@@ -1131,7 +1131,8 @@ export interface BDef {
   shadowTop?: number;
   pad?: [number, number, number, number];
   anims?: Anim[];
-  lights?: Lt[] | ((p: Props) => Lt[]);
+  /** Static lights, or a function of the instance (it runs every frame, so lights can flicker). */
+  lights?: Lt[] | ((p: Props, o: MapObject) => Lt[]);
   door?: number;
   label?: string;
   outline?: boolean;
@@ -1168,7 +1169,7 @@ export function building(kind: string, d: BDef): void {
     },
     lights: d.lights
       ? (o) => {
-          const ls = typeof d.lights === 'function' ? d.lights(o.props ?? {}) : (d.lights as Lt[]);
+          const ls = typeof d.lights === 'function' ? d.lights(o.props ?? {}, o) : (d.lights as Lt[]);
           const x0 = Math.round(o.x) - Math.floor(d.w / 2);
           const y0 = Math.round(o.y) - d.h;
           return ls.map(([x, y, r, color]) => ({ x: x0 + x, y: y0 + y, r, color }));

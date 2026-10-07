@@ -9,7 +9,7 @@
  * Anchor = bottom-centre of the footprint. Wall-mounted pieces (window,
  * poster, photo, calendar, corkboard, torch, door-wall) are not solid.
  */
-import { noteCaster } from '../../world/atmosphere';
+import { noteCaster, skyPhase, type SkyPhase } from '../../world/atmosphere';
 import { registerObject } from '../../world/registry';
 import type { MapObject, ObjectKind } from '../../world/types';
 import { FT, glyph, T, TC, TW } from '../font';
@@ -398,14 +398,106 @@ function windowView(view: string, gx: number, gy: number, gw: number, gh: number
     return;
   }
 }
+/**
+ * The default view (sky over far hills) for each sky phase. Night gets a
+ * deep blue sky with a few stars and a neighbour's lit window; rain greys
+ * everything down.
+ */
+function windowHills(ph: SkyPhase, gx: number, gy: number, gw: number, gh: number, seed: number): void {
+  const sky: Record<SkyPhase, [string, string, string]> = {
+    day: ['#8cc4e4', '#b8dcec', '#fde6b4'],
+    gold: ['#f2b07a', '#ffd49a', '#ffe8b8'],
+    dusk: ['#5a4a8a', '#b07aa8', '#f2a888'],
+    night: ['#1e2452', '#2c3468', '#3e3f74'],
+    rain: ['#8a92a8', '#a2aabc', '#b8bcc6'],
+  };
+  const [s0, s1, s2] = sky[ph];
+  for (let yy = 0; yy < gh; yy++) {
+    const t = yy / (gh - 1);
+    const c = t < 0.35 ? mixc(s0, s1, t / 0.35) : t < 0.75 ? mixc(s1, s2, (t - 0.35) / 0.4) : col(s2);
+    R(gx, gy + yy, gw, 1, (x, y) => (ph !== 'night' && dth(x, y, 6) && t > 0.3 && t < 0.8 ? mixc(c, '#fff0d0', 0.2) : c));
+  }
+  if (ph === 'day') {
+    // sun glow in the corner + a cloud
+    circ(gx + 13, gy + 2, 2.5, '#fff6d8');
+    P(gx + 13, gy + 2, '#ffffff');
+    ell(gx + 4, gy + 3, 3, 1.3, '#ffffff');
+    ell(gx + 6, gy + 2.6, 2, 1.2, '#fff8ec');
+  } else if (ph === 'gold') {
+    // the sun low over the hills, a cloud lit from underneath
+    circ(gx + 12, gy + 7, 2.5, '#fff0b8');
+    circ(gx + 12, gy + 7, 1.5, '#ffffff');
+    ell(gx + 5, gy + 3, 3, 1.1, '#ffe2b8');
+    H1(gx + 2.5, gx + 7.5, gy + 4, '#f29a6a');
+  } else if (ph === 'dusk') {
+    P1(gx + 3.5, gy + 1.5, '#fff4d8');
+    ell(gx + 12, gy + 6.5, 3, 0.8, '#ffc49a');
+  } else if (ph === 'night') {
+    // stars (one bright one), and a thin moon
+    for (let k = 0; k < 7; k++) P1(gx + 0.5 + hash2(k, seed, 811) * (gw - 1), gy + 0.5 + hash2(k, seed + 1, 812) * 5, k % 3 ? '#a8b0e0' : '#fff4d8');
+    P1(gx + 4, gy + 2, '#ffffff');
+    P1(gx + 4.5, gy + 2, '#c8d0f0');
+    P1(gx + 4, gy + 1.5, '#c8d0f0');
+    circ(gx + 13, gy + 2.5, 1.6, '#fff4d8');
+    circ(gx + 13.8, gy + 2.1, 1.4, '#2a3066');
+  } else {
+    ell(gx + 5, gy + 3, 4, 1.6, '#c4c8d2');
+    ell(gx + 12, gy + 2, 4, 1.4, '#b4b8c6');
+  }
+  // hills and a tiny tree line, then (after dark) a neighbour still up
+  const hill = ({
+    day: ['#8fb87a', '#b4d48e', '#5e8a5a', '#6a9a5e'],
+    gold: ['#a8a466', '#d8c27a', '#6e7a50', '#7e8654'],
+    dusk: ['#6a5e82', '#8a7a9a', '#5a5276', '#60587a'],
+    night: ['#283058', '#38406a', '#1e2448', '#222a4e'],
+    rain: ['#7e9284', '#98a898', '#5e7266', '#66786a'],
+  } as Record<SkyPhase, string[]>)[ph];
+  for (let x = 0; x < gw; x++) {
+    const hy = Math.round(gy + 8 + Math.sin((x + 2) * 0.5) * 1.2);
+    VL(gx + x, hy, gy + gh - 1, hill[0]);
+    P(gx + x, hy, hill[1]);
+  }
+  ell(gx + 3, gy + 8, 2, 2, hill[2]);
+  ell(gx + 11, gy + 9, 2.5, 2, hill[3]);
+  if (ph === 'night' || ph === 'dusk') {
+    const roof = ph === 'night' ? '#1a1e40' : '#3a3858';
+    R(gx + 6.5, gy + 7.5, 3, 2, roof);
+    poly([[gx + 6, gy + 7.6], [gx + 8, gy + 6.4], [gx + 10, gy + 7.6]], roof);
+    R(gx + 7.5, gy + 8, 1, 1, '#ffd070');
+    P1(gx + 7.5, gy + 8, '#fff2b0');
+  }
+}
+/** Tint a special view (street, city) to the sky phase; lit windows keep their glow. */
+function skyGrade(ph: SkyPhase, gx: number, gy: number, gw: number, gh: number): void {
+  if (ph === 'day') return;
+  const [c, k] = ({ gold: ['#ffb070', 0.3], dusk: ['#6a4a8a', 0.45], night: ['#1e2452', 0.72], rain: ['#9aa4b4', 0.5] } as Record<string, [string, number]>)[ph];
+  R(gx, gy, gw, gh, (_a, _b, o) => {
+    if (!o) return o;
+    if (ph === 'night' && (o & 255) > 220 && ((o >>> 8) & 255) > 180 && ((o >>> 16) & 255) < 190) return o;
+    return mixc(o, c, k);
+  });
+  if (ph === 'night') for (let n = 0; n < 4; n++) P1(gx + 1 + hash2(n, 3, 813) * (gw - 2), gy + 0.5 + hash2(n, 4, 814) * 2.5, '#d8dcf6');
+}
+/** Raindrops beading and running down the glass. */
+function rainOnGlass(gx: number, gy: number, gw: number, gh: number, seed: number): void {
+  for (let k = 0; k < 9; k++) {
+    const x = gx + 0.5 + hash2(k, seed, 821) * (gw - 1);
+    const y = gy + hash2(k, seed, 822) * (gh - 3);
+    const len = 1 + hash2(k, seed, 823) * 3;
+    V1(x, y, y + len, '#d8e0ec');
+    P1(x, y + len, '#ffffff');
+  }
+}
 reg('window', {
   draw: (ctx, o) => {
     const v = variant(o, 4);
     const view = String(o.props.view ?? '');
+    // The glass shows the real sky: day, golden hour, dusk, night or rain.
+    const ph = skyPhase();
     blit(
       ctx,
       o,
-      iart(`window|${v}|${view}`, 24, 20, () => {
+      iart(`window|${v}|${view}|${ph}`, 24, 20, () => {
         const [cb, cl, cd] = CURTAINS[v];
         // frame
         R(2, 2, 20, 15, '#fbf0d9');
@@ -416,26 +508,13 @@ reg('window', {
         const gy = 4;
         const gw = 16;
         const gh = 11;
-        for (let yy = 0; yy < gh; yy++) {
-          const t = yy / (gh - 1);
-          const c = t < 0.35 ? mixc('#8cc4e4', '#b8dcec', t / 0.35) : t < 0.75 ? mixc('#b8dcec', '#fde2b0', (t - 0.35) / 0.4) : '#fde6b4';
-          R(gx, gy + yy, gw, 1, (x, y) => (dth(x, y, 6) && t > 0.3 && t < 0.8 ? mixc(c, '#fff0d0', 0.3) : c));
+        windowHills(ph, gx, gy, gw, gh, v);
+        if (view) {
+          windowView(view, gx, gy, gw, gh);
+          if (view !== 'marquee') skyGrade(ph, gx, gy, gw, gh);
         }
-        // sun glow in the corner + a cloud
-        circ(gx + 13, gy + 2, 2.5, '#fff6d8');
-        P(gx + 13, gy + 2, '#ffffff');
-        ell(gx + 4, gy + 3, 3, 1.3, '#ffffff');
-        ell(gx + 6, gy + 2.6, 2, 1.2, '#fff8ec');
-        // hills and a tiny tree line
-        for (let x = 0; x < gw; x++) {
-          const hy = Math.round(gy + 8 + Math.sin((x + 2) * 0.5) * 1.2);
-          VL(gx + x, hy, gy + gh - 1, '#8fb87a');
-          P(gx + x, hy, '#b4d48e');
-        }
-        ell(gx + 3, gy + 8, 2, 2, '#5e8a5a');
-        ell(gx + 11, gy + 9, 2.5, 2, '#6a9a5e');
-        if (view) windowView(view, gx, gy, gw, gh);
-        fglare(gx, gy, gw, gh, 0.32);
+        if (ph === 'rain') rainOnGlass(gx, gy, gw, gh, v);
+        fglare(gx, gy, gw, gh, ph === 'night' ? 0.12 : 0.32);
         // mullions (a single picture pane for the views worth looking at)
         if (view === 'marquee') {
           // one big pane: nothing between her and the marquee
@@ -1955,6 +2034,9 @@ reg('cobweb', {
 reg('sunbeam', {
   above: true,
   draw: (ctx, o, t) => {
+    // only while the sun is actually out
+    const ph = skyPhase();
+    if (ph !== 'day' && ph !== 'gold') return;
     const f = frame(t, 8, 2, phaseOf(o));
     const len = num(o, 'len', 4);
     blit(
@@ -6188,14 +6270,19 @@ reg('promoter-desk', {
 
 /** A window with venetian blinds half-open, slatted daylight. */
 reg('window-blinds', {
-  lights: (o) => [light(o, 0, -6, 34, '#fff4d8')],
+  // daylight through the slats; after dark only a little cool street glow
+  lights: (o) => {
+    const ph = skyPhase();
+    return [light(o, 0, -6, ph === 'night' ? 18 : 34, ph === 'night' ? '#8a96d0' : ph === 'rain' ? '#d8e0ec' : ph === 'day' ? '#fff4d8' : '#ffd0a0')];
+  },
   draw: (ctx, o) => {
     const v = variant(o, 2);
+    const ph = skyPhase();
     blit(
       ctx,
       o,
       iart(
-        `window-blinds|${v}`,
+        `window-blinds|${v}|${ph}`,
         24,
         22,
         () => {
@@ -6217,7 +6304,9 @@ reg('window-blinds', {
               for (let w = 0; w < bh - 1; w += 1.5) if (hash2(k, w * 2, 452) < 0.4) P1(2.5 + k * 3 + (w % 2), 18 - bh + 1 + w, '#ffe08a');
             }
           }
-          fglare(2, 2, 20, 16, 0.25);
+          skyGrade(ph, 2, 2, 20, 16);
+          if (ph === 'rain') rainOnGlass(2, 2, 20, 16, v + 5);
+          fglare(2, 2, 20, 16, ph === 'night' ? 0.1 : 0.25);
           // the blinds: fine slats, lower half drawn, cords dangling
           for (let y = 2; y < 11; y += 1) {
             H1(2, 22, y, '#f2eee4');

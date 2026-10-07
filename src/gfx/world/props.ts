@@ -16,11 +16,10 @@ import {
 } from '../kit';
 import { FT, T, TC, glyph } from '../font';
 import { getSeason } from './terrain';
-import { noteCaster } from '../../world/atmosphere';
+import { noteCaster, skyPhase } from '../../world/atmosphere';
 import { SH1, SH2, SH3, blit, blitFx, flagFrame, over, tick, type Anim, type Art, type BDef, type Lt, type Props } from './buildings';
 
 const WARM = '#ffcf7a';
-const LAMP = '#ffd890';
 const vnum = (p: Props, n: number) => Math.abs(Math.floor(Number(p.variant ?? 0))) % n;
 const tiles = (v: unknown, d = 1) => Math.max(1, Math.min(40, Math.floor(Number(v ?? d)) || d));
 const TAU = Math.PI * 2;
@@ -245,7 +244,7 @@ export function prop(kind: string, d: BDef): void {
     },
     lights: d.lights
       ? (o) => {
-          const ls = typeof d.lights === 'function' ? d.lights(o.props ?? {}) : (d.lights as Lt[]);
+          const ls = typeof d.lights === 'function' ? d.lights(o.props ?? {}, o) : (d.lights as Lt[]);
           const x0 = Math.round(o.x) - Math.floor(d.w / 2);
           const y0 = Math.round(o.y) - d.h;
           return ls.map(([x, y, r, color]) => ({ x: x0 + x, y: y0 + y, r, color }));
@@ -864,8 +863,60 @@ prop('lamp', {
       if (k < 12) P1(ox + 15 + k, oy + 53.5 + k * 0.18, SH2);
     }
   },
-  lights: [[12, 8, 44, LAMP]],
+  // Lamps breathe a little: most are steady, a few waver, one buzzes (lampLevel).
+  lights: (_p, o) => [[12, 8, 44, lampColor(lampLevel(o))]],
+  anims: [
+    {
+      // the lantern goes dull while the lamp gutters (only matters after dark)
+      fps: 1,
+      frames: 2,
+      rect: [6, 4, 12, 10],
+      pick: (_t, o) => (lampLevel(o) < 0.6 && skyPhase() !== 'day' ? 1 : 0),
+      skip: (f) => f === 0,
+      draw: () => {
+        const x = 12;
+        poly([[x - 4, 5], [x + 4, 5], [x + 3, 12], [x - 3, 12]], () => (fd(6) ? '#a07a62' : '#8a6458'));
+        ell(x, 8, 1, 1.4, '#d8a070');
+        for (const bx of [-2, 0, 2]) L1(x + bx * 1.05, 5, x + bx * 0.85, 12, ironR[1]);
+      },
+    },
+  ],
 });
+
+// ---------------------------------------------------------------- lamp light
+/** Warm sodium-ish lamp light: a touch more amber than the lantern art. */
+const LAMP_LIGHT = '#ffc462';
+const lampCols = new Map<number, string>();
+function lampColor(k: number): string {
+  const q = Math.round(Math.max(0, Math.min(1, k)) * 25);
+  let c = lampCols.get(q);
+  if (!c) {
+    const n = col(LAMP_LIGHT);
+    const f = q / 25;
+    c = '#' + [n & 255, (n >>> 8) & 255, (n >>> 16) & 255].map((v) => Math.round(v * f).toString(16).padStart(2, '0')).join('');
+    lampCols.set(q, c);
+  }
+  return c;
+}
+/**
+ * How bright a street lamp burns right now (0..1). Each lamp has its own
+ * steadiness from its position: most hold still, some breathe, a few waver.
+ * A lamp with props.buzz is the one on Main Street that never got fixed: it
+ * stutters every few seconds and now and then gives up for a moment.
+ */
+export function lampLevel(o: MapObject): number {
+  const t = performance.now() / 1000;
+  const s = hash2(Math.round(o.x), Math.round(o.y), 77);
+  if (o.props.buzz) {
+    const c = (t + s * 9) % 8.5;
+    if (c < 1.3) return hash2(Math.floor(t * 15), 3, 78) < 0.45 ? 0.14 : 0.8 + hash2(Math.floor(t * 15), 4, 78) * 0.2;
+    if ((t % 37) < 2.2) return 0.12;
+    return 0.92 + Math.sin(t * 31) * 0.04 + Math.sin(t * 7.3) * 0.03;
+  }
+  const amp = s < 0.55 ? 0.015 : s < 0.88 ? 0.05 : 0.1;
+  const w = Math.sin(t * (1.7 + s * 2.6) + s * 40) * 0.5 + Math.sin(t * (4.1 + s * 5) + s * 13) * 0.3 + Math.sin(t * (11 + s * 6) + s * 90) * 0.2;
+  return 1 - amp * (0.5 + 0.5 * w);
+}
 prop('bench', {
   w: 32,
   h: 18,
