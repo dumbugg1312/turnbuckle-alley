@@ -132,7 +132,7 @@
   box-shadow: 0 var(--px) 0 var(--paper-hi);
 }
 .menu-page > h2:only-of-type + :not(.menu-sub) { margin-top: calc(var(--u) * 7); }
-.menu-empty { font-size: calc(var(--u) * 8); color: var(--ink-soft); font-style: italic; padding: calc(var(--u) * 6) 0; }
+.menu-empty { grid-column: 1 / -1; font-size: calc(var(--u) * 8); color: var(--ink-soft); font-style: italic; padding: calc(var(--u) * 6) 0; }
 .menu-actions { display: flex; gap: calc(var(--u) * 6); margin-top: calc(var(--u) * 9); flex-wrap: wrap; }
 
 /* Bag: a tray of little cubbies. */
