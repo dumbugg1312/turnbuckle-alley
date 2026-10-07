@@ -25,6 +25,8 @@ export interface Obj {
   fade?: [number, number, number, number];
   /** Extra drift speed (px/s) for clouds. */
   drift?: number;
+  /** What it is (for caption timing checks). */
+  tag?: string;
 }
 export interface Band {
   L: Layer;
@@ -48,7 +50,7 @@ export interface Journey {
 /** Layer-space x for something crossing the window centre at time tc (+dx px). */
 export const at = (L: Layer, tc: number, dx = 0): number => dist(tc) * SPEED * RATE[L] + dx;
 
-export const OVERPASS_T = 10.3;
+export const OVERPASS_T = 11.0;
 const T_SUB = 11.6;
 const T_HW = 20.6;
 const T_FARM = 26.6;
@@ -89,12 +91,12 @@ export function buildJourney(nearH: number, deckTop: number, nearBase: number): 
       add('mid', x + 25, walkup(v++));
       x += 50;
     }
-    add('mid', at('mid', 7.2), billboard(), 2);
+    add('mid', at('mid', 7.5), billboard(), 2).tag = 'billboard';
   }
   // near street lamps
   for (let x = at('near', -6); x < at('near', OVERPASS_T - 0.8); x += 150) add('near', x, streetLamp(), 0, 'lamp');
   // the overpass (its second pier hides the city/suburb seam on the near band)
-  add('near', at('near', OVERPASS_T), overpass(deckTop, nearBase), 0, 'overpass');
+  add('near', at('near', OVERPASS_T), overpass(deckTop, nearBase), 0, 'overpass').tag = 'overpass';
   const nearSeam = at('near', OVERPASS_T, 91);
 
   // ---------------------------------------------------------------- suburbs
@@ -104,7 +106,7 @@ export function buildJourney(nearH: number, deckTop: number, nearBase: number): 
     let v = 0;
     while (x < end) {
       const hs = house(v);
-      add('mid', x + lw(hs) / 2, hs);
+      add('mid', x + lw(hs) / 2, hs).tag = 'house';
       add('mid', x + lw(hs) / 2 + 2, lawn(v), 4);
       if (v % 2 === 1) add('mid', x + lw(hs) - 2, mailbox(v), 3);
       x += lw(hs) + 4;
@@ -118,7 +120,7 @@ export function buildJourney(nearH: number, deckTop: number, nearBase: number): 
   for (let x = at('near', T_SUB + 0.5); x < at('near', T_HW); x += 260 + r() * 200) add('near', x, tree(15 + Math.floor(r() * 5), 'morning', 90 + Math.floor(x)), 4, 'occluder');
 
   // ---------------------------------------------------------------- highway
-  add('midfar', at('midfar', 23.1), highwaySign(), 2);
+  add('midfar', at('midfar', 23.1), highwaySign(), 2).tag = 'sign';
   for (let x = at('midfar', T_HW - 1); x < at('midfar', T_FARM); x += 18 + r() * 30) {
     if (Math.abs(x - at('midfar', 23.1)) < 60) continue;
     add('midfar', x, r() < 0.5 ? pine(14 + Math.floor(r() * 8), 'noon', Math.floor(x)) : tree(5 + Math.floor(r() * 3), 'noon', Math.floor(x)), -1);
@@ -157,25 +159,26 @@ export function buildJourney(nearH: number, deckTop: number, nearBase: number): 
       [31.6, 1, 'graze', 9],
       [32.3, 0, 'graze', 10],
     ];
-    herd.forEach(([tc, k, pose, v], i) => add('mid', at('mid', tc), cow(k, pose, v), (i % 3) - 1));
+    herd.forEach(([tc, k, pose, v], i) => (add('mid', at('mid', tc), cow(k, pose, v), (i % 3) - 1).tag = 'cow'));
     const w = add('mid', at('mid', 29.5), cow(0, 'graze', 11), 1, 'watcher');
+    w.tag = 'cow';
     w.alt = cow(0, 'look', 11);
     w.altAt = 28.1;
   }
   for (let x = at('mid', 30); x < at('mid', 38); x += 60 + r() * 70) add('mid', x, bale(Math.floor(x)), -1);
-  add('mid', at('mid', 33.6), barn(), -1, 'occluder');
-  add('mid', at('mid', 34.9), windmillTower(), -2, 'windmill');
-  for (const tc of [36.4, 37.4]) add('mid', at('mid', tc), tree(13, 'golden', Math.floor(tc * 10)), 1, 'occluder');
+  add('mid', at('mid', 33.2), barn(), -1, 'occluder');
+  add('mid', at('mid', 34.4), windmillTower(), -2, 'windmill').tag = 'windmill';
+  for (const tc of [36.2, 37.3]) add('mid', at('mid', tc), tree(13, 'golden', Math.floor(tc * 10)), 1, 'occluder');
   for (let x = at('near', T_FARM + 1); x < at('near', T_TOWN); x += 300 + r() * 260) add('near', x, tree(16, 'golden', Math.floor(x)), 4, 'occluder');
 
   // ---------------------------------------------------------------- the town
-  add('midfar', at('midfar', 40.3), waterTower(), 0);
+  add('midfar', at('midfar', 40.3), waterTower(), 0).tag = 'watertower';
   add('midfar', at('midfar', STOP_T, 112), sportatoriumRoof(), 0);
   for (const dx of [-150, -120, 60, 160, 190]) add('midfar', at('midfar', STOP_T, dx), tree(6 + (dx & 3), 'sunset', dx + 400), -1);
   for (const tc of [39.4, 40.6, 41.8]) add('mid', at('mid', tc), tree(12 + Math.floor(tc) % 3, 'sunset', Math.floor(tc * 10)), 1, 'occluder');
   add('mid', at('mid', STOP_T, -150), tree(14, 'sunset', 7), 1);
   add('mid', at('mid', STOP_T, 170), tree(12, 'sunset', 8), 1);
-  add('near', at('near', STOP_T), welcomeSign(), 0, 'occluder');
+  add('near', at('near', STOP_T), welcomeSign(), 0, 'occluder').tag = 'welcome';
 
   // ---------------------------------------------------------------- clouds
   {

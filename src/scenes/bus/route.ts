@@ -113,7 +113,7 @@ export const ramp = (t: number, a: number, b: number): number => Math.max(0, Mat
 export const pulse = (t: number, a: number, b: number, c: number, d: number): number => Math.min(ramp(t, a, b), 1 - ramp(t, c, d));
 
 /** Rain on the glass: heavy in the city, gone shortly after the overpass. */
-export const rainAt = (t: number): number => 1 - ramp(t, 10.6, 13);
+export const rainAt = (t: number): number => 1 - ramp(t, 11.3, 13.6);
 /** Direct low sun (rim light, flares, dust motes). */
 export const sunAt = (t: number): number => pulse(t, 25.5, 30, 47, 49) * 1;
 /** Morning sun (soft, high, from the left). */
@@ -128,7 +128,7 @@ export const morningAt = (t: number): number => pulse(t, 11, 15, 22, 26);
 export const CAPTIONS: [number, string][] = [
   [0.7, 'Route 9 · The City → Turnbuckle Alley'],
   [5.4, 'A MaxxMedia billboard: EVERY MOMENT, CLIPPED. Not this one.'],
-  [10.7, 'Under the last overpass, the rain gives up.'],
+  [10.3, 'Under the last overpass, the rain gives up.'],
   [15.6, 'The suburbs. Every lawn a different opinion.'],
   [20.6, 'A green sign: TURNBUCKLE ALLEY, 152 miles. Your coffee has gone cold.'],
   [26.8, 'Cows. So many cows. One of them watches you go.'],

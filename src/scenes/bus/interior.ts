@@ -46,7 +46,7 @@ export function layout(w: number, h: number): Layout {
   const wr = w - side;
   const ww = wr - wl;
   const wh = wb - wt;
-  const yh = Math.round(wt + wh * 0.5);
+  const yh = Math.round(wt + wh * (portrait ? 0.56 : 0.5));
   const r = Math.round(24 * u);
   const head = { x: Math.round(wl + Math.min(ww * 0.26, 110 * u)), y: Math.round(wb - r * 0.12), r };
   const seat = { x0: Math.round(wl + ww * 0.66), y0: Math.round(wb - 15 * u) };
@@ -308,7 +308,7 @@ function paintSeat(L: Layout): void {
   R(x0 + 3, y0 - 2.5, gw, 0.5, '#6a6680');
   // seat-back pocket with a folded route map
   const pky = tray.y + 9 * u;
-  RR(x0 + 4, pky, sw - 6, h - pky, 2, '#2c2850');
+  RR(x0 + 4, pky, sw - 6, Math.min(h - pky, 26 * u), 2, '#2c2850');
   R(x0 + 4, pky, sw - 6, 1, '#4a4680');
   R(x0 + 4, pky + 1, sw - 6, 0.5, '#1c1834');
   poly([[x0 + 12 * u, pky - 7 * u], [x0 + 30 * u, pky - 9 * u], [x0 + 32 * u, pky + 1], [x0 + 13 * u, pky + 1]], '#f2ead6');

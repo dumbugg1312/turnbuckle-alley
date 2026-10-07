@@ -16,15 +16,24 @@ export function skyStrip(i: number, h: number): HTMLCanvasElement {
   if (hit) return hit;
   const cs = SKY[i].stops.map(col);
   const n = cs.length - 1;
+  // Interpolate the stops finely and dither only between neighbouring
+  // steps, so the gradient reads smooth instead of a checkerboard.
+  const STEPS = 40;
+  const ramp: number[] = [];
+  for (let k = 0; k <= STEPS; k++) {
+    const u = (k / STEPS) * n;
+    const a = Math.min(n - 1, Math.floor(u));
+    ramp.push(mixc(cs[a], cs[a + 1], u - a));
+  }
   const c = dense(2, () =>
     toCanvas(
       mkSpr(32, h, () => {
         R(0, 0, 32, h, () => {
-          // ease the stops toward the horizon so the glow hugs it
-          const u = Math.pow(Math.max(0, Math.min(1, FY / 2 / Math.max(1, h - 1))), 1.35) * n;
-          const a = Math.min(n - 1, Math.floor(u));
+          // ease toward the horizon so the glow hugs it
+          const u = Math.pow(Math.max(0, Math.min(1, FY / 2 / Math.max(1, h - 1))), 1.35) * STEPS;
+          const a = Math.min(STEPS - 1, Math.floor(u));
           const f = u - a;
-          return f * 16 > BAYER[((FY & 3) << 2) | (FX & 3)] ? cs[a + 1] : cs[a];
+          return f * 16 > BAYER[((FY & 3) << 2) | (FX & 3)] ? ramp[a + 1] : ramp[a];
         });
       }),
     ),
@@ -112,7 +121,7 @@ export function streak(v: number, warm: 'golden' | 'sunset'): HTMLCanvasElement 
       ell(x + rx * 0.15, y + ry * 0.8, rx * 0.6, ry * 0.3, lit);
     }
     // tattered fine edges
-    R(0, 0, W, H, (_x, _y, o) => (o && fn01(v + 7) < 0.05 ? 0 : o === col(mid) && fn01(v) < 0.1 ? mixc(mid, lit, 0.5) : null));
+    R(0, 0, W, H, (_x, _y, o) => (o && fn01(v + 7) < 0.015 ? 0 : o === col(mid) && fn01(v) < 0.1 ? mixc(mid, lit, 0.5) : null));
   });
 }
 

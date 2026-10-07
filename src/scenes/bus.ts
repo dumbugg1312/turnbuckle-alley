@@ -23,6 +23,10 @@ import { skyStrip } from './bus/sky';
 const LAYER_BASE: Record<Layer, number> = { cloud: 0, far: 3, midfar: 9, mid: 30, near: 62 };
 const GROUND_TOP: Record<Layer, number> = { cloud: 0, far: 0, midfar: 1, mid: 10, near: 33 };
 const PARALLAX: Layer[] = ['midfar', 'mid', 'near'];
+const BEATS: [number, string, number][] = [
+  [10.6, 'whoosh', 0.35],
+  [46.2, 'door', 0.6],
+];
 
 /** Interior light over the day: ambient multiply, rim colour, rim strength. */
 const LIGHT: { t: number; amb: string; rim: string; rimA: number }[] = [
@@ -74,6 +78,8 @@ export class BusScene implements Scene {
   private drops: Drop[] = [];
   private motes: { x: number; y: number; s: number; p: number }[] = [];
   private seed = 1;
+  private nearH = 60;
+  private beats = new Set<string>();
 
   constructor(onDone: () => void) {
     this.onDone = onDone;
@@ -126,6 +132,11 @@ export class BusScene implements Scene {
       void this.caption.offsetWidth;
       if (idx >= 0 && CAPTIONS[idx][1]) this.caption.classList.add('show');
     }
+    // a couple of sound beats: rushing under the overpass, the door at the stop
+    for (const [at, id, vol] of BEATS) if (this.t >= at && !this.beats.has(id)) {
+      this.beats.add(id);
+      audio.sfx(id, { volume: vol });
+    }
     this.updateRain(dt);
     if (this.t > DURATION) this.finish();
   }
@@ -140,6 +151,7 @@ export class BusScene implements Scene {
     this.inter = buildInterior(L, this.look);
     const nearTop = L.yh + GROUND_TOP.near;
     const nearH = Math.max(40, Math.min(96, L.wb - nearTop + 2));
+    this.nearH = nearH;
     this.jr = buildJourney(nearH, L.wt - 3 - (L.yh + LAYER_BASE.near), L.yh + LAYER_BASE.near);
     this.fx.width = w * 2;
     this.fx.height = h * 2;
@@ -209,6 +221,7 @@ export class BusScene implements Scene {
       if (Ly === 'mid') this.drawWires(ctx, L, t);
       if (Ly === 'midfar') this.haze(ctx, L, horizon, 0.16, 60);
     }
+    this.drawRoad(ctx, L, t);
 
     // rain falling outside
     const rain = rainAt(t);
@@ -352,6 +365,24 @@ export class BusScene implements Scene {
     }
   }
 
+  /** The bus's own lane, only seen on tall (portrait) windows. */
+  private drawRoad(ctx: CanvasRenderingContext2D, L: Layout, t: number): void {
+    const y = L.yh + GROUND_TOP.near + this.nearH - 1;
+    if (y >= L.wb) return;
+    const wet = t < 13;
+    ctx.fillStyle = wet ? '#3a3654' : '#57526a';
+    ctx.fillRect(0, y, L.ww, L.wb - y);
+    ctx.fillStyle = wet ? '#2c2846' : '#46425a';
+    ctx.fillRect(0, y, L.ww, 1);
+    ctx.fillStyle = '#e8e2d4';
+    ctx.fillRect(0, y + 3, L.ww, 1);
+    // the centre dashes rush past
+    ctx.fillStyle = '#f2c84a';
+    const off = (scroll('near', t) * 1.4) % 48;
+    const dy = y + Math.min(26, (L.wb - y) * 0.6);
+    for (let x = -off; x < L.ww; x += 48) ctx.fillRect(Math.round(x * 2) / 2, dy, 22, 1.5);
+  }
+
   /** Power lines sagging between consecutive poles. */
   private drawWires(ctx: CanvasRenderingContext2D, L: Layout, t: number): void {
     const ww = L.ww;
@@ -457,7 +488,7 @@ export class BusScene implements Scene {
     ctx.rect(L.wl, L.wt, L.ww, L.wh);
     ctx.clip();
     // your reflection, faint over the dark city, gone once the day is up
-    const refl = (1 - ramp(t, 8, 13)) * 0.13 + pulse(t, 9.8, 10.2, 10.6, 11.4) * 0.1;
+    const refl = (1 - ramp(t, 8.5, 13.5)) * 0.13 + pulse(t, 10.4, 10.8, 11.3, 12.1) * 0.12;
     if (this.reflect && refl > 0.005) {
       const s = this.reflect.width;
       ctx.save();
@@ -587,7 +618,7 @@ export class BusScene implements Scene {
     }
 
     // 3. sodium street lamps sliding past in the city
-    if (t < 11) {
+    if (t < 11.6) {
       c = this.fxCtx();
       let any = false;
       for (const o of this.jr!.objs) {
@@ -605,7 +636,7 @@ export class BusScene implements Scene {
       }
       if (any) {
         this.masked(c, it.mask);
-        this.blit(ctx, 'screen', 1 - ramp(t, 9, 10.5));
+        this.blit(ctx, 'screen', 1 - ramp(t, 9.6, 11.1));
       }
     }
 

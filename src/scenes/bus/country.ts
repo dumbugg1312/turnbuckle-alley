@@ -986,15 +986,21 @@ export function sportatoriumRoof(): HTMLCanvasElement {
       R(cx - 0.25, wall - 41, 0.5, 7, '#4a3550');
       R(cx - 2, wall - 38, 4, 0.5, '#4a3550');
       P1(cx - 1, wall - 40, '#ffd34a');
-      // the trees it hides behind
+      // the trees it hides behind, parted in the middle so the name shows
       for (let i = 0; i < 9; i++) {
         const tx = 2 + i * 11 + (i % 2) * 3;
-        const s = 6 + (i % 3) * 1.5;
+        if (Math.abs(tx - cx) < 26) continue;
+        const s = 5 + (i % 3) * 1.2;
         const p = LEAF.sunset;
         ell(tx, H - s * 0.6, s, s * 0.8, p.shade);
         ell(tx + 1, H - s * 0.8, s * 0.7, s * 0.55, p.base);
         ell(tx + 2, H - s, s * 0.4, s * 0.3, p.lit);
       }
+      // a low hedge along the front
+      R(0, H - 3, W, 3, LEAF.sunset.shade);
+      for (let x = 0; x < W; x += 1) R(x, H - 3.5 - hash2(x, 1, 5) * 1.5, 1, 1.5, LEAF.sunset.base);
+      // the sunset catching the roof's right slope
+      R(cx + 2, wall - 20, W / 2 - 16, 20, (_x, _y, o) => (o && o !== col('#5a4a6e') && FX % 8 === 0 ? '#ffc8a0' : null));
     },
     'soft',
   );
