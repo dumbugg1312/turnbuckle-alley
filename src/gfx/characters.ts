@@ -133,6 +133,8 @@ interface Built {
   ax: number;
   ay: number;
   white?: HTMLCanvasElement;
+  coarse?: HTMLCanvasElement;
+  coarseWhite?: HTMLCanvasElement;
 }
 
 const RING_SHOES = new Set(['wrestling-boots', 'kickpads', 'barefoot']);
@@ -185,6 +187,13 @@ function buildSprite(look: Look, pose: Pose, facing: Dir, frame: number, blink: 
   return { c: toCanvas(out), ax, ay };
 }
 
+/**
+ * Art pixels per native (world) pixel. At 2 the sprites are painted on a grid
+ * twice as fine as the world and drawn at half size, so on the doubled screen
+ * buffer every art pixel is still a whole buffer pixel (DECISIONS.md D-017).
+ */
+export const CHAR_DENSITY: number = 1;
+
 const cache = new Map<string, Built>();
 const CACHE_MAX = 2500;
 const lookKeys = new WeakMap<Look, { json: string; key: string; seed: number; sequins: boolean }>();
@@ -215,6 +224,22 @@ function getBuilt(look: Look, pose: Pose, facing: Dir, frame: number, blink: boo
   }
   cache.set(k, b);
   return b;
+}
+
+/** A smooth native-density copy, for drawing into native-resolution offscreen canvases. */
+function coarseOf(src: HTMLCanvasElement, b: Built, flash: boolean): HTMLCanvasElement {
+  const hit = flash ? b.coarseWhite : b.coarse;
+  if (hit) return hit;
+  const c = document.createElement('canvas');
+  c.width = Math.max(1, Math.round(src.width / CHAR_DENSITY));
+  c.height = Math.max(1, Math.round(src.height / CHAR_DENSITY));
+  const x = c.getContext('2d')!;
+  x.imageSmoothingEnabled = true;
+  x.imageSmoothingQuality = 'high';
+  x.drawImage(src, 0, 0, c.width, c.height);
+  if (flash) b.coarseWhite = c;
+  else b.coarse = c;
+  return c;
 }
 
 function whiteOf(b: Built): HTMLCanvasElement {
@@ -264,10 +289,23 @@ export function drawCharacter(ctx: CanvasRenderingContext2D, look: Look, x: numb
   if (opts.noItem && look.extras?.some((e) => EXTRA_SLOT[e.id] === 'hand')) l = { ...look, extras: look.extras.filter((e) => EXTRA_SLOT[e.id] !== 'hand') };
   const b = getBuilt(l, pose, facing, frame, blink, tw);
   const img = opts.flash ? whiteOf(b) : b.c;
-  ctx.drawImage(img, Math.round(x) - b.ax, Math.round(y) - b.ay);
+  const d = CHAR_DENSITY;
+  if (d === 1) {
+    ctx.drawImage(img, Math.round(x) - b.ax, Math.round(y) - b.ay);
+    return;
+  }
+  // On the doubled screen buffer the fine art lands 1:1 on buffer pixels.
+  // Native-resolution offscreen canvases (the VHS TV, ghosts) get a smooth copy.
+  const fine = Math.abs(ctx.getTransform().a) >= d - 0.01;
+  if (fine) {
+    ctx.drawImage(img, Math.round(x * d) / d - b.ax / d, Math.round(y * d) / d - b.ay / d, img.width / d, img.height / d);
+  } else {
+    const c = coarseOf(img, b, !!opts.flash);
+    ctx.drawImage(c, Math.round(x - b.ax / d), Math.round(y - b.ay / d));
+  }
 }
 
-/** The cached sprite canvas and its anchor (for tools, the creator and tests). */
+/** The cached sprite canvas and its anchor, in art pixels (CHAR_DENSITY per native pixel). */
 export function characterSprite(look: Look, opts: DrawOpts): { canvas: HTMLCanvasElement; ax: number; ay: number } {
   const pose = opts.pose ?? 'idle';
   const lk = lookKey(look);

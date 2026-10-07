@@ -315,7 +315,8 @@ export function drawRays(ctx: CanvasRenderingContext2D, g: Grade, w: number, h: 
   ctx.globalAlpha = g.rays * (0.2 + Math.sin(t * 0.4) * 0.04);
   const drift = (t * 7) % strip.width;
   // strip x-axis runs across the rays; y-axis (4px) is stretched along them
-  ctx.setTransform(ca, sa, -sa * (D / 4), ca * (D / 4), w / 2 - drift * ca + sa * D * 0.5, h / 2 - drift * sa - ca * D * 0.5);
+  // Compose with the current (base) transform rather than replacing it.
+  ctx.transform(ca, sa, -sa * (D / 4), ca * (D / 4), w / 2 - drift * ca + sa * D * 0.5, h / 2 - drift * sa - ca * D * 0.5);
   ctx.drawImage(strip, -strip.width / 2, 0);
   ctx.drawImage(strip, strip.width / 2, 0);
   ctx.drawImage(strip, -strip.width * 1.5, 0);

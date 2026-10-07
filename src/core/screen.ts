@@ -5,6 +5,13 @@
  * without stretching pixels (see DECISIONS.md D-002).
  */
 export const TARGET_NATIVE_H = 220;
+/**
+ * Draw buffer pixels per native pixel. The world still draws in native pixels
+ * (under a base transform), so every world pixel lands on exactly `scale`
+ * device pixels; characters use the finer half-pixels for extra detail
+ * (DECISIONS.md D-017).
+ */
+export const DENSITY = 2;
 
 export class Screen {
   readonly canvas: HTMLCanvasElement;
@@ -52,12 +59,17 @@ export class Screen {
     this.canvas.height = devH;
     this.canvas.style.width = cssW + 'px';
     this.canvas.style.height = cssH + 'px';
-    this.buffer.width = this.w;
-    this.buffer.height = this.h;
+    this.buffer.width = this.w * DENSITY;
+    this.buffer.height = this.h * DENSITY;
     this.ctx.imageSmoothingEnabled = false;
     this.out.imageSmoothingEnabled = false;
     document.documentElement.style.setProperty('--px', `${this.scale / this.dpr}px`);
     for (const fn of this.resizeHandlers) fn();
+  }
+
+  /** Reset a context drawing into the screen buffer to the base (native-pixel) transform. */
+  resetTransform(ctx: CanvasRenderingContext2D = this.ctx): void {
+    ctx.setTransform(DENSITY, 0, 0, DENSITY, 0, 0);
   }
 
   present(): void {

@@ -35,7 +35,7 @@ function step(): void {
 
 function draw(): void {
   const { ctx, w, h } = game.screen;
-  ctx.setTransform(1, 0, 0, 1, 0, 0);
+  game.screen.resetTransform(ctx);
   ctx.imageSmoothingEnabled = false;
   game.scenes.render(ctx, w, h);
   game.screen.present();

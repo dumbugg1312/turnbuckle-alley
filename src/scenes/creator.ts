@@ -10,7 +10,7 @@ import * as audioModule from '../audio';
 import { game } from '../core/game';
 import type { Scene } from '../core/scene';
 import { G, type Alignment, type Dir, type Persona } from '../core/state';
-import { characterSize, characterSprite, renderPortrait, type Pose } from '../gfx/characters';
+import { CHAR_DENSITY, characterSize, characterSprite, renderPortrait, type Pose } from '../gfx/characters';
 import { dth, ell, hash2, mkSpr, R, RR, shA, toCanvas, VG } from '../gfx/kit';
 import {
   BODY_TYPES, BOTTOM_STYLES, CLOTH_COLORS, cloneLook, EXTRA_SLOT, EXTRA_STYLES, EYE_COLORS, EYE_STYLES, FACIAL_STYLES, FEATURES,
@@ -465,7 +465,7 @@ class CreatorScene implements Scene {
       cv.height = spr.canvas.height;
       cv.getContext('2d')!.drawImage(spr.canvas, 0, 0);
       // Whole device pixels per art pixel, about half the world's scale.
-      const css = Math.max(1, Math.floor(game.screen.scale / 2)) / (window.devicePixelRatio || 1);
+      const css = Math.max(1, Math.floor(game.screen.scale / (2 * CHAR_DENSITY))) / (window.devicePixelRatio || 1);
       cv.style.width = `${cv.width * css}px`;
       cv.style.height = `${cv.height * css}px`;
       slot.replaceChildren(cv);
@@ -1194,7 +1194,9 @@ class CreatorScene implements Scene {
     ctx.globalAlpha = 1;
     const spr = characterSprite(this.look, { facing, pose, frame, t: this.t });
     ctx.imageSmoothingEnabled = false;
-    ctx.drawImage(spr.canvas, cx - spr.ax * k, floorY - spr.ay * k, spr.canvas.width * k, spr.canvas.height * k);
+    // k native pixels per body pixel; fine art (CHAR_DENSITY 2) keeps its extra detail.
+    const kk = k / CHAR_DENSITY;
+    ctx.drawImage(spr.canvas, cx - spr.ax * kk, floorY - spr.ay * kk, spr.canvas.width * kk, spr.canvas.height * kk);
     // Particles.
     for (const p of this.particles) {
       const fade = 1 - p.life / p.max;
