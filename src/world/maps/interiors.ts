@@ -392,6 +392,30 @@ interior('maxx-office', 'MaxxMedia, Floor 31', 20, 10, 'wall-panel', 'carpet', 9
   ['door-wall', 17, 3, { text: 'R. PENN' }, 'royce-door'],
 ], { music: 'city', light: 0.92 });
 
+// A city studio at midnight: a steel kitchenette and a fridge that hums, the
+// old TV you used to watch territory tapes on with Grandma, the city glowing
+// through the window, takeout on the floor, laundry with the MaxxMedia lanyard
+// on top, the mirror with a sticky note that says CALL GRANDMA, and on the
+// mat, under two bills, the envelope addressed in pencil.
 interior('apartment', 'Your Apartment', 10, 7, 'wall', 'wood', 4, [
-  ['bed', 8.5, 5.2, {}, 'apt-bed'], ['tv-vcr', 1, 4.2], ['couch', 3, 6], ['window', 5, 2.6], ['dresser', 6.5, 4.2, {}, 'apt-mirror'], ['plant', 9.4, 6.4], ['door-mat', 4.5, 7],
-], { music: 'city', light: 0.75 });
+  ['kitchen-run', 2, 3.15, { w: 2, style: 'steel', kettle: false }],
+  ['fridge', 3.5, 4.0],
+  ['poster', 4.6, 2.3, { variant: 2 }],
+  ['tv-vcr', 4.7, 4.5],
+  ['window', 6.5, 2.6, { variant: 1, view: 'city' }],
+  ['standing-mirror', 6.2, 4.6],
+  ['photo', 8.3, 1.9, { variant: 1 }],
+  ['dresser', 7.4, 4.4, {}, 'apt-mirror'],
+  ['bed', 9.5, 5.2, { variant: 1 }, 'apt-bed'],
+  ['rug', 5.5, 6.9, { w: 3, h: 2, variant: 2 }],
+  ['takeout', 3, 6.4],
+  ['clothes-pile', 8.2, 6.6],
+  ['plant', 1.4, 6.6, { variant: 1 }],
+  ['lamp-floor', 10.4, 6.6],
+  ['mail-pile', 5.6, 6.95],
+], {
+  music: 'city',
+  light: 0.72,
+  abs: true,
+  shape: (b) => b.rect(1, 3, 2, 2, 'tile'),
+});

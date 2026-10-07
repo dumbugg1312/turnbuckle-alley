@@ -422,10 +422,16 @@ reg('window', {
         ell(gx + 11, gy + 9, 2.5, 2, '#6a9a5e');
         if (view) windowView(view, gx, gy, gw, gh);
         fglare(gx, gy, gw, gh, 0.32);
-        // mullions
-        VL(11, 4, 14, '#efe2c8');
-        VL(12, 4, 14, '#d6c2a4');
-        HL(4, 19, 9, '#efe2c8');
+        // mullions (a single picture pane for the views worth looking at)
+        if (view === 'marquee') {
+          // one big pane: nothing between her and the marquee
+        } else if (view === 'city') {
+          V1(11.75, 4, 15, '#efe2c8');
+        } else {
+          VL(11, 4, 14, '#efe2c8');
+          VL(12, 4, 14, '#d6c2a4');
+          HL(4, 19, 9, '#efe2c8');
+        }
         // curtain rod with finials
         HL(0, 23, 1, PAL.gold3);
         P(0, 0, PAL.gold2);
@@ -2313,6 +2319,128 @@ reg('side-table', {
             R(2, 6, 8, 2, () => (dth(FX, FY, 4) ? alpha('#fff0c0', 110) : null));
           },
         },
+      ),
+    ),
+});
+
+
+/** A tall cheval mirror on a stand: the one you look into before you leave the city. */
+reg('standing-mirror', {
+  solid: { x: -5, y: -4, w: 10, h: 3 },
+  draw: (ctx, o) =>
+    blit(
+      ctx,
+      o,
+      iart(
+        'standing-mirror',
+        14,
+        30,
+        () => {
+          const wd = WALNUT;
+          // stand legs and pivots
+          L1(2, 29, 4, 20, wd.s);
+          L1(12, 29, 10, 20, wd.s);
+          R(1, 8, 1.5, 21, wd.b);
+          R(11.5, 8, 1.5, 21, wd.b);
+          ell(1.8, 13, 1, 1, PAL.gold2);
+          ell(12.2, 13, 1, 1, PAL.gold2);
+          // oval frame and glass with a long glint
+          ell(7, 13, 5, 11, wd.l);
+          ell(7, 13, 4.2, 10.2, wd.d);
+          ell(7, 13, 3.6, 9.5, '#8ab0c0');
+          R(2, 2, 10, 22, (_a, _b, o2) => {
+            if (!o2 || Math.hypot((lx() - 7) / 3.6, (ly() - 13) / 9.5) > 1) return o2;
+            return mixc('#b8d8e8', '#5a7a98', (ly() - 3.5) / 19 * 0.7 + (lx() - 3.4) / 7.2 * 0.3);
+          });
+          L1(5, 6, 6.5, 4, '#ffffff');
+          L1(4.5, 9, 7.5, 5, '#e8f8ff');
+          // a sticky note on the frame: "CALL GRANDMA"
+          R(8.5, 19, 4, 3.5, '#fff4a0');
+          H1(9, 12, 20, '#c9404c');
+          H1(9, 11.5, 21, '#c9404c');
+        },
+        { shadow: [['e', 7, 29, 6, 1.4]] },
+      ),
+    ),
+});
+
+/** The mail on the mat: two bills, a coupon, and one envelope addressed in pencil. */
+reg('mail-pile', {
+  draw: (ctx, o) =>
+    blit(
+      ctx,
+      o,
+      iart(
+        'mail-pile',
+        14,
+        7,
+        () => {
+          poly([[0, 3], [6, 1.5], [7, 5.5], [1, 7]], '#fbf6ea');
+          H1(1, 5, 3.5, '#c9404c');
+          poly([[5, 2], [11, 0.5], [12, 4], [6, 5.5]], '#e8f0f8');
+          R(7, 2, 2.5, 1, '#3f6ab0');
+          poly([[3, 4], [10, 3], [10.5, 6.5], [3.5, 7]], '#f2e2c4');
+          L1(4, 5, 7, 4.7, '#7a6a5a');
+          L1(4.5, 5.8, 8, 5.4, '#7a6a5a');
+          R(8.5, 3.6, 1.2, 1.2, '#c9404c');
+          R(10.5, 4, 3.5, 2.5, '#ffd050');
+        },
+        { outline: false },
+      ),
+    ),
+});
+
+/** Takeout boxes and cans: city dinners. */
+reg('takeout', {
+  draw: (ctx, o) =>
+    blit(
+      ctx,
+      o,
+      iart(
+        'takeout',
+        18,
+        9,
+        () => {
+          // pizza box with a grease spot, a noodle carton with chopsticks, two energy drinks
+          R(0, 3, 10, 5, '#d8b888');
+          R(0, 3, 10, 1.2, '#e8cc9c');
+          ell(6, 5.5, 1.6, 1, '#c09868');
+          tinyT('PIZZA', 1, 5, '#c9404c');
+          poly([[11, 3], [15, 3], [14.5, 8], [11.5, 8]], '#fbf6ea');
+          R(12, 5, 2, 1.2, '#c9404c');
+          L1(13, 3, 14.5, -0.5, '#c8a060');
+          L1(13.6, 3, 15.4, 0, '#c8a060');
+          for (const cx of [15.5, 17]) {
+            R(cx, 4, 1.4, 4, '#5fd0a8');
+            R(cx, 4, 1.4, 0.6, '#c8cce4');
+          }
+        },
+        { shadow: [['r', 0, 7, 18, 2]] },
+      ),
+    ),
+});
+
+/** A heap of laundry with the MaxxMedia lanyard on top. */
+reg('clothes-pile', {
+  draw: (ctx, o) =>
+    blit(
+      ctx,
+      o,
+      iart(
+        'clothes-pile',
+        16,
+        9,
+        () => {
+          ell(8, 6, 8, 3, '#5a6a90');
+          ell(5, 5, 4, 2.5, '#d8434b');
+          ell(11, 4.5, 4, 2.4, '#e8e0d4');
+          ell(8, 3.5, 3.5, 2, '#3a3450');
+          R(2, 5, 12, 4, (_a, _b, o2) => (o2 && hash2(FX, FY, 521) < 0.08 ? shA(o2, 0.15) : o2));
+          curve(4, 2.5, 12, 3, 2, '#3f6ab0');
+          R(10.5, 4, 2.5, 3, '#fbf6ea');
+          R(10.5, 4, 2.5, 1, '#3f6ab0');
+        },
+        { shadow: [['e', 8, 8, 8, 1.5]] },
       ),
     ),
 });
