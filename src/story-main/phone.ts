@@ -1,45 +1,93 @@
 import { audio } from '../audio';
 import { G, ext } from '../core/state';
-import { absDay } from '../core/time';
+import { absDay, isShowDay, weekday } from '../core/time';
 import { choose, narrate, say } from '../ui/dialog';
+import { fillMemory, lastMatch, type MatchMemory } from '../world/memory';
 import { speakerFor } from '../world/talk';
 
-/** Payphone calls with Grandma. One call a day; what she says grows with the story. */
+/**
+ * Payphone calls with Grandma. One call a day. She talks about your real week:
+ * the match you just had (as she heard it), how long it's been since you
+ * called, the weather, show day. A handful of fixed calls carry the story.
+ */
 interface PhoneState {
   lastCall: number;
   calls: number;
+  /** Day of the last match she has already talked about. */
+  heardMatch?: number;
+  /** Fixed calls already made. */
+  fixed?: number;
 }
 function phoneState(): PhoneState {
   return ext<PhoneState>('phone', () => ({ lastCall: -1, calls: 0 }));
 }
 
-const CALLS: ((name: string) => string[])[] = [
-  (n) => [`${n}! Is that you? You sound like you're in a tin can. Oh, it's the payphone by the gas station. That payphone has been there since Nixon.`, "Tell me everything. No, tell me the *important* thing: did the crowd stand up?"],
-  () => ['Lou called me. Lou never calls. He said you sold an elbow like it owed you money. I laughed so hard the nurse came in.', "Is she eating? Birdie forgets to eat when there's a show. She'll live on cinnamon sticks and spite."],
-  () => ["I had a dream we were in the Sportatorium and it was 1979 and the roof leaked right onto the ring and we wrestled anyway, sliding all over, and the people *loved* it.", "...That wasn't a dream, actually. That was a Tuesday."],
-  () => ["Sweetheart, what day is it? No, don't tell me. I like guessing. It's... Thursday.", "It's not Thursday, is it. That's alright. It'll be Thursday eventually."],
-  () => ['Do you know what a hope spot is? Of course you do. Little burst of offense right before the bad guy cuts you off again. The crowd *knows* it won\'t last. They cheer anyway.', 'That\'s the whole business, sweetheart. People cheering for something they know won\'t last. That\'s the whole thing.'],
-  () => ["You held that headlock too long Saturday. Your shoulders dropped before the comeback. I could see it from...", "...From Agnes's letter. She describes everything. Agnes would have made a wonderful referee. Don't tell her."],
-  () => ["I put my shoes in the refrigerator this morning. Nice and cold. Very refreshing for the feet.", "Don't laugh. ...Alright, laugh. I did. The nurse did. Even the shoes looked amused."],
-  () => ["Is the marquee still on the corner? Does it still spell her name with the little star over the i?", "There's no i in Birdie's... there is, isn't there. Two. Listen to me. I knew that for forty years."],
+type Stage = 'away' | 'town' | 'truth' | 'after';
+function stage(): Stage {
+  return G.flags['reunion_done'] ? 'after' : G.flags['truth_revealed'] ? 'truth' : G.flags['grandma_in_town'] ? 'town' : 'away';
+}
+
+/** The first call, then story calls that come round in order between the others. */
+const FIRST = (n: string) => [`${n}! Is that you? You sound like you're in a tin can. Oh, it's the payphone by the gas station. That payphone has been there since Nixon.`, 'Tell me everything. No, tell me the *important* thing first: did the crowd stand up?'];
+const FIXED_AWAY: string[][] = [
+  ["I had a dream we were in the Sportatorium and it was 1979 and the roof leaked right onto the ring and we wrestled anyway, sliding all over, and the people *loved* it.", "...That wasn't a dream, actually. That was a Tuesday."],
+  ["Is she eating? Birdie forgets to eat when there's a show. She'll live on cinnamon sticks and spite.", "Don't answer that. I'm not supposed to ask. Ask me about my pudding instead."],
+  ["I put my shoes in the refrigerator this morning. Nice and cold. Very refreshing for the feet.", "Don't laugh. ...Alright, laugh. I did. The nurse did. Even the shoes looked amused."],
+  ["Is the marquee still on the corner? Does it still spell her name with the little star over the i?", "There's no i in Birdie's... there is, isn't there. Two. Listen to me. I knew that for forty years."],
+  ["Sweetheart, what day is it? No, wait. I like guessing. It's... Thursday.", `Is it? ...Then I'm a genius, and I'd like that written down somewhere official.`],
+];
+const FIXED_TOWN: string[][] = [
+  ["Chère, you're calling me from the phone booth? I'm three blocks away. I can practically hear you not visiting.", 'Come Sunday. Bring a tape. Bring yourself.'],
+  ["I called you Bird yesterday. Sami told me. I'm sorry, chère.", "...No, I'm not. If I'm going to mix you up with anybody, it might as well be her."],
+];
+const FIXED_TRUTH: string[][] = [
+  ["She walked past the Bell this morning. Lavinia saw. She stopped on the steps, then she kept walking.", "That's alright. I did the same thing at her corner all summer. Slow learners, the both of us. Very thorough, though."],
+  ["Did she eat today? You'd tell me if she didn't eat. Somebody has to make her eat.", "Forty years and I'm still worrying about Birdie Malone's lunch."],
+];
+const FIXED_AFTER: string[][] = [
+  ["(Birdie answers Room 7's phone.) Dupree residence, sort of. She's asleep in the chair, sugar. Don't you worry. I've got her.", "She's got a blanket over her knees she says is too scratchy. She hasn't taken it off in two hours."],
+  ["(Birdie answers.) She cheated me out of nine dollars at gin and called me Bird all afternoon. Best afternoon I've had since 1983.", 'Come by Sunday. She wants to teach you the Curtsy again. Let her.'],
 ];
 
-/** Once Grandma lives three blocks away, the call goes to the Evening Bell front desk. */
-const TOWN_CALLS: string[][] = [
-  ["Chère, you're calling me from the phone booth? I'm three blocks away. I can practically hear you not visiting.", 'Come Sunday. Bring a tape. Bring yourself.'],
-  ["What day is it? No, let me guess. ...I'm not going to guess. I'm going to ask Sami, and pretend I knew.", "Sami says it's a weekday. Sami is very diplomatic."],
-  ['The marquee says your name tonight. Third from the top. I read it twice to make sure, and once more because I liked it.'],
-  ["I called you Bird yesterday. Sami told me. I'm sorry, chère.", "...No, I'm not. If I'm going to mix you up with anybody, it might as well be the best one."],
-];
-const TRUTH_CALLS: string[][] = [
-  ["Did she eat today? You'd tell me if she didn't eat. Somebody has to make her eat.", "Forty years and I'm still worrying about Birdie Malone's lunch. Some jobs you never retire from."],
-  ["She walked past the Bell this morning. Lavinia saw. She stopped on the steps, then she kept walking.", "That's alright. I did the same thing at her corner all summer. We're slow learners, chère. Very thorough, though."],
-];
-const AFTER_CALLS: string[][] = [
-  ["(Birdie answers Room 7's phone.) Dupree residence, sort of. She's asleep in the chair, sugar. Don't you worry. I've got her.", 'I always did have her. Took me a while to get here, is all.'],
-  ["(Birdie answers.) She cheated me out of eleven dollars at gin and called me Bird nine times. Best afternoon I've had since 1983.", 'Come by Sunday. She wants to teach you the Curtsy again. Let her.'],
-  ['Chère! Was it Saturday? It was. I stood up. I didn\'t know why, and then the music told me. Your music.', 'The body remembers. Ring the bell for me.'],
-];
+/** How she heard about it, depending on where she is. */
+function source(m: MatchMemory, st: Stage, calls: number): string {
+  if (st === 'after') return m.venue === 'vfw' ? 'Bird drove me to the VFW. I had a bingo card and I didn\'t look at it once.' : 'I was there! Second row. Bird held my elbow the whole time, which I allowed.';
+  if (st === 'town' || st === 'truth') {
+    return m.venue === 'sportatorium' ? "I heard it from my window, chère. The Sportatorium is louder than you'd think from three blocks. Sami told me which roar was yours." : 'Sami went to bingo at the VFW so he could tell me. He came back with a casserole dish that isn\'t his.';
+  }
+  const away = [
+    "Agnes wrote me. Four pages, both sides, and she drew the ring.",
+    'Lou called. Lou never calls. He let it ring nine times so I\'d know it was him.',
+    'Agnes sent me the Tattler, folded down to your part, with a paper clip on it like a medal.',
+  ];
+  return away[calls % away.length];
+}
+
+/** What she says about your last match. Specific to what happened. */
+function matchCall(m: MatchMemory, st: Stage, calls: number): string[] {
+  const good = m.stars >= 3;
+  const big = m.highlights.find((h) => h.includes('2.9'));
+  const out = [source(m, st, calls)];
+  if (m.won && m.title) out.push(`You won the belt. Off {opponent}. I made the nurse read it twice, then I made her read it to the man in 4B, who is deaf, so she had to read it loud.`);
+  else if (m.won && good) out.push("You beat {opponent} with the {finisher}. I made them say it twice. Then I told the nurse, who hadn't asked.");
+  else if (m.won) out.push("You won. They said it with a little pause after. I know that pause, chère. I've been that pause.", 'The middle went quiet, I hear. Middles do that. I once lost a whole crowd in Shreveport to a man selling boiled peanuts.');
+  else if (good) out.push("You lost to {opponent}, and the whole front row stood up for you anyway. Oh, I lost like that for years. Those are the ones they keep.");
+  else out.push("It sounds like a hard one. I'm not going to ask about the match.", 'I\'m going to ask if you ate after. ...You did not. I can hear that you did not.');
+  if (big) out.push('And a kickout at two and nine-tenths. I yelled. The nurse came running. I told her it was a spider.');
+  if (st === 'after') out.push(m.won ? 'I booed the other one. Out of habit. Bird says I can\'t do that anymore. I said watch me.' : 'Bird says you sold it right. I say you sold it beautiful. We\'re both correct.');
+  return out;
+}
+
+/** Calls about the rest of your week, when there's no match to talk about. */
+function weekCall(st: Stage, sinceCall: number, calls: number): string[] | null {
+  const m = lastMatch();
+  if (sinceCall >= 10) return ['There you are. I had the nurse check the phone was plugged in. Twice.', "I'm not cross. I'm writing it in my book, that's all. 'Tuesday: still not cross.'"];
+  if (isShowDay() && G.time.minutes < 19 * 60) return [weekday() === 2 ? 'Wednesday. The VFW. Fifty chairs and a nine-foot ceiling. Don\'t climb anything.' : 'Saturday. I can feel it in my knees. They always knew Saturday before I did.', 'Go stand in the hallway before the bell and just listen. Tell me what it sounds like, after.'];
+  if (G.weather.today === 'rain' || G.weather.today === 'storm') return ["Is it raining there too? It's raining here. I'm watching it run down the window like it's late for something.", st === 'away' ? 'The Sportatorium roof leaks over section C. Or it did. Tell Hank I said section C. He\'ll know.' : 'Section C is leaking, I bet. Tell Hank. Tell him I said so.'];
+  if (G.flags['debuted'] && (!m || absDay() - m.day > 10)) return ["You haven't wrestled in a while. Agnes noticed. Agnes notices everything, and then she writes it to me.", 'Are you hurt? Are you sulking? Both are allowed. Pick one and tell me.'];
+  if (calls % 4 === 3) return ['Tell me about the people. Not the matches. The *people*. Who sat in the front row? What were they eating?'];
+  return null;
+}
 
 export async function callGrandma(): Promise<void> {
   const ps = phoneState();
@@ -58,26 +106,38 @@ export async function callGrandma(): Promise<void> {
   if (c !== 'call') return;
   G.player.money -= 1;
   audio.sfx('coin');
+  const sinceCall = ps.lastCall < 0 ? 0 : absDay() - ps.lastCall;
   ps.lastCall = absDay();
   const g = speakerFor('grandma');
-  const name = G.player.name;
-  const lines = CALLS[Math.min(ps.calls, CALLS.length - 1)](name);
-  const stagePool = G.flags['reunion_done'] ? AFTER_CALLS : G.flags['truth_revealed'] ? TRUTH_CALLS : G.flags['grandma_in_town'] ? TOWN_CALLS : null;
-  if (stagePool) {
-    if (G.flags['grandma_in_town'] && !G.flags['reunion_done']) await say(speakerFor('sami'), 'Evening Bell, Sami speaking. ...Oh! Hold on. Your Grace? It\'s for you. It\'s your favorite.');
-    await say(G.flags['reunion_done'] && ps.calls % 3 !== 2 ? speakerFor('birdie') : g, ...stagePool[ps.calls % stagePool.length]);
-  } else if (ps.calls >= CALLS.length) {
-    const extra = [
-      ["Is it Saturday? I always know when it's Saturday. My knees know.", 'Go make somebody look like a million bucks.'],
-      ['Tell me about the people. Not the matches. The *people*. Who sat in the front row?'],
-      ["I'm fine, I'm fine. They have pudding here. I'm in a war with the pudding."],
-    ];
-    await say(g, ...extra[ps.calls % extra.length]);
-  } else await say(g, ...lines);
+  const st = stage();
+  if (st === 'town' || st === 'truth') await say(speakerFor('sami'), "Evening Bell, Sami speaking. ...Oh! Hold on. Your Grace? It's for you. It's your favorite.");
+
+  const m = lastMatch();
+  const fresh = m && m.day > (ps.heardMatch ?? -1) && absDay() - m.day <= 4 ? m : null;
+  const fixedPool = st === 'after' ? FIXED_AFTER : st === 'truth' ? FIXED_TRUTH : st === 'town' ? FIXED_TOWN : FIXED_AWAY;
+  let lines: string[];
+  let who = g;
+  if (ps.calls === 0) lines = FIRST(G.player.name);
+  else if (fresh) {
+    ps.heardMatch = fresh.day;
+    lines = matchCall(fresh, st, ps.calls).map((t) => fillMemory(t, 'grandma'));
+  } else {
+    // Every other call without news is one of the story calls, in order.
+    const week = ps.calls % 2 === 0 ? weekCall(st, sinceCall, ps.calls) : null;
+    const k = ps.fixed ?? 0;
+    if (week) lines = week;
+    else {
+      lines = fixedPool[k % fixedPool.length];
+      ps.fixed = k + 1;
+      if (st === 'after' && lines[0].startsWith('(Birdie')) who = speakerFor('birdie');
+    }
+  }
+  await say(who, ...lines);
   ps.calls++;
+  if (who !== g) return;
   const end = await choose(g, null, [
     { label: '"I love you, Grandma."', value: 'love' },
     { label: '"I\'ll call again soon."', value: 'soon' },
   ]);
-  await say(g, end === 'love' ? 'I love you more. That is a scientific fact. Bye, sweetheart.' : "You'd better. Bye, sweetheart. Ring the bell for me.");
+  await say(g, end === 'love' ? 'I love you more. I checked. Bye, sweetheart.' : "You'd better. Bye, sweetheart. Ring the bell for me.");
 }

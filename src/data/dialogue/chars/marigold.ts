@@ -33,7 +33,7 @@ export default {
     { text: "Late-night stitching. The shop's warm, the street's quiet, and I'm three hundred sequins into something wonderful.", when: { time: [1200, 1439] } },
     { text: "Mondays I see Velma at the Bell. She inspects my cuffs with a magnifying glass. I bring her cardamom cookies so she goes easy.", when: { weekday: [0] } },
     { text: "Flea market! I found a velvet curtain from a 1960s movie theater. I'm going to make something out of it. Possibly a life.", when: { weekday: [5, 6], time: [540, 780] } },
-    { text: "Rain! Good. Nobody comes in, so I get to work on the quilt. Don't tell anybody I'm happy about rain. I'm supposed to want customers.", when: { weather: ['rain'] } },
+    { text: "Rain! Good. Nobody comes in, so I get to work on the quilt. I'm supposed to want customers. I want the quilt.", when: { weather: ['rain'] } },
     { text: "Snow day. I'm hand-beading. The radiator clanks like a metronome. I love it here so much it makes my teeth hurt.", when: { weather: ['snow'] } },
     { text: "Wind's blowing sequins down Main Street again. If you see something sparkle in a gutter, it's mine. Bring it back. I'll pay you in hems.", when: { weather: ['wind'] } },
 
@@ -47,16 +47,17 @@ export default {
     { text: "Gideon came in for sequins again. We argued about rose gold for an hour. He won. He always wins. I let him think I let him.", when: { hearts: [3, 10] } },
     { text: "La Mariposa came in for a fitting. Silent, as always. She communicated an entire opinion about my hem with one eyebrow.", when: { hearts: [3, 10], place: ['public'] } },
     { text: "My parents emailed me another job listing. 'Senior Designer, Activewear.' In the city. I'm going to answer it by sewing a sleeve.", when: { hearts: [3, 8] } },
-    { text: "Spring means everybody wants a new look for Thaw Brawl. I've been awake since Tuesday. What day is it? Don't tell me. I'll panic.", when: { season: [0] }, weight: 2 },
-    { text: "Summer gear is all about breathing. Fabric has to breathe. *I* have to breathe. It's a whole season of breathing.", when: { season: [1] } },
-    { text: "Fall! Corduroy! Wool! Leaves the exact color of my cardigan! This is my season. Everybody else is just borrowing it.", when: { season: [2] } },
+    { text: "Spring means everybody wants a new look for Thaw Brawl. I've been awake since Tuesday. What day is it? No. Keep it. I'll panic.", when: { season: [0] }, weight: 2 },
+    { text: "Summer gear has to breathe. Dex sweats through new spandex in nine minutes. I've timed him. I've timed everybody. I have a chart.", when: { season: [1] } },
+    { text: "Somebody sold a corduroy jacket at the flea market with a bus ticket from 1981 in the pocket. I'm turning the jacket into elbow pads. I'm keeping the ticket.", when: { season: [2] } },
     { text: "Winter is robe season. Homecoming robes. I have a sketchbook of Hall of Fame robes for every legend in town. Just in case.", when: { season: [3] } },
     { text: "Openers don't get robes. Doesn't matter. You get a jacket. A jacket is just a robe that's still learning.", when: { rank: ['rookie', 'opener'] } },
     { text: "Main event? Then you need a robe. Not a jacket. A ROBE. With a collar people can see from the parking lot.", when: { rank: ['main'] } },
 
     // ---- Friends, insider
     { text: "In here I can say it: I know every wrestler's measurements. Earl's inseam is a state secret. I'll take it with me forever.", when: { hearts: [3, 10], place: ['insider'] } },
-    { text: "Gear is the first thing the crowd believes. Before you move, before you talk. It's a promise in thread.", when: { hearts: [3, 10], place: ['insider'] } },
+    { text: "Gear is the first thing the crowd believes. Gideon's collar gets a pop before he's through the curtain. The collar has never wrestled a day in its life.", when: { hearts: [3, 10], place: ['insider'] } },
+    { text: ["You and {opponent}. Your left knee pad slid on the second bump. I saw it from the curtain and made a noise.", "Bring it in. I'll put a second strap on it. Don't argue. I made a noise."], when: { place: ['insider'], lastMatch: { maxDaysAgo: 3 } } },
     { text: "The Quick Change is tear-away seams, magnets, and me behind the curtain counting to three. Every reveal you've ever loved is a hem.", when: { hearts: [3, 10], place: ['insider'] } },
     { text: "I cry at entrances. When the robe catches the light on the ramp, I cry. Gideon caught me once. He cried too. We don't talk about it.", when: { hearts: [3, 10], place: ['insider'] } },
     { text: "Hank does the metal, I do the leather. Every title belt in town is half hers, half mine. We've never once agreed on a buckle.", when: { hearts: [3, 10], place: ['insider'] } },
@@ -69,14 +70,14 @@ export default {
     { text: "I made you something. It's a pocket square. In your colors. It's nothing. It took nine hours. It's nothing.", when: { hearts: [6, 8] } },
     { text: "You stood up straighter today. I noticed. I notice shoulders. I'm noticing yours. Professionally. Mostly.", when: { hearts: [6, 8], place: ['public'] } },
     { text: "Quiet day at the shop. I don't mind. I'd rather have one good fitting than ten fast ones. My accountant minds. I don't have an accountant.", when: { hearts: [6, 10], place: ['public'] } },
-    { text: "The shop barely breaks even. I know. Everybody knows. I'd rather break even doing this than get rich doing anything else.", when: { hearts: [6, 10], place: ['insider'] } },
+    { text: "The shop barely breaks even. My parents email me spreadsheets. I email them photos of capes. I think we're saying the same thing.", when: { hearts: [6, 10], place: ['insider'] } },
     { text: "One square left on the quilt. Still saving it. You'll see. Don't look at it. You're looking at it.", when: { hearts: [6, 10], place: ['insider'] } },
-    { text: "Velma says I sew like I'm apologizing. She's wrong. I sew like I'm *asking*. There's a difference. Seams know.", when: { hearts: [6, 14] } },
+    { text: "Velma says I sew like I'm apologizing. I say I sew like I'm *asking*. She says that's what apologizing is. Three years we've been on this.", when: { hearts: [6, 14] } },
     { text: ["Velma's old pattern book has the Velvet Hammers' measurements. And a note in somebody else's handwriting, fall of '83.", "'Let Birdie's out an inch. She'll be eating better in the big city.' Why does that make me so sad?"], when: { hearts: [6, 14], place: ['insider'], flag: 'grandma_in_town' }, mood: 'sad' },
     { text: "Your grandmother's measurements are in Velma's book. I'd love to make her something. Plum. Velvet. Something with a train.", when: { hearts: [6, 14], flag: 'grandma_in_town' } },
 
     // ---- Family
-    { text: "I've started signing your gear. Tiny initials inside the hem. I only sign the pieces I'm proudest of. That's all of yours.", when: { hearts: [9, 14] } },
+    { text: "I've started signing your gear. Tiny initials inside the hem. Only on the pieces I'm proudest of. Don't check. ...You're checking.", when: { hearts: [9, 14] } },
     { text: "You're my favorite person to dress. Don't tell Gideon. He'd sulk for a week. Then redo his whole look. Actually, tell Gideon.", when: { hearts: [9, 14], place: ['insider'] } },
 
     // ---- Dating and married
@@ -117,10 +118,34 @@ export default {
       "I'm going to put this in the back. In a box. With the cheap satin. Where it can't hurt anybody.",
     ],
     birthday: [
-      "My birthday! You remembered! I'm going to wear this today. Even if it isn't wearable. ESPECIALLY if it isn't wearable.",
-      "A present! For me! People usually bring me things to fix. Nobody brings me things just because. Oh, I'm going to cry on a hem.",
+      "A {item}! On my birthday! I'm going to wear it today. Even if it isn't wearable. ESPECIALLY if it isn't wearable.",
+      "People bring me things to fix. Nobody brings me a {item} just because. Oh, I'm going to cry on a hem. It's fine. It's a practice hem.",
+    ],
+    byItem: {
+      rhinestone: ["From down there? (They hold it to the window.) Look at the cut. Somebody cut this by hand.", "This is going on a collar. Yours. Don't argue. I've already decided where."],
+      canvas: "Old ring canvas! The weave on this... it's from the Sportatorium's '80s ring, the one with the soft corner. It's going in the quilt. Corner square.",
+      yarn: "Pink yarn. I'm going to make a mask lining. Or a scarf for Velma. She'll say the stitches are crooked. They will be, a little. On purpose. For her.",
+      sequins: "A handful of sequins. They'll be in my hair till spring. My mom will find one at Diwali and ask questions.",
+      leather: "Leather strap. Good hide, no cracks. I'll make you a wrist cuff. You'll pretend it's for support. It's for looks.",
+      'blank-tee': "A blank tee! A blank tee is a promise. I'm going to make it say something terrible and wonderful.",
+      teacup: "A teacup. I'll keep pins in it. Every tailor's pin cup is a teacup. That's a rule. I made it, but it's a rule.",
+      wildflowers: "Wildflowers! The blue ones are exactly the blue of the Mothman's porch light. I'm going to match a thread to them.",
+      'gold-leaf': "Gold leaf. For a belt. Hank's going to want it. Hank can't have it. Hank can have half.",
+    },
+    later: [
+      "I used the {lastGift}. Well. I used part of it. The other part is in the quilt now. You're in the quilt. Sort of.",
+      "Velma asked where the {lastGift} came from and I turned red. I don't turn red. I'm not telling you what I told her.",
     ],
   },
+  again: [
+    "(Marigold mumbles through a mouthful of pins. It's probably 'hello again.' It could be 'hold still.')",
+    "Back so soon? Your collar must be in crisis again. ...It is. Come here.",
+    "We talked! I'm mid-hem. If I stop now this sleeve will never forgive me.",
+  ],
+  idle: [
+    "(Marigold is pinning a hem on a dress form, humming, and has not noticed you yet.)",
+    "Hold still. No, not you. The fabric. The fabric's being difficult.",
+  ],
   birthday: { season: 2, day: 16 },
   events: [
     {
@@ -153,7 +178,7 @@ export default {
         await api.narrate('The back booth. Marigold unrolls a quilt across the whole table, over the edge, and into June\'s lap. June allows it.');
         await api.say('marigold', 'The ACW quilt. Every square is a scrap of gear I made. Every robe, every pair of tights, every mask. I keep a piece of everything.');
         await api.say('marigold', "That's the Mountain's first snowcap. That's the Dust Devil's duster. And this, look, look, this tiny sequin? Gideon's very first robe.");
-        await api.say('marigold', "He cried when I asked for it. Then he gave me two. I only used one. The other's in my wallet. Don't tell him.");
+        await api.say('marigold', "He cried when I asked for it. Then he gave me two. I only used one. The other's in my wallet. He doesn't know.");
         await api.narrate('In the middle of the quilt, one square is empty. Bare backing, stitched neatly around the edges, waiting.');
         const c = await api.choose(null, [
           { label: "What's the empty square for?", value: 'ask' },

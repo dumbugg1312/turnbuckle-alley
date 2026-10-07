@@ -27,8 +27,8 @@ export default {
     // ---------------------------------------------------------------- Public: the Commissioner
     { text: "Welcome to Turnbuckle Alley, sugar. Water tower's a turnbuckle, the pie's a religion, and the villains get fined.", when: { hearts: [0, 2], place: ['public'] } },
     { text: "Anybody gives you trouble on Main Street, you holler for the Commissioner. I've still got a left hook and no patience.", when: { place: ['public'], alignment: ['face'] } },
-    { text: ["I saw what you pulled Saturday. One more stunt like that and you'll be fined into next Thursday.", "(She does not wink. She would never wink on Main Street.)"], when: { place: ['public'], alignment: ['heel'] }, mood: 'angry' },
-    { text: "Agnes has had seat A1 since 1971. She's hit eleven villains with that purse. I've never fined her once. Never will.", when: { place: ['public'] } },
+    { text: ["I saw what you pulled on {opponent}. One more stunt like that and you'll be fined into next Thursday.", "(She does not wink. She would never wink on Main Street.)"], when: { place: ['public'], alignment: ['heel'], lastMatch: { maxDaysAgo: 4 } }, mood: 'angry' },
+    { text: "Agnes has had seat A1 since 1971. She's hit more villains with that purse than I've fined. I've never fined her once. Never will.", when: { place: ['public'] } },
     { text: "Banned the Mountain from the building for a week once. He worked the library harder. Overdue fines went through the roof.", when: { place: ['public'] } },
     { text: "Suspended the Dust Devil twice last year. He blew right back in both times. Some weather you just can't fine.", when: { place: ['public'] } },
     { text: "Pip wrote me asking to fine the Mountain for 'being too big.' I fined him one library book. Pip was satisfied.", when: { place: ['public'] } },
@@ -57,17 +57,17 @@ export default {
     { text: "Smell that? Corporate lanyard. Somebody from the city's been sniffing around my parking lot. I can always tell.", when: { place: ['insider'] }, mood: 'angry' },
 
     // ---------------------------------------------------------------- Insider: the roster, gossip and love
-    { text: "June says I sleep on that office couch too much. June says a lot of things. June's usually right. Don't tell June.", when: { place: ['insider'] } },
+    { text: "June says I sleep on that office couch too much. June says a lot of things. June keeps a list of them on the back of a menu.", when: { place: ['insider'] } },
     { text: "Rosa's taqueria is running on fumes and pride. Eat there. Eat there twice. Tell her I sent you and she'll overcharge you.", when: { place: ['insider'], hearts: [3, 10] } },
     { text: "Dex has the city in his eyes. I've seen that look on a hundred kids. Some go, some stay. The good ones come back.", when: { place: ['insider'] } },
     { text: "Earl flinches at his own pyro every Saturday. Crowd thinks it's rage. I've never once told him to stop. It's the best thing in the show.", when: { place: ['insider'] } },
     { text: "Gideon breathes into a paper bag before the VFW. Fifty chairs. Bingo after. And he's still the best heel I've got.", when: { place: ['insider'] } },
     { text: "Hazel's knee is healed. Hazel isn't, yet. You don't rush a thing like that, sugar. You leave the door open and the lights on.", when: { place: ['insider'], hearts: [3, 10] } },
-    { text: "The Dust Devil was my idea. Nobody suspects the man being insulted. Cheapest trick in the book, and the saddest. Keep it.", when: { place: ['insider'], hearts: [3, 10] } },
-    { text: "Those Bruiser boys argue for real half the time. That's the secret ingredient. You can't fake a brother.", when: { place: ['insider'] } },
+    { text: "The Dust Devil was my idea. Nobody suspects the man being insulted. Clint said yes before I finished the sentence. I wish he'd let me finish.", when: { place: ['insider'], hearts: [3, 10] } },
+    { text: "Those Bruiser boys argue for real half the time. The other half they're arguing about which half.", when: { place: ['insider'] } },
     { text: "Tiny charges herself the villain surcharge when I book her heel. Quarters in her own register, in public. Integrity, sugar.", when: { place: ['insider'] } },
     { text: "Lou and I fished from five till eight. He caught two. I caught a cold and a boot. Same as every Monday since '84.", when: { place: ['insider'], weekday: [0] }, weight: 2 },
-    { text: "Mo's my right hand at the shows. Best referee in the territory. Nobody ever remembers she was there. That's the job, and it's a crime.", when: { place: ['insider'] } },
+    { text: "Mo's my right hand at the shows. Best referee in the territory. Ask anybody who reffed last Saturday and they'll say 'was there a ref?' I want to bite somebody.", when: { place: ['insider'] } },
     { text: "Doc still won't count anything fast. Change, pills, nothing. I've never blamed him for a thing, sugar. He's never stopped blaming himself.", when: { place: ['insider'], hearts: [6, 10] } },
 
     // ---------------------------------------------------------------- Show days
@@ -76,11 +76,14 @@ export default {
     { text: "VFW tonight. Fifty chairs, nine-foot ceiling, bingo after. Do not climb anything. I mean it. Dex.", when: { showDay: true, weekday: [2], place: ['insider'] } },
     { text: "Saturday. Lights, pyro, confetti, and two thousand people who paid good money for a miracle. Go give 'em one.", when: { showDay: true, weekday: [5] } },
     { text: "Hear that? Doors open. That's the best sound in the world, sugar, and I've heard a baby laugh at a duck.", when: { showDay: true, place: ['show'] } },
-    { text: "(Birdie's on her stool by the curtain, pencil behind her ear, cinnamon stick in her teeth. One small nod. That's all you need.)", when: { showDay: true, place: ['show'] } },
+    { text: "(Birdie's on her stool by the curtain, pencil behind her ear, cinnamon stick in her teeth. She gives you one small nod and goes back to the clipboard.)", when: { showDay: true, place: ['show'] } },
     { text: "Two thousand people out there, honey, and every one of 'em is rooting for somebody. Make sure a few of 'em are rooting for you.", when: { showDay: true, place: ['show'], rank: ['rookie', 'opener', 'undercard', 'midcard'] } },
 
     // ---------------------------------------------------------------- The ladder
     { text: "You debuted, sugar. Nobody can take that off you now. Your name's in Gus's shoebox forever, spelled right and everything.", when: { flag: 'debuted', rank: ['rookie', 'opener'] }, weight: 2 },
+    { text: ["{finisher} on {opponent}. I saw it from the stool.", "Don't let it go to your head. Let it go to your knees, and ice 'em."], when: { place: ['insider'], lastMatch: { won: true, maxDaysAgo: 3 } }, mood: 'happy' },
+    { text: ["{opponent} beat you and the room went with you anyway. I watched three people in row F stand up for a loser.", "That's money in the bank, sugar. Very small money. Very real bank."], when: { place: ['insider'], lastMatch: { won: false, minStars: 3, maxDaysAgo: 3 } } },
+    { text: ["You and {opponent}. We'll talk about the middle part.", "Not today. Today you eat a sandwich. Monday we talk about the middle part."], when: { place: ['insider'], lastMatch: { maxStars: 2.5, maxDaysAgo: 3 } }, mood: 'sad' },
     { text: "Moving up the card, are we? Don't let it go to your head, sugar. Let it go to your boots.", when: { place: ['insider'], rank: ['undercard', 'midcard'] } },
     { text: "Main event. That means when it goes wrong, they look at you. And when it goes right? They look at you. Get used to being looked at.", when: { rank: ['main'], place: ['insider'] } },
     { text: "Someday this pencil's going to need a new ear to live behind. Not today. But I've been looking at your ears.", when: { rank: ['main'], place: ['insider'], hearts: [6, 10] } },
@@ -95,7 +98,7 @@ export default {
     { text: "Harvest Havoc. Every year I swear nobody goes through a hay wagon, and every year, a hay wagon.", when: { season: [2] } },
     { text: "Homecoming. Hall of Fame night. Folks ask why we've never inducted the Velvet Hammers. Next question, sugar.", when: { season: [3], notFlag: 'truth_revealed' }, mood: 'sad' },
     { text: "Rain's good for business. Nowhere else to be, and nothing on TV but city clips. Folks come to the show to feel something.", when: { weather: ['rain'] } },
-    { text: "Storm on a show day. They'll come anyway, sugar. They always come anyway. That's the thing nobody in the city understands.", when: { weather: ['storm'], showDay: true } },
+    { text: ["Storm on a show day. They'll come anyway, sugar. They always come anyway.", "Hank's putting buckets under section C. Agnes brings her own."], when: { weather: ['storm'], showDay: true } },
     { text: "Wind like this, a flyer folded right lands face-up on a windshield three blocks over. Folded wrong, it's a kite.", when: { weather: ['wind'] } },
     { text: "Snow on the marquee. Spell it out anyway, I tell Hank. Folks read through snow. Folks read through anything if they want to.", when: { weather: ['snow'] } },
     { text: "Coffee's on. It's terrible. June brings me the good stuff at noon and pretends she just happened to be walking by.", when: { time: [360, 660], place: ['insider'] } },
@@ -109,7 +112,7 @@ export default {
     { text: ["Somebody always offers more, sugar. Remember that.", "You'll think you've got a partner for life, and somebody out there will always offer more."], when: { place: ['insider'], hearts: [6, 8], notFlag: 'truth_revealed' }, mood: 'sad' },
     { text: "You fold a flyer like somebody I used to know. Corners first. Nobody folds corners first anymore. ...Never mind me.", when: { place: ['insider'], hearts: [6, 10], notFlag: 'grandma_in_town' } },
     { text: "Got two rocking chairs on my porch. I only ever sit in the one. The other's for company. Company's running late.", when: { hearts: [6, 10], notFlag: 'reunion_done' }, mood: 'sad' },
-    { text: "Every chair's a seat. Every seat's a person. Every person's a reason. Count 'em, sugar. I do. Every night I can't sleep.", when: { place: ['insider'], hearts: [6, 10] } },
+    { text: "I count the chairs on nights I can't sleep. Four hundred and twelve. One of 'em wobbles. Row J. I've never let Hank fix it.", when: { place: ['insider'], hearts: [6, 10] } },
     { text: "Lou gave you the key? Well. He hasn't trusted anybody with that since Odessa. Don't get lost down there. I mean that literally.", when: { flag: 'lou_key', place: ['insider'] } },
 
     // ---------------------------------------------------------------- Grandma in town (before the truth)
@@ -122,7 +125,7 @@ export default {
     { text: "Forty years. She gave up forty years so I could have a contract. A contract! I'd have torn it up. She knew I'd tear it up.", when: { flag: 'truth_revealed', notFlag: 'reunion_done', place: ['insider'] }, mood: 'angry', weight: 3 },
     { text: "I'm still mad, sugar. Going to be mad a while. Turns out you can be mad and on your way over at the same time.", when: { flag: 'truth_revealed', notFlag: 'reunion_done' }, weight: 3 },
     { text: "I keep almost walking over there. I get to the corner. Then my feet forget the rest of the way.", when: { flag: 'truth_revealed', notFlag: 'reunion_done' }, mood: 'sad', weight: 3 },
-    { text: "Folks are saying the Duchess regretted it. For once in their lives, folks are right. Don't tell 'em I said so.", when: { flag: 'truth_revealed', place: ['public'] }, weight: 2 },
+    { text: "Folks are saying the Duchess regretted it. For once in their lives, folks are right. I'll deny it at the barbershop.", when: { flag: 'truth_revealed', place: ['public'] }, weight: 2 },
     { text: "Homecoming. Hall of Fame night. ...This year I'm not answering 'next question.' This year I'm answering the door.", when: { season: [3], flag: 'truth_revealed' }, mood: 'happy', weight: 2 },
 
     // ---------------------------------------------------------------- After the reunion
@@ -133,7 +136,7 @@ export default {
     { text: "She stands up every time your music hits. Every time. Whole front row stands with her. I'm going to need tissues in bulk.", when: { flag: 'reunion_done', showDay: true }, weight: 2 },
 
     // ---------------------------------------------------------------- Family
-    { text: "Whatever happens, sugar, you've got a home in this building. That's not business. That's just true.", when: { hearts: [9, 10] } },
+    { text: "Whatever happens, sugar, there's a hook in the locker room with no name on it. Hank asked who it was for. I said 'mind your business, Henrietta.'", when: { hearts: [9, 10] } },
     { text: "I've trained a hundred kids. You're the first one I'd let sweep my ring. That's a compliment. Take it and say thank you.", when: { hearts: [9, 10], place: ['insider'] } },
     { text: "If anybody from the city ever comes for you, you tell 'em the Commissioner said no. Then you tell me. Then I'll say it louder.", when: { hearts: [9, 10] } },
     { text: ["You're a villain now, sugar. Be the one they love to hate, never the one they hate to love.", "...Other way round. You know what I mean."], when: { alignment: ['heel'], place: ['insider'] } },
@@ -165,11 +168,36 @@ export default {
       "Bless your heart. That's Southern for 'no.'",
     ],
     birthday: [
-      "My birthday? Who told you? It was June. It's always June. ...Thank you, sugar. Truly.",
-      "Seventy-some years and you know what I still love? Somebody remembering. Thank you, honey.",
-      "Marigold bedazzled my hearing aid last year. Stiff competition. ...You won. Don't tell Marigold.",
+      "My birthday? Who told you? It was June. It's always June. ...A {item}. Thank you, sugar. Truly.",
+      "Marigold bedazzled my hearing aid last year. Stiff competition. ...The {item} wins. Keep that from Marigold.",
+    ],
+    byItem: {
+      coffee: "June's coffee in a paper cup. You carried it all the way here and it's still hot. You walk fast. Good. I like a fast walker.",
+      'old-program': ["Lord. 1979. Look at that pose. I had arms like a mailbox.", "Who's that in the corner of the photo, half cut off? ...Nobody, sugar. Pin it on the board."],
+      polaroid: "A crowd shot. Front row, purse in the air. That's Agnes. That's always Agnes. This is going in the frame by the door.",
+      'sheet-cake': "A whole sheet cake. From Tiny. For me. I'm going to eat a corner and then put it in the office fridge and guard it from Dex.",
+      vinyl: "1984, says the sleeve. I know whose music this is. I'll play it on the office player when you're gone. Not while you're here.",
+      pie: "Agnes's recipe. June's hands. I'm eating this at my desk with my shoes off. Shut the door on your way out.",
+      'tiny-cake': "Look at it. You could lose it in a pocket. I'll eat it with the little fork from the Christmas drawer.",
+      canvas: "Old ring canvas. That stain's from the Copperhead Sisters. 1981. Don't ask me how I know. I know.",
+      'merch-sign': "A sign with glitter. I'm hanging it in the office where the Mayor can see it when she comes about the pyro.",
+      'merch-tee': "Your shirt. I'll wear it to the bank. The bank man thinks I'm a serious person. Time he learned.",
+      'signed-photo': "Signed in silver marker. I'll put it next to the one of Lou. Lou's going to pretend he doesn't mind the company.",
+    },
+    later: [
+      "That {lastGift} is on the corkboard, sugar. Right next to the napkin that sold out the Thaw Brawl.",
+      "June saw the {lastGift} and asked who it was from. I said 'nobody.' She said 'mm-hm.' June says 'mm-hm' like a judge.",
     ],
   },
+  again: [
+    "Still here, sugar? I'm sweeping. You can hold the dustpan or you can hold the door.",
+    "I said what I said.",
+    "(Birdie points at the clock with her pencil and goes back to the napkins.)",
+  ],
+  idle: [
+    "Busy, sugar. Napkins don't book themselves.",
+    "(Birdie hums the wrong words to something and waves you along with the pencil.)",
+  ],
   birthday: { season: 1, day: 19 },
   events: [
     // ---------------------------------------------------------------- 2: The carny fold
@@ -229,9 +257,9 @@ export default {
         await api.say('birdie', "All right, off. Stool's mine. Don't get comfortable.", "...But you can borrow it sometimes.");
       },
     },
-    // ---------------------------------------------------------------- 6: Eleven people
+    // ---------------------------------------------------------------- 6: A light night (1985, the ice storm)
     {
-      id: 'birdie-6', hearts: 6, map: 'sportatorium', when: { showDay: false }, title: 'Eleven People',
+      id: 'birdie-6', hearts: 6, map: 'sportatorium', when: { showDay: false }, title: 'A Light Night',
       script: async (api) => {
         await api.narrate("The Sportatorium is empty. The last house was thin, and everybody knows it. Birdie is alone up in the stands, counting chairs out loud.");
         await api.say('birdie', "...four hundred and eight. Four hundred and nine.");
@@ -250,10 +278,10 @@ export default {
         await api.say('birdie', "Saturday night, 1985. Ice on every road in the county. Furnace out. You know how many people came?");
         await api.sayMood('birdie', 'sad', "Eleven.");
         await api.say('birdie', "Agnes, in A1. A trucker who got lost. Two girls from the high school. A family from Tulsa whose car died on the highway.");
-        await api.say('birdie', "Lou wanted to call it. I said no. We ran the whole card, opener to main event.", "Lou sang his verse to eleven people like it was the moon landing.");
-        await api.say('birdie', "Eleven people paid. Eleven people got a show.");
+        await api.say('birdie', "Lou wanted to call it. I said no. We ran the whole card, opener to main event.", "Lou sang his verse to them like it was the moon landing. The trucker cried. He said it was the heater.");
+        await api.say('birdie', "Every one of 'em paid. Every one of 'em got the whole show. The girls from the high school got Lou's towel.");
         await api.sayMood('birdie', 'happy', "Four of 'em still come. Agnes never missed one. That Tulsa family drives in every Homecoming. With their grandkids, now.");
-        await api.say('birdie', "So you count the chairs, sugar. Not the empty ones. The ones with somebody in 'em. That's the only number that matters.");
+        await api.say('birdie', "So I count the chairs, sugar. The ones with somebody in 'em. Agnes's I count twice. She'd want it noted.");
         await api.narrate("She tucks the pencil back behind her ear. \"Four hundred and ten,\" she says, and keeps going.");
       },
     },
@@ -334,7 +362,7 @@ export default {
         await api.say('birdie', "Up you go, sugar. Mind the third rung. It bites.");
         await api.narrate("The hatch opens onto the Sportatorium roof. Tar paper, a folding chair, the whole town gold in the early light. And tomatoes.");
         await api.narrate("Dozens of plants, staked and tied, growing out of old ring buckets. The kind wrestlers spit into between rounds. Scrubbed clean, every one.");
-        await api.say('birdie', "Forty summers of tomatoes. Don't tell June. She thinks I buy 'em off the Wilsons.");
+        await api.say('birdie', "Forty summers of tomatoes. June thinks I buy 'em off the Wilsons. Let her.");
         await api.say('birdie', "Sit. I'm going to tell you something I've never said out loud. Not to June. Not to Lou. Not to anybody.");
         await api.narrate("She takes the cinnamon stick out of her mouth. That's how you know.");
         await api.say('birdie', "The night she broke the belt, everybody figures I went home and cried. I did. After.");

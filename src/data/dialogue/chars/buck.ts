@@ -17,12 +17,12 @@ export default {
   npc: 'buck',
   intro: [
     "(A wild-bearded man in an untucked blue flannel is playing harmonica on a cereal box. He stops and waves with both hands.)",
-    "Buck! Kowalski! Bruiser! Whatever, I answer to all of 'em. You're the new one! Don't tell Bo I'm playing in here. He says it echoes.",
+    "Buck! Kowalski! Bruiser! Whatever, I answer to all of 'em. You're the new one! Bo says no harmonica in the store. He says it echoes.",
     "...He's right. It echoes beautifully.",
     "If you need a hammer, a song, or a bad idea, I'm your guy. Bo does all the other things.",
   ],
   introPublic: [
-    "(A man with wood shavings in his beard grins over the hardware counter.) Steel Chair Hardware! Buck Bruiser! The fun one! ...Don't tell Bo I called myself that.",
+    "(A man with wood shavings in his beard grins over the hardware counter.) Steel Chair Hardware! Buck Bruiser! The fun one! ...Bo calls himself the right one. We're both right. Loudly.",
     "He's wrong about everything. I haven't heard what he said yet, but I'm sure of it.",
     "Whatever you need, we've got it. Whatever Bo says we don't have, we do. It's in the back. Next to the minnows.",
   ],
@@ -32,7 +32,7 @@ export default {
     { text: "Don't touch the harmonica display. It's not for sale. ...It's for sale. It's *very* for sale. Don't touch it.", when: { place: ['public'], map: ['hardware'] } },
     { text: "Self-tightening turnbuckle. I'm so close. I just need one more spring and a *stronger Bo.*", when: { place: ['public'] } },
     { text: "Hero! Want a chair? Bo says no chairs. I say *yes* chairs. We're a house divided and also a store.", when: { place: ['public'], alignment: ['face'] } },
-    { text: "A villain! Finally, somebody I can high-five without a lecture. ...Don't tell Bo. He's got rules about high-fives.", when: { place: ['public'], alignment: ['heel'], flag: 'debuted' }, mood: 'happy' },
+    { text: "A villain! Finally, somebody I can high-five without a lecture. ...Bo's got rules about high-fives. There's a laminated card.", when: { place: ['public'], alignment: ['heel'], flag: 'debuted' }, mood: 'happy' },
     { text: "We boycott Tiny's bakery. It's an *outrage.* A dollar surcharge just for being us. ...Anyway she makes a mean cupcake. I'm told. By others.", when: { place: ['public'] } },
     { text: "I wrote a song once about a hammer. Three verses and no hope. Gus says it's a classic.", when: { place: ['public'], hearts: [3, 10] } },
     { text: "Pot roast at Aunt Patty's on Thursdays. She asks if we're 'really fighting.' We say yes. We're not lying. We're just not telling the whole... thing.", when: { place: ['public'], hearts: [3, 10], weekday: [3] }, weight: 2 },
@@ -45,10 +45,10 @@ export default {
     { text: "Storm. Power's out. Bo labels everything with a flashlight in his teeth. It's the best thing I've ever seen.", when: { weather: ['storm'] } },
     { text: "Snow. The harmonica sounds better in the cold. Don't ask me why. It just sounds more lonely.", when: { weather: ['snow'] } },
     { text: "Wind! Every tool in the store's a wind chime. Bo hates it. I love it. It's like a very metal choir.", when: { weather: ['wind'] } },
-    { text: "Spring. Thaw Brawl. Lots of 'where's my tape measure?' I have eleven of Bo's. He's counted.", when: { season: [0] }, weight: 2 },
-    { text: "Summer. Fishing. And Porch Hour on Fridays. I do one song. Then Gus makes me do three.", when: { season: [1] } },
+    { text: "Bo thinks he lost his tape measures. They're in my glovebox. Nine of 'em. Measuring nothing. Keeping each other company.", when: { season: [0] }, weight: 2 },
+    { text: "Porch Hour in summer, Gus leaves the station door open and the whole street gets my harmonica. Mrs. Purcell yelled AGAIN once. I took it as a request.", when: { season: [1] } },
     { text: "Fall's the sad season. I write four songs a week. Bo says it's 'a lot of content.' He means it as a compliment. It isn't one.", when: { season: [2] } },
-    { text: "Winter. Heaters, hot sauce, and June's Friday chili. I'd fight a bear for it. Wanda wouldn't even have to bow.", when: { season: [3] } },
+    { text: "June does chili on Fridays once it gets cold. I'd fight a bear for a bowl. Wanda would win. She'd bow first. Then she'd win.", when: { season: [3] } },
 
     // ---------------------------------------------------------------- Insider: Buck, a little quieter
     { text: "Everybody thinks I'm the easy one. Easy's just what loud looks like from outside.", when: { place: ['insider'], hearts: [3, 10] }, weight: 2 },
@@ -64,12 +64,14 @@ export default {
     { text: "You're new. Hit hard, tag fast, and never, ever let Bo see the invoice.", when: { place: ['insider'], rank: ['rookie', 'opener'] } },
     { text: "Top of the card! Bo's gonna want a chart. I'll bring a song.", when: { place: ['insider'], rank: ['main', 'assistant', 'pencil', 'owner'] }, mood: 'happy' },
     { text: "Pregame ritual. Bo labels the tool belt, I take the labels off, Bo puts them back, we both say 'measure twice.' Then we fight over the belt. Same every time.", when: { place: ['insider'], showDay: true }, mood: 'happy' },
-    { text: "Late. Bo's asleep. I can hear him through the wall. It's the best sound I know. Don't tell him I said that.", when: { time: [1320, 1560], place: ['insider'] }, mood: 'sad' },
+    { text: "Late. Bo's asleep. I can hear him through the wall. He snores in three-quarter time. I wrote it down once. It's a waltz.", when: { time: [1320, 1560], place: ['insider'] }, mood: 'sad' },
+    { text: ["You and {opponent}! I hummed the whole match. Under my breath. Bo elbowed me twice.", "There's a song in it. Minor key. Don't worry, you're the part that goes up."], when: { place: ['insider'], lastMatch: { maxDaysAgo: 3 } }, mood: 'happy' },
+    { text: "You beat us! I've already got a verse about it. Bo wants it to rhyme 'Bruiser' with 'loser.' I said that's too easy. He said that's the point.", when: { place: ['insider'], lastMatch: { won: true, opponent: ['bo', 'buck'], maxDaysAgo: 5 } } },
 
     // ---------------------------------------------------------------- After the events
     { text: "The turnbuckle works. *Ka-chunk.* Every time. It's beautiful. I'm going to put it in a museum. Bo wants to put it in an invoice.", when: { flag: 'buck_gadget', place: ['insider'] }, mood: 'happy' },
     { text: "If the store goes, so do we. That's what I keep thinking. ...I know. Dramatic. I'm a songwriter.", when: { flag: 'buck_store', notFlag: 'twins_wall', place: ['insider'] }, mood: 'sad', weight: 2 },
-    { text: "You gave it to him? ...What'd he say? No. Don't tell me. He knocked, didn't he? Don't tell me.", when: { flag: 'buck_notebook', notFlag: 'twins_wall', place: ['insider'] }, mood: 'surprised', weight: 3 },
+    { text: "You gave it to him? ...What'd he say? No. Don't tell me. He knocked, didn't he? ...He knocked.", when: { flag: 'buck_notebook', notFlag: 'twins_wall', place: ['insider'] }, mood: 'surprised', weight: 3 },
     { text: "We knock now. Two. Three. It's not a code. It's just a *yes.*", when: { flag: 'twins_wall', place: ['insider'] }, mood: 'love', weight: 3 },
     { text: "I asked him to stay. The easiest hard thing I ever did. I should've done it years ago.", when: { flag: 'bo_stay', place: ['insider'] }, mood: 'happy', weight: 2 },
     { text: "Bo's the careful one. He'd never say it, but I think he's afraid I'd be fine without him. Which is *hilarious.* I'd put my hat on backwards. Constantly.", when: { hearts: [9, 10], place: ['insider'] } },
@@ -82,7 +84,7 @@ export default {
   giftReplies: {
     love: [
       "NO. WAY. (He grabs it with both hands and nearly drops it.) Bo's gonna be so jealous. I'm not telling him. ...I'm telling him. I'm telling everybody.",
-      "That's the sad-song kind of perfect! I've got eleven songs that need exactly this!",
+      "That's the sad-song kind of perfect! I've got a whole notebook of songs that need exactly this!",
       "You're a *gem.* A rare, mostly unbreakable gem. Bo's gonna want to catalog you. Don't let him.",
     ],
     like: [
@@ -100,10 +102,33 @@ export default {
       "This has *instructions.* I don't do instructions. We're not friends anymore. Kidding! Kinda.",
     ],
     birthday: [
-      "Our birthday! (He hugs you with one arm. It's like being hugged by a very friendly tree.) Bo thinks he's the older one. By four minutes. I say it's *both* of us. ...Thank you.",
-      "Summer! The second! Bo and I celebrate by not speaking until midnight, then hugging. It's a *tradition.*",
+      "(He hugs you with one arm, {item} in the other. It's like being hugged by a very friendly tree.) Bo got thanked first. He always gets thanked first. Mine's louder.",
+      "Summer the second! Bo and I don't speak till midnight, then we hug. It's a *tradition.* You're getting your hug early, for the {item}.",
+    ],
+    byItem: {
+      cassette: "A mixtape! PUMP UP JAMS 4 SAT! Some kid made this for a Saturday. I'm gonna listen to it on a Tuesday. Out of respect.",
+      vinyl: "Vinyl! 1984! Bo's gonna say we don't have a record player. We DO. It's in the back. Under the minnows.",
+      'chili-dog': "(He eats it in four bites, standing up, before saying thank you.) ...Thank you. Sorry. That was a *good* chili dog.",
+      plank: "A board! I'm gonna make a bird feeder. Or a shelf. Or a bird feeder that's also a shelf. The birds can sort it out.",
+      scrap: "Scrap! This is turnbuckle money. This is the spring I needed. I'm not saying it'll work. I'm saying it'll go *ka-chunk.*",
+      tape: "Tape. I'm gonna tape my harmonica to my hat. Hands-free. Bo's gonna hate it so much.",
+      'corn-dog': "Corn dog! Fair food on a regular day! You're a rebel! I love a rebel!",
+      tamales: "Rosa's tamales. Still warm. I'm gonna eat one and hide one in the bait fridge for later. Next to the songs.",
+    },
+    later: [
+      "Still got the {lastGift}. Bo tried to label it. I peeled the label off. He put it back. It's a whole *thing* now.",
+      "I wrote a song about the {lastGift}. Two verses. It's not sad, for once. Gus says it's 'unsettling.'",
     ],
   },
+  again: [
+    "Back already! Missed me! ...You missed Bo. Everybody misses Bo. He's in aisle four.",
+    "(Buck plays two notes on the harmonica that clearly mean 'later.')",
+    "I'm in the middle of a song. It's about you now. Sorry. It happens.",
+  ],
+  idle: [
+    "(Buck is whittling something that might be a duck.)",
+    "Hey! Can't stop. Bo's counting something and I'm the thing.",
+  ],
   birthday: { season: 1, day: 2 },
   events: [
     // ---------------------------------------------------------------- 2: Breakaway chair
@@ -210,7 +235,7 @@ export default {
         await api.narrate("The Hot Tag, late. Buck is already in the back booth with his harmonica on the table, unplayed. No cereal box. No grin. He looks about ten years younger and twenty years more tired.");
         await api.say('buck', "Sit. Please. I don't have a bit. I've been trying all day to think of a bit, and I don't have one. That's... that's new.");
         await api.say('buck', "Dad built the store in '79. Mom painted the sign. When Bo and I were five, there was a storm, and our power went out, and we slept in the biggest tool crate in the back. It was the safest place in the world.");
-        await api.say('buck', "That crate's still there. Under the paint thinner. I check on it every Sunday. I don't tell Bo.");
+        await api.say('buck', "That crate's still there. Under the paint thinner. I check on it every Sunday. Bo doesn't know.");
         await api.sayMood('buck', 'sad', "The store's the last thing left of how it was when we were kids. Everything else grew up and went to Arizona. If the store goes, so does the crate, and the sign, and...");
         await api.say('buck', "...I don't know what we are, after. Two guys who punch each other.");
         const c = await api.choose(null, [
@@ -232,7 +257,7 @@ export default {
           await api.narrate("He picks up the harmonica and puts it down again. He's smiling the way he smiles for a crowd. It's the wrong smile for a booth.");
         }
         api.flag('buck_store', true);
-        await api.say('buck', "Don't tell Bo about the crate. He'd label it. And then I'd have to tell him why it matters. And then I'd say it wrong.");
+        await api.say('buck', "Keep the crate between us. He'd label it. And then I'd have to tell him why it matters. And then I'd say it wrong.");
       },
     },
     // ---------------------------------------------------------------- 10: The bait fridge
@@ -245,7 +270,7 @@ export default {
         await api.say('buck', "Bo labeled it in 2011, when he found it. He's never opened it. Fourteen years. That's... that's love, I think. Nobody *respects* a label like that.");
         await api.say('buck', "There's about two hundred songs in there. They're all sad. They're about trucks and dogs and lost rodeos. Don't read 'em in front of me.");
         await api.narrate("He flips to the last page and turns the notebook toward you, as if it might bite.");
-        await api.say('buck', "This one's about Bo. 'Same Wall.' I wrote it eleven times. I can't hand it to him. If I hand it to him, it's real. If it's real, I'd have to... say stuff.");
+        await api.say('buck', "This one's about Bo. 'Same Wall.' I wrote it fourteen times. I can't hand it to him. If I hand it to him, it's real. If it's real, I'd have to... say stuff.");
         await api.say('buck', "Would you? Give it to him. Please. You don't have to say anything. Just put it in his hands.");
         const c = await api.choose(null, [
           { label: '"I\'ll give it to him. I promise."', value: 'promise' },
@@ -258,7 +283,7 @@ export default {
         } else {
           api.hearts('buck', 15);
           await api.narrate("You read it standing in the cold glow of the bait fridge. It's short. It's the best thing you've read all year.");
-          await api.say('buck', "...Well? Don't tell me. Tell me. No. Don't. I can't take it. ...Was it okay?");
+          await api.say('buck', "...Well? No. Wait. Okay. Say it. No. ...Was it okay?");
           await api.narrate("You tell him it was okay. His face does something complicated.");
         }
         api.flag('buck_notebook', true);

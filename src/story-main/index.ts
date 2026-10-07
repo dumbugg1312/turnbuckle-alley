@@ -12,6 +12,7 @@ import { choose, narrate, say, toast } from '../ui/dialog';
 import { doorRule, onEnterMap, onNewDay, onTalk } from '../world/hooks';
 import { WORLD } from '../world/scene';
 import { makeApi, speakerFor } from '../world/talk';
+import { fillMemory, lastMatch } from '../world/memory';
 import { apartmentScene, arrivalScene, farmArrival, firstNight, officeScene, openCreator } from './opening';
 import { LETTERS } from './letters';
 
@@ -189,7 +190,14 @@ onTalk(async (npcId) => {
   if (G.player.matches < 3 && absDay() < 9) return false;
   const l = speakerFor('lou');
   await narrate('Sweet Lou doesn\'t look up from his fishing line.');
-  await say(l, "Saw your match Saturday. You sold that elbow like it owed you money.", "Your grandma used to do that. Take a shot, turn it into a story. Made the whole building lean forward.");
+  const m = lastMatch();
+  const day = m?.venue === 'vfw' ? 'Wednesday' : 'Saturday';
+  const saw = !m
+    ? ["Been hearing about you. Agnes talks. Agnes talks to the fish when I'm not looking."]
+    : m.won
+      ? [`Saw you ${day}. You hit {opponent} with the {finisher} and you didn't smile till you were through the curtain.`, 'Your grandma did that. Saved it for the hallway.']
+      : [`Saw you ${day}. {opponent} beat you, and you went down so the back row felt it in their fillings.`, 'Your grandma used to do that. Take a loss and turn it into the thing they talk about Monday.'];
+  await say(l, ...saw.map((t) => fillMemory(t, 'lou')));
   await say(l, "Here.", "*(He presses a heavy iron key into your hand. It's warm, like it's been in his pocket for forty years.)*");
   addItem('dungeon-key', 1);
   setFlag('lou_key');

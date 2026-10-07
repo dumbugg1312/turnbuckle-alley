@@ -42,11 +42,13 @@ export default {
     { text: "Picture it: the World's Largest Folding Chair. Forty feet tall, welded by Hank. I have the plans. Hank has the opinions.", when: { hearts: [3, 10] }, weight: 2 },
     { text: "The tram to the fairgrounds. Eight minutes, glass sides, a gift shop. The council said 'why.' I said 'why NOT.'", when: { hearts: [3, 10] } },
     { text: ["The Wrestling Hall of Fame museum is happening. I have the dream, the plans, and the confidence. I need the building and the funding.", "We'll see."], when: { hearts: [3, 10] } },
-    { text: ["I'm pursuing a sister-city pact with Abuela Celia's hometown in Mexico. Eleven letters, in Spanish, with Rosa's help.", "Abuela corrected them in red. I framed them."], when: { hearts: [3, 10] } },
+    { text: ["I'm pursuing a sister-city pact with Abuela Celia's hometown in Mexico. Nine letters, in Spanish, with Rosa's help.", "Abuela corrected them in red. I framed them."], when: { hearts: [3, 10] } },
     { text: "A man from MaxxMedia keeps courting me with lunches. The food is excellent. The contract is a gourmet trap.", when: { hearts: [0, 6], place: ['public'] } },
 
     // ---------------------------------------------------------------- Her belief
-    { text: "A hero in my town! I'll have Hank cut you a key to the city. It opens nothing. Symbolically, it opens everything.", when: { alignment: ['face'], flag: 'debuted' } },
+    { text: "A hero in my town! I'll have Hank cut you a key to the city. It opens nothing. Hank was very clear. I'm still saying 'symbolically.'", when: { alignment: ['face'], flag: 'debuted' } },
+    { text: ["Your victory over {opponent} has been entered into the municipal record. Item four, between the sewer bond and a goat.", "The goat was also a victory. A different kind."], when: { lastMatch: { won: true, maxDaysAgo: 5 }, alignment: ['face', 'tweener'] }, mood: 'happy' },
+    { text: "I have drafted a formal letter to {opponent} regarding their conduct toward you at {venue}. In triplicate. One copy is scented.", when: { lastMatch: { won: false, maxDaysAgo: 5 }, alignment: ['face', 'tweener'] }, mood: 'angry' },
     { text: "As mayor, I am filing a formal complaint, in triplicate, about your conduct and your boots.", when: { alignment: ['heel'], flag: 'debuted', place: ['public'] }, weight: 2 },
     { text: "I've submitted your name for a commendation. One copy for the city, one for you, one for the pigeons.", when: { hearts: [3, 10], flag: 'debuted' } },
     { text: "Birdie Malone and I spar over permits every spring. I'd rather be fined by her than praised by anyone else.", when: { hearts: [3, 10] } },
@@ -57,8 +59,8 @@ export default {
 
     // ---------------------------------------------------------------- Heart
     { text: ["Simone's in finance, in the city. She calls on Sundays. The calls are getting shorter. I tell myself it's the time zone.", "It's not a time zone."], when: { hearts: [4, 10] }, mood: 'sad' },
-    { text: "A map's just paper. I want a town somebody would drive home to.", when: { hearts: [6, 10], place: ['public'] }, mood: 'sad' },
-    { text: "Everybody says 'put the town on the map.' But a town isn't a dot. It's a porch light on a street. You leave it on, and somebody comes.", when: { hearts: [8, 10] }, mood: 'happy' },
+    { text: "Simone's building has a fountain in the parking garage. I asked if anybody sits by it. She said, 'Nobody sits, Mom.'", when: { hearts: [6, 10], place: ['public'] }, mood: 'sad' },
+    { text: "I leave the porch light on every night. Simone hasn't been home since Easter. I've changed the bulb twice. I keep the receipts in a drawer.", when: { hearts: [8, 10] }, mood: 'sad' },
 
     // ---------------------------------------------------------------- Weather and seasons
     { text: "Rain! Excellent for the garden, dreadful for the parade route. I'll move the parade. I'd move the *rain* if I had to.", when: { weather: ['rain'] } },
@@ -68,15 +70,15 @@ export default {
     { text: ["Homecoming. I've been to every Hall of Fame induction for twelve years. I cry at the same part every time. Nobody's ever caught me.", "You didn't see that."], when: { season: [3] } },
   ],
   gifts: {
-    loves: ['polaroid', 'old-program', 'lemonade'],
-    likes: ['wildflowers', 'bouquet', 'honey', 'yarn', 'funnel-cake'],
+    loves: ['lemonade', 'bouquet'],
+    likes: ['polaroid', 'old-program', 'wildflowers', 'honey', 'yarn', 'funnel-cake'],
     dislikes: ['gas-hotdog', 'scrap', 'fiber'],
   },
   giftReplies: {
     love: [
       "(She clutches it to her chest, pageant posture faltering.) Is this official? It feels official. I'll frame it and file it. In that order.",
       "OH. Oh! This is exactly what the town needs. I'm taking it straight to council. I'll give you credit. In large print.",
-      "A vintage view of our little town! Look at that water tower with no ambitions. We've come so far. And so little.",
+      "This is going in the time capsule. We don't have a time capsule. We do now. I'll cut a ribbon on it.",
     ],
     like: [
       "How thoughtful! I'll put it on my desk beside the scissors. They'll be very good friends.",
@@ -92,10 +94,33 @@ export default {
       "(A pageant wave, slightly strained.) Thank you. Truly. I'll compost it. Ceremonially.",
     ],
     birthday: [
-      "You remembered the fourth! My birthday! Also, coincidentally, the town's other holiday! I'm declaring today a municipal feast day!",
-      "A birthday gift! For the mayor! I'm cutting a ribbon on it. Hold the other end.",
+      "The fourth! My birthday! A {item}! I'm declaring today a municipal feast day. Retroactively, it always was.",
+      "A birthday {item}! For the mayor! I'm cutting a ribbon on it. Hold the other end.",
+    ],
+    byItem: {
+      lemonade: "Fair lemonade! Shaken by hand! I drank one of these in 1983 in a sash, waiting for a crown. This one tastes better. Less waiting.",
+      bouquet: ["Flowers! For the mayor! (She holds them like she's been handed an award, which, in a way, she has.)", "These are going on the council table. The dahlia faction will see them and despair."],
+      polaroid: "A crowd at the Sportatorium! Civic engagement! I'm putting this in the Town Hall lobby beside the zoning map. It's more inspiring than the zoning map.",
+      'old-program': "A 1979 card! Look at the ad on the back: 'Visit Turnbuckle Alley!' Somebody had my job before me, and they had no budget either.",
+      wildflowers: "Wildflowers from the creek. Unofficial flowers. I'll put them in an official vase.",
+      honey: "Local honey! I'm going to mention this in my next proclamation. It'll rhyme with 'money.' Everything does, eventually.",
+      yarn: "Yarn! I'll knit a sash. For the bear. She deserves a sash. She has more dignity than half the council.",
+      'funnel-cake': "Funnel cake! Mayors are not supposed to eat funnel cake on Main Street. (She's already eating it.) Mayors are allowed to break one rule a year.",
+    },
+    later: [
+      "The {lastGift} is on my desk at Town Hall, next to the ceremonial scissors. I've labeled it A GIFT FROM A CONSTITUENT.",
+      "I mentioned the {lastGift} in council. Nobody asked. I mentioned it anyway. It's in the minutes now.",
     ],
   },
+  again: [
+    "Back so soon? Excellent turnout! Twice in one day! I'll note it.",
+    "(Mayor Oakes is mid-ribbon. She mouths 'one second' and cuts.)",
+    "We've met! I've met so many people today. I remember you, though. You're the one I've met twice.",
+  ],
+  idle: [
+    "(Mayor Oakes is practicing a speech to a pigeon. The pigeon has heard it.)",
+    "Can't stop! A ribbon is waiting! It doesn't know it yet!",
+  ],
   birthday: { season: 1, day: 4 },
   events: [
     // ---------------------------------------------------------------- 2: Key to the city

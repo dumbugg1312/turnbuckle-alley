@@ -41,7 +41,7 @@ export default {
     { text: "Tonight at the VFW! Fifty folding chairs! Bingo after! And a ring card I've been rehearsing since Monday!", when: { showDay: true, weekday: [2], place: ['public', 'show'] }, weight: 3 },
     { text: "Tonight, the SPORTATORIUM! Lights! Pyro! Confetti! And me, in a spotlight Hank swears is not a fire hazard!", when: { showDay: true, weekday: [5], place: ['public', 'show'] }, weight: 3 },
     { text: "The Mayor wants me to announce the new stop sign at Main and Second. I said yes. 'AND... NEWWWW... STOP SIGN!' It's a *tremendous* stop sign.", when: { place: ['public'], hearts: [3, 10] } },
-    { text: "Jobber and I fought over the microphone cord last night. He won. He always wins. Don't tell Old Thunder.", when: { place: ['public'], hearts: [3, 10] } },
+    { text: "Jobber and I fought over the microphone cord last night. He won. He always wins. Old Thunder thinks it was a draw. I let him think it.", when: { place: ['public'], hearts: [3, 10] } },
     { text: "I read Clementine's reviews on air in a mournful voice. 'Two stars,' I intone. 'A snooze.' The listeners *love* it. She hates it. Best segment on the station.", when: { place: ['public'], hearts: [3, 10] } },
     { text: "Sunday cribbage with Hank in the back room. She's beaten me fourteen hundred times. I'm one loss away from a lifetime achievement.", when: { place: ['public'], weekday: [6] } },
     { text: "Hazel Huang's forecasts. 'A storm front of one, with scattered kicks.' She writes them, I read them. We're a meteorological team.", when: { place: ['public'], hearts: [3, 10] } },
@@ -66,6 +66,9 @@ export default {
     { text: "Forty shoeboxes in the booth. One per year. Every ring card. It's the best archive nobody asked for.", when: { place: ['insider'], hearts: [3, 10] } },
     { text: "Forty years I've been saying other people's names into a microphone. Best job in the world. Nobody ever says yours back, though.", when: { place: ['insider'], hearts: [6, 10] }, mood: 'sad', weight: 2 },
     { text: "Hank beats me at cribbage so I'll keep coming back. I know that. She knows I know. We never discuss it.", when: { place: ['insider'], hearts: [6, 10] } },
+    { text: ["On the Pit this morning I said '{opponent}' and '{ring}' in the same sentence and my coffee went cold.", "I called the {finisher} from memory. Twice. Jobber knocked over the mug. It was *radio.*"], when: { place: ['public'], lastMatch: { won: true, maxDaysAgo: 3 } }, mood: 'happy' },
+    { text: "Read the results on air this morning. '{opponent} over {ring}.' I said it neutral. I'm *neutral.* My voice cracked on the second word. Neutrally.", when: { place: ['public'], lastMatch: { won: false, maxDaysAgo: 3 } } },
+    { text: "I put your match card in the shoebox last night. You and {opponent}, {venue}. Name spelled right. I checked it twice. I checked it a third time for luck.", when: { place: ['insider'], lastMatch: { maxDaysAgo: 4 } } },
     { text: "Late-night radio, kid. The best audience is one person at a kitchen table in the dark. I do a show for her. She's probably asleep. I do it anyway.", when: { place: ['insider'], time: [1200, 1560] }, weight: 2 },
     { text: "You're new. When I say your name, don't look at the crowd. Pick one person. Make them the only person. The rest will follow.", when: { place: ['insider'], rank: ['rookie', 'opener'] } },
     { text: "Main event! I'll stretch your name till the rafters beg. Don't blink. I once held a name for nineteen seconds. The man fainted. He was *thrilled.*", when: { place: ['insider'], rank: ['main', 'assistant', 'pencil', 'owner'] }, mood: 'happy' },
@@ -81,8 +84,8 @@ export default {
     { text: "That night, I couldn't call the finish. I just held the microphone, and Birdie and the Duchess walked out together, and the whole building said it for me.", when: { flag: 'reunion_done', place: ['insider'] }, mood: 'love', weight: 3 },
   ],
   gifts: {
-    loves: ['vinyl', 'honey', 'cassette', 'merch-tee'],
-    likes: ['concha', 'old-program', 'signed-photo', 'coffee', 'polaroid'],
+    loves: ['vinyl', 'cassette', 'merch-tee'],
+    likes: ['honey', 'concha', 'old-program', 'signed-photo', 'coffee', 'polaroid'],
     dislikes: ['bait', 'scrap', 'fiber'],
   },
   giftReplies: {
@@ -106,10 +109,34 @@ export default {
       "Mm. I'll put this somewhere I don't have to announce it.",
     ],
     birthday: [
-      "My birthday! ...You remembered! Ladies and gentlemen: a person who *remembered!* (He's already tearing up.) Thank you, kid.",
-      "The first of fall. First show of the season. First *everything.* And you came with a gift. I'll announce you at every intro this week.",
+      "LADIES AND GENTLEMEN, on this, the first day of fall... a {item}! For the birthday boy! (He's already tearing up.) Sixty-four years old and *undefeated* at birthdays.",
+      "The first of fall. First show of the season. First *everything.* And a {item}. I'll announce you at every intro this week. You can't stop me. I own the microphone.",
+    ],
+    byItem: {
+      vinyl: ["A RECORD! Ladies and gentlemen, a 1984 pressing! (He reads the label.) ...Oh, I know this one.", "I played it on air the week it came out. Somebody's entrance music. I'll play it Monday. I'll say where I got it."],
+      cassette: "A mixtape! PUMP UP JAMS 4 SAT! Some kid's Saturday, in my hands! I'm putting it on the Porch Hour. Buck will harmonize. Buck harmonizes with *everything.*",
+      'merch-tee': "YOUR SHIRT! I'm wearing it to the station under the Hawaiian. Nobody will see it. *I'll* know. Jobber will know.",
+      honey: "Honey! For the throat! A voice like mine is a public utility, kid. You've just maintained the infrastructure.",
+      concha: "A concha! Rosa's! The pink kind! I'll eat it on air. The listeners love chewing sounds. They don't. I do.",
+      'old-program': "1979! Look who's on the card! ...Look who announced it. Hal Buckner. Not me. Hal Buckner. He had a voice like a bathtub. I was so jealous I could spit.",
+      'signed-photo': "Signed! In silver! It's going on the booth wall, right above Jobber's bed, where he can resent it.",
+      coffee: "Coffee! For the six a.m.! You know what's on the radio at six a.m.? ME. Because of COFFEE.",
+      polaroid: "A crowd shot! The front row on its feet! I can hear it from here. You can hear a photo, if you were there. I was there. I'm always there.",
+    },
+    later: [
+      "I mentioned the {lastGift} on the Pit this morning. 'A gift from a listener.' Three people called in to ask who. I said: a *friend of the program.*",
+      "Jobber's been sleeping next to the {lastGift}. In the booth. I don't have the heart to move him. He looks so *official.*",
     ],
   },
+  again: [
+    "And we're BACK! ...Sorry. Old habit. What'd I miss? Nothing. We just talked.",
+    "(Gus taps the microphone twice. Off the air. Indoor voice.) Still here, kid. Still here.",
+    "Ladies and gentlemen, a RETURN APPEARANCE! (quietly) I'm on in four minutes.",
+  ],
+  idle: [
+    "(Gus is reading a ring card to himself, lips moving, stretching every vowel.)",
+    "Can't chat. Jobber's got the mic cord again and I'm negotiating.",
+  ],
   birthday: { season: 2, day: 1 },
   events: [
     // ---------------------------------------------------------------- 2: The Big Intro, at the Hot Tag
@@ -252,7 +279,7 @@ export default {
         }
         api.flag('gus_depot', true);
         await api.narrate("He stands, and for a moment you think he'll announce something. He doesn't. He just rests a hand on your shoulder, very briefly, the way you'd touch a good luck charm.");
-        await api.say('gus', "Don't tell her I told. Not yet. When she's ready, she'll tell it herself. She's got a better voice for it than mine.");
+        await api.say('gus', "She can't hear it from me. Not yet. When she's ready, she'll tell it herself. She's got a better voice for it than mine.");
       },
     },
     // ---------------------------------------------------------------- 10: Old Thunder

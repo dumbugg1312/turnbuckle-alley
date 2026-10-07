@@ -38,12 +38,12 @@ export default {
     { text: "Wanda's polite. She's also a bear. Respect both.", when: { place: ['public'], map: ['fair'] } },
     { text: "(Clint tucks a paperback into a feed bag as you walk up.) Just... feed. (It's a western. It's always a western.)", when: { place: ['public'], map: ['fair'] } },
     { text: "Heroes are welcome at the fairgrounds. The quiet ones, especially. Wanda likes quiet.", when: { place: ['public'], alignment: ['face'] } },
-    { text: "Heel, huh. Folks say you're good at it. That's the trouble with it.", when: { place: ['public'], alignment: ['heel'], flag: 'debuted' }, mood: 'sad' },
+    { text: "Heel, huh. Folks say you're good at it. Lacey says you're 'kind of awesome.' I'm choosing not to have heard that.", when: { place: ['public'], alignment: ['heel'], flag: 'debuted' }, mood: 'sad' },
     { text: "That Dust Devil fella calls me washed-up on the radio. Ain't a thing about him I trust. Not the mask, not the mouth. And I'd know.", when: { place: ['public'], hearts: [3, 10] }, mood: 'angry' },
     { text: "Livestock auction tonight. Back late. Wanda'll mind the fence. I never buy anything. I just like the hats.", when: { showDay: true, place: ['public'] }, weight: 2 },
     { text: "Lacey's got a meet Tuesday. Top row, hat over my heart. She waves at the whole gym, but I know who it's for.", when: { place: ['public'], weekday: [1], hearts: [3, 10] } },
     { text: "Sunday breakfast with Lacey after church. Pancakes. She steals my bacon. It's a ritual.", when: { place: ['public'], weekday: [6] } },
-    { text: "Agnes Pickett's peach pie, I'd cross a state line for. Don't tell her. She'd make me do it.", when: { place: ['public'], hearts: [3, 10] } },
+    { text: "Agnes Pickett's peach pie, I'd cross a state line for. She knows it, too. She brings up the state line.", when: { place: ['public'], hearts: [3, 10] } },
     { text: "Hazel Huang came by the fairgrounds. Checked the honey. Said it was 'adequate.' Highest praise I've had all year.", when: { place: ['public'], hearts: [3, 10] } },
     { text: "Doc Halloran cleared me for light work. Light being a relative term. I feed a bear. She's *medium.*", when: { place: ['public'], hearts: [3, 10] } },
     { text: "(He taps his hat brim twice. Doesn't say why. Doesn't look at you.)", when: { place: ['public'], hearts: [6, 10] }, mood: 'sad' },
@@ -53,7 +53,7 @@ export default {
     { text: "Storm's coming. I'd best go sit with Wanda. She hums when it thunders.", when: { weather: ['storm'], place: ['public'] } },
     { text: "Snow's good for the old knees and bad for the old knees. Mostly good. Wanda loves it.", when: { weather: ['snow'], place: ['public'] } },
     { text: "Wind's got a mean streak today. Reminds me of a certain masked fella.", when: { weather: ['wind'], place: ['public'] } },
-    { text: "Wanda woke up this morning. First thing she did was bow at the gate. I about cried. Don't tell anybody.", when: { season: [0], place: ['public'] }, weight: 2 },
+    { text: "Wanda woke up this morning. First thing she did was bow at the gate. I had to go check on a fence post for a while.", when: { season: [0], place: ['public'] }, weight: 2 },
     { text: "County fair's all week. Funnel cake and a bear that bows. If that don't improve a man, nothing will.", when: { season: [1], place: ['public'] } },
     { text: "Harvest. The infield's a mess of leaves. I leave 'em. Wanda likes the crunch.", when: { season: [2], place: ['public'] } },
     { text: "Winter. Wanda's in her den. I sit outside and read her a western. She snores. Best review I ever got.", when: { season: [3], place: ['public'] } },
@@ -78,19 +78,21 @@ export default {
     { text: "First rule of the Dust Devil: dirt in the eye is theater, not damage. Sell it right and nobody gets hurt. Sell it wrong and you're just a bad man.", when: { place: ['insider'], rank: ['rookie', 'opener'] } },
     { text: "Main event. Folks'll look at you the way they looked at me. Pick one face in the crowd. Wrestle for them.", when: { place: ['insider'], rank: ['main', 'assistant', 'pencil', 'owner'] } },
     { text: "Can't sleep when the weather's changing. Neither can Wanda. We keep each other company through the fence.", when: { time: [1320, 1560] }, mood: 'sad' },
+    { text: ["You and {opponent}. I watched from the tunnel with the mask in my lap.", "You took the {finisher} like a man falling off a hay wagon. That's a compliment where I'm from."], when: { place: ['insider'], lastMatch: { maxDaysAgo: 3 } } },
+    { text: "Lacey watched your match with {opponent} from the bleachers. She didn't say a word on the drive home. That's a rave, from her.", when: { place: ['insider'], lastMatch: { minStars: 3.5, maxDaysAgo: 4 } }, mood: 'happy' },
 
     // ---------------------------------------------------------------- After the events
     { text: "Lacey's got a dartboard with the Dust Devil's face on it. I sleep better knowing it. A man ought to be somebody's target.", when: { flag: 'clint_dartboard', place: ['insider'] }, mood: 'happy' },
     { text: "Last match is coming. I told Wanda. She bowed. She bows at everything. ...It was a *good* bow.", when: { flag: 'clint_unmask_choice', notFlag: 'clint_last_match', place: ['insider'] }, weight: 3 },
     { text: "Mask's on the nail. Hat's next to it. I look at 'em every time I walk into that room. Waiting on my girl. She'll know when she's ready. So will I.", when: { flag: 'clint_last_match', place: ['insider'] }, mood: 'sad', weight: 2 },
-    { text: "I saw the Velvet Hammers in a ring, forty years late and right on time. Eight-year-old me about fell off the couch.", when: { flag: 'reunion_done', place: ['insider'] }, mood: 'happy', weight: 2 },
+    { text: "I saw the Velvet Hammers in a ring again. Eight-year-old me about fell off the couch. Fifty-two-year-old me about fell off the bleachers.", when: { flag: 'reunion_done', place: ['insider'] }, mood: 'happy', weight: 2 },
 
     // ---------------------------------------------------------------- Family
     { text: "You're the only person in town who knows both fellas. You've never once asked which one's the real one. ...Thank you. They both are.", when: { hearts: [9, 10], place: ['insider'] }, mood: 'love' },
   ],
   gifts: {
-    loves: ['honey', 'pie', 'paperback', 'polaroid'],
-    likes: ['leather', 'coffee', 'vinyl', 'corn-dog', 'fish'],
+    loves: ['honey', 'pie', 'paperback'],
+    likes: ['leather', 'coffee', 'vinyl', 'corn-dog', 'fish', 'polaroid'],
     dislikes: ['trading-card', 'toy-wrestler', 'foam-finger'],
   },
   giftReplies: {
@@ -105,19 +107,43 @@ export default {
       "Thank you kindly. It's a good one.",
     ],
     neutral: [
-      "Huh. Thank you. I'll find a place for it. Everything's got a nail somewhere.",
-      "That's a gift, all right. I can tell by how you're holding it.",
+      "Huh. Much obliged. I'll hang the {item} on a nail. Everything out here's got a nail.",
+      "Well. Wanda's going to want to smell that {item}. Everything comes through Wanda first.",
     ],
     dislike: [
       "You're a funny one. (It goes straight into the feed bag before anybody can see.)",
       "Mm. I'll put that where I'll find it. Eventually. Not soon.",
-      "Where'd you get this? ...Never mind. Don't tell me. I'll just put it down.",
+      "Where'd you get this? ...Never mind. I'll just set it down. Over here. Farther.",
     ],
     birthday: [
-      "Birthday. Ain't had one noticed in a good while. ...Thank you. I'll tell Wanda. She'll bow.",
-      "Winter, the third. Cold as a cellar. Warmer for it now. Thank you, partner.",
+      "Birthday. Ain't had one noticed in a good while. ...A {item}. I'll show Wanda. She'll bow at it.",
+      "Winter, the third. Cold as a cellar. (He taps his hat brim twice and puts the {item} inside his coat.)",
+    ],
+    byItem: {
+      honey: "Fairgrounds honey. Half for Wanda, half for my coffee. ...Sixty-forty. She'll know if it's fifty-fifty. She counts by smell.",
+      pie: "Peach? ...It's Agnes's. I can tell by the lattice. You didn't steal it, did you. Don't answer. I'll eat it anyway.",
+      paperback: "A western? ...It's a mystery. Well. A man can branch out. I'll read it in the truck where nobody can see me guessing wrong.",
+      leather: "Good strap. Oiled. I'll fix the gate latch with it. The gate's been held shut with a bootlace since April.",
+      coffee: "Strong? Good. June makes it so it stands up on its own. That's how I like my coffee and my bears.",
+      vinyl: "Somebody's entrance music. I'll play it for Wanda. She sways. Not to the beat. To her own idea of the beat.",
+      'corn-dog': "Corn dog. I eat these walking the midway so folks think I'm on patrol. I'm not on patrol. I'm eating a corn dog.",
+      fish: "Bluegill. Wanda gets the head, I get the rest. We've done it that way nine years. Neither of us has complained.",
+      polaroid: "Somebody's crowd photo. I used to be in pictures like this. Front row, cheering a fella in a hat. ...I'll keep it.",
+    },
+    later: [
+      "Wanda's been nosing at the {lastGift}. I let her. She gives it back. She's got manners.",
+      "Still got the {lastGift} on the dash of the truck. Lacey asked about it. I said a friend. She said 'you have friends?'",
     ],
   },
+  again: [
+    "(Clint touches his hat brim once. That's 'still here.' Twice would be something else.)",
+    "We talked, partner. I'm not a talker. That was most of my day's talking.",
+    "Wanda wants her supper. I'd best not keep a bear waiting.",
+  ],
+  idle: [
+    "(Clint is leaning on the fence, watching nothing in particular, the way only a man who's watched cattle can.)",
+    "Afternoon. Wanda says hello. She does it by sitting down.",
+  ],
   birthday: { season: 3, day: 3 },
   events: [
     // ---------------------------------------------------------------- 2: Honey on a wooden spoon
@@ -163,7 +189,7 @@ export default {
         await api.narrate("The locker room, empty. Clint sets the feed bag on the bench and takes out a long black duster and a rust-and-sand mask with a swirling pattern.");
         await api.narrate("He holds the mask in both hands. They're shaking. A lot.");
         await api.say('clint', "Twenty years. Never shook once. Not on a bull. Not in front of ten thousand. And now I've got a kid with a dartboard.");
-        await api.sayMood('clint', 'sad', "Don't tell anybody I'm nervous. I'm supposed to be a weather event.");
+        await api.sayMood('clint', 'sad', "My hands do this before every show. I'm supposed to be a weather event. Weather doesn't shake.");
         await api.say('clint', "I keep thinking, what if she's in the building? What if she hears one of the lines I say about myself, and it's just a bit too good?");
         const c = await api.choose('The mask trembles in his fingers.', [
           { label: 'Offer to tie the strings for him', value: 'tie' },
@@ -197,7 +223,7 @@ export default {
         await api.say('clint', "Polaroid. Lacey took it. She sent a copy to her mama in the city. Her mama sent it on to me. Said, 'Your daughter has your aim.'");
         await api.narrate("The Polaroid: a dartboard on a bedroom door. A rust-and-sand mask drawn on the cork in red paint. One dart, buried straight between the eyes.");
         await api.say('clint', "Dead center. Between his eyes. I mean *his* eyes. The Dust Devil's. I've been hit by chairs, bulls, a tuba once. Nothing ever got me like that dart.");
-        await api.sayMood('clint', 'happy', "I've never been prouder of anything in my life. That's my girl. Eleven days of practice. I about wept into my meatloaf.");
+        await api.sayMood('clint', 'happy', "I've never been prouder of anything in my life. That's my girl. Twelve days of practice. I about wept into my meatloaf.");
         const c = await api.choose(null, [
           { label: '"She has your aim. You should be proud."', value: 'proud' },
           { label: '"Tell her. Tonight. She deserves to know."', value: 'tell' },
@@ -206,7 +232,7 @@ export default {
         if (c === 'proud') {
           api.hearts('clint', 30);
           await api.narrate("He taps his hat brim twice, even though his hat is sitting on the table. He realizes. He taps the table instead.");
-          await api.say('clint', "I am. I surely am. Don't tell her I said so. ...Don't tell her anything. Not yet.");
+          await api.say('clint', "I am. I surely am. Keep that between us. ...Keep all of it between us. Not yet.");
         } else if (c === 'tell') {
           api.hearts('clint', -10);
           await api.say('clint', "No.");
@@ -296,7 +322,7 @@ export default {
           await api.narrate("He turns away, quickly. His hat is on the nail, so he taps his thigh twice, instead.");
         } else {
           api.hearts('clint', 15);
-          await api.say('clint', "I know. Every day I don't tell her is a day I've picked wrong. I just... can't find the right one.");
+          await api.say('clint', "I know. Every day I keep it from her is a day I've picked wrong. I just... can't find the right one.");
         }
         api.flag('clint_last_match', true);
         await api.narrate("Before he turns off the light, he sets Wanda's honey spoon on the bench by the door. Somebody will take it to the fairgrounds. Nobody will ask why it was in a locker room.");

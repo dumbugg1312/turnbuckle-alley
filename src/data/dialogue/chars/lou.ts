@@ -37,11 +37,11 @@ export default {
     { text: "Lightnin' on the water. Up the bank, young'un. Legends don't get struck, but you ain't a legend yet.", when: { weather: ['storm'] } },
     { text: "Wind's tryin' to steal my hat again. Lot of good lures on this hat. Wind's got taste.", when: { weather: ['wind'] } },
     { text: "Snow on the creek. Fish slow down, I slow down, the whole world slows down to my speed. Finally.", when: { weather: ['snow'] } },
-    { text: "Spring's when the creek wakes up. Thaw Brawl and the bluegill both. Everything comes up for air.", when: { season: [0] }, weight: 2 },
-    { text: "First warm mornin' of spring, Birdie and me caught eleven fish and threw back twelve. Don't ask me the math. Ask Odessa.", when: { season: [0], hearts: [3, 10] } },
-    { text: "Summer, the creek smells like a warm penny. Best smell there is. Don't tell June. She thinks it's her cobbler.", when: { season: [1] } },
+    { text: "First week of spring the bluegill come up in the shallows like they're checking it's safe. Then they bite everything. Bit my thumb Tuesday.", when: { season: [0] }, weight: 2 },
+    { text: "First warm mornin' of spring, Birdie and me caught nine fish and threw back ten. Don't ask me the math. Ask Odessa.", when: { season: [0], hearts: [3, 10] } },
+    { text: "Summer, the creek smells like a warm penny. Best smell there is. June says it smells like her cobbler. June says that about most things.", when: { season: [1] } },
     { text: "Leaves come down the creek like little boats. I name 'em. That red one's Gus. Loud color.", when: { season: [2] } },
-    { text: "Cold keeps the fish honest. They don't bite unless they mean it. Neither do I.", when: { season: [3] } },
+    { text: "Cold mornin's I bring two thermoses. One's coffee. The other's soup for whoever comes down the bank. Usually it's Earl. He brings his own spoon.", when: { season: [3] } },
 
     // ---- The week
     { text: "Monday mornin's Birdie fishes right here with me. She don't talk, I don't talk. Best conversation in town.", when: { weekday: [0], time: [300, 600] } },
@@ -58,9 +58,11 @@ export default {
     { text: "The Mothman? Bowed to me once on the creek road, five in the mornin'. I bowed back. Seemed only polite.", when: { hearts: [3, 10] } },
     { text: "Gus plays my old record on the radio every birthday. I pretend to be embarrassed. I ain't. I turn it up.", when: { hearts: [3, 10] } },
     { text: "Hum before you talk. Gives the words time to put their shoes on.", when: { hearts: [3, 8] } },
-    { text: "That elbow you took Saturday. I felt it in my teeth. You got back up, though. That's the part folks remember.", when: { hearts: [3, 8], place: ['public'], flag: 'debuted' } },
+    { text: "That {opponent} put you down hard. I felt it in my teeth from the legends table. Took you a while to get up. Took me six years once.", when: { hearts: [3, 8], place: ['public'], lastMatch: { won: false, maxDaysAgo: 4 } } },
+    { text: ["You and {opponent}. You stalled right before the comeback, the way I showed you. Let the bait sit.", "Back row leaned in so far I thought the bleachers'd tip."], when: { place: ['insider'], lastMatch: { minStars: 3, maxDaysAgo: 4 } }, mood: 'happy' },
+    { text: "You hurried tonight. You and {opponent} both. I could see the finish coming from the parking lot. Slow down, young'un. Fish can tell.", when: { place: ['insider'], lastMatch: { maxStars: 2.5, maxDaysAgo: 3 } } },
     { text: "Heard you been cuttin' corners in that ring. I'll say a prayer for your soul and your opponent's kidneys.", when: { place: ['public'], alignment: ['heel'], flag: 'debuted' } },
-    { text: "Kids round here are wearing your colors. Don't you ever let 'em down, hear? That's the whole job.", when: { place: ['public'], alignment: ['face'], flag: 'debuted' } },
+    { text: "Saw a kid at the creek with your name on a T-shirt in marker. Spelled it wrong. Wore it like a crown.", when: { place: ['public'], alignment: ['face'], flag: 'debuted' } },
     { text: "Openers set the table. Don't try to eat the whole meal in the first match. Leave 'em hungry for the next one.", when: { rank: ['rookie', 'opener'] } },
 
     // ---- Insider: shop talk
@@ -80,12 +82,12 @@ export default {
     // ---- Close
     { text: "Agnes Pickett waved at me from the bakery. With her whole hand. ...I'm seventy-seven. My heart oughta know better.", when: { hearts: [6, 8], place: ['public'] } },
     { text: "You're coming round more than the fish do. I don't mind. Just saying the fish are jealous.", when: { hearts: [6, 10] } },
-    { text: "When I was young I thought a legend was somebody everybody remembered. Turns out it's somebody who remembers everybody.", when: { hearts: [6, 10], place: ['public'] } },
-    { text: "Some promises get heavier every year, young'un. You carry 'em anyway. That's what makes 'em promises.", when: { hearts: [6, 10], place: ['insider'] } },
+    { text: "When I was young I thought a legend was somebody everybody remembered. Now I can't find my hat, and folks keep stopping me on the street to tell me where it is.", when: { hearts: [6, 10], place: ['public'] } },
+    { text: "I been carrying a promise forty years. Some Mondays I set it down on the post office counter. Then I pick it right back up and walk home.", when: { hearts: [6, 10], place: ['insider'] } },
     { text: ["You stand like somebody I knew. Weight on the back foot, chin up like a dare.", "...Never mind me. Old men see ghosts."], when: { hearts: [6, 8], place: ['insider'], notFlag: 'grandma_in_town' } },
     { text: "After the booth tonight I got work at the Biscuit. Long night. Don't come knockin'. I won't hear you over the machines.", when: { weekday: [5], hearts: [6, 10], place: ['insider'] } },
     { text: "Birdie's never watched the tape of '83. Never will. I watched it once. Once was plenty for a lifetime.", when: { hearts: [6, 10], place: ['insider'], notFlag: 'truth_revealed' } },
-    { text: "June's back booth has heard more truth than any church in the county. Don't tell the pastor. He thinks he's winning.", when: { hearts: [6, 10], place: ['insider'] } },
+    { text: "June's back booth has heard more truth than any church in the county. The pastor eats there Thursdays. He sits facing the wall.", when: { hearts: [6, 10], place: ['insider'] } },
     { text: "Danny Halloran tends that little tree like it might forgive him someday. Maybe it will. Trees are patient.", when: { hearts: [6, 10], place: ['insider'] } },
     { text: ["Your grandmama always did walk like she owned the building.", "Still does, I hear. You tell her Lou says hey. She'll know which Lou."], when: { hearts: [6, 10], place: ['insider'], flag: 'grandma_in_town' } },
 
@@ -99,8 +101,8 @@ export default {
     { text: "Saw 'em at the Hot Tag counter. Two stools. Side by side. Forty years I waited to see two stools, young'un. Lord.", when: { flag: 'reunion_done' }, mood: 'happy', weight: 3 },
   ],
   gifts: {
-    loves: ['vinyl', 'pie', 'polaroid'],
-    likes: ['coffee', 'bait', 'fish', 'lemonade', 'river-stone', 'old-program', 'honey'],
+    loves: ['vinyl', 'pie', 'bait'],
+    likes: ['coffee', 'fish', 'lemonade', 'river-stone', 'old-program', 'honey', 'polaroid'],
     dislikes: ['gas-hotdog', 'protein-shake', 'scrap'],
   },
   giftReplies: {
@@ -124,10 +126,35 @@ export default {
       "Young'un, I been called old-timer, and it hurt less. But thank you for thinking of me.",
     ],
     birthday: [
-      "You remembered! Seventy-some years and folks still remember. I'm gonna hum all day. You can't stop me.",
+      "A {item}, on my birthday. Gus'll play my old record on the radio tonight and I'll pretend I'm embarrassed. I'm gonna hum all day. You can't stop me.",
       "A birthday present for Sweet Lou. Lord. Come by the creek tonight, I'll sing you a verse. Just one. My voice is a rumor these days.",
     ],
+    byItem: {
+      vinyl: ["Well, I'll be. (He turns the sleeve over.) I know this voice.", "Fella used to open for me in Shreveport. Sang flat and meant every word. I'll play it at the Biscuit tonight with the window open."],
+      pie: "June's peach? No. Agnes's cherry, June's hands. I'll eat it on the bank and not share it with a single fish.",
+      bait: "Bait! Fresh-ish! You know what this means? Means you were listening. Means the catfish and me got a date.",
+      coffee: "Coffee at the creek. Now we're talking. Sit. Hold the pole while I drink it. Don't reel. Just hold.",
+      fish: "A bluegill! You caught this? ...You caught this. Well. Throw the next one back. Let him tell his friends about you.",
+      lemonade: "Fair lemonade. Shaken by hand. Reminds me of the summer of '74, when I drank nothing else and won everything.",
+      'river-stone': "Flat one. Good skipper. (He turns it once in his fingers.) No. This one's a keeper. Some stones are too good to throw.",
+      'old-program': "1979. There's my name, third from the bottom. Spelled 'Swet Lou.' I never got 'em to fix it. I liked it, a little.",
+      honey: "Honey. In the coffee, in the tea, on a biscuit in the Biscuit. You can't go wrong.",
+      polaroid: "A crowd. Somebody in the front with a purse up. ...That's Agnes. I'd know that swing in a snowstorm.",
+    },
+    later: [
+      "Still got the {lastGift} on the Biscuit's windowsill. Catches the morning light. I check on it like it's a fish.",
+      "I been thinking about that {lastGift}. You didn't have to. You did. I'm still humming about it.",
+    ],
   },
+  again: [
+    "Still here? Pull up a rock. The creek's got all day.",
+    "(Lou hums two bars of something and nods at the water. Conversation's over; company's welcome.)",
+    "We talked, young'un. I'm saving the rest for the catfish.",
+  ],
+  idle: [
+    "(Lou is humming at his fishing line. The line does not answer.)",
+    "Mornin'. Or afternoon. I lose track by the creek. That's the point of a creek.",
+  ],
   birthday: { season: 3, day: 19 },
   events: [
     {
@@ -216,7 +243,7 @@ export default {
           await api.say('lou', "Slow. I can do slow. Slow's the only speed I got left.");
         }
         await api.say('lou', "I wrote her a song once. A second verse to my old entrance tune. Never sang it for anybody. Not once.");
-        await api.sayMood('lou', 'happy', "Maybe someday. Maybe in front of the whole town, if I get brave. Don't tell her. Tell her I said hey.");
+        await api.sayMood('lou', 'happy', "Maybe someday. Maybe in front of the whole town, if I get brave. Till then, keep it between us. Tell her I said hey.");
       },
     },
     {

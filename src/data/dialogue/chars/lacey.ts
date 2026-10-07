@@ -45,13 +45,14 @@ export default {
     { text: "New sign tonight. DUST DEVIL = DUST BUNNY. Pip helped with the letters. He did the B's backwards. It's a style now.", when: { showDay: true }, mood: 'smug' },
     { text: "If the Dust Devil comes out tonight, I'm not responsible for what I yell. Gus already warned me twice.", when: { showDay: true, place: ['show'] }, mood: 'angry' },
     { text: ["Did you hear his promo? He said Cowboy Clint 'couldn't rope a parked car.'", "My dad roped a BULL. In '93. There's a buckle."], when: { weekday: [3, 6] }, mood: 'angry' },
-    { text: "You took a nasty bump. Ice it. And don't let anybody tell you to walk it off. Walking it off is how Dad got his knees.", when: { weekday: [3, 6], flag: 'debuted', hearts: [2, 14] } },
+    { text: "{opponent} gave you a nasty bump. Ice it. And don't let anybody tell you to walk it off. Walking it off is how Dad got his knees.", when: { lastMatch: { won: false, maxDaysAgo: 3 }, hearts: [2, 14] } },
+    { text: ["I was in the bleachers for you and {opponent}. I yelled so much Coach Patty moved seats.", "She moved back. She wanted to see the {finisher}. She'll deny that."], when: { lastMatch: { won: true, maxDaysAgo: 3 } }, mood: 'smug' },
 
     // ---------------------------------------------------------------- alignment
     { text: "You're one of the good ones. I can tell. You've got that face like you'd help somebody's dad up off the mat.", when: { alignment: ['face'] } },
     { text: "So you're a villain now. Cool. Cool cool cool. Just so you know, I have a dartboard and a LOT of free time.", when: { alignment: ['heel'], hearts: [0, 5] }, mood: 'angry' },
     { text: ["I don't get it. You're nice to Wanda. Wanda doesn't bow to just anybody.", "So why are you doing the bad guy stuff?"], when: { alignment: ['heel'], hearts: [3, 14] }, mood: 'sad' },
-    { text: "You're a villain and you're my friend. I've decided I'm allowed one of those. ONE. Don't tell the Dust Devil there's an opening.", when: { alignment: ['heel'], hearts: [6, 14] } },
+    { text: "You're a villain and you're my friend. I've decided I'm allowed one of those. ONE. The Dust Devil doesn't get to apply.", when: { alignment: ['heel'], hearts: [6, 14] } },
     { text: "Gus calls you a tweener. My dad was never a tweener. He was a hero all the way down. ...You're fine, though. You're hero-adjacent.", when: { alignment: ['tweener'] } },
 
     // ---------------------------------------------------------------- rank
@@ -59,7 +60,7 @@ export default {
     { text: "Openers are the hardest match, Dad says. Cold crowd. You gotta light the fire. No pressure. Okay, some pressure.", when: { rank: ['rookie', 'opener'], flag: 'debuted' } },
 
     // ---------------------------------------------------------------- seasons and weather
-    { text: "Spring means state qualifiers, Thaw Brawl, and Wanda waking up. Best season. Fight me.", when: { season: [0] }, mood: 'happy' },
+    { text: "State qualifiers in three weeks. I've been sleeping in my headgear. Not on purpose. I keep forgetting it's on.", when: { season: [0] }, mood: 'happy' },
     { text: "Wanda woke up this morning, walked straight to the fence and bowed at me. Five months asleep and her manners are still better than Gary's.", when: { season: [0], time: [360, 720] }, mood: 'happy' },
     { text: "Spring rain means no outdoor runs, so Coach makes us run the bleachers. I can feel my soul in my calves.", when: { season: [0], weather: ['rain'] } },
     { text: "Summer I work the concession window at the fair. Free corn dogs. Ask for the one on the left. It's always better. Don't ask why.", when: { season: [1] } },
@@ -71,18 +72,18 @@ export default {
     { text: "You're okay, city. For a wrestler. Dad says wrestlers are all a little crazy. He'd know. He was the craziest one.", when: { hearts: [3, 5] } },
     { text: ["Can I ask you something? Do you think a girl my size could make it? In the pros?", "...Don't answer. I just wanted to hear myself ask it out loud."], when: { hearts: [6, 8] } },
     { text: "Thanks for sitting with me. In the bleachers. I don't usually cry. I usually throw things. Crying's way less satisfying.", when: { flag: 'lacey_six', notFlag: 'lacey_trainee' } },
-    { text: "When I go pro I'm wearing Dad's bandana and doing his Bulldogger off the top rope. A version he could never do. Don't tell him I said never.", when: { hearts: [9, 14], notFlag: 'lacey_trainee' }, mood: 'smug' },
+    { text: "When I go pro I'm wearing Dad's bandana and doing his Bulldogger off the top rope. A version he could never do. If he hears I said 'never' he'll do it at fifty-three out of spite.", when: { hearts: [9, 14], notFlag: 'lacey_trainee' }, mood: 'smug' },
     { text: "You're like the only grown-up who talks to me like I'm a person and not a problem. Just saying. Don't make it weird.", when: { hearts: [9, 14] }, mood: 'love' },
     { text: "Those drills you showed me? I used the single-leg at the meet Tuesday. Coach asked where I learned it. I said YouTube. You're welcome.", when: { flag: 'lacey_drills', notFlag: 'lacey_trainee' }, mood: 'smug' },
 
     // ---------------------------------------------------------------- the main story
     { text: ["Agnes showed me a picture of the Duchess crying, back in '83.", "I always thought she was the worst person ever. Now I don't know what I think."], when: { flag: 'truth_revealed', notFlag: 'reunion_done' } },
-    { text: "The Velvet Hammers, man. Forty years and they still came back. Some people just don't quit on each other. That's the whole point, isn't it.", when: { flag: 'reunion_done' } },
+    { text: "The Velvet Hammers, man. Forty years and they still came back. I cried in the bleachers. Dad cried in the truck. We've agreed nobody cried.", when: { flag: 'reunion_done' } },
 
     // ---------------------------------------------------------------- through the curtain (after her 10-heart event)
     { text: ["He made fun of himself. For two whole years. So I wouldn't know.", "I'm still kind of mad. I'm also the proudest I've ever been."], when: { flag: 'lacey_trainee', place: ['insider'] } },
     { text: "Ms. Pruitt is the PROFESSOR. I've been booing my algebra teacher for two years. She gave me an A-minus anyway. Respect.", when: { flag: 'lacey_trainee', place: ['insider'] }, mood: 'surprised' },
-    { text: "Dad and I have a signal now. He taps his mask twice. I tap my bandana twice. Nobody out there will ever know. That's the best part.", when: { flag: 'lacey_trainee', place: ['insider'] }, mood: 'love' },
+    { text: "Dad and I have a signal now. He taps his mask twice. I tap my bandana twice. Nobody out there will ever know. Pip almost knows. Pip taps his hat twice now. Pip doesn't own a hat.", when: { flag: 'lacey_trainee', place: ['insider'] }, mood: 'love' },
     { text: "I still throw darts at the Dust Devil's face. Dad asked me not to stop. He says it's the best review he ever got.", when: { flag: 'lacey_trainee', place: ['insider'] }, mood: 'happy' },
   ],
   gifts: {
@@ -111,10 +112,35 @@ export default {
       "...Yeah, I'm gonna give this to Jobber. He'll appreciate it. He's got no standards.",
     ],
     birthday: [
-      "You remembered? Dad forgot till noon. He made it up to me with pancakes shaped like Wanda. They looked like potatoes.",
-      "One more year closer to the Sportatorium. Thanks, city. Seriously.",
+      "Dad forgot till noon. He made it up with pancakes shaped like Wanda. They looked like potatoes. You brought a {item}. You win. He's going to hear about it.",
+      "Seventeen. One more year closer to the Sportatorium. And a {item}. Thanks, city. Seriously.",
+    ],
+    byItem: {
+      'trading-card': "A pack! If there's a Cowboy Clint rookie in here I'm going to lose my mind. ...There isn't. There's a Bruiser. There's always a Bruiser.",
+      vinyl: "A record. 1984. Somebody's entrance music. I'm going to learn the bass line by Friday and play it at the VFW and nobody will know why they're crying.",
+      cassette: "PUMP UP JAMS 4 SAT. Some kid made this. Some kid like me. I'm gonna listen to it on the bus to Pell's Crossing.",
+      honey: "Honey sticks? No, a whole jar. Wanda's gonna smell this on me from the parking lot.",
+      lemonade: "Fair lemonade! The shaken kind. You have to drink it fast before the ice gives up.",
+      'corn-dog': "The one on the left? ...You got the one on the left. You listened.",
+      tape: "Tape. For my fingers. Bass strings eat them. Wrestling eats them. Everything eats my fingers.",
+      'protein-shake': "Chocolate? It's chocolate. I'm going to drink it in front of Becca so she knows I'm serious.",
+      'merch-sign': "A sign! For the bleachers! I'm adding a Dust Devil insult on the back. Don't read the back.",
+      comic: "Wrestle-Bot vs. The Moon. The moon's going down. I can tell from the cover. The moon has no ground game.",
+    },
+    later: [
+      "The {lastGift} is in my locker at school. Becca asked about it. I said 'a wrestler gave it to me.' She didn't believe me. Her loss.",
+      "I told Wanda about the {lastGift}. She sniffed my hand for like a full minute. That's a yes.",
     ],
   },
+  again: [
+    "Still here, city? I've got sprawls in ten.",
+    "(Lacey pops one earbud out, raises her eyebrows, and waits. It's very efficient.)",
+    "We talked. That's my daily allowance of talking to adults. It's a small allowance.",
+  ],
+  idle: [
+    "(Lacey is tapping a bass line on her knee, mouthing the count.)",
+    "Hey. Can't stop. Wanda's dinner. She eats before we do.",
+  ],
   birthday: { season: 2, day: 17 },
   events: [
     {

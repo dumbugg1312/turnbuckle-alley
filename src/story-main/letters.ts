@@ -1,5 +1,6 @@
 import { G } from '../core/state';
 import { absDay } from '../core/time';
+import { lastMatch } from '../world/memory';
 
 /** Summer 22, the day Grandma moves into Room 7 (kept in step with chapters/beats.ts). */
 const ARRIVAL = 49;
@@ -9,17 +10,25 @@ import type { Letter } from '../systems/mail';
 /** Grandma's letters through the first year. */
 export const LETTERS: { when: () => boolean; letter: Letter }[] = [
   {
-    when: () => false, // sent by markDebut()
-    letter: {
-      id: 'grandma-2',
-      from: 'Grandma',
-      body: [
-        'Sweetheart,',
-        'Mo the mail lady (is it still Mo? There was always a Mo) will bring you this. I hear you wrestled! Somebody named Agnes wrote me. She says you sold "like a dying swan." That is the highest compliment in that town.',
-        "Did you find her? Don't tell me what she said. I know what she said. She said you have my chin.",
-        "Eat something green. Not just pie.",
-      ],
-      gift: 'grandmas-chili',
+    when: () => false, // sent by markDebut(), after the first match is recorded
+    get letter(): Letter {
+      const m = lastMatch();
+      const agnes = !m
+        ? 'She says you sold "like a dying swan." That is the highest compliment in that town.'
+        : m.won
+          ? `She says you beat ${m.opponentName} and then bowed to the bingo table, and that she approved of the bow, and that the bingo table did not.`
+          : `She says ${m.opponentName} beat you and you sold "like a dying swan." That is the highest compliment in that town.`;
+      return {
+        id: 'grandma-2',
+        from: 'Grandma',
+        body: [
+          'Sweetheart,',
+          `Mo the mail lady (is it still Mo? There was always a Mo) will bring you this. I hear you wrestled! Somebody named Agnes wrote me. ${agnes}`,
+          'Did you find her? I know what she said. She said you have my chin.',
+          'Eat something green. Not just pie.',
+        ],
+        gift: 'grandmas-chili',
+      };
     },
   },
   {
@@ -98,7 +107,7 @@ export const LETTERS: { when: () => boolean; letter: Letter }[] = [
         '~~October 1979~~ Sweetheart,',
         'Sami says I could walk this to you myself. I said the mail is more dramatic. He said I am more dramatic. He is learning.',
         "The marquee lights came on last night, every bulb, even the north side, which has been dark since I don't know when. Since forever.",
-        "Somebody fixed them. I won't guess who. I sat up till they went off at midnight. Don't tell her. You know who.",
+        "Somebody fixed them. I won't guess who. I sat up till they went off at midnight, and Sami found me asleep in the chair with both shoes on, which he says is progress.",
       ],
     },
   },

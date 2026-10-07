@@ -92,10 +92,33 @@ export default {
       "(Jobber pushes it away with one finger, climbs back into the trash can, and shuts the lid. The conversation is over.)",
     ],
     birthday: [
-      "(Jobber hears the word 'birthday' and runs three fast circles, ending in a somersault. He doesn't know what it is. He's thrilled anyway.)",
-      "(He accepts the gift, climbs your shoulder, and, with the dignity of a tiny king, eats it there.)",
+      "(Jobber hears the word 'birthday' and runs three fast circles, ending in a somersault. He doesn't know what it is. He's thrilled anyway. He takes the {item} on the way past.)",
+      "(He accepts the {item}, climbs your shoulder, and, with the dignity of a tiny king, examines it there.)",
+    ],
+    byItem: {
+      rhinestone: "(Jobber holds the rhinestone up to the light. It throws a dot on the wall. He chases the dot for four minutes, then returns, dignified, as if nothing happened.)",
+      fish: "(Jobber takes the bluegill in both paws, washes it in the gutter puddle with enormous care, and eats it facing away from you, out of manners.)",
+      sequins: "(Jobber stuffs the sequins into his cheek pouches. Then he smiles. He is now glittering from the inside.)",
+      'corn-dog': "(Jobber eats the corn dog in a spiral, like a typewriter, and returns the stick. Clean.)",
+      'chili-dog': "(Jobber eats the chili dog, all of it, and then sits very still, contemplating his choices.)",
+      'funnel-cake': "(Jobber dives face-first into the funnel cake. He comes up white. A small powdered ghost. 'Brrt.')",
+      'gas-hotdog': "(Jobber sniffs the gas station hot dog. He respects it. He has met it before. He eats it anyway.)",
+      concha: "(Jobber peels the sugar shell off the concha in one piece and wears it as a hat.)",
+    },
+    later: [
+      "(Jobber is sitting on the trash can lid, guarding the {lastGift}. He's been guarding it for days. He's taking shifts with nobody.)",
+      "(Jobber brings out the {lastGift} to show you. He wants you to know he still has it. Then he puts it back.)",
     ],
   },
+  again: [
+    "(The lid lifts half an inch. Two eyes. The lid closes. You've been seen. That's enough for Jobber.)",
+    "(Jobber holds out his paw again. Still respectfully. Still a snack request.)",
+    "(Jobber turns his back to you and polishes the medal. You've had your audience.)",
+  ],
+  idle: [
+    "(The trash can is very quiet, in the way trash cans are when something inside is listening.)",
+    "(Jobber is asleep in a cereal box. One paw hangs out, holding a pretzel, just in case.)",
+  ],
   birthday: { season: 0, day: 17 },
   events: [
     // ---------------------------------------------------------------- 2: Eye contact

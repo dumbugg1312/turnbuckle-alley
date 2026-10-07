@@ -5,6 +5,8 @@
 import { G, RANK_NAMES, type Rank } from '../../core/state';
 import { sting } from '../../core/sting';
 import { narrate, toast } from '../../ui/dialog';
+import { NPC_BY_ID } from '../../data/npcs';
+import { fillMemory, lastMatch } from '../../world/memory';
 import { addHearts } from '../../world/talk';
 import { BIRDIE } from '../data/birdie';
 import { promote } from '../career';
@@ -181,6 +183,125 @@ export async function runQueuedScenes(max = 2, who?: string): Promise<number> {
 
 // ------------------------------------------------------------------ the booth
 
+/**
+ * Back-booth talk after a show, built from what actually happened tonight:
+ * who won, how good it was, whose finisher ended it. Keys: beat (they beat
+ * you), fell (you beat them), won / lost (their own match with {other}).
+ * {finisher} is the move that ended your match, {stars} Mo's star count.
+ */
+type BoothVoice = { beat: [good: string[], rough: string[]]; fell: [good: string[], rough: string[]]; won: string[]; lost: string[] };
+const BOOTH: Record<string, BoothVoice> = {
+  dex: {
+    beat: [["You kicked out of my springboard and I nearly forgot what came next. I came up with something. Pretty sure it was a cartwheel."], ["We stepped on each other twice. Both times my fault. I was looking at the crowd. I'm always looking at the crowd."]],
+    fell: [["{finisher}. On me. You put me down so clean I heard Pip gasp from the floor."], ["I went down for {finisher} a beat early. You covered for me. I owe you a milkshake. Two straws."]],
+    won: ["Beat {other} tonight. Hazel watched from the curtain. She said 'acceptable' and then she clapped once, which is new."],
+    lost: ["{other} pinned me clean and I'm still smiling about it. Don't ask me why. Ask my ribs."],
+  },
+  earl: {
+    beat: [["You fell for me like the floor owed you money. I said sorry after. You said 'for what.' I liked that."], ["I lowered you a little hard on the second one. Sorry. I told the mat sorry too."]],
+    fell: [["{finisher}. I went over like a bookshelf. The front row moved their drinks. Courteous people."], ["I was late on the fall. I counted wrong in my head. I count pages better than seconds."]],
+    won: ["I beat {other}. I said nothing at all on the mic. Gus says it was my best promo."],
+    lost: ["{other} beat me. I took the long way to the floor so the kids could see it coming."],
+  },
+  gideon: {
+    beat: [["You made my finish look *expensive*, darling. I'll be insufferable for a week. Longer if Clementine is kind."], ["You were behind me on the spots tonight. I could hear you thinking. Think less. Be gorgeous."]],
+    fell: [["{finisher}, and I landed on my good side. You thought of my good side. That's the nicest thing a person has done for me in months."], ["You beat me and my hair moved wrong on the way down. I'm not blaming you. I'm blaming the fan by the door."]],
+    won: ["Beat {other}. Somebody in row two booed me so hard their hat came off. I'm keeping the memory in a drawer."],
+    lost: ["{other} got me. I lay there an extra second because the light was doing something lovely on the sequins."],
+  },
+  mariposa: {
+    beat: [["My abuela watched your fall from the second row. She says you dropped like a quinceañera cake. That's good. I think it's good."], ["You missed the rope on the tope. I caught you anyway. Next time, look for me. I'll be there."]],
+    fell: [["{finisher}. You put me down and the mask didn't move an inch. That's trust. I'm going to eat four tacos about it."], ["We were loose tonight. I was tired. Six hours at the plancha before bell time. That's mine, not yours."]],
+    won: ["Beat {other}. Abuela says my headscissors were 'a little American' again. I'm taking it as a note."],
+    lost: ["{other} pinned me. The kids in front were crying. I waved on the way out so they'd know I'm okay."],
+  },
+  hazel: {
+    beat: [["That was clean. Your feet were under you every time. I could tell from the sound."], ["You landed flat on the second bump. Ice it tonight. Then come to the studio at seven and I'll show you why."]],
+    fell: [["{finisher}. You protected my knee the whole way down and didn't make a show of it. Thank you."], ["You beat me, and I'm sore in a way I don't like. Not your fault. The left side's still learning."]],
+    won: ["Got the win over {other}. I counted my breathing the whole time. Four in, four out. Nobody could tell."],
+    lost: ["{other} beat me. It was the right finish. I keep having to remind the competitive part of me."],
+  },
+  tiny: {
+    beat: [["You bumped for my big boot like it was a truck. Earl clapped from the back. He never claps. He forgets his hands."], ["I squashed you a little too much on the corner. Sorry! I brought you a cake. It's in my pocket. It's flat now."]],
+    fell: [["{finisher}! I went down like a wedding cake on a hot day. Slowly, then all at once. The crowd loved it."], ["You beat me and I think I fell on the cake I had in my boot. Tonight was not a cake night."]],
+    won: ["I beat {other}! The villain surcharge jar is full. I'm giving it to the VFW for chairs."],
+    lost: ["{other} beat me fair. Somebody yelled that my cakes are too small. I yelled back that they're the right size. They are."],
+  },
+  bo: {
+    beat: [["That was the tidiest match I've worked all month. I wrote down the timing. I write everything down."], ["You were a beat behind on the double-team. Buck says it was me. I have the notes. It was a little bit me."]],
+    fell: [["{finisher}. On a Bruiser. Buck's going to write a song about it and I'm going to have to hear it."], ["You beat us and I tripped on Buck's tape measure on the apron. It was in his boot. Why was it in his boot."]],
+    won: ["We beat {other}. Buck hugged me in the ring. On camera. In public. Our dad called."],
+    lost: ["{other} beat us. Buck says it's character growth. I say we owe the VFW a chair."],
+  },
+  buck: {
+    beat: [["That was a SONG. That match had a chorus. You came in on the second verse like you'd heard it before."], ["We stepped on each other's feet so many times it was basically line dancing. Not good line dancing."]],
+    fell: [["{finisher}! I'm writing it down. Not the match. A song about the match. It's in G."], ["You beat me and I lost my tape measure somewhere in the third row. If you see it, it's Bo's."]],
+    won: ["We beat {other}! Bo let me do the pose. Bo never lets me do the pose."],
+    lost: ["{other} got us. I've got a sad song for it already. Two, actually. One's for Bo."],
+  },
+  clint: {
+    beat: [["You took that clothesline like a pro. I mean that the old way. Like somebody who's been doing this since leather was the only kind of boot."], ["You caught a little too much of the rope. Get Doc to look at your back before Monday. Humor an old man."]],
+    fell: [["{finisher}. That's a real finish. Lacey'd have stood up for it, if she ever stood up for anything I'm in."], ["You beat me and my knees made a noise I've only ever heard from a screen door. Doc will hear about it. Doc hears about everything."]],
+    won: ["Beat {other} tonight. Wanda watched from the truck. She doesn't clap, but she leans."],
+    lost: ["{other} put me down. At my age you take a pin like a nap. Gratefully."],
+  },
+  professor: {
+    beat: [["Seventeen minutes, and every hold had a reason. You'd be surprised how rare that is. You'd be surprised what I grade."], ["Your arm drag was sloppy. I say that because you're capable of a clean one. I've seen it. Fix it by Wednesday."]],
+    fell: [["{finisher}. I was in the right place for it and so were you. That's geometry, and it's very satisfying."], ["You beat me and we both rushed the finish. I'm deducting points from myself. Half a point. I'm generous."]],
+    won: ["Beat {other}. Coach Kowalski was in the second row, timing it. I lost a little focus. I won anyway. Don't put that in a story."],
+    lost: ["{other} got me with a small package. I taught that to a sophomore once. Everything comes back around."],
+  },
+  lou: {
+    beat: [["You let an old man look good. That's a skill, sugar. That's half the business."], ["Little rough tonight. That's alright. I had rough ones for six years. Then I had good ones for thirty."]],
+    fell: [["{finisher}. Took it like I was twenty. I'll feel it like I'm seventy-seven. Worth it."], ["You beat me and I forgot the next spot. Not your fault. Some nights the old songs come in and the new ones go out."]],
+    won: ["Beat {other}. Sang a verse on the way out. Agnes sang the harmony. She's flat. It was perfect."],
+    lost: ["{other} put me down. I stayed down long enough for the kids to worry and short enough for Doc not to."],
+  },
+};
+
+const BOOTH_ANY: BoothVoice = {
+  beat: [["Good match. You made my finish look like it meant something."], ["We were off tonight. Both of us. Next one we'll be on."]],
+  fell: [["{finisher}. Clean. I've got nothing to say about it, and that's a compliment."], ["You beat me. It was a little loose. Let's go over it Monday."]],
+  won: ["Got the win over {other}. I'll take it."],
+  lost: ["{other} beat me tonight. It was the right call."],
+};
+
+const BIRDIE_ON_YOU: { won: boolean; good: boolean; text: string[] }[] = [
+  { won: true, good: true, text: ["{finisher}, and the whole building came up off the bleachers like somebody pulled a string. {stars} stars from where I sat, and I sat on the cheap stool."] },
+  { won: true, good: false, text: ["Hand raised. {stars} stars, from where I sat. The back row was checking their watches in the middle, sugar. I saw a man wind his."] },
+  { won: false, good: true, text: ["You lost to {opponent} and two kids by the curtain cried into the same napkin. {stars} stars. June wants the napkin back."] },
+  { won: false, good: false, text: ["{opponent} beat you, and the middle sagged like a porch. We'll go through it Monday. Eat your pie first."] },
+];
+
+function boothTalk(shows: { segs: { seg: { participants: string[]; playerInvolved: boolean }; sides?: string[][]; winnerSide?: number | null }[] }[], r: ReturnType<typeof rng>): { who: string; text: string; mood: Mood } | null {
+  const fill = (t: string, extra: Record<string, string> = {}) => fillMemory(t, 'birdie', extra);
+  const m = lastMatch();
+  const tonight = m && m.day === today() ? m : null;
+  const booths = (id: string) => id !== PLAYER && id !== 'mothman' && !!NPC_BY_ID[id]?.insider;
+  if (tonight && booths(tonight.opponent) && r.chance(0.7)) {
+    const v = BOOTH[tonight.opponent] ?? BOOTH_ANY;
+    const good = tonight.stars >= 3;
+    const set = tonight.won ? v.fell : v.beat;
+    return { who: tonight.opponent, text: fill(r.pick(set[good ? 0 : 1])), mood: good ? 'happy' : 'neutral' };
+  }
+  if (tonight) {
+    const good = tonight.stars >= 3;
+    const pick = BIRDIE_ON_YOU.find((b) => b.won === tonight.won && b.good === good)!;
+    return { who: 'birdie', text: fill(r.pick(pick.text)), mood: good ? 'happy' : 'neutral' };
+  }
+  // Night off for you: somebody talks about their own match.
+  const segs = shows.flatMap((x) => x.segs).filter((g) => !g.seg.playerInvolved && g.sides && g.winnerSide != null);
+  const g = segs.length ? r.pick(segs) : null;
+  if (!g || !g.sides) return null;
+  const who = g.sides.flat().find(booths);
+  if (!who) return null;
+  const mine = g.sides.findIndex((side) => side.includes(who));
+  const other = g.sides.filter((_, i) => i !== mine).flat()[0];
+  const v = BOOTH[who] ?? BOOTH_ANY;
+  const won = g.winnerSide === mine;
+  return { who, text: fill(r.pick(won ? v.won : v.lost), { other: NameOf(other ?? 'somebody') }), mood: won ? 'happy' : 'neutral' };
+}
+
 export function waitingPitches(): PitchState[] {
   return S().pitches.filter((p) => p.status === 'waiting');
 }
@@ -198,11 +319,8 @@ export async function boothScene(opts: { afterShow: boolean }): Promise<boolean>
       'Bingo is still going next door. In the back booth, the insiders finally get to be themselves.',
       'Hot Tag Diner, after the show. Milkshakes, two straws each, and the good napkins.',
     ]));
-    const chatty = [...new Set(s.shows.filter((x) => x.day === today()).flatMap((x) => x.segs.flatMap((g) => g.seg.participants)))].filter((x) => x !== PLAYER && persona(x).booth.length && x !== 'mothman');
-    if (chatty.length) {
-      const who = r.pick(chatty);
-      await line(who, render(r.pick(persona(who).booth), { cast: {}, rng: r }), 'happy');
-    }
+    const talk = boothTalk(s.shows.filter((x) => x.day === today()), r);
+    if (talk) await line(talk.who, talk.text, talk.mood);
   }
   await runQueuedScenes(3);
   if (s.career.pending && !['assistant', 'pencil', 'owner'].includes(s.career.pending)) await promotionScene('insider');

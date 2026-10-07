@@ -42,17 +42,17 @@ export default {
     { text: "Monday. Deliveries. The bakery van. It is... small. I am... folded. We do not speak of it.", when: { place: ['public'], weekday: [0] } },
     { text: "Tonight I climb. Everyone else... falls.", when: { showDay: true, place: ['public', 'show'] }, mood: 'angry', weight: 2 },
     { text: "(Earl is on the gazebo bench, reading. A pigeon sits on his knee. When he sees you, he sets it down. Gently. Then he glares.)", when: { place: ['public'], map: ['town'], time: [1110, 1320] } },
-    { text: "The library keeps WRSL's old program logs. Fall of 1983 has a spot that never aired. 'Velvet Hammers Rematch.' Paid. Unplayed. I have read it eleven times.", when: { place: ['public'], hearts: [3, 10], notFlag: 'truth_revealed' }, mood: 'sad' },
+    { text: "The library keeps WRSL's old program logs. Fall of 1983 has a spot that never aired. 'Velvet Hammers Rematch.' Paid. Unplayed. I have read it until the page went soft.", when: { place: ['public'], hearts: [3, 10], notFlag: 'truth_revealed' }, mood: 'sad' },
 
     // ---------------------------------------------------------------- Public: weather and seasons
     { text: "Rain. Good. Fewer... interruptions.", when: { place: ['public'], weather: ['rain'] } },
     { text: "The sky is clearing its throat. Be quiet. It's... almost finished.", when: { place: ['public'], weather: ['storm'] } },
     { text: "Snow. A blanket. For the books. And for... the Mountain.", when: { place: ['public'], weather: ['snow'] } },
     { text: "Wind. The pages are... restless. I do not approve.", when: { place: ['public'], weather: ['wind'] } },
-    { text: "Spring. Everything is overdue in spring. Library cards. Sunshine. Hope. Bring them back.", when: { place: ['public'], season: [0] }, weight: 2 },
-    { text: "Summer reading program. Forty children. Forty books. Zero noise. That is... the plan.", when: { place: ['public'], season: [1] } },
-    { text: "Fall. Do not touch the leaves. I am... pressing them. All of them. For... reasons.", when: { place: ['public'], season: [2] } },
-    { text: "Winter. The library is warm. Sit. No one has to... talk.", when: { place: ['public'], season: [3] } },
+    { text: "Someone returned a gardening book with a pressed tulip in chapter four. I have... left it there. It is the best part of the chapter.", when: { place: ['public'], season: [0] }, weight: 2 },
+    { text: "Summer reading. Forty children signed up. Thirty-nine finished. The fortieth is Pip. He is reading the wrestling almanac again. With notes. In the margins. In PEN.", when: { place: ['public'], season: [1] } },
+    { text: "The leaves on the reading-room sill. Do not touch them. I am... pressing them. All of them. For... reasons.", when: { place: ['public'], season: [2] } },
+    { text: "The radiator in the stacks knocks twice, then sighs. I have sat beside it every winter for nine years. We have... an understanding.", when: { place: ['public'], season: [3] } },
 
     // ---------------------------------------------------------------- Insider: Earl, whispering
     { text: "Hi. Sorry. About all the growling. It's a lot. I'm just going to sit down. Is this chair okay? Sorry, chair.", when: { place: ['insider'], hearts: [0, 5] }, weight: 2 },
@@ -66,13 +66,17 @@ export default {
     { text: "You're new, so: sell big for me. I can't really *throw* you. I mostly lower you. Fall like it hurts and I'll make it look good.", when: { place: ['insider'], rank: ['rookie', 'opener'] } },
     { text: "Main event. Be gentle with the small ones on the way up. They get big. Everybody does, eventually.", when: { place: ['insider'], rank: ['main', 'assistant', 'pencil', 'owner'] } },
     { text: "Show day. My hands are shaking. Don't tell the Mountain. He thinks he's made of stone.", when: { place: ['insider'], showDay: true }, mood: 'sad' },
-    { text: "Rain on the library roof is the best sound there is. Better than pyro. Don't tell Hank.", when: { place: ['insider'], weather: ['rain'] } },
+    { text: "Rain on the library roof is the best sound there is. Better than pyro. Hank would argue. Hank argues with rain.", when: { place: ['insider'], weather: ['rain'] } },
+    { text: ["You and {opponent}. I watched from the curtain with my fingers in my ears for the pyro.", "You went over the top rope like a... dropped coat. A good coat. Sorry. It was a compliment. It sounded better in my head."], when: { place: ['insider'], lastMatch: { maxDaysAgo: 3 } } },
+    { text: "I set you down like glass. I counted. One, two, glass. Are your shoulders... alright? I think about the shoulders.", when: { place: ['insider'], lastMatch: { won: false, opponent: ['earl'], maxDaysAgo: 5 } }, mood: 'sad' },
+    { text: "You beat the Mountain. The Mountain has... feelings about it. Earl is very proud of you. Earl had pie.", when: { place: ['insider'], lastMatch: { won: true, opponent: ['earl'], maxDaysAgo: 5 } }, mood: 'happy' },
+    { text: "The Mountain... remembers {venue}. The Mountain... is not finished with you.", when: { place: ['public'], lastMatch: { won: true, opponent: ['earl'], maxDaysAgo: 7 } }, mood: 'angry' },
     { text: "It's late. The library at night is full of people. They're all inside the books. Don't say hi. They're shy.", when: { time: [1320, 1560] }, weight: 2 },
 
     // ---------------------------------------------------------------- Close: the sparrow, the book
     { text: "A person my size learns to take up less room. Then Birdie says, take up *all* of it, on Saturdays. Nicest thing anyone ever said to me.", when: { place: ['insider'], hearts: [6, 10] } },
     { text: "I'm working on something. A small thing. ...No. Not yet. It isn't done being small.", when: { place: ['insider'], hearts: [5, 7], notFlag: 'earl_book_read' } },
-    { text: "You're the only one who's heard the whole book. Don't tell Tiny. She'll want to bake it.", when: { flag: 'earl_book_read', place: ['insider'], notFlag: 'earl_book' }, mood: 'happy' },
+    { text: "You're the only one who's heard the whole book. Tiny can't know. She'll want to bake it.", when: { flag: 'earl_book_read', place: ['insider'], notFlag: 'earl_book' }, mood: 'happy' },
     { text: "The crowd cheered me Saturday. I didn't know what to do with my hands. Dex had to show me. Over the head, he said. Like a person.", when: { flag: 'earl_gentle_turn', place: ['insider'] }, mood: 'happy', weight: 2 },
     { text: "'E. O. Pebble.' It's a good name. Small. Round. Fits in a pocket. Sheriff Bev cried at the window display. I cried in the stacks. Quietly.", when: { flag: 'earl_pebble', place: ['insider'] }, mood: 'happy', weight: 2 },
     { text: "Sheriff Bev asked me for a pen. She says she wants to arrest whoever wrote the sparrow book for making her cry on duty. I... said I'd look into it.", when: { flag: 'earl_pebble', place: ['public'] } },
@@ -118,10 +122,33 @@ export default {
       "Please don't take this the wrong way. I'm going to put this in the donation bin. Gently. With an apology.",
     ],
     birthday: [
-      "My birthday. You remembered. Usually I sit in the library alone with a cake I bought myself. Tiny sends one. But this. Thank you.",
-      "The eighth of fall. The leaves are at their best. Birthdays should be that careful. ...Thank you. Truly.",
+      "My birthday. Usually I sit in the library after close with a cake I bought myself. Tiny sends thirty small ones. And now a {item}. I'm... going to have to sit on the floor.",
+      "The eighth of fall. The leaves are at their best. (He holds the {item} up to the window light, as though it might have a watermark.) ...Thank you. Truly.",
+    ],
+    byItem: {
+      wildflowers: "From the creek bank. The little blue ones are speedwell. The yellow ones are... I don't know. I'm going to find out. Tonight. In the botany section.",
+      'tiny-cake': ["(He holds it on one fingertip.) Thirty is a reasonable number of these. One is... a gift.", "I am going to eat it in two bites. Tiny says one. Tiny is wrong. It deserves two."],
+      teacup: "Chipped. Floral. Just big enough for chamomile and one... small sorrow. I'll use it at the desk. The Mountain does not drink from teacups. Earl does.",
+      honey: "Honey. For the chamomile. The chamomile has been very lonely.",
+      comic: "Wrestle-Bot vs. The Moon. ...I am going to file this under astronomy, and wait to see who finds it.",
+      'old-program': "1979. Look at the program's typeface. Someone chose it on purpose. I'll put it in the archive box marked DO NOT LEND. It's a small box.",
+      'river-stone': "Smooth. Cool. It fits my palm. Most things don't. I'll use it as a paperweight for the sparrow drawings.",
+      cassette: "A mixtape. I'll play it at the desk after close. Quietly. Very quietly. The library has... rules, and I wrote some of them.",
+    },
+    later: [
+      "The {lastGift} is on the circulation desk. A child asked if it was overdue. I said it was... on loan. Permanently.",
+      "I drew the {lastGift}. Next to a sparrow. The sparrow is looking at it. I think the sparrow approves.",
     ],
   },
+  again: [
+    "(Earl lifts one huge hand an inch off the desk. Hello again. Quietly.)",
+    "Sorry. I'm... reshelving. Talk while I walk? I walk very slowly in the poetry section.",
+    "Still here. Me too. Five more minutes until close. You can... stay for them.",
+  ],
+  idle: [
+    "(Earl is stamping return dates with enormous care. Each one lands exactly straight.)",
+    "...Shh. (It's a friendly shush. You can tell by the pause.)",
+  ],
   birthday: { season: 2, day: 8 },
   events: [
     // ---------------------------------------------------------------- 2: The shush
@@ -154,7 +181,7 @@ export default {
           api.hearts('earl', -10);
           await api.narrate("You push back through the door and announce, to a full reading room, that the Mountain is a big softie.");
           await api.sayMood('earl', 'angry', "The Mountain... is not... soft.");
-          await api.narrate("Eleven patrons look at you. One of them is Mayor Oakes. Earl won't meet your eyes for the rest of the day, and you suspect it's not the act.");
+          await api.narrate("Nine patrons look at you. One of them is Mayor Oakes. Earl won't meet your eyes for the rest of the day, and you suspect it's not the act.");
         }
       },
     },
@@ -185,7 +212,7 @@ export default {
           api.hearts('earl', 30);
           await api.sayMood('earl', 'surprised', "The little one. On the big shape. That's her on the mountain. ...How did you know that's the one I can't draw?");
         }
-        await api.say('earl', "Don't tell anyone. The Mountain doesn't draw birds.");
+        await api.say('earl', "Please. Nobody can know. The Mountain doesn't draw birds.");
         await api.narrate("He closes the sketchbook. Then, very carefully, he tears out the page you picked and slides it across the table.");
         api.flag('earl_sparrow', c);
         await api.say('earl', "Keep it. So there's a copy that isn't in my head.");
@@ -260,7 +287,7 @@ export default {
           await api.say('earl', "I'll let her pick. When she's ready. Thank you for asking *her*, and not me.");
         }
         api.flag('earl_book_read', true);
-        await api.narrate("As you leave, June sets a slice of pie in front of Earl, wipes her eyes with a dishtowel, and says the onions are acting up. There are no onions in the Hot Tag at nine p.m.");
+        await api.narrate("As you leave, June sets a slice of pie in front of Earl without a word and goes to wipe a table that is already clean. She wipes it for a long time.");
       },
     },
     // ---------------------------------------------------------------- 10: Own name, or Pebble
@@ -367,7 +394,7 @@ export default {
           await api.sayMood('earl', 'love', "That's the first time anyone has ever said that to me and meant it in the right direction.");
         } else {
           api.hearts('earl', 15);
-          await api.sayMood('earl', 'happy', "Thank you. I rewrote the 'two' eleven times. It was always going to be two.");
+          await api.sayMood('earl', 'happy', "Thank you. I rewrote the 'two' thirty times. It was always going to be two.");
         }
         await api.say('earl', "Hank's been braiding a rope. I'm told it's a rope you hold out. On the apron. Like a tag. I'm very good at being tagged. I just... stand there. And let it land.");
         await api.say('earl', "When you're ready. I'll have already apologized to the ring ropes. Take your time. Mountains are good at waiting.");

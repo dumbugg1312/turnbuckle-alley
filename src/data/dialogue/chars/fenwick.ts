@@ -26,9 +26,9 @@ export default {
     { text: "This is Static, my parakeet. Named for the sound a TV makes when it's thinking. He says 'tracking' and 'oh no.' Mostly 'oh no.'", mood: 'happy' },
     { text: "Which house on Elm had the first color television? The Purcells, 1966. Folks came from three streets over to watch the weather." },
     { text: ["Somewhere out there is the 1979 Haunted House match. Unaired. The night they hung the porch light.", "I would give my left loupe."] },
-    { text: "Pip comes by on Saturdays. I give him trading cards. Free. Don't tell. He's my apprentice. He has the eye. Mostly the eye." },
+    { text: "Pip comes by on Saturdays. I give him trading cards. Free. Keep that quiet. He's my apprentice. He has the eye. Mostly the eye." },
     { text: "Thermos soup. Tomato. I bring it everywhere. Stakeouts, flea market, the dentist. A man should be prepared to stay a while." },
-    { text: ["Want a tape about the old days? Bins in the back. Dig.", "The good ones are always under the bad ones. That's true of tapes and also of most of life."] },
+    { text: ["Want a tape about the old days? Bins in the back. Dig.", "The good ones are always under the bad ones. Under the bowling videos. It's always under the bowling videos."] },
     { text: "I'll fix anything with a picture tube. Anything. I fixed the Mayor's TV in 2009 and she cut a ribbon on it. On the TV." },
 
     // ---------------------------------------------------------------- the Mothman (always whispered)
@@ -54,8 +54,9 @@ export default {
 
     // ---------------------------------------------------------------- shows
     { text: "Saturday! Binoculars charged. Rafters mapped. If the porch light comes on tonight, I'm getting the clearest photo in history.", when: { weekday: [5] }, mood: 'happy' },
-    { text: ["Did you SEE it Saturday? Forty seconds! I got a photo.", "It's mostly my thumb. But the thumb is pointing right AT it."], when: { weekday: [6] }, mood: 'surprised' },
-    { text: "You took a nasty bump. I have a VCR head cleaner, but that's for tapes. For people I recommend soup. I have soup.", when: { weekday: [3, 6], flag: 'debuted', hearts: [2, 14] } },
+    { text: ["I think I saw it last night. In the rafters. Forty seconds! I got a photo.", "It's mostly my thumb. But the thumb is pointing right AT it."], when: { weekday: [6] }, mood: 'surprised' },
+    { text: "{opponent} gave you a nasty bump. I have a VCR head cleaner, but that's for tapes. For people I recommend soup. I have soup.", when: { lastMatch: { won: false, maxDaysAgo: 3 }, hearts: [2, 14] } },
+    { text: ["(whispering) Your match with {opponent}. Did you feel a draft? Around the ninth minute? From above?", "No? ...Hm. I'm writing 'no draft' with a question mark."], when: { lastMatch: { venue: ['sportatorium'], maxDaysAgo: 4 } } },
 
     // ---------------------------------------------------------------- alignment
     { text: "You're a hero! The Mothman favors heroes. Statistically. I've charted it. It helps whoever the crowd most needs helped. Often you.", when: { alignment: ['face'] } },
@@ -71,8 +72,8 @@ export default {
     { text: "Spring fog off the creek. Prime sighting weather. I'll be up all night. Well. Till midnight. Midnight is all night, for me.", when: { season: [0] } },
     { text: "Spring rain! Basements flood, folks haul out boxes, and the boxes have tapes in them. I'm not happy about the floods. I'm happy about the boxes.", when: { season: [0], weather: ['rain'] } },
     { text: "Summer fireflies wreck my sighting map. Every blink's a red pin. I have to hand-sort them. It takes all of August.", when: { season: [1] } },
-    { text: "Fall. Long nights, creek fog, peak Mothman season. I made a calendar. You can have one. It's mostly fog.", when: { season: [2] } },
-    { text: "Winter. The flea market's half empty. Just me, the hand warmers, and a man selling one boot. Bless him.", when: { season: [3] } },
+    { text: "Creek fog every night this month. I made a sighting calendar. You can have one. October is just the word FOG, thirty-one times, in my best hand.", when: { season: [2] } },
+    { text: "The flea market's half empty in the cold. Just me, the hand warmers, and a man selling one boot. Bless him. I hope he finds the other buyer.", when: { season: [3] } },
     { text: "A storm knocks the power out, and suddenly everyone remembers they own a VCR. Best week of my year, a good blackout.", when: { weather: ['storm'] }, mood: 'happy' },
 
     // ---------------------------------------------------------------- hearts
@@ -93,8 +94,8 @@ export default {
     { text: "I taped your wedding! From the rafters. Not for the Mothman. Well. Partly for the Mothman. Mostly for you. You looked wonderful.", when: { married: true }, mood: 'love' },
   ],
   gifts: {
-    loves: ['mothman-figure', 'feather', 'polaroid', 'old-program'],
-    likes: ['cassette', 'vinyl', 'comic', 'coffee', 'toy-wrestler', 'scrap', 'river-stone'],
+    loves: ['mothman-figure', 'feather', 'polaroid'],
+    likes: ['old-program', 'cassette', 'vinyl', 'comic', 'coffee', 'toy-wrestler', 'scrap', 'river-stone'],
     dislikes: ['protein-shake', 'sequins', 'fiber'],
   },
   giftReplies: {
@@ -117,10 +118,36 @@ export default {
       "You're going to tell me this is a big owl too, aren't you.",
     ],
     birthday: [
-      "My birthday! Nobody... well, Mo remembered. She brought a card with a moth on it. Funny coincidence. Very thoughtful woman.",
-      "Fifty-nine! And still no clear photo. This is the year, friend. This is the year.",
+      "My birthday! Mo brought a card with a moth on it this morning. Funny coincidence. And now a {item}! Two gifts! Static, we're POPULAR.",
+      "Fifty-nine! Static learned a new word for it. The word is \"happy.\" He follows it with \"oh no.\" A {item}! Thank you, friend!",
+    ],
+    byItem: {
+      'mothman-figure': ["The eyes glow. THE EYES GLOW.", "(He turns off the stall lamp and holds it up in the dark, and doesn't say anything for a long time.)"],
+      feather: ["Is that... a wing? This SIZE?", "(whispering) Where. When. Which way was the wind. No. Don't say it here. Static is listening and Static talks."],
+      polaroid: "A blurry crowd, the flash late, somebody's purse in the air. Look at the top left corner. LOOK at it. ...It's a light fixture. It's probably a light fixture.",
+      'old-program': "A 1979 program! I'll file it with the tapes from that season. They'll keep each other company. They're from the same year. They'll have things to say.",
+      cassette: "A mixtape. Saturday pump-up jams. I'll digitize it. No I won't. I'll play it in the van like a civilized man.",
+      vinyl: "1984 pressing. Grooves are clean. Somebody loved this and also owned a dust jacket. That's rare. That's a responsible kind of love.",
+      comic: "Wrestle-Bot vs. The Moon! Issue one! The moon has a face on the cover. Faces on the moon are a whole separate theory. I'll tell you on Thursday.",
+      coffee: "Coffee! For the stakeout. I'll last till half past twelve now. That's practically dawn.",
+      'toy-wrestler': "A vintage figure! Bendable. Chewed on the boot. I can date him by the chew. That's a 1986 chew.",
+      scrap: "Scrap metal. I'll make an antenna. For... reasons. Reception reasons. Rafters reasons.",
+      'river-stone': "From the creek? Near the water tower? (He holds it to his ear.) ...Nothing. Worth checking.",
+    },
+    later: [
+      "(whispering) The {lastGift} is in the Annex. Under glass. Next to the good soup thermos.",
+      "Static's been saying a new word since you gave me the {lastGift}. It's 'oh.' Just 'oh.' I think he's moved.",
     ],
   },
+  again: [
+    "(whispering) Back so soon? Were you followed? ...By anything with wings?",
+    "Static says 'oh no.' That means 'welcome back.' Mostly.",
+    "I'm in the middle of rewinding. Rewinding can't be rushed. Well, it can. It's called fast-forward. That's different.",
+  ],
+  idle: [
+    "(Fenwick is holding a tape up to the light, squinting at the ribbon like it owes him an answer.)",
+    "Fifty cents a tape. A quarter if you've seen something. Have you seen something? No? Fifty cents.",
+  ],
   birthday: { season: 2, day: 26 },
   events: [
     {
@@ -230,7 +257,7 @@ export default {
       id: 'fenwick-10', hearts: 10, title: 'Friend',
       script: async (api) => {
         await api.narrate('Fenwick grabs your sleeve. He looks like he has not slept, which turns out to be exactly the case.');
-        await api.say('fenwick', "I did it. Eleven alarms. Static helped. I'm going to be awake at five a.m. Tomorrow. At the water tower. Come with me?");
+        await api.say('fenwick', "I did it. Fourteen alarms. Static helped. I'm going to be awake at five a.m. Tomorrow. At the water tower. Come with me?");
         await api.fade();
         await api.narrate('Five in the morning. Fog off the creek, thick as cotton. The water tower is a gray shape overhead, its safety light blinking.');
         await api.narrate('Fenwick is wrapped in three scarves, holding his thermos like a lantern. He is vibrating with awake.');

@@ -34,8 +34,10 @@ export default {
     { text: "When's your first match? I'll be at the barricade. I like to be at a person's first match. Things happen at first matches.", when: { notFlag: 'debuted' } },
 
     // ---------------------------------------------------------------- the chair
-    { text: "That fella hit you with a chair. I saw it. Say the word and I'll have him in cell two by supper.", when: { flag: 'debuted' }, mood: 'angry' },
-    { text: "Saturday's chair shot has been logged into evidence. Birdie wouldn't let me take the chair. I took a photo of the chair.", when: { flag: 'debuted', weekday: [6] } },
+    { text: "{opponent} put you on the mat. I saw it from the barricade. Say the word and I'll have that one in cell two by supper.", when: { lastMatch: { won: false, maxDaysAgo: 4 }, alignment: ['face', 'tweener'] }, mood: 'angry' },
+    { text: ["You beat {opponent}. I don't know how yet. I suspect the ropes.", "I've written THE ROPES on an index card and pinned it next to your photo."], when: { lastMatch: { won: true, maxDaysAgo: 4 }, alignment: ['heel'] }, mood: 'angry' },
+    { text: "You beat {opponent} fair and square. I watched for anything unfair. I watched so hard I got a headache. Nothing. Good egg.", when: { lastMatch: { won: true, maxDaysAgo: 4 }, alignment: ['face', 'tweener'] }, mood: 'happy' },
+    { text: "Last night's match has been logged. Birdie wouldn't let me take the ring rope into evidence. I took a photo of the ring rope.", when: { lastMatch: { maxDaysAgo: 1 } } },
     { text: ["Still got that form you signed. It's in a folder. The folder's in a drawer.", "Forms don't expire. I made sure of it. I wrote the form."], when: { flag: 'bev_form' }, mood: 'smug' },
 
     // ---------------------------------------------------------------- weekly rhythm
@@ -53,7 +55,7 @@ export default {
 
     // ---------------------------------------------------------------- alignment
     { text: "You're a good egg. Tell you what, I'll keep an extra eye on your matches. I've only got two eyes, but I'll find another one.", when: { alignment: ['face'] } },
-    { text: "Sheriff's office has received eleven complaints about your conduct. Nine are from Agnes. The other two are also Agnes.", when: { alignment: ['heel'] } },
+    { text: "Sheriff's office has received fourteen complaints about your conduct. Twelve are from Agnes. The other two are also Agnes, in a different pen.", when: { alignment: ['heel'] } },
     { text: ["I can't believe you'd turn on that sweet kid. I watched it from the barricade.", "I had the cuffs halfway out. Birdie looked at me. I put them back."], when: { alignment: ['heel'], hearts: [0, 5], flag: 'debuted' }, mood: 'angry' },
     { text: "You're on the board now. Middle row. I put up a nice photo, at least. You've got a good side. You're using it for crime.", when: { alignment: ['heel'], hearts: [3, 14] } },
     { text: "Off the record, I think you're a decent person making bad choices in a ring. On the record, you're a menace. Both go in the file.", when: { alignment: ['heel'], hearts: [6, 14] } },
@@ -81,7 +83,7 @@ export default {
 
     // ---------------------------------------------------------------- the main story
     { text: ["Heard the Duchess moved into the Evening Bell. I've driven past four times. Keeping an eye. Professionally.", "She waved at me. With the back of her hand."], when: { flag: 'grandma_in_town', notFlag: 'truth_revealed' }, mood: 'angry' },
-    { text: ["Took the Duchess down off my board this morning. Top corner, forty years.", "Didn't feel how I thought it would. Some cases you close by understanding them."], when: { flag: 'truth_revealed' } },
+    { text: ["Took the Duchess down off my board this morning. Top corner, forty years.", "Didn't feel how I thought it would. Doug lay down on the photo. I let him."], when: { flag: 'truth_revealed' } },
     { text: "Velvet Hammers back together. I stood at the barricade and didn't try to arrest a soul all night. Best shift of my life.", when: { flag: 'reunion_done' }, mood: 'happy' },
 
     // ---------------------------------------------------------------- life events
@@ -112,18 +114,42 @@ export default {
       "This looks like something I'd confiscate from a Bruiser.",
     ],
     birthday: [
-      "You remembered? Lorraine's making a cake. Doug already ate part of it. He's under investigation.",
-      "Fifty-seven. Still no arrest at a show. This is the year. Thanks, kid.",
+      "A {item}, on my birthday. Lorraine's making a cake. Doug already ate part of it. He's under investigation.",
+      "Fifty-seven. Lorraine put all fifty-seven candles on the cake and Doug barked at it till the fire went out. The {item} goes in the good drawer.",
+    ],
+    byItem: {
+      paperback: "A mystery. Missing the last page. Good. I'll solve it myself. It was the brother-in-law. It's always the brother-in-law.",
+      feather: ["That's a moth wing. That size? Where did you find this. Time and place. Write it down.", "...I'm keeping it. Evidence. Fenwick gets a photo, not the wing."],
+      'hot-tag-special': "The Special. Two eggs, hash browns, the pancake. I'm on duty, so I'll eat it standing up by the cruiser, like a professional.",
+      coffee: "June's coffee. Did she give you the chipped mug? ...No? Good. Then you're not on the list.",
+      honey: "Honey. For my tea and for the raccoon, if I'm honest. We have an arrangement. He doesn't know about it.",
+      'chili-dog': "Chili dog. Lorraine says I can't have these. Lorraine isn't here. Doug, you saw nothing.",
+      polaroid: "Somebody in the front row's got a purse up. That's Agnes. That's Agnes in 1980-something, mid-swing. I'm framing it for the board.",
+      'river-stone': "Smooth one. I'll put it on the paperwork in the wind. Paperwork's always trying to leave.",
+      fish: "Bluegill. You caught this with Lou? He tell you about the one that got away? It didn't get away. He let it go. He does that.",
+    },
+    later: [
+      "That {lastGift} is on my desk. Doug's been guarding it. He's never guarded anything. I'm proud of him.",
+      "Lorraine asked where the {lastGift} came from. I told her a good egg. She knew who I meant.",
     ],
   },
+  again: [
+    "Still here? I'm on patrol. Walk with me or move along. Those are the options.",
+    "We've spoken. I've made a note. The note says 'spoke twice.'",
+    "(Bev tips her hat without stopping. Doug does not tip anything.)",
+  ],
+  idle: [
+    "Quiet afternoon. I don't trust it. I don't trust any afternoon.",
+    "Doug says hello. He doesn't. He's working.",
+  ],
   birthday: { season: 1, day: 15 },
   events: [
     {
       id: 'bev-2', hearts: 2, map: 'town', title: 'The Form', when: { flag: 'debuted' },
       script: async (api) => {
         await api.narrate('Sheriff Bev steps out in front of you on Main Street and pushes her aviators up onto her hat. That means it\'s serious.');
-        await api.say('bev', "That fella hit you with a chair on Saturday. In front of two thousand witnesses and a basset hound.");
-        await api.narrate('She produces a form from one of her many pockets. It is filled out in tidy block capitals. UNLAWFUL USE OF A FOLDING CHAIR (FIRST DEGREE).');
+        await api.say('bev', "That {opponent} put you down on the mat at {venue}. In front of witnesses and a basset hound.");
+        await api.narrate('She produces a form from one of her many pockets. It is filled out in tidy block capitals: UNLAWFUL USE OF A FOLDING CHAIR (FIRST DEGREE). There was no chair. She has crossed out CHAIR and written ATTITUDE.');
         await api.say('bev', "I've done the paperwork. All I need is your signature. Right here. Next to Doug's paw print.");
         await api.narrate("There is, in fact, a paw print. Doug looks up at you with the solemn patience of the law.");
         const c = await api.choose('She holds out a pen.', [
@@ -200,7 +226,7 @@ export default {
         await api.narrate('Sheriff Bev is there before the second call is finished.');
         await api.say('bev', "Marcus. Theo. Look at me. He's ten, he's got light-up shoes, and this fairground's got one gate. We'll have him in ten minutes.");
         await api.say('bev', "{name}, take the barns. I've got the midway. Doug's got everything else.");
-        await api.narrate("It's not ten minutes. It's twenty. Twenty long minutes of calling and looking under things.");
+        await api.narrate("It takes twenty. Twenty long minutes of calling and looking under things.");
         await api.narrate("Then, by her fence, you notice Wanda. She is standing very still, staring hard at the funnel-cake stand. Pointing with her whole nose.");
         await api.narrate("Behind the stand, curled on a pile of flattened boxes, cardboard belt for a pillow, Pip is fast asleep.");
         await api.narrate("Bev kneels and wakes him like it's the most ordinary thing in the world. \"Hey, champ. Your dads want to know about your title defense.\"");

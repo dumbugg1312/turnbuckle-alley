@@ -11,6 +11,7 @@ import { iconFor } from '../gfx/icons';
 import { TYPE_COLORS, TYPE_LABEL } from '../match/cardart';
 import { cardDef } from '../match/cards';
 import { lookFor } from '../world/scene';
+import { heldGift, holdGift } from '../world/talk';
 import { toast } from './dialog';
 import { el, markup, uiRoot } from './dom';
 
@@ -96,9 +97,22 @@ const RENDER: Record<Tab, (rerender: () => void) => HTMLElement> = {
       const def = item(id);
       const cell = el('button', 'item-cell');
       cell.append(canvasCopy(iconFor(id), 'item-ico'), el('span', 'item-n', String(G.player.inventory[id])));
+      if (heldGift() === id) cell.style.outline = '3px solid #f4b63f';
       cell.addEventListener('click', () => {
         detail.innerHTML = '';
         detail.append(el('h3', {}, def.name), el('p', {}, def.desc));
+        if (def.cat !== 'key') {
+          // Gifts: hold it out, then talk to someone.
+          const holding = heldGift() === id;
+          const hold = el('button', { class: `btn small${holding ? '' : ' teal'}` }, holding ? 'Put it away' : 'Hold out to give');
+          hold.addEventListener('click', () => {
+            holdGift(holding ? null : id);
+            audio.sfx('select');
+            if (!holding) toast(`You're holding the ${def.name}. Talk to someone to give it.`, iconFor(id));
+            rerender();
+          });
+          detail.append(hold);
+        }
         if (id === 'trading-card') {
           const open = el('button', { class: 'btn primary small' }, 'Open pack!');
           open.addEventListener('click', async () => {

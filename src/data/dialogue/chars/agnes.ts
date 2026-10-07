@@ -3,7 +3,7 @@ import type { DialogueSet } from '../types';
 /**
  * Agnes Pickett, 80. Seat A1 at every show since 1971, retired switchboard
  * operator, county pie champion, and owner of Gertrude, a 1966 patent-leather
- * handbag that has met eleven villains. Lives at the Evening Bell Residence
+ * handbag that has met twenty-six villains. Lives at the Evening Bell Residence
  * (map 'sunnypines') with Hubert the cat and the rose beds she commandeered.
  * A mark. She was in A1 the Night of the Broken Belt, and she has a photo.
  */
@@ -12,22 +12,22 @@ export default {
   intro: [
     "You'll be the new one. I can tell by the shoes. Nobody in this town owns shoes that clean.",
     "Agnes Pickett. Seat A1, every show since 1971. And this is Gertrude.",
-    "Gertrude is a handbag, dear. Patent leather, 1966. She and I have met eleven villains. Personally. Up close.",
+    "Gertrude is a handbag, dear. Patent leather, 1966. She and I have met twenty-six villains. Personally. Up close.",
     "I ran the telephone switchboard here for twenty-eight years. I know every family in this county. Soon I'll know yours.",
     "Welcome to Turnbuckle Alley. Stand up straight, wipe your feet, and never turn your back on the ring.",
   ],
   lines: [
     // ---------------------------------------------------------------- anytime
     { text: "What's in Gertrude? Butterscotch, tissues, a rain bonnet, spare glasses, and the church bulletin. No brick. Whatever the Bruisers say." },
-    { text: ["Eleven villains since 1971. I keep a list.", "I don't need to keep a list, dear. I remember every one. I just like the list."], mood: 'smug' },
+    { text: ["Twenty-six villains since 1971. I keep a list.", "I don't need to keep a list, dear. I remember every one. I just like the list."], mood: 'smug' },
     { text: "I ran the switchboard from 1961 to 1989. I listened to nothing and heard everything. There's a difference, dear." },
     { text: ["I had my gallbladder out on a Thursday in 1979 and I was in A1 on Saturday.", "The doctor came with me. He booed beautifully."], mood: 'smug' },
     { text: ["They let me bring Hubert to the Evening Bell. There was a vote. Thirty-one to two.", "I know who the two were. I ran a switchboard."] },
     { text: "My cat Hubert thinks he's a dog. He fetches. He growls at the mail. He's the only one in the building who does. Maribel deserves better." },
     { text: ["Every rose in the Evening Bell garden is named for a hero. The yellow climber is Mariposa.", "The stubborn one by the drainpipe is Birdie Malone."] },
-    { text: ["County pie champion. Cherry lattice. Tiny Tallbridge is coming for my crown.", "I respect her. I'll never tell her. That's how respect works."] },
+    { text: ["County pie champion. Cherry lattice. Tiny Tallbridge is coming for my crown.", "Her crust is fine. Her lattice wanders. I've told her about the crust."] },
     { text: "Sheriff Bev and I have an arrangement. I phone in villain sightings. She writes them down. Nothing ever happens. It's very satisfying." },
-    { text: ["Sweet Lou Bastian is the finest man alive.", "That's not an opinion, dear. It's arithmetic. I've been checking the figures since 1977."] },
+    { text: ["Sweet Lou Bastian is the finest man alive.", "I've done the figures, dear. Twice. On the back of a hymnal, during a sermon about pride."] },
     { text: "Birdie Malone has kept seat A1 for me since 1984. Somebody offered to buy it once. She told them where to put the offer. Good woman." },
     { text: ["I write the Tattler about lax refereeing. Clementine prints about half.", "The other half, she says, 'contain language.' They contain the truth."] },
     { text: "The Abernathy boy holds Gertrude at intermission. He's the only person alive I trust with her. He has a very serious face for ten." },
@@ -38,8 +38,8 @@ export default {
 
     // ---------------------------------------------------------------- weekly rhythm
     { text: ["Sunday is church and then canasta. I pray for the heroes by name.", "Then I take everyone's money at canasta. The Lord understands."], when: { weekday: [6] }, mood: 'smug' },
-    { text: "My nephew in Ohio calls every Sunday. 'Aunt Agnes, are you eating?' I'm eating. I don't tell him it's mostly butterscotch.", when: { weekday: [6], time: [960, 1320] } },
-    { text: ["Monday at eleven I wait at my mailbox to tell Maribel about the calls she missed on Saturday.", "She says 'I call what I see.' She sees nothing."], when: { weekday: [0] }, mood: 'angry' },
+    { text: "My nephew in Ohio calls every Sunday. 'Aunt Agnes, are you eating?' I'm eating. He doesn't need the details. The details are butterscotch.", when: { weekday: [6], time: [960, 1320] } },
+    { text: ["Monday mornings I wait at my mailbox to tell Maribel about the calls she missed on Saturday.", "She says 'I call what I see.' She sees nothing."], when: { weekday: [0] }, mood: 'angry' },
     { text: "Rummage sale prep. Thirty years I've run it. People donate things I sold them in 1994. It's the circle of life, dear.", when: { weekday: [1, 2, 3, 4], time: [720, 1020] } },
     { text: "Good morning. I've already done the roses, read the bulletin and written the Tattler. You're late, whatever you're doing.", when: { time: [360, 600] } },
 
@@ -49,7 +49,11 @@ export default {
     { text: "Are you on tonight? Then I'm watching. If anybody hits you with a chair, I'll be over that railing. Don't think I won't.", when: { showDay: true, place: ['show'], alignment: ['face', 'tweener'] } },
     { text: "If you come anywhere near row A tonight, I'd like you to know Gertrude has been polished.", when: { showDay: true, place: ['show'], alignment: ['heel'] }, mood: 'angry' },
     { text: "That referee missed three things on Saturday. Three. I've written them down. The Tattler will hear about all three.", when: { weekday: [6], flag: 'debuted' }, mood: 'angry' },
-    { text: ["You took a hard fall, dear. Ice it and say your prayers.", "I said some for you. Two Our Fathers and a 'give 'em what for.'"], when: { weekday: [3, 6], flag: 'debuted', hearts: [3, 14] }, mood: 'sad' },
+    { text: ["{opponent} put you on the mat hard, dear. Ice it and say your prayers.", "I said some for you. Two Our Fathers and a 'give 'em what for.'"], when: { lastMatch: { won: false, maxDaysAgo: 2 }, hearts: [3, 14] }, mood: 'sad' },
+    { text: "You beat {opponent}. I stood up so fast I knocked Pip's soda into Gertrude. She's forgiven you. She has not forgiven Pip.", when: { lastMatch: { won: true, maxDaysAgo: 4 }, alignment: ['face', 'tweener'] }, mood: 'happy' },
+    { text: ["{opponent} beat you, and I saw what that referee didn't. From A1 you see everything.", "I've written it down. Page four, if Clementine has any spine."], when: { lastMatch: { won: false, maxDaysAgo: 4 }, alignment: ['face', 'tweener'] }, mood: 'angry' },
+    { text: "You beat {opponent} and I booed until my teeth moved. I've never booed with my teeth before. I hope you're ashamed. I suspect you're not.", when: { lastMatch: { won: true, maxDaysAgo: 4 }, alignment: ['heel'] }, mood: 'angry' },
+    { text: "{opponent} finally gave you what for. I clapped with my gloves off so it would be louder.", when: { lastMatch: { won: false, maxDaysAgo: 4 }, alignment: ['heel'] }, mood: 'smug' },
 
     // ---------------------------------------------------------------- alignment
     { text: "You're a good one. I can see it. You remind me of Lou in '77, except Lou had better posture. Stand up straight.", when: { alignment: ['face'] } },
@@ -62,7 +66,7 @@ export default {
     { text: "Gus calls you a 'tweener.' In my day we called that 'making up your mind.' Make it up, dear. Gertrude is getting restless.", when: { alignment: ['tweener'] } },
 
     // ---------------------------------------------------------------- rank
-    { text: "You open the show? Lou told me he started in the opener too. 1966. Eleven people and a dog. He wore lavender even then.", when: { rank: ['rookie', 'opener'], flag: 'debuted' } },
+    { text: "You open the show? Lou told me he started in the opener too. 1966. Nine people and a dog. He wore lavender even then.", when: { rank: ['rookie', 'opener'], flag: 'debuted' } },
     { text: "Main event. Well. I knew. I knew back when you were in the opener. I'm never wrong about these things, dear. Ask Lou.", when: { rank: ['main', 'assistant', 'pencil', 'owner'] }, mood: 'smug' },
 
     // ---------------------------------------------------------------- seasons and weather
@@ -82,7 +86,7 @@ export default {
     { text: "I was in A1 the night the belt broke. 1983. I don't talk about it, dear. Ask me again when I like you more.", when: { hearts: [3, 5], notFlag: 'agnes_photo' } },
 
     // ---------------------------------------------------------------- close
-    { text: "When you're my age, dear, people think you've seen it all. I haven't. That's why I keep coming.", when: { hearts: [6, 14] } },
+    { text: ["When you're my age, dear, people think you've seen it all. I haven't.", "I've never seen a man win with a sunburn. I've never seen a bear lose. I'm waiting on both."], when: { hearts: [6, 14] } },
     { text: ["I never married. I had a career, I had wrestling, and I had my roses. That was plenty.", "...It was mostly plenty."], when: { hearts: [6, 14] } },
     { text: ["Lou used to sing a verse to the crowd before every match. I know every word of the second verse.", "Don't you dare tell him."], when: { hearts: [6, 14] }, mood: 'love' },
     { text: ["That referee in '83 counted three like he had a bus to catch.", "I wrote the Tattler about it. They printed it, too. Page four."], when: { hearts: [6, 14] }, mood: 'angry' },
@@ -97,7 +101,7 @@ export default {
 
     // ---------------------------------------------------------------- the Duchess, down the hall
     { text: ["That woman has moved into Room 7. The Duchess. Down MY hall.", "I've asked to sit at a different lunch table for the rest of my natural life."], when: { flag: 'grandma_in_town', notFlag: 'truth_revealed', hearts: [0, 5] }, mood: 'angry' },
-    { text: "She beat Velma at rummy four times on Tuesday. Cheated, obviously. Can't prove it. That's how you know she's good.", when: { flag: 'grandma_in_town', notFlag: 'reunion_done' } },
+    { text: ["She beat Velma at rummy four times on Tuesday. Cheated, obviously. Can't prove it.", "Velma has taken up checkers. Velma is seventy-nine and furious."], when: { flag: 'grandma_in_town', notFlag: 'reunion_done' } },
     { text: "The Duchess waltzed with Farid Haddad on Friday night. Villains don't waltz like that. I don't know what to do with it.", when: { flag: 'grandma_in_town', notFlag: 'truth_revealed' } },
     { text: ["I see you visiting Room 7. I won't ask.", "I ran a switchboard twenty-eight years, dear. I know how not to hear things."], when: { flag: 'grandma_in_town', hearts: [4, 14] } },
     { text: ["I passed her in the hall this morning. She said, 'Good morning, A1.'", "She remembered my SEAT. Forty years. I didn't swing. I was too surprised."], when: { flag: 'grandma_in_town', hearts: [6, 14], notFlag: 'reunion_done' }, mood: 'surprised' },
@@ -105,10 +109,10 @@ export default {
     { text: ["I took Gertrude down to Room 7. I didn't swing. I just sat.", "Neither of us said a word. Best conversation I've had in years."], when: { flag: 'truth_revealed', notFlag: 'reunion_done', hearts: [6, 14] } },
     { text: "The Velvet Hammers. Forty years, and they won it right in front of me. I stood up first and sat down last. Ask anyone.", when: { flag: 'reunion_done' }, mood: 'happy' },
     { text: ["She sits next to me now. A1 and A2. I told her, 'I've hated you for forty years, Duchess.'", "'Sit down. I saved you a seat.'"], when: { flag: 'reunion_done' }, mood: 'love' },
-    { text: "She doesn't always know who I am. But she always knows where the ring is. That's enough, dear. That's the important part.", when: { flag: 'reunion_done', hearts: [6, 14] } },
+    { text: ["She doesn't always know who I am. She always knows where the ring is.", "Last Saturday she pointed it out to me. In case I'd lost it. In fifty years."], when: { flag: 'reunion_done', hearts: [6, 14] } },
 
     // ---------------------------------------------------------------- life events
-    { text: "A wedding in the ring. I cried into Gertrude. Don't tell anyone. She's waterproof, mostly.", when: { married: true }, mood: 'love' },
+    { text: "A wedding in the ring. I cried into Gertrude. She's waterproof, mostly. I am not.", when: { married: true }, mood: 'love' },
   ],
   gifts: {
     loves: ['signed-photo', 'old-program', 'teacup', 'bouquet'],
@@ -136,10 +140,41 @@ export default {
       "Is this a joke? I've heard better jokes from the Bruiser Twins, and they don't tell jokes.",
     ],
     birthday: [
-      "You remembered. At my age, birthdays are mostly a list of people who forgot. You're not on the list.",
-      "Eighty-one. Don't say it out loud. Gertrude doesn't know.",
+      "A {item}, on my birthday. I'm going to mention this at lunch and watch Velma eat her soup slower.",
+      "Eighty-one. Don't say it out loud. Gertrude doesn't know. Thank you for the {item}, dear. Quietly.",
+    ],
+    byItem: {
+      'signed-photo': "Signed. In silver. I'm putting this in the Bible, between Ruth and the photo of Lou in '77. It's a good neighborhood.",
+      'old-program': ["1979. Look at her flexing. I was in A1 that night, dear. Two rows of us stood on our chairs. The ushers gave up.", "I had this program once. Dennis used it to swat a wasp in 1990. I've never fully forgiven him."],
+      teacup: "Chipped on the handle. Good. A teacup with no chips has never been to anything worth going to.",
+      bouquet: "Flowers from the bakery window. Nobody's bought me those since a man named Harold in 1958. Harold was not worth it. You are.",
+      pie: "Whose crust is this? ...June's. Fine. Adequate. I'll eat it in front of Tiny so she knows I'm keeping my strength up.",
+      polaroid: "A crowd shot. I'm going to find myself in it with the magnifying glass. I'm always in the front. Ah. There's Gertrude.",
+      wildflowers: "From the creek bank? Those yellow ones are a weed, dear. I'll put them in water anyway. Weeds try very hard.",
+      paperback: "Missing the last page. I'll write my own. The butler did it. The butler always did it, in my day.",
+      honey: "Honey. For my tea and for Hubert's ear, which he keeps getting into fights with. Don't ask me how a cat fights with an ear.",
+      coffee: "Black? Good. Cream is for people with time.",
+      concha: "Rosa's bread. I eat the top first and save the bottom for the birds. The birds have come to expect it.",
+      yarn: "Pink. I'll knit Gertrude a new cozy. She'll pretend she's too old for it. She's sixty years old. She's exactly the right age.",
+    },
+    byCat: {
+      food: "That's food, dear, and I'll eat it, because I was raised in a house where you ate what came.",
+      flea: "Something from the flea market. I probably sold it to Fenwick. It's come home. Thank you.",
+    },
+    later: [
+      "That {lastGift} is on my nightstand. Hubert sniffed it and approved. He does not approve of the mailman.",
+      "I showed the {lastGift} to Velma. She said 'hm.' That's the most jealous I've ever seen her.",
     ],
   },
+  again: [
+    "Still here, dear? So am I. So is Gertrude.",
+    "We've spoken. Twice is a visit. Three times, people talk, and I'd know, because they'd tell me.",
+    "(Agnes holds up one finger without looking up. She's counting stitches. You are not a stitch.)",
+  ],
+  idle: [
+    "Hubert sends his regards. He doesn't, but he would if he were raised better.",
+    "Stand up straight. There. Now go on, I'm in the middle of the bulletin.",
+  ],
   birthday: { season: 3, day: 6 },
   events: [
     {
