@@ -2445,6 +2445,170 @@ reg('clothes-pile', {
     ),
 });
 
+// ---------------------------------------------------------------- the Evening Bell Residence
+
+/** A card table mid-game of rummy: the score pad says Velma is cheating again. */
+reg('card-table', {
+  solid: { x: -12, y: -9, w: 24, h: 8 },
+  draw: (ctx, o) =>
+    blit(
+      ctx,
+      o,
+      iart(
+        'card-table',
+        28,
+        20,
+        () => {
+          // three chairs around it, seen from behind and the sides
+          for (const [cx, cy] of [[3, 2], [25, 2]] as [number, number][]) {
+            R(cx - 2, cy, 4, 9, HONEY.b);
+            H1(cx - 2, cx + 2, cy, HONEY.l);
+          }
+          for (const lx0 of [5, 22]) R(lx0, 11, 1.5, 8, '#6e688e');
+          R(4, 4, 20, 8, '#2f6a52');
+          R(4.5, 4.5, 19, 7, (_a, _b, o2) => (o2 && hash2(FX, FY, 581) < 0.06 ? shA(o2, 0.12) : o2));
+          H1(4, 24, 4, '#5fa882');
+          R(4, 12, 20, 1.5, '#1e4a3a');
+          // a fanned hand, the discard pile, the stock, the score pad, peppermints
+          for (let k = 0; k < 5; k++) {
+            const a = -0.6 + k * 0.3;
+            const cx = 8 + Math.sin(a) * 2;
+            R(cx, 6.5 - Math.cos(a) * 1, 2.2, 3, '#fbf6ea');
+            P1(cx + 0.5, 7, k % 2 ? '#c9404c' : '#2b2140');
+          }
+          R(13, 6, 2.5, 3.5, '#fbf6ea');
+          P1(13.5, 6.5, '#c9404c');
+          R(16, 6.5, 2.5, 3.5, '#3a4a8a');
+          R(16.3, 6.8, 2, 3, (_a, _b, o2) => (o2 && (FX + FY) % 2 === 0 ? '#5a6aaa' : o2));
+          R(19.5, 6, 3.5, 4.5, '#fff4a0');
+          for (let k = 0; k < 3; k++) H1(20, 22.5, 7 + k * 1.2, '#7a6a5a');
+          tinyT('V?', 20, 6.2, '#c9404c');
+          for (let k = 0; k < 3; k++) {
+            ell(6 + k * 1.5, 11, 0.7, 0.7, '#fbf6ea');
+            P1(6 + k * 1.5, 11, '#d8434b');
+          }
+        },
+        { shadow: [['r', 2, 17, 26, 3]] },
+      ),
+    ),
+});
+
+/** The nurses' station: a sign-in book, a bell, a vase of gardenias, Sami's mug. */
+reg('nurse-station', {
+  draw: (ctx, o) => {
+    const n = num(o, 'w', 3);
+    const W = n * 16;
+    blit(
+      ctx,
+      o,
+      iart(
+        `nurse-station|${n}`,
+        W,
+        24,
+        () => {
+          // raised ledge
+          R(0, 4, W, 3, '#e8dcc4');
+          H1(0, W, 4, '#fff6e6');
+          R(0, 7, W, 17, '#9cc8b8');
+          R(0, 7, W, 17, (_a, _b) => mixc('#b8dccc', '#7aa898', (ly() - 7) / 17));
+          for (let x = 0; x < W; x += 8) V1(x, 8, 23, '#8ab8a8');
+          H1(0, W, 23.5, '#5a8a7a');
+          R(W / 2 - 10, 10, 20, 5, '#fbf6ea');
+          tinyC('EVENING BELL', W / 2, 11, '#3a6a5a');
+          // on the ledge: sign-in book with a pen on a chain, the bell, gardenias, Sami's mug
+          R(3, 1.5, 9, 3, '#fbf6ea');
+          V1(7.5, 1.5, 4.5, '#c8c0b8');
+          for (let k = 0; k < 2; k++) H1(4, 7, 2.5 + k, '#a89cc0');
+          L1(11, 3, 13, 0.5, '#3f6ab0');
+          ell(17, 3, 2, 1.4, PAL.gold2);
+          P1(16.5, 2.5, '#fff4c0');
+          R(16.5, 1, 1, 1, PAL.gold3);
+          R(W - 12, -1, 3, 5, alpha('#e8f4ff', 190));
+          for (const [fx, fy] of [[W - 12.5, -2.5], [W - 10, -3], [W - 11.5, -4.5]] as [number, number][]) {
+            ell(fx, fy, 1.4, 1.2, '#fffaf0');
+            P1(fx, fy, '#f6e8a0');
+          }
+          L1(W - 11, 0, W - 12.5, -2, '#5a8a4a');
+          mug(W - 6, 1, '#ff94b4');
+          tinyT('S', W - 5.5, 1.5, '#fbf6ea');
+        },
+        { shadow: [['r', 1, 21, W, 4]] },
+      ),
+    );
+  },
+});
+
+/** A birdcage on a stand with a canary in it. */
+reg('birdcage', {
+  solid: { x: -4, y: -3, w: 8, h: 2 },
+  draw: (ctx, o, t) => {
+    const hop = frame(t, 6, 2, phaseOf(o));
+    blit(
+      ctx,
+      o,
+      iart(
+        `birdcage|${hop}`,
+        14,
+        32,
+        () => {
+          // stand
+          chrome(6.5, 14, 1, 16);
+          for (const s2 of [-1, 1]) L1(7, 29, 7 + s2 * 4, 31.5, '#9aa2c8');
+          // cage: domed top, fine wire bars, a perch, seed cup, the canary
+          ell(7, 4, 6, 4, (_a, _b, o2) => o2);
+          for (let k = 0; k <= 10; k++) {
+            const x = 1.5 + k * 1.1;
+            const top = 4 - Math.sqrt(Math.max(0, 1 - ((x - 7) / 5.6) ** 2)) * 3.5;
+            V1(x, top, 13, PAL.gold2);
+          }
+          for (let k = 0; k < 14; k++) P1(7 + Math.cos(Math.PI + (k / 13) * Math.PI) * 5.6, 4 + Math.sin(Math.PI + (k / 13) * Math.PI) * 3.5, PAL.gold3);
+          ell(7, 0, 1, 1, PAL.gold2);
+          R(1, 12.5, 12, 1.5, PAL.gold3);
+          H1(2, 12, 9, '#8a5640');
+          const by = hop === 3 ? 7 : 8;
+          ell(6, by - 0.5, 1.6, 1.2, '#ffd84a');
+          ell(7.2, by - 1.5, 0.9, 0.9, '#ffe070');
+          P1(7.6, by - 1.7, AK);
+          P1(8.2, by - 1.4, '#f2903a');
+          P1(4.6, by, '#e8b830');
+          R(9.5, 10.5, 2, 1.5, '#9cc8e0');
+        },
+        { shadow: [['e', 7, 31, 5, 1.2]] },
+      ),
+    );
+  },
+});
+
+reg('wheelchair', {
+  solid: { x: -6, y: -5, w: 12, h: 4 },
+  draw: (ctx, o) =>
+    blit(
+      ctx,
+      o,
+      iart(
+        'wheelchair',
+        16,
+        18,
+        () => {
+          // big wheels with fine spokes, a plum seat, a crocheted blanket folded over the back
+          for (const wx of [3, 13]) {
+            circ(wx, 11, 5, '#6e688e');
+            circ(wx, 11, 4.3, 0);
+            for (let k = 0; k < 8; k++) L1(wx, 11, wx + Math.cos(k * 0.785) * 4.3, 11 + Math.sin(k * 0.785) * 4.3, '#c8cce4');
+            circ(wx, 11, 0.8, '#9aa2c8');
+          }
+          R(4, 2, 8, 6, '#6a3a7a');
+          R(4, 8, 8, 3, '#7a4a8a');
+          chrome(3.5, 1, 1, 10);
+          chrome(11.5, 1, 1, 10);
+          afghan(5, 2, 6, 4);
+          for (const cx of [5, 11]) ell(cx, 16.5, 1, 1, '#2b2140');
+        },
+        { shadow: [['e', 8, 17, 7, 1.4]] },
+      ),
+    ),
+});
+
 // ================================================================ kitchen
 
 /**

@@ -349,12 +349,34 @@ interior('studio', 'Hurricane Physio & Yoga', 10, 8, 'wall-blue', 'wood', 4, [
   ['yoga-mat', 2.5, 6.6], ['yoga-mat', 4.5, 6.6], ['yoga-mat', 7.5, 6.6], ['plant', 0.6, 4.4], ['plant', 9.4, 4.4], ['window', 5, 2.6], ['speed-bag', 8.5, 4.6],
 ], { music: 'home' });
 
+// The common room: rocking chairs by the windows (Agnes in one, and later
+// Grandma in the other), a canary in a brass cage, the TV corner with a couch,
+// the rummy table where Velma is cheating again, the activity board, the
+// nurses' station with gardenias and Sami's pink mug, the piano, and the
+// short hall to Room 7.
 interior('sunnypines', 'The Evening Bell Residence', 18, 10, 'wall', 'carpet', 8, [
-  ['rocking-chair', 3, 5], ['rocking-chair', 5, 5], ['tv-lounge', 9, 4.8, {}, 'pines-tv'], ['couch', 9, 7.4], ['piano', 15.5, 4.8, {}, 'pines-piano'],
-  ['table', 14, 8], ['chair-wood', 13, 8.2], ['chair-wood', 15, 8.2], ['window', 4, 2.6], ['window', 13, 2.6], ['plant', 0.6, 9.4], ['plant', 17.4, 9.4],
-  ['door-wall', 17, 3, { text: 'ROOM 7' }, 'door-room7'],
+  ['birdcage', 1.7, 4.8],
+  ['window', 4.2, 2.6, { variant: 2 }], ['window', 6.8, 2.6, { variant: 2 }],
+  ['rocking-chair', 4.5, 6.8, { solid: { x: 0, y: 0, w: 0, h: 0 } }], ['rocking-chair', 6.5, 6.8, { solid: { x: 0, y: 0, w: 0, h: 0 } }],
+  ['side-table', 5.5, 6.6],
+  ['notice', 9, 1.6, { lines: 'TODAY|BINGO 2PM|CHAIR YOGA|MOVIE 7PM', variant: 1 }],
+  ['tv-lounge', 11.6, 4.8, {}, 'pines-tv'],
+  ['coffee-table', 11.6, 6.6],
+  ['rug', 11.6, 9.6, { w: 5, h: 4, variant: 3 }],
+  ['couch', 11.6, 8.4, { variant: 3 }],
+  ['lamp-floor', 8.6, 7.2],
+  ['bookshelf', 9.2, 4.6, { variant: 1 }],
+  ['card-table', 3.5, 9.1],
+  ['photo-wall', 14.2, 2.6, { variant: 3 }],
+  ['nurse-station', 15.5, 5.95, { w: 3, solid: { x: -24, y: -17, w: 48, h: 16 } }],
+  ['door-wall', 18, 3, { text: 'ROOM 7', variant: 1 }, 'door-room7'],
+  ['piano', 15.5, 8.8, {}, 'pines-piano'],
+  ['wheelchair', 13.3, 9.5],
+  ['plant', 1.4, 9.4, { variant: 2 }], ['plant', 18.4, 9.4, { variant: 0 }],
 ], {
   music: 'home',
+  light: 0.92,
+  abs: true,
   extraWarps: [{ x: 18, y: 2, w: 1, h: 2, to: 'grandma-room', tx: 4, ty: 6, facing: 'up', door: true, label: 'Room 7' }],
 });
 
