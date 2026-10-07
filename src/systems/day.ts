@@ -10,6 +10,7 @@ import { WORLD } from '../world/scene';
 import { dayLog, resetDayLog, summarizeToday } from './daylog';
 import { pickNightLine } from './goodnight-lines';
 import { beginMorning, endMorning, morningBundle } from './morning';
+import './surprises';
 
 /** Advance the calendar by one day and run the morning routine. */
 function rollWeather(rng: Rng): Weather {
