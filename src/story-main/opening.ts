@@ -9,7 +9,7 @@ import { showLetter } from '../systems/mail';
 import { showEnvelopeContents } from './keepsakes';
 import { WorldScene, WORLD } from '../world/scene';
 import { HAIR_COLORS, SKIN_TONES } from '../gfx/look';
-import { speakerFor } from '../world/talk';
+import { cutsceneSpeaker } from '../world/talk';
 import { TILE } from '../world/types';
 import { TOWN_ENTRY } from '../world/maps/town';
 
@@ -64,7 +64,7 @@ export async function officeScene(): Promise<void> {
   if (!w) return;
   audio.music('city');
   await narrate('*The City.* Floor 31 of the MaxxMedia tower. 11:48 PM.', 'Your monitor shows a wrestling match: two people pouring everything they have into the last five minutes of a show. Your job is to find the nine seconds the algorithm likes.');
-  const royce = speakerFor('royce');
+  const royce = cutsceneSpeaker('royce');
   await w.walkTo('royce', 9, 7, 'left');
   await say(royce, "Twelve clips by midnight. Slams, flips, falls. Faces hitting mats.", "Nobody watches the selling. Nobody watches the part where they *look at each other.* Cut it.");
   const c = await choose(null, 'Which nine seconds do you clip?', [
@@ -80,7 +80,7 @@ export async function officeScene(): Promise<void> {
   }
   await w.walkTo('royce', 18, 4, 'left');
   w.despawn('royce');
-  const arlo = speakerFor('arlo');
+  const arlo = cutsceneSpeaker('arlo');
   await say(arlo, c === 'heart' ? "For what it's worth, I liked your clip. The standing-up one. It made the back of my neck do a thing." : "You okay? You've got the face you make when you clip something you hate.");
   await say(arlo, "You used to watch the old stuff with your grandma, right? The territory tapes? You told me about her once. The Duchess.", "...Go home. I'll finish your last clip. I'm in a giving mood and also I'm avoiding my own clips.");
   await narrate('You grab your coat. The elevator takes a long time. The city is very bright and very loud and nobody looks up.');
@@ -143,7 +143,7 @@ export async function arrivalScene(): Promise<void> {
   await narrate('The bus wheezes away down Route 9, and the dust settles on *Turnbuckle Alley*.', 'The sun is low and gold. Somewhere, a screen door bangs. The whole town smells like cut grass and fryer oil.');
   w.spawnTemp('pip', TOWN_ENTRY.bus.x - 8, TOWN_ENTRY.bus.y - 1, 'right');
   await w.walkTo('pip', TOWN_ENTRY.bus.x - 2, TOWN_ENTRY.bus.y, 'right');
-  const pip = speakerFor('pip');
+  const pip = cutsceneSpeaker('pip');
   await say(pip, 'WHOA. Are you a wrestler? You have wrestler shoulders.', "I'm Pip. I'm the undisputed Pip-weight champion of the world. *(He taps a cardboard belt with PIP painted on it in glitter glue.)*");
   const c = await choose(pip, 'Are you a wrestler?', [
     { label: "Not yet. Maybe soon.", value: 'soon' },

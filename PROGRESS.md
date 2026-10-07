@@ -44,7 +44,9 @@ Status of the overnight build (night of 2026-10-06).
 - Match: Reversal on an "X + Cover" no longer pins you; a crowd goal reached on the opponent's move counts; Ring General doubles sympathy progress; Side Headlock gives its promised Sympathy when winded.
 - World: tapes can't run the clock into 2 AM under the TV; Earl, Gideon, Hank and Nadia stay at the venue through show night; a skipped debut is rebooked and Birdie's debut coaching only plays for the debut; the Dungeon spar can't hang on a busy fade.
 - Kayfabe: Birdie's in-ring "Best loss I ever booked" is now "saw".
-- Flagged, not changed: flags set but never read (`agnes_1983_asked`, `calendar_turned`, `hammers_met`, `knows_encore`, `locker_opened`, `marquee_fixed`, `page_six`, `player_knows`, `prologue_heart`, `debutDone`); tape haggling uses `Math.random`, so reload and retry gets a new price.
+- Second sweep (D-025 follow-ups): keyboard (Esc reopening the menu, held E skipping dialogue), the world's busy state is a counter so a 2 AM pass-out with a crate open can't freeze the game, passing out waits for overlays to close, Birdie's show-floor finish talk is now a silent hand signal, hedges off the Main St sidewalk, seeded haggling/gate/reward rolls, shop double-sell, favicon, no pure black.
+- Playtest fixes: a turned-away first Dungeon visit no longer loses the tutorial; people met in cutscenes (Pip, Birdie, Dex, Marigold, Lou, chapter casts) don't re-introduce themselves; the goal slip no longer covers the show-night banner.
+- Story flags like `locker_opened` and `page_six` are scene-completion markers; progress runs on the `ms_<id>` beat markers, so nothing is missing.
 
 ## In progress at the end of the night
 - Done since: all 34 characters have dialogue files; the main story runs through the Homecoming finale and credits (src/story-main/chapters/).

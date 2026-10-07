@@ -4,16 +4,16 @@ import { absDay } from '../../core/time';
 import type { Line } from '../../data/dialogue/types';
 import { choose, narrate, say } from '../../ui/dialog';
 import { WORLD } from '../../world/scene';
-import { addHearts, speakerFor } from '../../world/talk';
+import { addHearts, cutsceneSpeaker } from '../../world/talk';
 
 /** Tiny script vocabulary shared by every chapter scene. */
 export type Mood = Line['mood'];
 
 export const N = (...lines: string[]) => narrate(...lines);
-export const S = (who: string, ...lines: string[]) => say(speakerFor(who), ...lines);
-export const M = (who: string, mood: Mood, ...lines: string[]) => say(speakerFor(who, mood), ...lines);
+export const S = (who: string, ...lines: string[]) => say(cutsceneSpeaker(who), ...lines);
+export const M = (who: string, mood: Mood, ...lines: string[]) => say(cutsceneSpeaker(who, mood), ...lines);
 export const pick = <T extends string>(prompt: string | null, options: { label: string; value: T }[], who: string | null = null): Promise<T> =>
-  choose(who ? speakerFor(who) : null, prompt, options);
+  choose(who ? cutsceneSpeaker(who) : null, prompt, options);
 export const heart = (who: string, pts: number) => addHearts(who, pts);
 export const music = (id: string) => audio.music(id, { fade: 0.6 });
 

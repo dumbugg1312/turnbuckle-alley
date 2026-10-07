@@ -27,6 +27,18 @@ function talkState(): TalkState {
   return ext<TalkState>('talk', () => ({ recent: {}, met: [] }));
 }
 
+/** Count a character as met, so a later first chat skips their "nice to meet you" intro. */
+export function markMet(id: string): void {
+  const ts = talkState();
+  if (!ts.met.includes(id)) ts.met.push(id);
+}
+
+/** speakerFor() for story cutscenes: anyone who talks to you in a scene has met you. */
+export function cutsceneSpeaker(id: string, mood: Line['mood'] = 'neutral'): Speaker | null {
+  if (id !== 'narrator' && id !== 'player') markMet(id);
+  return speakerFor(id, mood);
+}
+
 const portraitCache = new Map<string, HTMLCanvasElement>();
 /** Characters with a dialogue file but no NPCS entry (they never walk a schedule). */
 const EXTRA_NAMES: Record<string, string> = { jobber: 'Jobber' };
@@ -150,6 +162,8 @@ export async function talkTo(npcId: string, place: Place): Promise<void> {
     }
   }
 
+  // Saves from before cutscenes marked people as met still carry the story's met_ flags.
+  if (!ts.met.includes(npcId) && G.flags[`met_${npcId}`]) ts.met.push(npcId);
   if (!ts.met.includes(npcId)) {
     ts.met.push(npcId);
     const def = NPC_BY_ID[npcId];

@@ -15,6 +15,7 @@ export class Hud {
   private energy: HTMLElement;
   private action: HTMLButtonElement;
   private showTag: HTMLElement;
+  private ticket: HTMLElement;
   private goal: HTMLElement;
   private last = '';
   private lastGoal = '';
@@ -22,7 +23,7 @@ export class Hud {
 
   constructor(onMenu: () => void, onAction: () => void) {
     this.root = el('div', 'hud passthrough');
-    const ticket = el('div', 'hud-ticket panel');
+    const ticket = (this.ticket = el('div', 'hud-ticket panel'));
     this.date = el('div', 'hud-date');
     this.clock = el('div', 'hud-clock');
     this.sun = el('div', 'hud-sun');
@@ -48,7 +49,20 @@ export class Hud {
     this.goal.style.display = 'none';
     this.root.append(ticket, this.goal, energyWrap, menuBtn, this.action);
     uiRoot().append(this.root);
+    window.addEventListener('resize', this.placeGoal);
   }
+
+  /**
+   * The goal slip has a fixed CSS top, but the ticket grows when the show-night banner is
+   * showing; then the slip covered the banner. Push it down just enough to clear the ticket.
+   */
+  private placeGoal = (): void => {
+    if (this.goal.style.display === 'none') return;
+    this.goal.style.top = '';
+    const gap = 4;
+    const overlap = this.ticket.getBoundingClientRect().bottom + gap - this.goal.getBoundingClientRect().top;
+    if (overlap > 0) this.goal.style.top = `${parseFloat(getComputedStyle(this.goal).top) + overlap}px`;
+  };
 
   setAction(label: string | null): void {
     if (!label) {
@@ -66,6 +80,7 @@ export class Hud {
       this.lastGoal = g;
       this.goal.textContent = g ? `★ ${g}` : '';
       this.goal.style.display = g ? '' : 'none';
+      this.placeGoal();
       if (g) this.goal.animate([{ transform: 'translateX(20px)', opacity: 0 }, { transform: 'none', opacity: 1 }], { duration: 350, easing: 'ease-out' });
     }
     const t = G.time;
@@ -87,9 +102,11 @@ export class Hud {
       this.showTag.textContent = `★ ${name} · 7PM`;
       this.showTag.style.display = '';
     } else this.showTag.style.display = 'none';
+    this.placeGoal();
   }
 
   destroy(): void {
+    window.removeEventListener('resize', this.placeGoal);
     this.root.remove();
   }
 }

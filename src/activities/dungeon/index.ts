@@ -21,6 +21,9 @@ export async function runDungeon(): Promise<void> {
   ensureBeltItem();
   const save = dungeonSave();
   const firstVisit = !save.introSeen;
+  // Keyed on never having reached a floor, not on the intro: a first visit turned away
+  // (too late, no energy) used to mark the intro seen and lose the tutorial for good.
+  const needTutorial = save.deepest === 0;
   if (firstVisit) {
     await narrate(
       'The key turns. The gate groans open, and cold air rolls up the stairs like a crowd letting out its breath.',
@@ -59,7 +62,7 @@ export async function runDungeon(): Promise<void> {
       resolve();
       return;
     }
-    if (firstVisit) void tutorial();
+    if (needTutorial) void tutorial();
   });
 }
 

@@ -11,7 +11,7 @@ import { sendLetter } from '../systems/mail';
 import { choose, narrate, say, toast } from '../ui/dialog';
 import { doorRule, onEnterMap, onNewDay, onTalk } from '../world/hooks';
 import { WORLD } from '../world/scene';
-import { makeApi, speakerFor } from '../world/talk';
+import { cutsceneSpeaker, makeApi, speakerFor } from '../world/talk';
 import { apartmentScene, arrivalScene, farmArrival, firstNight, officeScene, openCreator } from './opening';
 import { LETTERS } from './letters';
 
@@ -86,7 +86,7 @@ async function meetBirdie(): Promise<void> {
   setFlag('met_birdie');
   w.spawnTemp('birdie', 15, 15, 'up');
   w.spawnTemp('dex', 16, 9, 'down');
-  const b = speakerFor('birdie');
+  const b = cutsceneSpeaker('birdie');
   audio.music('sportatorium');
   await narrate('The Sportatorium. Rafters full of old banners, a ring in the middle like an altar, and the smell of popcorn that has soaked into the wood for ninety years.', 'A short woman in a crimson velvet blazer is sweeping the ring apron and singing at the top of her lungs. She stops when she sees you.');
   await say(b, '...Well. Look at that chin.', "You've got her chin, sugar. And her terrible timing. I said ten o'clock.");
@@ -100,7 +100,7 @@ async function meetBirdie(): Promise<void> {
   await wrestlingRoots(b);
   await say(b, "*Dex!* Get in here. Let's see what the city sent us.");
   await w.walkTo('dex', 14, 9, 'down');
-  await say(speakerFor('dex'), "Hey! You're the new one? Cool cool cool. Don't worry, I'll make you look good. That's literally the job.");
+  await say(cutsceneSpeaker('dex'), "Hey! You're the new one? Cool cool cool. Don't worry, I'll make you look good. That's literally the job.");
   await say(b, "Get in the ring. Show me something. And *listen to him*. In this business you don't beat your opponent. You dance with them.");
   // The tryout match: an exhibition with coaching.
   await new Promise<void>((resolve) => {
@@ -131,7 +131,7 @@ async function meetBirdie(): Promise<void> {
   G.player.matches++;
   await say(b, "...Hm.", "You *listened.* Most kids from the city don't. They come in here wanting to win. Nobody wins, sugar. The *people* win, or nobody does.");
   await say(b, "You're on Wednesday's card at the VFW. Opener. You'll be working with Big Earl. You're losing, and you're going to make him look like a million bucks.", "And go see Marigold at the sewing shop on Second Street. You can't wrestle in *jeans*.");
-  await say(speakerFor('dex'), "Welcome to the Alley! Hey, sell for Earl like he's a mountain falling on you. Because he kind of is.");
+  await say(cutsceneSpeaker('dex'), "Welcome to the Alley! Hey, sell for Earl like he's a mountain falling on you. Because he kind of is.");
   w.despawn('dex');
   w.despawn('birdie');
   sting('story-beat');
@@ -156,7 +156,7 @@ async function wrestlingRoots(b: ReturnType<typeof speakerFor>): Promise<void> {
 }
 
 async function marigoldPersona(): Promise<void> {
-  const m = speakerFor('marigold');
+  const m = cutsceneSpeaker('marigold');
   await say(m, "Oh! You're the Dupree kid. Birdie called. Birdie *never* calls, she just appears.", "Okay. Okay okay okay. Stand there. Arms out. Let's find out who you are *in the ring*.");
   await say(m, "Everybody in this town has two of themselves: the one at the grocery store and the one under the lights. Let's make yours.");
   await openCreator('ring');
@@ -187,7 +187,7 @@ onTalk(async (npcId) => {
   if (npcId !== 'lou') return false;
   if (!G.flags['debuted'] || G.flags['lou_key'] || hasItem('dungeon-key')) return false;
   if (G.player.matches < 3 && absDay() < 9) return false;
-  const l = speakerFor('lou');
+  const l = cutsceneSpeaker('lou');
   await narrate('Sweet Lou doesn\'t look up from his fishing line.');
   await say(l, "Saw your match Saturday. You sold that elbow like it owed you money.", "Your grandma used to do that. Take a shot, turn it into a story. Made the whole building lean forward.");
   await say(l, "Here.", "*(He presses a heavy iron key into your hand. It's warm, like it's been in his pocket for forty years.)*");
