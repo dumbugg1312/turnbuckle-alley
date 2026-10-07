@@ -137,8 +137,12 @@ export class GameMap {
   /** Pre-render the ground layer once. */
   ground(): HTMLCanvasElement {
     if (this.groundCanvas) return this.groundCanvas;
-    const c = makeCanvas(this.pxW, this.pxH);
+    // Double density (D-018): dense terrain tiles land on the fine grid; the
+    // tagged canvas still draws at its logical size.
+    const c = makeCanvas(this.pxW * 2, this.pxH * 2);
+    (c as unknown as { __k: number }).__k = 2;
     const x = ctx2d(c);
+    x.setTransform(2, 0, 0, 2, 0, 0);
     for (let ty = 0; ty < this.h; ty++)
       for (let tx = 0; tx < this.w; tx++) {
         const id = this.terrain[ty * this.w + tx];
