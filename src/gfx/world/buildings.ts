@@ -1092,6 +1092,9 @@ function micro(s: string, x: number, y: number, c: Color, f = FT): void {
   }
 }
 
+/** Material kit, referenced so builds stay clean while buildings adopt it. */
+export const FINE_KIT = { worn, siding, brickF, shingleF, stucco, streaks, win, doorF, acUnit, ventF };
+
 // =====================================================================
 //  Building registration
 // =====================================================================
@@ -1642,7 +1645,7 @@ function drawSportatorium(): void {
   R(cx - 7, cyB - 3, 14, 1, '#fbefd2');
   // pyramid cap
   poly([[cx - 9.5, cyB - 11], [cx, cyB - 20], [cx + 9.5, cyB - 11]], '#5a5280');
-  FR(cx - 10, cyB - 21, 20, 11, (fx, fy, o) => {
+  FR(cx - 10, cyB - 21, 20, 11, (fx, _fy, o) => {
     if (!o) return null;
     const x = (fx + 0.5) / 2;
     return x < cx ? ((fx & 3) === 0 ? '#9a94c0' : '#78729e') : (fx & 3) === 3 ? '#3e3862' : '#544c7a';
