@@ -7388,6 +7388,8 @@ const BANNERS: [Color, Color, string[]][] = [
   ['#5a3a7a', '#ff94c8', ['WOMENS', 'CHAMP', '1983']],
   ['#2b2140', '#c8cce4', ['MID', 'SOUTH', '1977']],
   ['#d8a040', '#3a2c3a', ['50', 'YEARS', 'OF', 'FIGHTS']],
+  ['#2f6a52', '#ffd050', ['STATE', 'MAT', 'CHAMPS', '1988']],
+  ['#c9404c', '#fbf6ea', ['GO', 'TURN', 'BUCK', 'LES']],
 ];
 reg('banner', {
   draw: (ctx, o, t) => {
@@ -8047,6 +8049,506 @@ reg('stairs-down', {
           P(3, 1, '#c8c4dc');
         },
         { outline: false },
+      ),
+    );
+  },
+});
+
+// ---------------------------------------------------------------- library, gym, radio, clinic, studio
+
+/** The card catalog Earl carried up the front steps by himself. */
+reg('card-catalog', {
+  solid: { x: -12, y: -8, w: 24, h: 7 },
+  draw: (ctx, o) =>
+    blit(
+      ctx,
+      o,
+      iart(
+        'card-catalog',
+        26,
+        26,
+        () => {
+          const wd = OAK;
+          R(1, 2, 24, 22, wd.b);
+          fgrain(1, 2, 24, 22, wd, 651, true);
+          R(0, 0, 26, 3, wd.l);
+          H1(0, 26, 0, liA(wd.l, 0.4));
+          for (let r = 0; r < 5; r++)
+            for (let c = 0; c < 4; c++) {
+              const x = 2 + c * 5.8;
+              const y = 4 + r * 3.8;
+              R(x, y, 5, 3.2, shA(wd.b, 0.06));
+              H1(x, x + 5, y, liA(wd.b, 0.3));
+              H1(x, x + 5, y + 3, shA(wd.b, 0.35));
+              R(x + 1.2, y + 0.6, 2.6, 1, '#fbf6ea');
+              P1(x + 2.5, y + 2.2, PAL.gold2);
+            }
+          // one drawer pulled out, cards standing up
+          R(13.6, 11.6, 5, 2, shA(wd.b, 0.4));
+          for (let k = 0; k < 6; k++) V1(14 + k * 0.7, 10.2, 11.8, '#fbf6ea');
+          R(1, 24, 3, 2, wd.d);
+          R(22, 24, 3, 2, wd.d);
+          // a brass bell and a tiny drawing of a sparrow on a card
+          ell(5, -0.5, 1.6, 1.2, PAL.gold2);
+          R(18, -1.5, 5, 2, '#fbf6ea');
+          L1(19, -0.5, 21, -1, '#6a5a4a');
+          P1(21.5, -1, '#6a5a4a');
+        },
+        { shadow: [['r', 1, 23, 26, 4]] },
+      ),
+    ),
+});
+
+reg('book-cart', {
+  solid: { x: -8, y: -4, w: 16, h: 3 },
+  draw: (ctx, o) =>
+    blit(
+      ctx,
+      o,
+      iart(
+        'book-cart',
+        18,
+        18,
+        () => {
+          const wd = WALNUT;
+          R(1, 4, 16, 2, wd.l);
+          R(1, 10, 16, 2, wd.l);
+          V1(1, 2, 15, wd.s);
+          V1(16.5, 2, 15, wd.s);
+          books(2, -1, 14, 5, 661);
+          books(2, 5, 14, 5, 662);
+          for (const wx of [3, 15]) ell(wx, 16.5, 1.4, 1.4, '#2b2140');
+          L1(17, 2, 18, 0, '#9aa2c8');
+        },
+        { shadow: [['e', 9, 17, 8, 1.4]] },
+      ),
+    ),
+});
+
+reg('globe', {
+  solid: { x: -4, y: -3, w: 8, h: 2 },
+  draw: (ctx, o) =>
+    blit(
+      ctx,
+      o,
+      iart(
+        'globe',
+        12,
+        20,
+        () => {
+          const wd = WALNUT;
+          for (const s2 of [-1, 1]) L1(6, 13, 6 + s2 * 4, 19.5, wd.s);
+          R(5.5, 11, 1, 3, wd.b);
+          circ(6, 6, 5, '#4a7ab8');
+          R(1, 1, 10, 10, (_a, _b, o2) => {
+            if (!o2) return o2;
+            const n = Math.sin(lx() * 1.3) + Math.cos(ly() * 1.1 + lx() * 0.4);
+            return n > 0.6 ? '#7ab060' : o2;
+          });
+          ell(4.3, 4.2, 1.6, 1.2, alpha('#ffffff', 120));
+          curve(1, 6, 11, 6, -3, PAL.gold3);
+          V1(6, 0.5, 11.5, PAL.gold2);
+        },
+        { shadow: [['e', 6, 19, 4, 1.2]] },
+      ),
+    ),
+});
+
+/** A basketball hoop on the gym wall: glass backboard, orange rim, a tired net. */
+reg('hoop', {
+  draw: (ctx, o) =>
+    blit(
+      ctx,
+      o,
+      iart(
+        'hoop',
+        24,
+        26,
+        () => {
+          R(10.5, 0, 3, 6, '#6e688e');
+          R(0, 4, 24, 14, alpha('#e8f4ff', 200));
+          H1(0, 24, 4, '#ffffff');
+          R(0, 4, 24, 14, (_a, _b, o2) => (lx() < 0.6 || lx() > 23.4 || ly() < 4.6 || ly() > 17.4 ? '#c8cce4' : o2));
+          R(8, 9, 8, 6, 0);
+          R(8, 9, 8, 6, alpha('#e8f4ff', 160));
+          R(8, 9, 8, 0.6, '#d8434b');
+          R(8, 14.4, 8, 0.6, '#d8434b');
+          V1(8, 9, 15, '#d8434b');
+          V1(15.6, 9, 15, '#d8434b');
+          ell(12, 17, 5, 1.4, '#ff6a1a');
+          ell(12, 17, 4, 0.9, 0);
+          for (let k = 0; k < 6; k++) {
+            L1(8 + k * 1.6, 17.5, 9.5 + k * 1.1, 24, '#fbf6ea');
+            L1(9 + k * 1.6, 17.5, 8.5 + k * 1.3, 24, '#e8e0d4');
+          }
+        },
+        { outline: false },
+      ),
+    ),
+});
+
+/** The gym scoreboard: HOME and GUEST in dim red digits. */
+reg('scoreboard', {
+  lights: (o) => [light(o, 0, -8, 30, '#ff7a5a')],
+  draw: (ctx, o) =>
+    blit(
+      ctx,
+      o,
+      iart(
+        'scoreboard',
+        40,
+        18,
+        () => {
+          R(0, 0, 40, 18, '#2b2140');
+          R(1, 1, 38, 16, '#1e1830');
+          R(1, 1, 38, 3, '#2f6a52');
+          tinyC('TURNBUCKLES', 20, 1.3, '#ffd050');
+          tinyT('HOME', 3, 5, '#fbf6ea');
+          tinyT('GUEST', 27, 5, '#fbf6ea');
+          T('21', 3, 9, '#ff5a3a', FT, {});
+          T('07', 28, 9, '#ff5a3a', FT, {});
+          T('4', 18, 7, '#ffd050', FT, {});
+          for (let k = 0; k < 3; k++) P1(17 + k * 1.5, 14.5, k < 2 ? '#ff5a3a' : '#5a2a2a');
+        },
+        { outline: false },
+      ),
+    ),
+});
+
+/** The red ON AIR light over the studio door. */
+reg('on-air', {
+  lights: (o) => [light(o, 0, -4, 22, '#ff3a3a')],
+  draw: (ctx, o) =>
+    blit(
+      ctx,
+      o,
+      iart(
+        'on-air',
+        20,
+        8,
+        () => {
+          RR(0, 0, 20, 8, 2, '#2b2140');
+          R(1, 1, 18, 6, '#e8202e');
+          R(1, 1, 18, 2, '#ff6a6a');
+          TC('ON AIR', 10, 1.5, '#fff4f0', FT, {});
+        },
+        { outline: false },
+      ),
+    ),
+});
+
+/** Shelves of LPs, spines in every colour; a few faced out. */
+reg('record-shelf', {
+  solid: { x: -12, y: -8, w: 24, h: 7 },
+  draw: (ctx, o) =>
+    blit(
+      ctx,
+      o,
+      iart(
+        'record-shelf',
+        26,
+        30,
+        () => {
+          const wd = WALNUT;
+          R(0, 0, 26, 30, wd.d);
+          R(0, 0, 26, 2, wd.l);
+          for (const sy of [10, 20, 29]) R(0, sy, 26, 1.5, wd.l);
+          for (const sy of [2, 11.5, 21.5]) {
+            for (let x = 1; x < 25; x += 0.75) {
+              const k = hash2(Math.floor(x * 4), sy, 671);
+              V1(x, sy + (k < 0.2 ? 1 : 0), sy + 8, ['#c9404c', '#2b2140', '#ffd050', '#3a6ab0', '#fbf6ea', '#5ec0a8', '#e2844a', '#7a3a8a'][Math.floor(k * 8)]);
+            }
+          }
+          // faced-out sleeves: a country record and one with Gus's face on it
+          R(3, 2.5, 7, 7, '#ffd050');
+          circ(6.5, 6, 2.2, '#2b2140');
+          P1(6.5, 6, '#c9404c');
+          R(15, 12, 7, 7, '#3f9a92');
+          ell(18.5, 15, 1.8, 2, '#e6ab84');
+          ell(18.5, 13.6, 1.8, 0.8, '#c8c0b8');
+          H1(17.5, 19.5, 16, '#6a4a3a');
+        },
+        { shadow: [['r', 1, 27, 26, 4]] },
+      ),
+    ),
+});
+
+/** Egg-crate acoustic foam on the wall (props.w in tiles). */
+reg('foam-wall', {
+  draw: (ctx, o) => {
+    const n = num(o, 'w', 3);
+    const W = n * 16;
+    blit(
+      ctx,
+      o,
+      iart(
+        `foam-wall|${n}`,
+        W,
+        24,
+        () => {
+          R(0, 0, W, 24, '#4a3a5a');
+          R(0, 0, W, 24, () => {
+            const a = Math.sin(lx() * 1.6) * Math.sin(ly() * 1.6);
+            return a > 0.35 ? '#6a5a7a' : a < -0.35 ? '#2f2440' : '#4a3a5a';
+          });
+          R(0, 23, W, 1, '#2b2140');
+        },
+        { outline: false },
+      ),
+    );
+  },
+});
+
+/** A reel-to-reel deck on a cart, reels turning. */
+reg('reel-to-reel', {
+  solid: { x: -7, y: -4, w: 14, h: 3 },
+  draw: (ctx, o, t) => {
+    const f = frame(t, 4, 4, phaseOf(o));
+    blit(
+      ctx,
+      o,
+      iart(
+        `reel-to-reel|${f}`,
+        16,
+        24,
+        () => {
+          R(1, 14, 14, 2, '#4e4870');
+          R(2, 16, 1, 7, '#6e688e');
+          R(13, 16, 1, 7, '#6e688e');
+          RR(1, 0, 14, 14, 1, '#c8cce4');
+          R(1.5, 0.5, 13, 13, (_a, _b) => mixc('#e4e8f8', '#9aa2c8', ly() / 13));
+          for (const rx of [4.5, 11.5]) {
+            circ(rx, 4.5, 3, '#3a3450');
+            circ(rx, 4.5, 1, '#c8cce4');
+            for (let k = 0; k < 3; k++) {
+              const a = (k / 3) * Math.PI * 2 + f * 0.5;
+              P1(rx + Math.cos(a) * 2, 4.5 + Math.sin(a) * 2, '#9aa2c8');
+            }
+          }
+          L1(4.5, 7.5, 11.5, 7.5, '#5a4030');
+          R(3, 10, 10, 2, '#2b2140');
+          for (let k = 0; k < 4; k++) P1(4 + k * 2.5, 11, k === 1 ? '#ff3a3a' : '#9aa2c8');
+        },
+        { shadow: [['e', 8, 23, 6, 1.2]] },
+      ),
+    );
+  },
+});
+
+/** An anatomy chart of the spine, and the clinic's slogan. */
+reg('spine-chart', {
+  draw: (ctx, o) =>
+    blit(
+      ctx,
+      o,
+      iart(
+        'spine-chart',
+        16,
+        24,
+        () => {
+          R(0, 0, 16, 24, '#fbf6ea');
+          R(0, 0, 16, 2.5, '#5ec0a8');
+          tinyC('YOUR BACK', 8, 0.4, '#fbf6ea');
+          // vertebrae stacked in a gentle S
+          for (let k = 0; k < 14; k++) {
+            const x = 8 + Math.sin(k * 0.45) * 1.6;
+            ell(x, 4 + k * 1.3, 1.6 - k * 0.02, 0.55, k < 7 ? '#e8c8a0' : '#d8b890');
+            P1(x + 1.6, 4 + k * 1.3, '#c89a7a');
+          }
+          ell(8, 22, 3.5, 1.5, '#e8c8a0');
+          for (let k = 0; k < 4; k++) H1(1.5, 4.5, 6 + k * 3, '#a89cc0');
+          for (let k = 0; k < 4; k++) H1(11.5, 14.5, 8 + k * 3, '#a89cc0');
+          V1(16, 1, 24, SH(70));
+          H1(1, 16, 24, SH(70));
+        },
+        { outline: false },
+      ),
+    ),
+});
+
+/** A teaching skeleton on a stand (wearing a neck brace, for the Bruiser Twins' sake). */
+reg('skeleton', {
+  solid: { x: -4, y: -3, w: 8, h: 2 },
+  draw: (ctx, o) =>
+    blit(
+      ctx,
+      o,
+      iart(
+        'skeleton',
+        12,
+        32,
+        () => {
+          const b = '#f2ead8';
+          chrome(5.5, 24, 1, 6);
+          for (const s2 of [-1, 1]) L1(6, 30, 6 + s2 * 4, 31.5, '#6e688e');
+          ell(6, 3, 2.4, 2.6, b);
+          P1(5.2, 2.8, AK);
+          P1(6.8, 2.8, AK);
+          H1(5, 7, 4.6, shA(b, 0.3));
+          R(4.5, 5.5, 3, 1.5, '#fbf6ea');
+          H1(4.5, 7.5, 5.5, '#c8c0b0');
+          V1(6, 7, 17, b);
+          for (let k = 0; k < 5; k++) {
+            curve(6, 8 + k * 1.6, 3, 9 + k * 1.6, 0.5, b);
+            curve(6, 8 + k * 1.6, 9, 9 + k * 1.6, 0.5, b);
+          }
+          ell(6, 17.5, 3, 1.5, b);
+          L1(3, 8, 1.5, 15, b);
+          L1(9, 8, 10.5, 15, b);
+          L1(4.5, 18, 4, 24, b);
+          L1(7.5, 18, 8, 24, b);
+          P1(1.5, 15.5, b);
+          P1(10.5, 15.5, b);
+        },
+        { shadow: [['e', 6, 31, 4, 1]] },
+      ),
+    ),
+});
+
+/** A row of waiting-room chairs with magazines on the end table. */
+reg('waiting-chairs', {
+  solid: { x: -20, y: -6, w: 40, h: 5 },
+  draw: (ctx, o) =>
+    blit(
+      ctx,
+      o,
+      iart(
+        'waiting-chairs',
+        42,
+        18,
+        () => {
+          for (let k = 0; k < 3; k++) {
+            const x = 1 + k * 12;
+            RR(x, 0, 10, 8, 2, '#5ec0a8');
+            vinyl(x + 0.5, 0.5, 9, 7, '#5ec0a8', 3);
+            R(x - 0.5, 8, 11, 4, liA('#5ec0a8', 0.15));
+            H1(x - 0.5, x + 10.5, 8, '#9ce0c8');
+            chrome(x, 12, 1, 6);
+            chrome(x + 9, 12, 1, 6);
+          }
+          R(37, 9, 5, 3, WALNUT.l);
+          R(38, 12, 1, 6, WALNUT.d);
+          R(37.5, 7.5, 4, 1.5, '#ff94b4');
+          R(38, 6.3, 3.5, 1.2, '#5a7ab8');
+        },
+        { shadow: [['r', 0, 15, 42, 3]] },
+      ),
+    ),
+});
+
+/** The injury board: who's really hurt, and who's working it. */
+reg('injury-board', {
+  draw: (ctx, o) =>
+    blit(
+      ctx,
+      o,
+      iart(
+        'injury-board',
+        24,
+        18,
+        () => {
+          R(0, 0, 24, 18, '#c8cce4');
+          R(0.5, 0.5, 23, 17, '#fbfcff');
+          tinyC('THE BOARD', 12, 1, '#3f9a92');
+          const rows: [string, Color][] = [['BO NECK W', '#3f6ab0'], ['GIDEON PINKY W', '#3f6ab0'], ['HAZEL KNEE', '#c9404c'], ['EARL ANGER W', '#3f6ab0']];
+          rows.forEach(([txt, c], i) => tinyT(txt, 1.5, 4 + i * 3, c));
+          L1(18, 10, 22, 13, '#c9404c');
+          tinyT('SLOW', 16, 15, '#2b2140');
+        },
+        { outline: false },
+      ),
+    ),
+});
+
+/** Hazel's studio is the old bus depot: the departures board still frozen at its last bus. */
+reg('departures-board', {
+  lights: (o) => [light(o, 0, -10, 30, '#ffb84a')],
+  draw: (ctx, o, t) => {
+    const f = frame(t, 2, 0.4, phaseOf(o));
+    blit(
+      ctx,
+      o,
+      iart(
+        `departures-board|${f}`,
+        44,
+        22,
+        () => {
+          R(0, 0, 44, 22, '#2b2140');
+          R(1, 1, 42, 20, '#14101e');
+          R(1, 1, 42, 4, '#3a2c4a');
+          tinyC('DEPARTURES', 22, 1.6, '#ffb84a');
+          const rows: [string, string][] = [['2:10 AM', 'THE CITY'], ['', ''], ['', '']];
+          rows.forEach(([tm, dest], i) => {
+            const y = 6.5 + i * 4.5;
+            for (let x = 2; x < 42; x += 2.5) R(x, y - 0.5, 2.2, 3.4, '#1e1830');
+            if (tm) {
+              tinyT(tm, 2.5, y, '#ffb84a');
+              tinyT(dest, 17, y, '#ffb84a');
+              ell(40, y + 1.2, 0.8, 0.8, f ? '#ffb84a' : '#5a3a20');
+            }
+          });
+          fglare(1, 1, 42, 20, 0.08);
+        },
+        { outline: false },
+      ),
+    );
+  },
+});
+
+/** A studio mirror wall with a ballet barre and a stack of rolled mats. */
+reg('mirror-barre', {
+  draw: (ctx, o) => {
+    const n = num(o, 'w', 4);
+    const W = n * 16;
+    blit(
+      ctx,
+      o,
+      iart(
+        `mirror-barre|${n}`,
+        W,
+        30,
+        () => {
+          R(0, 0, W, 26, '#c8cce4');
+          VG(1, 1, W - 2, 24, ['#d8ecf4', '#a8c8d8', '#88a8c0']);
+          for (let x = 0; x < W; x += 24) V1(x, 0, 26, '#9aa2c8');
+          fglare(1, 1, W - 2, 24, 0.35);
+          // the barre on brackets
+          chrome(0, 16, W, 1.6, false);
+          for (let x = 6; x < W; x += 24) chrome(x, 17, 1, 5);
+          R(0, 26, W, 4, '#e8dcc4');
+        },
+        { outline: false },
+      ),
+    );
+  },
+});
+
+/** A little tabletop fountain, stones and a bamboo spout, always trickling. */
+reg('zen-fountain', {
+  solid: { x: -6, y: -4, w: 12, h: 3 },
+  draw: (ctx, o, t) => {
+    const f = frame(t, 4, 5, phaseOf(o));
+    blit(
+      ctx,
+      o,
+      iart(
+        `zen-fountain|${f}`,
+        14,
+        20,
+        () => {
+          R(1, 10, 12, 2, WALNUT.l);
+          R(2, 12, 1.2, 8, WALNUT.d);
+          R(10.8, 12, 1.2, 8, WALNUT.d);
+          ell(7, 9, 6, 2.2, '#4e4870');
+          ell(7, 8.6, 5, 1.6, '#7ab0c8');
+          for (const [sx, sy, r0] of [[4, 8, 1.3], [9, 8.2, 1.6], [6.5, 7, 1.1]] as [number, number, number][]) ell(sx, sy, r0, r0 * 0.8, '#9a96a8');
+          L1(10, 7, 12, 2, '#8ab868');
+          L1(10.5, 7, 12.5, 2, '#6f9a5a');
+          V1(10, 3, 7, alpha('#c8e8ff', 200));
+          P1(10, 3 + f, '#ffffff');
+          ell(7, 8.6, 1 + f * 0.6, 0.5, alpha('#e8f8ff', 120));
+        },
+        { shadow: [['e', 7, 19, 5, 1.2]] },
       ),
     );
   },

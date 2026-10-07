@@ -302,17 +302,28 @@ interior('vfw', 'VFW Post 316', 24, 15, 'wall-wood', 'wood-dark', 11, [
 ], { music: 'show', light: 0.84, abs: true });
 
 // ---------------------------------------------------------------- Shops and homes
+// The quietest building in America: shelves along the walls and a row of
+// stacks, Earl's circulation desk, the card catalog he carried up the steps
+// alone, a globe, the returns cart, a reading table, and the storytime
+// corner with the big armchair where the Mountain reads on Saturdays.
 interior('library', 'Public Library', 16, 11, 'wall', 'carpet', 7, [
-  ['bookshelf', 2, 4.6], ['bookshelf', 5, 4.6], ['bookshelf', 11, 4.6], ['bookshelf', 14, 4.6],
-  ['desk', 8, 4.6, {}, 'library-desk'], ['office-chair', 8, 3.8],
-  ['rug', 2, 8.4, { w: 4, h: 2, variant: 3 }, 'storytime-rug'], ['armchair', 4, 7.6, {}, 'storytime-chair'],
-  ['table', 12, 8.4], ['chair-wood', 11, 8.6], ['chair-wood', 13, 8.6],
-  ['window', 4, 2.6], ['window', 11, 2.6], ['plant', 15.4, 10.4], ['lamp-floor', 0.6, 7.4],
-], { music: 'home' });
+  ['bookshelf', 2, 4.6, { variant: 0 }], ['bookshelf', 4, 4.6, { variant: 1 }], ['bookshelf', 6, 4.6, { variant: 0 }],
+  ['bookshelf', 13, 4.6, { variant: 1 }], ['bookshelf', 15, 4.6, { variant: 0 }],
+  ['notice', 3, 1.6, { lines: 'STORYTIME|SAT 10AM|THE MOUNTAIN|READS', variant: 2 }],
+  ['window', 8.2, 2.6, { variant: 1 }], ['window', 10.8, 2.6, { variant: 1 }],
+  ['notice', 9.5, 0.95, { lines: 'QUIET|PLEASE' }],
+  ['counter', 9.5, 4.95, { w: 3, style: 'wood' }, 'library-desk'],
+  ['bookshelf', 13, 6.95, { variant: 0 }], ['bookshelf', 15, 6.95, { variant: 1 }],
+  ['card-catalog', 6.5, 6.6],
+  ['book-cart', 10.6, 6.7],
+  ['globe', 1.6, 6.7],
+  ['table', 12, 8.95, { variant: 0 }],
+  ['rug', 3, 9.8, { w: 4, h: 2, variant: 3 }, 'storytime-rug'],
+  ['armchair', 4.5, 7.8, { variant: 2, solid: { x: 0, y: 0, w: 0, h: 0 } }, 'storytime-chair'],
+  ['lamp-floor', 6.1, 9.6],
+  ['plant', 16.4, 10.4, { variant: 0 }],
+], { music: 'home', light: 0.92, abs: true });
 
-// Rosa's place: talavera counter, papel picado strung across the wall, the
-// masks (hers in gold in the middle), Abuela Celia's ofrenda with candles and
-// marigolds, a salsa bar from mild to "Rosa's", tables for the lunch rush.
 interior('taqueria', 'Taqueria Mariposa', 14, 9, 'wall-pink', 'tile', 6, [
   ['papel-picado', 8, 0.95, { w: 14 }],
   ['kitchen-run', 3.5, 3.15, { w: 4, style: 'taqueria', kettle: false }],
@@ -346,14 +357,22 @@ interior('bakery', 'Tallbridge Bakery', 12, 8, 'wall', 'checker', 5, [
   ['plant', 1.4, 7.6, { variant: 2 }],
 ], { music: 'diner', light: 0.94, abs: true });
 
+// WRSL 1340 AM, home of The Gravel Pit: egg-crate foam on every wall, the ON
+// AIR light, Gus's console and his chrome microphone Old Thunder, a wall of
+// LPs, the reel-to-reel turning, a couch for guests who never sit down.
 interior('radio', 'WRSL 1340 AM', 10, 8, 'wall-panel', 'carpet', 4, [
-  ['radio-console', 5, 4.6, {}, 'radio-console'], ['mic-stand', 7.4, 4.8], ['office-chair', 5, 5.6], ['filing-cabinet', 1, 4.4], ['crt-stack', 9, 4.8],
-  ['poster', 3, 2.3, { variant: 2 }], ['poster', 7.5, 2.3, { variant: 5 }],
-], { music: 'diner', light: 0.85 });
+  ['foam-wall', 5.5, 2.6, { w: 10 }],
+  ['on-air', 5.5, 0.8],
+  ['notice', 8.6, 1.9, { lines: 'THE GRAVEL PIT|6 TO 10 AM|WRSL 1340' }],
+  ['poster', 3, 2.3, { variant: 5 }],
+  ['record-shelf', 2.2, 4.7],
+  ['radio-console', 6, 4.95, {}, 'radio-console'],
+  ['mic-stand', 6.5, 5.7],
+  ['reel-to-reel', 9.6, 4.9],
+  ['couch', 8.5, 7.4, { variant: 2 }],
+  ['lamp-floor', 1.5, 7.4],
+], { music: 'diner', light: 0.82, abs: true });
 
-// Marigold's shop: bolts of fabric up the wall, the sewing machine, a dress
-// form wearing the Hall of Fame robe they're making for the Duchess "just in
-// case", the ironing board, racks of ring gear, a fitting mirror.
 interior('tailor', "Sew What? (Marigold's)", 12, 8, 'wall-pink', 'wood', 5, [
   ['fabric-bolts', 3, 2.95, { w: 4 }],
   ['notice', 9.2, 1.4, { lines: 'MEASURE TWICE|CUT ONCE|-M.', variant: 2 }],
@@ -408,19 +427,33 @@ interior('hardware', 'Steel Chair Hardware', 12, 9, 'wall-brick', 'concrete', 5,
   ['barrel', 7.9, 8.6],
 ], { music: 'diner', light: 0.9, abs: true });
 
+// Halloran Chiropractic, "We've Got Your Back": the reception desk with a jar
+// of butterscotch, the adjusting table, a spine chart, the injury board that
+// only insiders can read, a skeleton in a neck brace, the waiting chairs.
 interior('clinic', 'Halloran Chiropractic', 10, 8, 'wall', 'tile', 4, [
-  ['exam-table', 6.5, 4.8, {}, 'exam-table'], ['desk', 2.5, 4.8], ['office-chair', 2.5, 4.0], ['plant', 9.4, 7.4], ['poster', 5, 2.3, { variant: 4 }], ['window', 8, 2.6],
-], { music: 'home' });
+  ['notice', 3, 1.3, { lines: "WE'VE GOT|YOUR BACK", variant: 0 }],
+  ['spine-chart', 6, 2.6],
+  ['injury-board', 9.2, 2.3],
+  ['counter', 3, 4.95, { w: 2, style: 'wood' }],
+  ['exam-table', 7.5, 4.9, {}, 'exam-table'],
+  ['skeleton', 10.4, 5.4],
+  ['plant', 1.4, 5.8, { variant: 1 }],
+  ['waiting-chairs', 3.4, 7.7],
+  ['water-cooler', 10.4, 7.6],
+], { music: 'home', light: 0.95, abs: true });
 
+// Eye of the Storm, in the old bus depot: the departures board still frozen
+// on its last bus (2:10 AM, to the city), a mirror wall with a barre, yoga
+// mats, the speed bag, a little fountain trickling, plants everywhere.
 interior('studio', 'Hurricane Physio & Yoga', 10, 8, 'wall-blue', 'wood', 4, [
-  ['yoga-mat', 2.5, 6.6], ['yoga-mat', 4.5, 6.6], ['yoga-mat', 7.5, 6.6], ['plant', 0.6, 4.4], ['plant', 9.4, 4.4], ['window', 5, 2.6], ['speed-bag', 8.5, 4.6],
-], { music: 'home' });
+  ['departures-board', 3.6, 1.75],
+  ['mirror-barre', 8.6, 2.45, { w: 3 }],
+  ['zen-fountain', 1.6, 4.7],
+  ['speed-bag', 10, 4.6],
+  ['yoga-mat', 3.5, 6.6], ['yoga-mat', 5.5, 6.6], ['yoga-mat', 8, 6.6],
+  ['plant', 1.4, 7.4, { variant: 0 }], ['plant', 10.4, 7.4, { variant: 1 }], ['plant', 6.6, 4.4, { variant: 2 }],
+], { music: 'home', light: 0.95, abs: true });
 
-// The common room: rocking chairs by the windows (Agnes in one, and later
-// Grandma in the other), a canary in a brass cage, the TV corner with a couch,
-// the rummy table where Velma is cheating again, the activity board, the
-// nurses' station with gardenias and Sami's pink mug, the piano, and the
-// short hall to Room 7.
 interior('sunnypines', 'The Evening Bell Residence', 18, 10, 'wall', 'carpet', 8, [
   ['birdcage', 1.7, 4.8],
   ['window', 4.2, 2.6, { variant: 2 }], ['window', 6.8, 2.6, { variant: 2 }],
@@ -470,9 +503,20 @@ interior('grandma-room', 'Room 7', 8, 7, 'wall-blue', 'carpet', 3, [
   abs: true,
 });
 
-interior('school', 'Turnbuckle Alley High Gym', 18, 12, 'wall-panel', 'mat', 8, [
-  ['bleachers', 3, 6, { w: 5 }], ['bleachers', 15, 6, { w: 5 }], ['trophy-case', 9, 4.4, {}, 'school-trophies'], ['poster', 6, 2.3, { variant: 4 }], ['poster', 12, 2.3, { variant: 2 }],
-], { music: 'workout' });
+// The high school gym: bleachers on both sides, the hoop and the scoreboard,
+// state championship banners, the trophy case, and blue wrestling mats rolled
+// out in the middle for Thursday's "debate" between Coach Patty and Odessa.
+interior('school', 'Turnbuckle Alley High Gym', 18, 12, 'wall-panel', 'wood', 8, [
+  ['scoreboard', 5, 1.5],
+  ['hoop', 9.5, 2.7],
+  ['banner', 13.4, 2.1, { variant: 6 }], ['banner', 15.4, 2.1, { variant: 7 }],
+  ['trophy-case', 17.2, 4.6, {}, 'school-trophies'],
+  ['notice', 2.4, 1.4, { lines: 'THURSDAY|MATS 4PM|-COACH', variant: 1 }],
+  ['bleachers', 3.5, 7.6, { w: 5, solid: { x: -40, y: -32, w: 80, h: 31 } }],
+  ['bleachers', 16.5, 7.6, { w: 5, solid: { x: -40, y: -32, w: 80, h: 31 } }],
+  ['floor-mat', 9.5, 11.4, { w: 6, h: 4, variant: 1 }],
+  ['chair-cart', 1.7, 11.6],
+], { music: 'workout', light: 0.95, abs: true });
 
 interior('birdie-house', "Birdie's House", 12, 8, 'wall-pink', 'wood', 4, [
   ['couch', 3, 6], ['tv-vcr', 1, 4.4], ['armchair', 6, 5], ['bed', 10.5, 5.2], ['photo', 4, 2.1, { variant: 1 }], ['window', 7.5, 2.6], ['plant', 11.4, 7.4], ['rug', 2, 7, { w: 4, h: 1, variant: 0 }],
