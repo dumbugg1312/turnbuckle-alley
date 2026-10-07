@@ -13,7 +13,7 @@ import { noteCaster } from '../../world/atmosphere';
 import { registerObject } from '../../world/registry';
 import type { MapObject, ObjectKind } from '../../world/types';
 import { FT, glyph, T, TC, TW } from '../font';
-import { AK, type Color, circ, col, curve, dense, DS, dth, ell, FX, FY, GP, hash2, HL, L, liA, mixc, mkSpr, OUT, P, P1, type Paint, poly, R, rng, RR, RRB, selA, shA, type Spr, toCanvas, VG, VL } from '../kit';
+import { AK, type Color, circ, col, curve, dense, density, DS, dth, ell, FX, FY, GP, hash2, HL, L, liA, mixc, mkSpr, OUT, P, P1, type Paint, poly, R, rng, RR, RRB, selA, shA, type Spr, toCanvas, VG, VL } from '../kit';
 
 // ================================================================ build + cache
 
@@ -214,8 +214,12 @@ export const WALNUT: Wood = { l: '#b47c54', b: '#8a5640', s: '#663c36', d: '#472
 export const OAK: Wood = { l: '#f0cc94', b: '#d8a86e', s: '#ac7a50', d: '#7a5040' };
 export const CHERRY: Wood = { l: '#d8805e', b: '#b05a44', s: '#843e3c', d: '#5a2a36' };
 
-/** Wood grain fill. */
+/** Wood grain fill (fine, wavy grain when building at double density). */
 export function grain(x: number, y: number, w: number, h: number, wd: Wood, seed: number, vertical = false): void {
+  if (density() > 1) {
+    fgrain(x, y, w, h, wd, seed, vertical);
+    return;
+  }
   R(x, y, w, h, (X, Y) => {
     const g = vertical ? hash2(X, Y >> 2, seed) : hash2(X >> 2, Y, seed);
     return g < 0.12 ? shA(wd.b, 0.12) : g > 0.92 ? liA(wd.b, 0.14) : wd.b;
@@ -241,6 +245,10 @@ export function box3(x: number, y: number, w: number, h: number, top: number, c:
 }
 /** Glass reflection streaks over a rect (call after drawing what's behind). */
 export function glare(x: number, y: number, w: number, h: number, k = 0.35): void {
+  if (density() > 1) {
+    fglare(x, y, w, h, k);
+    return;
+  }
   for (let yy = 0; yy < h; yy++)
     for (let xx = 0; xx < w; xx++) {
       const s = (xx + yy * 0.9) % 22;
@@ -277,6 +285,12 @@ export function books(x: number, y: number, w: number, h: number, seed: number):
     R(xx, y + h - bh, ww, bh, c);
     VL(xx, y + h - bh, y + h - 1, liA(c, 0.25));
     if (bh > 3 && r() < 0.6) HL(xx, xx + ww - 1, y + h - bh + 1, r() < 0.5 ? '#f6d38a' : shA(c, 0.3));
+    // fine detail: a crease down the spine, a gilt band near the foot, a title smudge
+    if (ww >= 2) V1(xx + ww - 0.5, y + h - bh, y + h, shA(c, 0.3));
+    if (bh > 4) {
+      H1(xx, xx + ww, y + h - 1.5, r() < 0.5 ? '#f6d38a' : liA(c, 0.35));
+      if (r() < 0.5) H1(xx + 0.5, xx + ww - 0.5, y + h - bh + 2.5, liA(c, 0.5));
+    }
     xx += ww;
   }
 }
@@ -1143,6 +1157,22 @@ function sofa(w: number, c: Color, acc: Color, seats: number, wings: boolean): v
     circ(x + aw / 2, 12, 2.2, side ? ddc : dc);
     circ(x + aw / 2, 12, 1.2, side ? c : lc);
     P(x + (side ? 1 : aw - 2), top + 3, side ? ddc : dc);
+  }
+  // fine upholstery: a woven nap, deep button pits with a lit rim, piping along the cushion fronts
+  R(0, 0, w, 19, (_a, _b, o2) => {
+    if (!o2) return o2;
+    if ((FX + FY * 2) % 5 === 0) return shA(o2, 0.05);
+    if (hash2(FX, FY, 771) > 0.97) return liA(o2, 0.08);
+    return o2;
+  });
+  for (let i = 0; i < seats; i++) {
+    const x0 = Math.round(aw + i * inner);
+    const x1 = Math.round(aw + (i + 1) * inner) - 1;
+    for (let x = x0 + 3; x < x1 - 1; x += 5) {
+      P1(x + 0.5, 6.5, ddc);
+      P1(x, 6, llc);
+    }
+    H1(x0, x1 + 1, 13.5, shA(c, 0.12));
   }
   void acc;
 }
