@@ -4953,6 +4953,206 @@ reg('fishing-gear', {
     ),
 });
 
+// ---------------------------------------------------------------- MaxxMedia, floor 31
+
+/** Floor-to-ceiling glass onto the city at midnight; a MaxxMedia billboard glows on a tower. */
+reg('skyline-window', {
+  lights: (o) => [light(o, 0, -10, 60, '#a8c0ff')],
+  draw: (ctx, o, t) => {
+    const n = num(o, 'w', 10);
+    const W = n * 16;
+    const blink = frame(t, 2, 0.5, phaseOf(o));
+    blit(
+      ctx,
+      o,
+      iart(
+        `skyline-window|${n}|${blink}`,
+        W,
+        44,
+        () => {
+          // night sky with a faint orange city glow at the horizon
+          VG(0, 0, W, 44, ['#1e1a3a', '#2a2a5a', '#5a3a6a', '#c8705a']);
+          for (let k = 0; k < W / 3; k++) P1(hash2(k, 1, 561) * W, hash2(k, 2, 561) * 14, alpha('#fff8e8', 160));
+          // far towers, then near towers, windows lit at random
+          for (const [layer, col0, min, max] of [[0, '#3a3a68', 14, 28], [1, '#2a2850', 20, 40]] as [number, Color, number, number][]) {
+            let x = -2;
+            let k = 0;
+            while (x < W) {
+              const bw = 6 + hash2(k, layer, 562) * 10;
+              const bh = min + hash2(k, layer + 5, 562) * (max - min);
+              R(x, 44 - bh, bw, bh, col0);
+              if (hash2(k, layer, 563) < 0.3) R(x + bw / 2 - 0.5, 44 - bh - 4, 1, 4, col0);
+              for (let wy = 44 - bh + 2; wy < 43; wy += 2) for (let wx = x + 1; wx < x + bw - 1; wx += 1.5) if (hash2(Math.floor(wx * 2), Math.floor(wy * 2), 564 + layer) < (layer ? 0.28 : 0.18)) P1(wx, wy, layer ? '#ffe8a8' : '#c8b88a');
+              x += bw + (layer ? 1 : 2);
+              k++;
+            }
+          }
+          // the MaxxMedia billboard: a giant red M on a tower, and a red aircraft light blinking
+          const bx = W * 0.62;
+          R(bx, 10, 22, 10, '#2b2140');
+          R(bx + 0.5, 10.5, 21, 9, '#d8203a');
+          tinyC('MAXXMEDIA', bx + 11, 12.8, '#fff4f0');
+          for (let x = bx + 1; x < bx + 21; x += 2) P1(x, 19.5, '#ffb0b0');
+          if (blink) ell(W * 0.2, 7, 0.8, 0.8, '#ff3a3a');
+          // mullions every two tiles, a reflection of the office lights in the glass
+          for (let x = 0; x <= W; x += 32) chrome(Math.min(W - 1.5, x), 0, 1.5, 44);
+          chrome(0, 0, W, 1.5, false);
+          R(0, 30, W, 1, alpha('#c8d0f0', 80));
+          fglare(0, 0, W, 44, 0.12);
+        },
+        { outline: false },
+      ),
+    );
+  },
+});
+
+const CLIP_COLS = ['#d8434b', '#3f6ab0', '#ffd050', '#5ec0a8'];
+/** A cubicle: fabric partition, a monitor full of nine-second clips, the detritus of crunch. */
+reg('cubicle', {
+  draw: (ctx, o, t) => {
+    const empty = o.props.empty === true;
+    const mine = o.props.mine === true;
+    const f = frame(t, 4, 2, phaseOf(o));
+    blit(
+      ctx,
+      o,
+      iart(
+        `cubicle|${empty ? 'e' : mine ? 'm' : 'w'}|${f}`,
+        40,
+        34,
+        () => {
+          // grey-blue fabric partition with an aluminium cap
+          R(0, 0, 40, 16, '#6a7090');
+          R(0.5, 1, 39, 15, (_a, _b) => (hash2(FX, FY, 571) < 0.18 ? '#5e6484' : '#6a7090'));
+          chrome(0, 0, 40, 1.2, false);
+          // pinned to it: sticky notes, a printout, and (on yours) a Polaroid of the Velvet Hammers
+          const notes: Color[] = ['#fff4a0', '#ffc8d8', '#c8f0d8'];
+          for (let k = 0; k < 3; k++) {
+            R(3 + k * 5, 3 + (k % 2), 4, 4, notes[k]);
+            H1(3.5 + k * 5, 6.5 + k * 5, 4.5 + (k % 2), '#a89cc0');
+          }
+          R(28, 2, 7, 9, '#fbf6ea');
+          for (let k = 0; k < 4; k++) H1(29, 34, 4 + k * 1.6, '#a8a0b8');
+          tinyT('KPI', 29, 2.2, '#d8203a');
+          if (mine) {
+            R(19, 3, 5, 6, '#fffaf0');
+            R(19.5, 3.5, 4, 3.5, '#e8c8a0');
+            ell(20.6, 5, 0.6, 0.6, '#6a4a3a');
+            ell(22.4, 5, 0.6, 0.6, '#c89a5a');
+          }
+          // the desk: white laminate, monitor on an arm, keyboard, cold coffee
+          R(0, 16, 40, 4, '#e8eaf2');
+          H1(0, 40, 16, '#ffffff');
+          R(0, 20, 40, 1.2, '#9aa2c8');
+          for (const lx0 of [1, 37.5]) R(lx0, 21, 1.5, 13, '#c8cce0');
+          if (!empty) {
+            RR(12, 4, 16, 11, 1, '#2b2140');
+            R(13, 5, 14, 9, '#1e2a48');
+            // a clip on a loop: two wrestlers, a scrub bar, a view counter climbing
+            R(13, 10, 14, 4, '#e2dcec');
+            H1(13, 27, 9.5, '#e8404e');
+            R(15 + f, 6.5 + (f === 2 ? 1 : 0), 2, 3, CLIP_COLS[0]);
+            R(22 - f, 6.5, 2, 3, CLIP_COLS[1]);
+            R(13, 13, 14, 1, '#2b2140');
+            R(13, 13, 3 + f * 3, 1, '#ff3a5a');
+            tinyT(`${9 - f}S`, 13.5, 5.2, '#fff4f0');
+            fglare(13, 5, 14, 9, 0.15);
+            R(19, 15, 2, 1.5, '#4e4870');
+            R(14, 17, 12, 2, '#3a3450');
+            for (let x = 14.5; x < 25.5; x += 1) P1(x, 17.5, '#6e688e');
+            mug(30, 16, '#fbf6ea');
+            P1(31, 16.5, '#6a3a2a');
+            // energy drink cans in a pyramid
+            for (const [cx, cy] of [[4, 17], [6, 17], [5, 14.5]] as [number, number][]) {
+              R(cx, cy, 1.6, 2.5, '#5fd0a8');
+              R(cx, cy, 1.6, 0.5, '#c8cce4');
+            }
+          } else {
+            // abandoned: a cardboard box, a dead plant, the monitor dark
+            RR(12, 4, 16, 11, 1, '#2b2140');
+            R(13, 5, 14, 9, '#1a1830');
+            fglare(13, 5, 14, 9, 0.12);
+            R(28, 13, 8, 6, '#c8a070');
+            H1(28, 36, 13, '#e8c090');
+            R(3, 15, 3, 2, '#d27a52');
+            L1(4.5, 15, 3.5, 12, '#8a7a4a');
+            L1(4.5, 15, 6, 12.5, '#8a7a4a');
+          }
+          // the office chair in front, pushed back
+          RR(15, 22, 10, 6, 2, '#3a3450');
+          R(16, 23, 8, 4, '#4e4870');
+          R(19.5, 28, 1, 3, '#9aa2c8');
+          H1(15, 25, 31, '#6e688e');
+          for (const cx of [15.5, 20, 24.5]) P1(cx, 31.5, AK);
+        },
+        { shadow: [['r', 1, 30, 40, 4]] },
+      ),
+    );
+  },
+});
+
+/** The big wall screen: tonight's numbers, a line that only goes up. */
+reg('stats-screen', {
+  lights: (o) => [light(o, 0, -10, 40, '#7ab0ff')],
+  draw: (ctx, o, t) => {
+    const f = frame(t, 4, 1, phaseOf(o));
+    blit(
+      ctx,
+      o,
+      iart(
+        `stats-screen|${f}`,
+        34,
+        22,
+        () => {
+          RR(0, 0, 34, 22, 1, '#2b2140');
+          R(1, 1, 32, 20, '#141a34');
+          tinyT('VIEWS', 2, 2, '#7ab0ff');
+          tinyT(`12,00${4 + f},33${f}`, 2, 5, '#fff4f0');
+          // bar chart and a line chart
+          for (let k = 0; k < 7; k++) {
+            const bh = 2 + ((k * 7 + f * 3) % 9);
+            R(3 + k * 2.5, 19 - bh, 1.8, bh, k === 6 ? '#ff3a5a' : '#3f6ab0');
+          }
+          let py = 18;
+          for (let x = 21; x < 32; x += 1) {
+            const ny = 18 - (x - 21) * 0.9 - Math.sin(x + f) * 0.8;
+            L1(x - 1, py, x, ny, '#5fd0a8');
+            py = ny;
+          }
+          tinyT('+9S', 23, 2, '#ff3a5a');
+          fglare(1, 1, 32, 20, 0.08);
+        },
+        { outline: false },
+      ),
+    );
+  },
+});
+
+reg('beanbag', {
+  draw: (ctx, o) => {
+    const v = variant(o, 3);
+    blit(
+      ctx,
+      o,
+      iart(
+        `beanbag|${v}`,
+        16,
+        12,
+        () => {
+          const c = ['#d8203a', '#3f6ab0', '#5ec0a8'][v];
+          ell(8, 7, 7.5, 5, shA(c, 0.25));
+          ell(8, 6.5, 7, 4.5, c);
+          ell(6, 4.5, 3.5, 2, liA(c, 0.3));
+          L1(4, 6, 9, 9, shA(c, 0.35));
+          L1(11, 4, 12, 9, shA(c, 0.3));
+          tinyC('M', 9, 6.5, '#fbf6ea');
+        },
+        { shadow: [['e', 8, 11, 7, 1.5]] },
+      ),
+    );
+  },
+});
+
 reg('trophy-case', {
   solid: { x: -16, y: -10, w: 32, h: 9 },
   draw: (ctx, o) => {

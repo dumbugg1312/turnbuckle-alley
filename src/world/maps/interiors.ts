@@ -406,14 +406,27 @@ interior('salon', 'Gorgeous (Salon)', 10, 7, 'wall-pink', 'checker', 4, [
 ], { music: 'creator' });
 
 // ---------------------------------------------------------------- The city prologue
+// Floor 31 at 11:48 PM: a wall of glass onto the city with the MaxxMedia
+// billboard glowing on a tower, the numbers on the big screen only going up,
+// cubicles lit by nine-second clips on a loop (yours has the Polaroid pinned
+// to it; one is abandoned with a box packed), energy-drink pyramids,
+// beanbags nobody sits on, and Royce's door at the end.
 interior('maxx-office', 'MaxxMedia, Floor 31', 20, 10, 'wall-panel', 'carpet', 9, [
-  ['window', 3, 2.6], ['window', 7, 2.6], ['window', 11, 2.6], ['window', 15, 2.6], ['poster', 18.5, 2.3, { variant: 2 }],
-  ['desk', 6, 6, {}, 'player-desk'], ['crt-stack', 6, 5.2], ['office-chair', 6, 7],
-  ['desk', 10, 6, {}, 'arlo-desk'], ['crt-stack', 10, 5.2], ['office-chair', 10, 7],
-  ['desk', 14, 6], ['crt-stack', 14, 5.2], ['office-chair', 14, 7],
-  ['desk', 6, 9.4], ['desk', 14, 9.4], ['filing-cabinet', 1, 4.4], ['filing-cabinet', 2, 4.4], ['vending', 19, 5], ['plant', 0.6, 9.4],
-  ['door-wall', 17, 3, { text: 'R. PENN' }, 'royce-door'],
-], { music: 'city', light: 0.92 });
+  ['stats-screen', 2.6, 2.3],
+  ['skyline-window', 10.5, 2.95, { w: 12 }],
+  ['door-wall', 18, 3, { text: 'R. PENN', variant: 2 }, 'royce-door'],
+  ['notice', 20.3, 1.4, { lines: 'ENGAGEMENT|IS|EVERYTHING' }],
+  ['filing-cabinet', 1.5, 4.4], ['filing-cabinet', 2.4, 4.4],
+  ['cubicle', 7, 6.95, { mine: true, solid: { x: -20, y: -20, w: 40, h: 8 } }, 'player-desk'],
+  ['cubicle', 11, 6.95, { solid: { x: -20, y: -20, w: 40, h: 8 } }, 'arlo-desk'],
+  ['cubicle', 15, 6.95, { empty: true, solid: { x: -20, y: -20, w: 40, h: 8 } }],
+  ['cubicle', 4, 9.95, { solid: { x: -20, y: -20, w: 40, h: 8 } }],
+  ['cubicle', 16, 9.95, { empty: true, solid: { x: -20, y: -20, w: 40, h: 8 } }],
+  ['vending', 20.4, 5],
+  ['water-cooler', 20.4, 7.7],
+  ['beanbag', 12.4, 9.5], ['beanbag', 13.6, 9.7, { variant: 1 }],
+  ['plant', 1.4, 9.4, { variant: 1 }],
+], { music: 'city', light: 0.72, abs: true });
 
 // A city studio at midnight: a steel kitchenette and a fridge that hums, the
 // old TV you used to watch territory tapes on with Grandma, the city glowing
