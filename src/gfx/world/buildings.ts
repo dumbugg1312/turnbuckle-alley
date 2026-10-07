@@ -3140,77 +3140,136 @@ function column(x: number, y0: number, y1: number): void {
 }
 function drawLibrary(): void {
   const W = 96;
-  const GY = 80;
+  const GY = 96;
   // slate roof behind the pediment
-  shingles(0, 4, W, 16, '#6a6488', 111, 3, 4);
-  HL(0, W - 1, 4, '#9a94b8');
-  // wings: stone with tall arched windows
-  stoneWall(0, 20, W, GY - 20, '#c8bccc', 112);
+  shingleF(0, 4, W, 20, '#6a6488', 111, 3, 4, 0.15);
+  fh(0, W, 4, '#a8a2c8');
+  ventF(84, 3, 4);
+  // wings: cut stone with tall arched windows
+  stoneWall(0, 24, W, GY - 24, '#c8bccc', 112);
+  FR(0, 24, W, GY - 24, (fx, fy, o) => (hash2(fx, fy, 113) < 0.05 ? shA(o, 0.1) : hash2(fx, fy, 114) > 0.985 ? liA(o, 0.2) : o));
+  R(0, 24, W, 2, '#efe6e4');
+  fh(0, W, 24, '#fffaf4');
+  fh(0, W, 25.5, '#a898b0');
+  aoTop(0, 26, W, 4, 0.2);
+  shadeRight(W - 8, 26, 8, GY - 26, 0.18);
   for (const wx of [5, 81]) {
-    RR(wx - 1, 34, 12, 26, 4, '#f4eee8');
-    glass(wx, 36, 10, 23, () => {
-      roomA(wx, 36, 10, 23, '#e7a468', wx);
-      for (let k = 0; k < 4; k++) R(wx + 1, 40 + k * 5, 8, 3, ['#c9424f', '#4c6ab2', '#e2b244', '#518c5c'][k]);
+    RR(wx - 1.5, 39, 13, 34, 5, '#f4eee8');
+    fh(wx + 1, wx + 9, 39, '#fffaf4');
+    glassF(wx, 41, 10, 31, () => {
+      room(wx, 41, 10, 31, '#e7a468', wx);
+      for (let k = 0; k < 5; k++) {
+        const sy = 46 + k * 5;
+        R(wx, sy + 3, 10, 1, '#7a4a3a');
+        for (let b = 0; b < 9; b++) {
+          const c = ['#c9424f', '#4c6ab2', '#e2b244', '#518c5c', '#9a6ad0', '#e8e0d0'][(b + k * 2) % 6];
+          R(wx + 0.5 + b, sy + (b % 3 === 0 ? 0.5 : 0), 1, 3 - (b % 3 === 0 ? 0.5 : 0), c);
+          fv(wx + 0.5 + b, sy + 0.5, sy + 3, liA(c, 0.25));
+        }
+      }
     });
-    RR(wx, 35, 10, 3, 1, '#e8a868');
-    VL(wx + 5, 36, 58, '#f4eee8');
-    R(wx - 2, 60, 14, 2, '#e8e0dc');
+    RR(wx, 40, 10, 3, 1, '#e8a868');
+    R(wx + 4.75, 41, 0.5, 31, '#f4eee8');
+    for (const yy of [52, 62]) R(wx, yy, 10, 0.5, '#f4eee8');
+    // keystone
+    R(wx + 3.5, 37.5, 3, 3, '#e0d8d4');
+    fh(wx + 3.5, wx + 6.5, 37.5, '#fffaf4');
+    R(wx - 2.5, 73, 15, 1.5, '#e8e0dc');
+    fh(wx - 2.5, wx + 12.5, 73, '#fffaf4');
+    fh(wx - 2.5, wx + 12.5, 74.5, tint('#2b2140', 0.3));
+  }
+  // ivy climbing the left corner
+  for (let y = 40; y < GY - 4; y += 1) {
+    const x = 1 + Math.sin(y * 0.35) * 1.2;
+    P1(x, y, '#4f7a4a');
+    if (y % 3 === 0) {
+      ell(x + 1, y, 1, 0.8, hash2(y, 0, 115) < 0.5 ? '#5f9a5a' : '#3f6a4a');
+    }
   }
   // portico: pediment, frieze, four columns
-  poly([[18, 26], [48, 6], [78, 26]], '#efe6e4');
-  poly([[24, 24], [48, 10], [72, 24]], '#ddd2d4');
-  L(18, 26, 48, 6, '#fffaf4');
-  L(48, 6, 78, 26, '#b8a8b4');
+  poly([[16, 31], [48, 9], [80, 31]], '#efe6e4');
+  poly([[23, 29], [48, 13], [73, 29]], '#ddd2d4');
+  FR(23, 13, 50, 16, (fx, fy, o) => (o === col('#ddd2d4') && hash2(fx, fy, 116) < 0.06 ? shA(o, 0.06) : o));
+  L(16, 31, 48, 9, '#fffaf4');
+  L(48, 9, 80, 31, '#b8a8b4');
+  for (let i = 0; i < 20; i++) P1(18 + i * 1.5, 30 - i * 1.03, '#d8ccd0');
   // an open book in the pediment
-  R(42, 15, 12, 6, '#fff8ee');
-  VL(48, 15, 20, '#c8b8c0');
-  for (let k = 0; k < 3; k++) {
-    HL(43, 46, 16 + k * 2, '#a898b0');
-    HL(50, 53, 16 + k * 2, '#a898b0');
+  R(42, 19, 12, 7, '#fff8ee');
+  fv(48, 19, 26, '#c8b8c0');
+  fh(42, 54, 26, '#c8b8c0');
+  for (let k = 0; k < 4; k++) {
+    fh(43, 47, 20.5 + k * 1.3, '#a898b0');
+    fh(49, 53, 20.5 + k * 1.3, '#a898b0');
   }
-  R(16, 26, 64, 9, '#efe6e4');
-  HL(16, 79, 26, '#fffaf4');
-  HL(16, 79, 34, '#b8a8b4');
-  TC('PUBLIC LIBRARY', 48, 28, '#5a4a7a', FT, {});
-  R(18, 35, 60, 35, '#a89cb4');
+  R(14, 31, 68, 10, '#efe6e4');
+  fh(14, 82, 31, '#fffaf4');
+  fh(14, 82, 40.5, '#b8a8b4');
+  for (let x = 15; x < 82; x += 3) R(x, 31.5, 1, 1, '#ddd2d4');
+  TC('PUBLIC LIBRARY', 48.5, 34.5, '#c8b8c8', FT, {});
+  TC('PUBLIC LIBRARY', 48, 34, '#5a4a7a', FT, {});
   // shadowy portico interior with the door
-  for (let x = 18; x < 78; x++) for (let y = 35; y < 40; y++) P(x, y, (X: number, Y: number) => (dth(X, Y, 10 - (y - 35) * 2) ? '#8a7e9a' : '#a89cb4'));
-  doorA(42, 46, 12, 24, '#7a4a3a', { glass: true, frame: '#e8e0dc', step: false });
-  RR(41, 41, 14, 5, 2, '#e8e0dc');
-  for (const cx of [21, 31, 60, 70]) column(cx, 35, 70);
+  R(18, 41, 60, 44, '#a89cb4');
+  stoneWall(18, 41, 60, 44, '#a89cb4', 117);
+  aoTop(18, 41, 60, 10, 0.32);
+  doorF(41, 51, 14, 34, '#7a4a3a', { frame: '#e8e0dc', lite: true, liteH: 12, seed: 118, step: null, transom: true });
+  RR(40, 45, 16, 5, 2, '#e8e0dc');
+  fh(41, 55, 45, '#fffaf4');
+  glassF(42, 46, 12, 3, () => R(42, 46, 12, 3, '#ffcf7a'));
+  // hanging lantern
+  fv(48, 41, 43, '#4a3550');
+  // a banner between the columns
+  R(57, 46, 7, 14, '#4c6ab2');
+  poly([[57, 60], [60.5, 57], [64, 60], [64, 61], [57, 61]], '#4c6ab2');
+  fv(57, 46, 61, '#6a8ad0');
+  micro('READ', 57.5, 48, '#fff4dc');
+  ell(60.5, 53.5, 2, 1.5, '#fff4dc');
+  fv(60.5, 52, 55, '#4c6ab2');
+  for (const cx of [21, 31, 60, 70]) column(cx, 41, 85);
   // the stone steps
   for (let k = 0; k < 3; k++) {
-    R(30 - k * 4, 70 + k * 3, 36 + k * 8, 3, ['#e8e0dc', '#d8d0d0', '#c8c0c4'][k]);
-    HL(30 - k * 4, 65 + k * 4, 70 + k * 3, '#fffaf4');
+    const sx = 28 - k * 4;
+    const sw = 40 + k * 8;
+    R(sx, 85 + k * 3.5, sw, 3.5, ['#e8e0dc', '#d8d0d0', '#c8c0c4'][k]);
+    fh(sx, sx + sw, 85 + k * 3.5, '#fffaf4');
+    fh(sx, sx + sw, 88 + k * 3.5, tint('#5a4a6a', 0.3));
+    FR(sx, 85 + k * 3.5, sw, 3.5, (fx, fy, o) => (hash2(fx, fy, 119 + k) < 0.05 ? shA(o, 0.08) : o));
   }
   // Story Time sandwich board
-  L(3, GY - 1, 5, GY - 18, '#8a5a4a');
-  L(21, GY - 1, 19, GY - 18, '#6e3a48');
-  RR(1, GY - 21, 22, 19, 1, '#a8704f');
-  HL(2, 21, GY - 21, '#d09a6a');
-  R(2, GY - 20, 20, 17, '#3a4a4c');
-  TC('STORY', 12, GY - 19, '#fff4dc', FT, {});
-  TC('TIME', 12, GY - 13, '#ffd977', FT, {});
-  TC('4PM', 12, GY - 7, '#ff9ab0', FT, {});
+  L(3, GY - 1, 5, GY - 20, '#8a5a4a');
+  L(21, GY - 1, 19, GY - 20, '#6e3a48');
+  RR(1, GY - 23, 22, 20, 1, '#a8704f');
+  fh(2, 22, GY - 23, '#d09a6a');
+  R(2, GY - 22, 20, 18, '#3a4a4c');
+  FR(2, GY - 22, 20, 18, (fx, fy, o) => (hash2(fx, fy, 120) < 0.05 ? mixc(o, '#ffffff', 0.15) : o));
+  TC('STORY', 12, GY - 21, '#fff4dc', FT, {});
+  TC('TIME', 12, GY - 15, '#ffd977', FT, {});
+  TC('4PM', 12, GY - 9, '#ff9ab0', FT, {});
   // the blue book-return box
-  RR(81, GY - 16, 11, 16, 2, '#4a68b8');
-  R(83, GY - 13, 7, 2, '#2b2140');
-  VL(82, GY - 15, GY - 2, '#7aa0e0');
+  RR(81, GY - 17, 11, 17, 2, '#4a68b8');
+  fh(82, 91, GY - 17, '#8aa8f0');
+  R(83, GY - 14, 7, 2, '#2b2140');
+  fh(83, 90, GY - 12, '#7aa0e0');
+  fv(81.5, GY - 15, GY - 2, '#7aa0e0');
+  fv(91.5, GY - 15, GY - 2, '#30407c');
   T('B', 85, GY - 9, '#fff4dc', FT, {});
   R(82, GY - 1, 2, 1, '#30407c');
   R(89, GY - 1, 2, 1, '#30407c');
+  grime(0, GY - 8, 18, 7, 0.18);
+  grime(78, GY - 8, 18, 7, 0.18);
 }
 building('b-library', {
   w: 96,
-  h: 80,
+  h: 96,
   door: 0,
   draw: drawLibrary,
-  shadowTop: 6,
+  shadowTop: 8,
   label: 'Public Library',
+  solid: { x: -48, y: -66, w: 96, h: 66 },
   lights: [
-    [10, 46, 14, WARM],
-    [86, 46, 14, WARM],
-    [48, 54, 16, WARM],
+    [10, 56, 14, WARM],
+    [86, 56, 14, WARM],
+    [48, 66, 16, WARM],
+    [48, 47, 10, WARM],
   ],
 });
 
@@ -3233,62 +3292,107 @@ function vfwFlag(f: number): void {
 }
 function drawVFW(): void {
   const W = 112;
-  const GY = 80;
-  flatRoof(0, 10, W, 10, 121);
-  vent(90, 11);
-  vent(30, 12);
-  brick(0, 20, W, GY - 20, '#a8504a', '#924442', '#6a3444', 122);
-  R(0, 18, W, 3, '#f2ece4');
-  HL(0, W - 1, 18, '#ffffff');
-  HL(0, W - 1, 20, '#b8a8b0');
-  R(W - 6, 21, 6, GY - 21, (x: number, y: number, o: number) => (dth(x, y, 8) ? shA(o, 0.2) : o));
+  const GY = 96;
+  flatRoof(0, 12, W, 12, 121);
+  FR(0, 12, W, 12, (fx, fy, o) => (hash2(fx, fy, 122) < 0.12 ? shA(o, 0.1) : o));
+  ventF(90, 14, 5);
+  ventF(30, 15, 4);
+  acUnit(60, 15);
+  brickF(0, 24, W, GY - 24, '#a8504a', '#924442', '#7a4a52', 122);
+  R(0, 22, W, 3, '#f2ece4');
+  fh(0, W, 22, '#ffffff');
+  fh(0, W, 24.5, '#b8a8b0');
+  aoTop(0, 25, W, 4, 0.22);
+  shadeRight(W - 8, 25, 8, GY - 25, 0.2);
   // name band
-  R(20, 23, 72, 10, '#2f3a6a');
-  HL(20, 91, 23, '#4a5a9a');
-  TC('VFW POST 316', 56, 25, '#fbf0e4', FM, {});
-  P(23, 28, '#f4b63f');
-  P(88, 28, '#f4b63f');
-  // the changeable-letter marquee
-  R(10, 35, 92, 19, '#f2ece4');
-  box(10, 35, 92, 19, '#5a5a7a');
-  HL(11, 100, 36, '#ffffff');
-  HL(12, 99, 44, '#d8d0d8');
-  HL(12, 99, 52, '#d8d0d8');
-  TC('WED NIGHT WRESTLING', 56, 38, '#2b2140', FT, {});
-  TC('BINGO AFTER', 56, 46, '#c9404c', FT, {});
+  R(20, 27, 72, 11, '#2f3a6a');
+  fh(20, 92, 27, '#6a7ab8');
+  fh(20, 92, 37.5, '#1a2048');
+  TC('VFW POST 316', 56.5, 30, '#1a2048', FM, {});
+  TC('VFW POST 316', 56, 29.5, enamel('#fbf0e4'), FM, {});
+  for (const sx of [23, 88]) {
+    const st = ['..#..', '.###.', '#####', '.###.', '.#.#.'];
+    st.forEach((row, yy) => [...row].forEach((ch, xx) => ch === '#' && P1(sx - 1 + xx * 0.5, 30.5 + yy * 0.5, '#f4b63f')));
+  }
+  // the changeable-letter marquee on its frame
+  R(10, 40, 92, 20, '#f2ece4');
+  box(10, 40, 92, 20, '#5a5a7a');
+  fh(11, 101, 41, '#ffffff');
+  for (const yy of [48.5, 56.5]) {
+    fh(12, 100, yy, '#d8d0d8');
+    fh(12, 100, yy + HF, '#ffffff');
+  }
+  const letters = (str: string, y: number, c: string) => {
+    const w = TW(str, FT, {});
+    let x = 56 - w / 2;
+    for (const ch of str) {
+      if (ch !== ' ') {
+        R(x - 0.5, y - 0.5, 4, 6, '#ffffff');
+        fh(x - 0.5, x + 3.5, y + 5, '#d8d0d8');
+      }
+      x = T(ch, x, y, c, FT, {});
+    }
+  };
+  letters('WED NIGHT WRESTLING', 42.5, '#2b2140');
+  letters('BINGO AFTER', 50.5, '#c9404c');
+  // legs of the marquee frame
+  for (const lx of [12, 99]) {
+    R(lx, 60, 1.5, 4, '#5a5a7a');
+    fv(lx, 60, 64, '#8a8aa0');
+  }
   // windows
-  for (const wx of [9, 85]) windowA(wx, 58, 18, 12, { frame: '#f2ece4', curtains: '#fff4e6', seed: wx });
+  for (const wx of [9, 85]) win(wx, 66, 18, 14, { frame: '#f2ece4', curtains: '#fff4e6', seed: wx, lintel: '#e0d8d0', cols: 3, rows: 2 });
+  // memorial plaque
+  RR(31, 70, 7, 9, 1, '#a8803a');
+  R(32, 71, 5, 7, '#c8a04a');
+  fh(32, 37, 71, '#f0d080');
+  for (let k = 0; k < 4; k++) fh(32.5, 36.5, 73 + k * 1.2, '#8a6a2a');
   // double doors with canopy (centre x = 56)
-  R(42, 54, 28, 3, '#2f3a6a');
-  HL(42, 69, 54, '#4a5a9a');
-  doorA(46, 60, 10, 20, '#5a6a9a', { glass: true, frame: '#f2ece4', step: false });
-  doorA(56, 60, 10, 20, '#5a6a9a', { glass: true, frame: '#f2ece4', step: false });
+  R(41, 56, 30, 3.5, '#2f3a6a');
+  fh(41, 71, 56, '#6a7ab8');
+  fh(41, 71, 59, '#1a2048');
+  aoTop(42, 59.5, 28, 2.5, 0.3);
+  doorF(45, 62, 11, 34, '#5a6a9a', { frame: '#f2ece4', lite: true, liteH: 12, step: null, seed: 123, kick: '#c8c4d8' });
+  doorF(56, 62, 11, 34, '#5a6a9a', { frame: '#f2ece4', lite: true, liteH: 12, step: null, seed: 124, knobRight: false, kick: '#c8c4d8' });
   R(43, GY - 2, 26, 2, '#c8c0c4');
-  HL(43, 68, GY - 2, '#e6dee0');
+  fh(43, 69, GY - 2, '#e6dee0');
   // flagpole in front of the left corner
-  VL(5, 2, GY - 1, '#c8c4d8');
-  VL(6, 3, GY - 1, '#8a84a0');
-  circ(6, 2, 1.5, '#f4b63f');
+  R(5, 2, 1.5, GY - 2, '#c8c4d8');
+  fv(5, 2, GY, '#eeeaf6');
+  fv(6, 3, GY, '#8a84a0');
+  circ(5.75, 2, 1.5, '#f4b63f');
+  P1(5.25, 1.5, '#fff0a0');
   R(3, GY - 3, 6, 3, '#9a92a8');
+  fh(3, 9, GY - 3, '#c8c0d0');
   vfwFlag(0);
-  // a bench and an ashtray-urn by the door
-  R(74, GY - 7, 8, 2, '#a8704f');
-  R(75, GY - 5, 1, 5, '#6e4a3a');
-  R(80, GY - 5, 1, 5, '#6e4a3a');
+  // a bench and an ashtray urn by the door
+  R(74, GY - 8, 10, 2, '#a8704f');
+  fh(74, 84, GY - 8, '#d09a6a');
+  R(74, GY - 11, 10, 1.5, '#a8704f');
+  fh(74, 84, GY - 11, '#d09a6a');
+  R(75, GY - 6, 1, 6, '#6e4a3a');
+  R(82, GY - 6, 1, 6, '#6e4a3a');
+  RR(87, GY - 8, 4, 8, 1, '#6a6a80');
+  fh(87, 91, GY - 8, '#9a9ab0');
+  ell(89, GY - 8, 1.5, 0.5, '#e8e0d0');
+  grime(0, GY - 9, W, 8, 0.22);
+  footing(0, GY - 3, 43, 3, '#b8a8b0', 125);
+  footing(69, GY - 3, 43, 3, '#b8a8b0', 126);
 }
 building('b-vfw', {
   w: 112,
-  h: 80,
+  h: 96,
   door: 0,
   draw: drawVFW,
-  shadowTop: 18,
+  shadowTop: 22,
   label: 'VFW Post 316',
+  solid: { x: -56, y: -66, w: 112, h: 66 },
   anims: [{ fps: 5, frames: 4, rect: [6, 0, 18, 16], draw: (f) => vfwFlag(f) }],
   lights: [
-    [18, 64, 14, WARM],
-    [94, 64, 14, WARM],
-    [56, 66, 18, WARM],
-    [56, 44, 30, '#fff0d0'],
+    [18, 73, 14, WARM],
+    [94, 73, 14, WARM],
+    [56, 74, 18, WARM],
+    [56, 50, 30, '#fff0d0'],
   ],
 });
 
@@ -3312,96 +3416,111 @@ function tigerFace(cx: number, cy: number): void {
 }
 function drawSchool(): void {
   const W = 112;
-  const GY = 88;
-  // barrel roof receding behind the arched front
-  for (let x = 2; x < W - 2; x++) {
-    const t = (x - W / 2) / (W / 2 - 2);
-    const top = Math.round(6 + t * t * 20);
-    for (let y = top; y < top + 12; y++) P(x, y, x % 5 === 0 ? '#9a94b8' : x < W / 2 ? '#7a7498' : '#625c84');
-    P(x, top, '#c8c4dc');
-  }
+  const GY = 104;
   // arched brick front
   const archTop = (x: number) => {
     const t = (x - W / 2) / (W / 2);
-    return Math.round(16 + t * t * 18);
+    return 18 + t * t * 20;
   };
-  for (let x = 0; x < W; x++) {
+  brickF(0, 18, W, GY - 18, '#b45a4c', '#a85048', '#8a5a5a', 131);
+  FR(0, 18, W, 21, (fx, fy, o) => ((fy + 0.5) / 2 < archTop((fx + 0.5) / 2) ? 0 : o));
+  // barrel roof receding behind the arched front, standing seams
+  for (let x = 2; x < W - 2; x += 0.5) {
+    const t = (x - W / 2) / (W / 2 - 2);
+    const top = 6 + t * t * 22;
+    const lit = x < W / 2;
+    const xi = Math.round(x * 2);
+    const c = xi % 10 === 0 ? '#a8a2c8' : xi % 10 === 9 ? '#4e486e' : lit ? '#7a7498' : '#625c84';
+    R(x, top, 0.5, 14, (_X: number, _Y: number, o: number) => (o ? o : col(c)));
+    P1(x, top, (_X: number, _Y: number, o: number) => (o ? o : col('#d8d4ec')));
+  }
+  ventF(26, 14, 4);
+  ventF(84, 13, 4);
+  for (let x = 0; x < W; x += 0.5) {
     const top = archTop(x);
-    R(x, top, 1, GY - top, (X: number, Y: number) => {
-      const row = Math.floor((Y - 2) / 4);
-      const k = (Y - 2) % 4;
-      const off = row % 2 ? 4 : 0;
-      if (k === 3 || (X + off) % 8 === 0) return '#8a5a5a';
-      const n = hash2(Math.floor((X + off) / 8), row, 131);
-      return n < 0.3 ? '#a85048' : n < 0.4 ? '#c46a58' : '#b45a4c';
-    });
-    P(x, top, '#f2ece4');
-    P(x, top + 1, '#f2ece4');
-    P(x, top + 2, '#c8b0b0');
+    R(x, top - 0.5, 0.5, 2, '#f2ece4');
+    P1(x, top - 0.5, '#ffffff');
+    P1(x, top + 1.5, '#c8b0b0');
   }
-  R(W - 6, 30, 6, GY - 30, (x: number, y: number, o: number) => (o && dth(x, y, 8) ? shA(o, 0.2) : o));
+  aoTop(0, 30, W, 6, 0.2);
+  shadeRight(W - 8, 30, 8, GY - 30, 0.2);
   // painted tiger in the arch
-  RR(46, 18, 20, 16, 4, '#2f3a6a');
-  tigerFace(56, 26);
+  RR(46, 21, 20, 16, 4, '#2f3a6a');
+  fh(48, 64, 21, '#4a5a9a');
+  tigerFace(56, 29);
   // name band
-  R(8, 36, 96, 9, '#2f3a6a');
-  HL(8, 103, 36, '#4a5a9a');
-  TC('TURNBUCKLE ALLEY HIGH', 56, 38, '#f4b63f', FT, {});
+  R(8, 40, 96, 10, '#2f3a6a');
+  fh(8, 104, 40, '#6a7ab8');
+  fh(8, 104, 49.5, '#1a2048');
+  TC('TURNBUCKLE ALLEY HIGH', 56.5, 42.5, '#8a5a1a', FT, {});
+  TC('TURNBUCKLE ALLEY HIGH', 56, 42, enamel('#f4b63f'), FT, {});
   // clerestory windows
-  for (const wx of [6, 96]) {
-    R(wx - 1, 47, 12, 9, '#f2ece4');
-    glass(wx, 48, 10, 7, () => roomA(wx, 48, 10, 7, '#f2c890', wx));
-    VL(wx + 5, 48, 54, '#f2ece4');
+  for (const wx of [6, 96]) win(wx, 53, 10, 8, { frame: '#f2ece4', wall: '#f2c890', seed: wx, cols: 2, rows: 1 });
+  // banner, tied at the corners and sagging a touch
+  R(20, 52, 72, 15, '#f2903a');
+  FR(20, 52, 72, 15, (fx, fy, o) => (fy % 6 === 0 ? shA(o, 0.06) : (fx + fy) % 23 === 0 ? liA(o, 0.12) : o));
+  for (let x = 20; x < 92; x += 4) P1(x + 1, 67, '#f2903a');
+  fh(20, 92, 52, '#ffc078');
+  fh(20, 92, 66.5, '#c86a2a');
+  TC('HOME OF THE', 56, 54, '#3a2440', FT, {});
+  TC('TURNBUCKLE TIGERS', 56.5, 60.5, '#8a4a1a', FT, {});
+  TC('TURNBUCKLE TIGERS', 56, 60, enamel('#fff4e6'), FT, {});
+  for (const sx of [20.5, 91]) {
+    fv(sx, 53, 66, '#c86a2a');
+    P1(sx, 51.5, '#e8e0d0');
+    P1(sx, 52, '#a89888');
   }
-  // banner
-  R(20, 47, 72, 15, '#f2903a');
-  for (let x = 20; x < 92; x += 4) P(x + 1, 62, '#f2903a');
-  HL(20, 91, 47, '#ffc078');
-  TC('HOME OF THE', 56, 49, '#3a2440', FT, {});
-  TC('TURNBUCKLE TIGERS', 56, 55, '#fff4e6', FT, {});
-  for (const sx of [22, 88]) {
-    VL(sx, 49, 59, '#3a2440');
-    VL(sx + 2, 49, 59, '#3a2440');
-  }
-  // big double doors with push bars (centre x = 56)
-  R(42, 63, 28, 3, '#2f3a6a');
-  for (const dx of [44, 56]) {
-    R(dx, 66, 12, 22, '#3f9a92');
-    VL(dx, 66, 87, '#6ac0b0');
-    VL(dx + 11, 66, 87, '#2f7a76');
-    glass(dx + 3, 68, 6, 8, () => roomA(dx + 3, 68, 6, 8, '#f2c890', dx));
-    R(dx + 1, 78, 10, 2, '#d8d4e8');
-    HL(dx + 1, dx + 10, 78, '#ffffff');
+  // big double doors with push bars (centre x = 56), and a canopy
+  R(40, 67.5, 32, 3, '#2f3a6a');
+  fh(40, 72, 67.5, '#6a7ab8');
+  fh(40, 72, 70, '#1a2048');
+  aoTop(42, 70.5, 28, 2, 0.3);
+  for (const [dx, kr] of [[44, true], [56, false]] as [number, boolean][]) {
+    doorF(dx, 71, 12, 33, '#3f9a92', { frame: '#f2ece4', lite: true, liteH: 10, wall: '#f2c890', step: null, seed: dx, knobRight: kr, kick: '#c8c4d8' });
+    R(dx + 1, 87, 10, 2, '#d8d4e8');
+    fh(dx + 1, dx + 11, 87, '#ffffff');
+    fh(dx + 1, dx + 11, 88.5, '#8a84a0');
   }
   R(40, GY - 2, 32, 2, '#c8c0c4');
-  // windows low on the sides + a trophy case
-  for (const wx of [10, 88]) windowA(wx, 66, 14, 12, { frame: '#f2ece4', curtains: null, seed: wx * 7 });
-  // bike rack
+  fh(40, 72, GY - 2, '#e6dee0');
+  // windows low on the sides
+  for (const wx of [10, 88]) win(wx, 74, 14, 14, { frame: '#f2ece4', seed: wx * 7, cols: 2, rows: 2, plant: wx < 50, blinds: wx > 50 ? '#e8e0d0' : undefined });
+  // trophy glimpse, a lost-and-found sweater on the bike rack
   for (let k = 0; k < 4; k++) {
-    RR(26 + k * 4, GY - 7, 4, 7, 2, '#8a84a0');
-    R(27 + k * 4, GY - 6, 2, 6, '#b4584a');
+    RR(26 + k * 4, GY - 8, 4, 8, 2, '#8a84a0');
+    fv(26 + k * 4, GY - 7, GY, '#b8b4c8');
+    R(27 + k * 4, GY - 7, 2, 7, '#b4584a');
   }
-  // tiger paw prints on the steps
-  for (const [px, py] of [[74, 84], [80, 82]] as [number, number][]) {
+  circ(30, GY - 4, 2.5, '#3a3048');
+  R(34, GY - 9, 5, 3, '#f2903a');
+  fh(34, 39, GY - 9, '#ffc078');
+  // tiger paw prints on the walk
+  for (const [px, py] of [[74, 100], [80, 98]] as [number, number][]) {
     R(px, py, 2, 2, '#f2903a');
-    P(px - 1, py - 1, '#f2903a');
-    P(px + 2, py - 1, '#f2903a');
+    P1(px - 0.5, py - 1, '#f2903a');
+    P1(px + 0.75, py - 1.5, '#f2903a');
+    P1(px + 2, py - 1, '#f2903a');
   }
+  downspout(1, 36, GY - 1, '#c8c4d8');
+  downspout(W - 2.5, 36, GY - 1, '#a8a4bc');
+  grime(0, GY - 10, W, 9, 0.2);
+  footing(0, GY - 3, 40, 3, '#b8a8b0', 132);
+  footing(72, GY - 3, 40, 3, '#b8a8b0', 133);
 }
 building('b-school', {
   w: 112,
-  h: 88,
+  h: 104,
   door: 0,
   draw: drawSchool,
-  shadowTop: 20,
+  shadowTop: 24,
   label: 'Turnbuckle Alley High',
-  solid: { x: -56, y: -60, w: 112, h: 60 },
+  solid: { x: -56, y: -72, w: 112, h: 72 },
   lights: [
-    [56, 76, 18, WARM],
-    [11, 51, 10, WARM],
-    [101, 51, 10, WARM],
-    [17, 72, 12, WARM],
-    [95, 72, 12, WARM],
+    [56, 86, 18, WARM],
+    [11, 57, 10, WARM],
+    [101, 57, 10, WARM],
+    [17, 81, 12, WARM],
+    [95, 81, 12, WARM],
   ],
 });
 
@@ -3423,91 +3542,132 @@ function rocker(x: number, y: number, c: Color): void {
 }
 function drawSunnyPines(): void {
   const W = 128;
-  const GY = 80;
-  // hip roof with three dormers
-  shingles(4, 2, W - 8, 18, '#8a6a8a', 141, 3, 5);
-  poly([[4, 2], [12, 2], [4, 12]], 0);
-  HL(8, W - 9, 2, '#b89ab8');
+  const GY = 100;
+  // hip roof with three dormers and a chimney
+  chimney(104, 0, 10, '#b4644e');
+  shingleF(4, 4, W - 8, 21, '#8a6a8a', 141, 3, 5, 0.15);
+  poly([[4, 4], [14, 4], [4, 16]], 0);
+  poly([[W - 4, 4], [W - 14, 4], [W - 4, 16]], 0);
+  for (let i = 0; i < 24; i++) {
+    P1(4 + i * 0.42, 15.5 - i * 0.5, '#c8a8c8');
+    P1(W - 4 - i * 0.42, 15.5 - i * 0.5, '#5a4a6a');
+  }
+  fh(14, W - 14, 4, '#c8aac8');
   for (const dx of [26, 60, 94]) {
-    poly([[dx - 1, 10], [dx + 4, 4], [dx + 9, 10]], '#9a7a9a');
-    R(dx, 10, 8, 8, '#fff6e0');
-    glass(dx + 1, 11, 6, 6, () => roomA(dx + 1, 11, 6, 6, '#f2c890', dx));
-    VL(dx + 4, 11, 16, '#fff6e0');
+    poly([[dx - 2, 12], [dx + 4, 5], [dx + 10, 12]], '#9a7a9a');
+    L(dx - 2, 12, dx + 4, 5, '#c8aac8');
+    fh(dx - 2, dx + 10, 12, '#fff6e0');
+    R(dx, 12.5, 8, 10, '#fff6e0');
+    fv(dx + 7.5, 12.5, 22.5, '#d8c8b0');
+    glassF(dx + 1, 13.5, 6, 8, () => room(dx + 1, 13.5, 6, 8, '#f2c890', dx));
+    R(dx + 3.75, 13.5, 0.5, 8, '#fff6e0');
+    R(dx + 1, 17.25, 6, 0.5, '#fff6e0');
+    fh(dx - 1, dx + 9, 22.5, tint('#3a2848', 0.35));
   }
+  fh(4, W - 4, 24.5, '#4a3a5a');
+  gutter(3, W - 3, 24.5, '#e8e0e8');
   // upper storey: soft butter clapboard
-  clap(2, 20, W - 4, 26, '#fff2c8', '#f6e0a8', '#d8b884', 142);
-  for (const wx of [6, 20, 100, 114]) windowA(wx, 26, 9, 12, { frame: '#ffffff', shutters: '#7aa890', seed: wx + 3 });
+  siding(2, 26, W - 4, 30, '#f6e0a8', 142, 4, 0.015);
+  aoTop(2, 26, W - 4, 4, 0.22);
+  shadeRight(W - 10, 26, 8, 30, 0.14);
+  for (const wx of [8, 22, 98, 112]) win(wx, 31, 9, 15, { frame: '#ffffff', shutters: '#7aa890', seed: wx + 3, curtains: '#fff4e6', cols: 2, rows: 2, cat: wx === 112 });
   // the name, with a little bell either side
-  RRB(34, 23, 60, 17, 3, '#5a8a7a', '#fffaf0');
-  HL(36, 91, 24, '#ffffff');
-  TC('EVENING BELL', 64, 25, '#4a5a8a', FT, {});
-  bellIcon(64, 31, '#f4b63f', '#a8702a');
-  bellIcon(40, 30, '#f4b63f', '#a8702a');
-  bellIcon(88, 30, '#f4b63f', '#a8702a');
+  RRB(34, 28, 60, 19, 3, '#5a8a7a', '#fffaf0');
+  fh(36, 92, 29, '#ffffff');
+  FR(35, 29, 58, 17, (fx, fy, o) => (o === col('#fffaf0') && hash2(fx, fy, 143) < 0.04 ? '#f0e8d8' : o));
+  TC('EVENING BELL', 64, 30.5, enamel('#4a5a8a'), FT, {});
+  bellIcon(64, 37, '#f4b63f', '#a8702a');
+  bellIcon(40, 36, '#f4b63f', '#a8702a');
+  bellIcon(88, 36, '#f4b63f', '#a8702a');
   for (const sx of [50, 78]) {
-    P(sx, 34, '#7aa890');
-    P(sx + 1, 33, '#7aa890');
-    P(sx + 2, 34, '#7aa890');
+    P1(sx, 40, '#7aa890');
+    P1(sx + 0.5, 39.5, '#7aa890');
+    P1(sx + 1, 39, '#7aa890');
+    P1(sx + 1.5, 39.5, '#7aa890');
+    P1(sx + 2, 40, '#7aa890');
   }
+  micro('RESIDENCE', 55, 43.5, '#5a8a7a');
   // porch roof
-  R(0, 45, W, 4, '#9a7a9a');
-  HL(0, W - 1, 45, '#c8a8c8');
-  HL(0, W - 1, 48, '#6a4a6a');
+  R(0, 55, W, 5, '#9a7a9a');
+  metalF(0, 55, W, 5, '#9a7a9a', 144, 3, 0.1);
+  fh(0, W, 55, '#d8b8d8');
+  fh(0, W, 59.5, '#5a4a6a');
+  for (let x = 2; x < W; x += 4) {
+    P1(x, 60, '#fff6e0');
+    P1(x + 1, 60, '#fff6e0');
+  }
   // ground floor behind the porch
-  clap(2, 49, W - 4, GY - 49, '#fff2c8', '#f6e0a8', '#d8b884', 143);
-  for (let x = 2; x < W - 2; x++) for (let y = 49; y < 54; y++) P(x, y, (X: number, Y: number, o: number) => (dth(X, Y, 12 - (y - 49) * 3) ? shA(o, 0.25) : o));
-  for (const wx of [10, 30, 86, 106]) windowA(wx, 56, 12, 12, { frame: '#ffffff', seed: wx });
-  doorA(57, 54, 14, 24, '#7aa890', { glass: true, frame: '#ffffff', step: false, wreath: true });
+  siding(2, 60, W - 4, GY - 60, '#f6e0a8', 145, 4, 0.015);
+  aoTop(2, 60, W - 4, 8, 0.3);
+  for (const wx of [10, 30, 86, 106]) win(wx, 68, 12, 14, { frame: '#ffffff', seed: wx, curtains: '#fff4e6', cols: 2, rows: 2, plant: wx === 30 });
+  doorF(56, 64, 16, 34, '#7aa890', { frame: '#ffffff', lite: true, liteH: 12, step: null, wreath: false, seed: 146, mail: true });
+  RR(58, 59.5, 12, 3, 1, '#5a8a7a');
+  micro('WELCOME', 59, 60, '#fffaf0');
   // porch posts and railing
   for (const px of [2, 22, 46, 80, 104, 124]) {
-    R(px, 49, 3, GY - 51, '#ffffff');
-    VL(px + 2, 49, GY - 3, '#d8d0c8');
+    R(px, 60, 3, GY - 62, '#ffffff');
+    fv(px, 60, GY - 2, '#ffffff');
+    fv(px + 2.5, 60, GY - 2, '#c8c0b8');
+    R(px - 0.5, 60, 4, 1.5, '#fff6e0');
+    R(px - 0.5, GY - 4, 4, 2, '#e8e0d8');
   }
-  for (let x = 2; x < W - 2; x++) {
+  for (let x = 2; x < W - 2; x += 1.5) {
     if (x >= 52 && x < 76) continue;
-    if (x % 3 === 0) VL(x, GY - 9, GY - 3, '#f4eee8');
+    fv(x, GY - 10, GY - 3, '#f4eee8');
+    fv(x + 0.5, GY - 10, GY - 3, '#c8c0b8');
   }
-  HL(2, 51, GY - 10, '#ffffff');
-  HL(76, W - 3, GY - 10, '#ffffff');
+  for (const [a, b] of [[2, 52], [76, W - 2]] as [number, number][]) {
+    R(a, GY - 11, b - a, 1.5, '#ffffff');
+    fh(a, b, GY - 9.5, tint('#3a2848', 0.3));
+  }
   R(0, GY - 3, W, 3, '#c8b0a0');
-  HL(0, W - 1, GY - 3, '#e6d4c4');
-  // rocking chairs and hanging ferns
-  rocker(32, GY - 15, '#a8704f');
-  rocker(88, GY - 15, '#7aa890');
+  fh(0, W, GY - 3, '#e6d4c4');
+  FR(0, GY - 2.5, W, 2.5, (fx, _fy, o) => (fx % 12 === 0 ? shA(o, 0.2) : o));
+  // rocking chairs, a knitting basket and hanging ferns
+  rocker(33, GY - 16, '#a8704f');
+  rocker(89, GY - 16, '#7aa890');
+  ell(44, GY - 4, 2.5, 1.5, '#c8a070');
+  P1(43.5, GY - 6, '#d8434b');
+  P1(44.5, GY - 6, '#5a7ad0');
   for (const fx of [12, 116]) {
-    VL(fx, 49, 51, '#6a5a4a');
-    ell(fx, 54, 4, 2.5, '#5f9a5a');
-    for (let k = -3; k <= 3; k += 2) VL(fx + k, 55, 57 + Math.abs(k % 3), '#4f8a5a');
+    fv(fx, 60, 63, '#6a5a4a');
+    R(fx - 2, 63, 4, 2, '#c8704f');
+    ell(fx, 65, 4.5, 2.5, '#5f9a5a');
+    for (let k = -4; k <= 4; k += 1) fv(fx + k * 0.9, 66, 68 + Math.abs((k * 7) % 3), k % 2 ? '#4f8a5a' : '#6fb070');
   }
   // planters on the steps
   for (const px of [48, 76]) {
     R(px, GY - 7, 6, 6, '#c8704f');
-    HL(px, px + 5, GY - 7, '#e8906a');
+    fh(px, px + 6, GY - 7, '#e8906a');
+    fh(px, px + 6, GY - 1.5, '#9a4a3a');
     ell(px + 3, GY - 9, 4, 3, '#5f9a5a');
-    P(px + 1, GY - 10, '#ff8fae');
-    P(px + 4, GY - 11, '#ffe070');
-    P(px + 3, GY - 9, '#ff8fae');
+    P1(px + 1, GY - 10, '#ff8fae');
+    P1(px + 4, GY - 11, '#ffe070');
+    P1(px + 3, GY - 9, '#ff8fae');
+    P1(px + 5, GY - 9.5, '#fff8f0');
   }
 }
 building('b-sunnypines', {
   w: 128,
-  h: 80,
+  h: 100,
   door: 0,
   draw: drawSunnyPines,
-  shadowTop: 6,
+  shadowTop: 8,
   label: 'The Evening Bell Residence',
+  solid: { x: -64, y: -68, w: 128, h: 68 },
   lights: [
-    [10, 32, 10, WARM],
-    [24, 32, 10, WARM],
-    [104, 32, 10, WARM],
-    [118, 32, 10, WARM],
-    [16, 62, 12, WARM],
-    [36, 62, 12, WARM],
-    [92, 62, 12, WARM],
-    [112, 62, 12, WARM],
-    [64, 64, 16, WARM],
-    [30, 14, 8, WARM],
-    [98, 14, 8, WARM],
+    [12, 38, 10, WARM],
+    [26, 38, 10, WARM],
+    [102, 38, 10, WARM],
+    [116, 38, 10, WARM],
+    [16, 75, 12, WARM],
+    [36, 75, 12, WARM],
+    [92, 75, 12, WARM],
+    [112, 75, 12, WARM],
+    [64, 76, 16, WARM],
+    [30, 17, 8, WARM],
+    [64, 17, 8, WARM],
+    [98, 17, 8, WARM],
   ],
 });
 
