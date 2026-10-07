@@ -49,7 +49,7 @@ b.rect(0, SECOND + 4, TOWN_W, 1, 'sidewalk');
 for (const x of [47, 86]) b.rect(x, SECOND + 1, 2, 3, 'crosswalk');
 // Paths from Main St down to Second St (between the studio and the VFW; past the lot)
 b.rect(47, MAIN + 7, 2, SECOND - MAIN - 7, 'path');
-b.rect(14, MAIN + 7, 1, SECOND - MAIN - 7, 'path');
+b.rect(14, MAIN + 7, 2, SECOND - MAIN - 7, 'path');
 // Parking lot and the flea market lot
 b.rect(83, MAIN + 8, 6, SECOND - MAIN - 8, 'parking');
 b.rect(89, MAIN + 7, 15, SECOND - MAIN - 7, 'gravel');
@@ -178,7 +178,7 @@ o('tapebin', 100.5, MAIN + 14.6, { bin: 'flea' }, 'bin-flea-3');
 o('crate', 93.5, MAIN + 14.8);
 o('crate', 102.6, MAIN + 9);
 o('sign', 89.8, MAIN + 8.4, { text: 'FLEA MARKET: SAT & SUN. Tapes, toys, treasures.' }, 'sign-flea');
-for (const x of [15, 36, 62.5, 83.5, 99]) o('lamp', x, SECOND + 0.4);
+for (const x of [13.4, 36, 62.5, 83.5, 99]) o('lamp', x, SECOND + 0.4);
 
 // ---- Town square
 o('gazebo', 36.5, SECOND + 10.2, {}, 'gazebo');
