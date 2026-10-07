@@ -230,6 +230,11 @@ export const audio = {
     }, undefined);
   },
 
+  /** Debug: the live playbacks (song id, scheduled stop time, gain). */
+  debugPlaying(): unknown {
+    return live ? { now: live.ctx.currentTime, state: live.ctx.state, playing: live.eng.debugState() } : null;
+  },
+
   /** The song id currently requested (may not be audible yet if locked). */
   current(): string | null {
     return state.music;

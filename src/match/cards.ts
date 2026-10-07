@@ -1,3 +1,4 @@
+import type { BackgroundId } from '../core/state';
 import type { CardDef } from './types';
 
 /**
@@ -107,6 +108,15 @@ export function cardDef(entry: string): CardDef & { upgraded: boolean; entry: st
 export const STARTER_DECK = ['chop', 'chop', 'forearm', 'forearm', 'bodyslam', 'snapsuplex', 'whip', 'elbowdrop', 'bump', 'bump', 'playcrowd', 'signature'];
 
 /** Background-specific additions to the starter deck. */
+/** Where you learned to wrestle; Birdie asks before the tryout. */
+export const BACKGROUNDS: { id: BackgroundId; label: string; blurb: string; icon: string }[] = [
+  { id: 'backyard', label: 'Backyard Wrestler', icon: '🛝', blurb: 'Trampolines, garden-hose ropes and a video channel with 41 subscribers. Scrappy, fearless, a little bruised.' },
+  { id: 'amateur', label: 'College Amateur Champ', icon: '🥇', blurb: 'You know every hold in the book and a few that aren\'t. Mat wrestling comes easy.' },
+  { id: 'theater', label: 'Theater Kid', icon: '🎭', blurb: 'You can cry on cue and project to the back row. Promos and crowd work are your stage.' },
+  { id: 'gymrat', label: 'Gym Rat', icon: '🏋️', blurb: 'Five a.m. alarms, protein shakes, and a deadlift record you mention too often. Strong from day one.' },
+  { id: 'superfan', label: 'Superfan', icon: '📼', blurb: 'You\'ve watched every match since you could hold a remote. You know the story before it happens.' },
+];
+
 export const BACKGROUND_CARDS: Record<string, string[]> = {
   backyard: ['springboard', 'climb'],
   amateur: ['chainwrestle', 'germansuplex'],

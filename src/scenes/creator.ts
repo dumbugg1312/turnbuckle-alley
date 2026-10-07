@@ -1,6 +1,6 @@
 /**
  * The character creator.
- *  - 'self': the prologue, getting ready in the city apartment mirror.
+ *  - 'self': the prologue, getting ready in the city apartment mirror (looks only).
  *  - 'ring': week one at Marigold's sewing shop; ring gear and persona.
  * Shallow path: Roll me one + presets + Looks great. Deep path: tabs.
  */
@@ -9,7 +9,7 @@ import { audio } from '../audio';
 import * as audioModule from '../audio';
 import { game } from '../core/game';
 import type { Scene } from '../core/scene';
-import { G, type Alignment, type BackgroundId, type Dir, type Persona } from '../core/state';
+import { G, type Alignment, type Dir, type Persona } from '../core/state';
 import { characterSize, characterSprite, type Pose } from '../gfx/characters';
 import { dth, ell, hash2, mkSpr, R, RR, shA, toCanvas, VG } from '../gfx/kit';
 import {
@@ -21,13 +21,6 @@ import { el, uiRoot } from '../ui/dom';
 
 // ================================================================ tables (presets, palettes, generators)
 
-export const BACKGROUNDS: { id: BackgroundId; label: string; blurb: string; icon: string }[] = [
-  { id: 'backyard', label: 'Backyard Wrestler', icon: '🛝', blurb: 'Trampolines, garden-hose ropes and a video channel with 41 subscribers. Scrappy, fearless, a little bruised.' },
-  { id: 'amateur', label: 'College Amateur Champ', icon: '🥇', blurb: 'You know every hold in the book and a few that aren\'t. Mat wrestling comes easy.' },
-  { id: 'theater', label: 'Theater Kid', icon: '🎭', blurb: 'You can cry on cue and project to the back row. Promos and crowd work are your stage.' },
-  { id: 'gymrat', label: 'Gym Rat', icon: '🏋️', blurb: 'Five a.m. alarms, protein shakes, and a deadlift record you mention too often. Strong from day one.' },
-  { id: 'superfan', label: 'Superfan', icon: '📼', blurb: 'You\'ve watched every match since you could hold a remote. You know the story before it happens.' },
-];
 
 export const ALIGNMENTS: { id: Alignment; label: string; blurb: string }[] = [
   { id: 'face', label: 'Hero (face)', blurb: 'Kids high-five you outside the bakery and Agnes saves you a cookie. You win the crowd by being good.' },
@@ -100,6 +93,9 @@ export interface Preset {
   id: string;
   label: string;
   blurb: string;
+  /** Everyday name and blurb for the mirror (who you are before the ring). */
+  selfLabel: string;
+  selfBlurb: string;
   self: Partial<Look>;
   ring: Partial<Look>;
   persona?: Partial<Persona>;
@@ -109,72 +105,84 @@ const ex = (id: string, color: string, accent?: string, pattern?: string): Extra
 export const PRESETS: Preset[] = [
   {
     id: 'hometown', label: 'Hometown Hero', blurb: 'Big heart, bigger smile. The town\'s favorite kid.',
+    selfLabel: 'Hometown Kid', selfBlurb: 'Ball cap, easy grin, says hi to everybody.',
     self: { body: 'athletic', hair: 'short', facial: 'none', eyes: 'happy', top: 'tee', topColor: '#d8434b', topAccent: '#fbf0d9', topPattern: 'logo', bottom: 'jeans', bottomColor: '#3d5a8a', bottomAccent: '#2c4166', shoes: 'sneakers', shoesColor: '#fbf0d9', extras: [ex('cap', '#3f74d8', '#fbf0d9')] },
     ring: { top: 'tank', topColor: '#d8434b', topAccent: '#fbf0d9', bottom: 'tights', bottomColor: '#3f74d8', bottomAccent: '#fbf0d9', bottomPattern: 'stars', shoes: 'wrestling-boots', shoesColor: '#fbf0d9', mask: 'none', paint: 'none', extras: [ex('kneepads', '#fbf0d9'), ex('wrist-tape', '#fbf0d9')] },
     persona: { alignment: 'face', finisherStyle: 'power' },
   },
   {
     id: 'masked', label: 'Masked Mystery', blurb: 'Nobody knows who you are. That\'s the whole point.',
+    selfLabel: 'Keeps to Themselves', selfBlurb: 'Hood up, headphones on, notices everything.',
     self: { body: 'lean', hair: 'shaggy', eyes: 'sharp', top: 'hoodie', topColor: '#3a3448', topAccent: '#ff5d8f', bottom: 'jeans', bottomColor: '#2a2236', bottomAccent: '#2a2236', shoes: 'hightops', shoesColor: '#3a3448', extras: [ex('sunglasses', '#3a3448')] },
     ring: { top: 'bodysuit', topColor: '#2a2236', topAccent: '#ff5d8f', bottom: 'tights', bottomColor: '#2a2236', bottomAccent: '#ff5d8f', shoes: 'wrestling-boots', shoesColor: '#2a2236', mask: 'luchador', maskColor: '#2a2236', maskAccent: '#ff5d8f', maskPattern: 'flames', paint: 'none', extras: [ex('cape', '#2a2236', '#ff5d8f')] },
     persona: { alignment: 'tweener', finisherStyle: 'aerial' },
   },
   {
     id: 'sequins', label: 'Sequined Show-Off', blurb: 'If it doesn\'t sparkle, why bother?',
+    selfLabel: 'Glitter, Daily', selfBlurb: 'Why save the sparkle for special occasions?',
     self: { body: 'lean', hair: 'pompadour', eyes: 'lashes', top: 'blouse', topColor: '#ff5d8f', topAccent: '#ffe48e', topPattern: 'sequins', bottom: 'slacks', bottomColor: '#f2e6c9', bottomAccent: '#e6d6b8', shoes: 'loafers', shoesColor: '#f4b63f', extras: [ex('sunglasses', '#f4b63f', '#2b2140')] },
     ring: { top: 'none', bottom: 'trunks', bottomColor: '#ff5d8f', bottomAccent: '#ffe48e', bottomPattern: 'sequins', shoes: 'wrestling-boots', shoesColor: '#ffe48e', mask: 'none', paint: 'sparkle', paintColor: '#ffe48e', extras: [ex('robe', '#ff5d8f', '#ffe48e', 'sequins')] },
     persona: { alignment: 'heel', finisherStyle: 'flashy' },
   },
   {
     id: 'country', label: 'Big Country', blurb: 'Raised on biscuits and barn chores. Says "ma\'am" to referees.',
+    selfLabel: 'Farm Fresh', selfBlurb: 'Flannel, boots, and a firm handshake.',
     self: { body: 'heavy', height: 3, hair: 'short', facial: 'beard', top: 'flannel', topColor: '#c9404c', topAccent: '#5a2034', bottom: 'jeans', bottomColor: '#3d5a8a', bottomAccent: '#7a5236', shoes: 'cowboy-boots', shoesColor: '#7a5236', extras: [ex('cowboy-hat', '#d9aa6a', '#7a5236')] },
     ring: { top: 'none', bottom: 'overalls', bottomColor: '#3d5a8a', bottomAccent: '#c9404c', shoes: 'cowboy-boots', shoesColor: '#7a5236', mask: 'none', paint: 'none', extras: [ex('cowboy-hat', '#d9aa6a', '#7a5236'), ex('bandana', '#c9404c')] },
     persona: { alignment: 'face', finisherStyle: 'power' },
   },
   {
     id: 'tiny', label: 'Tiny Terror', blurb: 'Pocket-sized. Bites ankles. Wins anyway.',
+    selfLabel: 'Small & Scrappy', selfBlurb: 'Pocket-sized and fully caffeinated.',
     self: { body: 'petite', height: -2, hair: 'spacebuns', eyes: 'wide', top: 'crop', topColor: '#58b368', topAccent: '#2b2140', bottom: 'shorts', bottomColor: '#2b2140', bottomAccent: '#58b368', shoes: 'hightops', shoesColor: '#58b368', extras: [] },
     ring: { top: 'sportsbra', topColor: '#58b368', topAccent: '#2b2140', bottom: 'shorts', bottomColor: '#2b2140', bottomAccent: '#58b368', bottomPattern: 'lightning', shoes: 'kickpads', shoesColor: '#58b368', mask: 'none', paint: 'stripes', paintColor: '#2b2140', extras: [ex('wrist-tape', '#fbf0d9'), ex('kneepads', '#2b2140')] },
     persona: { alignment: 'tweener', finisherStyle: 'strike' },
   },
   {
     id: 'gentle', label: 'Gentle Giant', blurb: 'Seven feet of soft-spoken kindness. Do not upset the giant.',
+    selfLabel: 'Big Softie', selfBlurb: 'Tall enough to reach the top shelf for everyone.',
     self: { body: 'giant', height: 5, hair: 'bald', facial: 'beard', eyes: 'happy', top: 'sweater', topColor: '#6f8f4a', topAccent: '#4f6a38', bottom: 'slacks', bottomColor: '#7c5249', bottomAccent: '#5a3a46', shoes: 'sneakers', shoesColor: '#4a3042', extras: [ex('round-glasses', '#eab64e')] },
     ring: { top: 'singlet', topColor: '#5a5a72', topAccent: '#f4f2fa', bottom: 'tights', bottomColor: '#5a5a72', bottomAccent: '#f4f2fa', shoes: 'wrestling-boots', shoesColor: '#6f8f4a', mask: 'none', paint: 'none', extras: [] },
     persona: { alignment: 'face', finisherStyle: 'power' },
   },
   {
     id: 'punk', label: 'Punk Rock Flyer', blurb: 'Safety pins, sneakers, and a moonsault off anything taller than a chair.',
+    selfLabel: 'Punk Rock', selfBlurb: 'Safety pins, band tees, beat-up sneakers.',
     self: { body: 'lean', hair: 'mohawk', hairColor: '#e6649c', eyes: 'sharp', top: 'tee', topColor: '#3a3448', topAccent: '#e6649c', topPattern: 'logo', bottom: 'jeans', bottomColor: '#3a3448', bottomAccent: '#2a2236', shoes: 'hightops', shoesColor: '#d8434b', extras: [ex('jacket', '#2a2236', '#e6649c')] },
     ring: { top: 'none', bottom: 'tights', bottomColor: '#3a3448', bottomAccent: '#e6649c', bottomPattern: 'checker', shoes: 'wrestling-boots', shoesColor: '#d8434b', mask: 'none', paint: 'tears', paintColor: '#2b2140', extras: [ex('kneepads', '#3a3448'), ex('elbow-pads', '#3a3448')] },
     persona: { alignment: 'tweener', finisherStyle: 'aerial' },
   },
   {
     id: 'technician', label: 'Old-School Technician', blurb: 'Plain black trunks. Perfect form. Respects the handshake.',
+    selfLabel: 'Plain & Practical', selfBlurb: 'Nothing fancy. Everything ironed.',
     self: { body: 'athletic', hair: 'side-part', facial: 'mustache', eyes: 'round', top: 'polo', topColor: '#7a2840', topAccent: '#f2e6c9', bottom: 'slacks', bottomColor: '#5a5a72', bottomAccent: '#3a3448', shoes: 'loafers', shoesColor: '#5a3a2e', extras: [] },
     ring: { top: 'none', bottom: 'trunks', bottomColor: '#2a2236', bottomAccent: '#2a2236', shoes: 'wrestling-boots', shoesColor: '#2a2236', mask: 'none', paint: 'none', extras: [ex('kneepads', '#2a2236')] },
     persona: { alignment: 'face', finisherStyle: 'submission' },
   },
   {
     id: 'disco', label: 'Disco Daydream', blurb: 'Saturday night forever. The mirror ball follows you home.',
+    selfLabel: 'Thrift-Store Disco', selfBlurb: 'Every outfit has a story and a little polyester.',
     self: { body: 'lean', hair: 'afro', eyes: 'lashes', top: 'buttondown', topColor: '#b27ae0', topAccent: '#ffe48e', topPattern: 'sequins', bottom: 'wide', bottomColor: '#fbf0d9', bottomAccent: '#e6d6b8', shoes: 'loafers', shoesColor: '#ffe48e', extras: [ex('aviators', '#f4b63f', '#c27a1e')] },
     ring: { top: 'bodysuit', topColor: '#b27ae0', topAccent: '#ffe48e', topPattern: 'sequins', bottom: 'tights', bottomColor: '#b27ae0', bottomAccent: '#ffe48e', shoes: 'wrestling-boots', shoesColor: '#ffe48e', mask: 'none', paint: 'star', paintColor: '#ffe48e', extras: [ex('cape', '#ffe48e', '#b27ae0', 'stars')] },
     persona: { alignment: 'face', finisherStyle: 'flashy' },
   },
   {
     id: 'strongman', label: 'Small-Town Strongman', blurb: 'Bends horseshoes for the county fair. Mustache non-negotiable.',
+    selfLabel: 'Weekend Mechanic', selfBlurb: 'Grease under the nails, mustache optional.',
     self: { body: 'stocky', height: 1, hair: 'buzz', facial: 'handlebar', top: 'tank', topColor: '#fbf0d9', topAccent: '#d8434b', bottom: 'slacks', bottomColor: '#5a3a2e', bottomAccent: '#3a2a20', shoes: 'boots', shoesColor: '#3a2a20', extras: [ex('suspenders', '#d8434b')] },
     ring: { top: 'singlet', topColor: '#d8434b', topAccent: '#fbf0d9', topPattern: 'stripes', bottom: 'tights', bottomColor: '#d8434b', bottomAccent: '#fbf0d9', shoes: 'wrestling-boots', shoesColor: '#3a2a20', mask: 'none', paint: 'none', extras: [ex('wrist-tape', '#fbf0d9')] },
     persona: { alignment: 'face', finisherStyle: 'power' },
   },
   {
     id: 'creep', label: 'Creature of the Night', blurb: 'Fog machine on standby. Speaks only in riddles (and please/thank you).',
+    selfLabel: 'All Black Everything', selfBlurb: 'Moody, mysterious, very polite.',
     self: { body: 'lean', height: 2, hair: 'long', hairColor: '#1c1418', eyes: 'sleepy', top: 'sweater', topColor: '#2a2236', topAccent: '#5a5a72', bottom: 'jeans', bottomColor: '#2a2236', bottomAccent: '#2a2236', shoes: 'boots', shoesColor: '#2a2236', extras: [ex('scarf', '#7a2840', '#5a2034')] },
     ring: { top: 'none', bottom: 'tights', bottomColor: '#2a2236', bottomAccent: '#7a2840', shoes: 'wrestling-boots', shoesColor: '#2a2236', mask: 'none', paint: 'skull', paintColor: '#f4f2fa', extras: [ex('duster', '#2a2236', '#7a2840')] },
     persona: { alignment: 'heel', finisherStyle: 'submission' },
   },
   {
     id: 'cheer', label: 'Cheerleader of Chaos', blurb: 'Pom-pom energy, folding-chair follow-through.',
+    selfLabel: 'Peppy', selfBlurb: 'Bright colors, brighter attitude.',
     self: { body: 'athletic', hair: 'highpony', eyes: 'happy', top: 'track', topColor: '#ff5d8f', topAccent: '#fbf0d9', bottom: 'skirt', bottomColor: '#fbf0d9', bottomAccent: '#ff5d8f', shoes: 'sneakers', shoesColor: '#fbf0d9', extras: [ex('headband', '#fbf0d9')] },
     ring: { top: 'crop', topColor: '#ff5d8f', topAccent: '#fbf0d9', topPattern: 'hearts', bottom: 'shorts', bottomColor: '#fbf0d9', bottomAccent: '#ff5d8f', shoes: 'wrestling-boots', shoesColor: '#ff5d8f', mask: 'none', paint: 'heart', paintColor: '#ff5d8f', extras: [ex('headband', '#fbf0d9'), ex('kneepads', '#ff5d8f')] },
     persona: { alignment: 'heel', finisherStyle: 'flashy' },
@@ -314,7 +322,6 @@ class CreatorScene implements Scene {
   private look: Look;
   private name: string;
   private pronouns: string;
-  private background: BackgroundId;
   private persona: Persona;
   private tab: TabId;
   private root: HTMLElement | null = null;
@@ -342,7 +349,6 @@ class CreatorScene implements Scene {
     const P = G.player;
     this.name = P.name && P.name !== 'Rookie' ? P.name : '';
     this.pronouns = P.pronouns || 'they';
-    this.background = P.background || 'backyard';
     this.tab = mode === 'self' ? 'you' : 'gear';
     if (mode === 'self') {
       this.look = cloneLook(P.look);
@@ -567,7 +573,6 @@ class CreatorScene implements Scene {
     if (this.mode === 'self') {
       P.name = this.name.trim() || 'Rookie';
       P.pronouns = this.pronouns.trim() || 'they';
-      P.background = this.background;
       P.look = cloneLook(this.look);
       if (!P.persona) P.ringLook = { ...cloneLook(P.ringLook), ...this.bodyOf(this.look), hair: this.look.hair, hairColor: this.look.hairColor, hairAccent: this.look.hairAccent };
     } else {
@@ -607,7 +612,7 @@ class CreatorScene implements Scene {
     const rollBtn = el('button', { class: 'btn gold cr-roll', onclick: () => this.roll() }, '🎲 Roll me one');
     const presets = el('div', 'cr-presets');
     for (const p of PRESETS) {
-      const b = el('button', { class: 'cr-preset', 'data-id': p.id, onclick: () => this.applyPreset(p) }, el('b', {}, p.label), el('span', {}, p.blurb));
+      const b = el('button', { class: 'cr-preset', 'data-id': p.id, onclick: () => this.applyPreset(p) }, el('b', {}, this.mode === 'self' ? p.selfLabel : p.label), el('span', {}, this.mode === 'self' ? p.selfBlurb : p.blurb));
       presets.append(b);
     }
     quick.append(rollBtn, presets);
@@ -657,12 +662,6 @@ class CreatorScene implements Scene {
         add(this.textRow('Name', this.name, 'What should Grandma call you?', (v) => (this.name = v), 24));
         add(this.chipRow('Pronouns', [{ id: 'they', label: 'they/them' }, { id: 'she', label: 'she/her' }, { id: 'he', label: 'he/him' }, { id: 'custom', label: 'custom' }], ['they', 'she', 'he'].includes(this.pronouns) ? this.pronouns : 'custom', (v) => { this.pronouns = v === 'custom' ? '' : v; this.renderTab(); }));
         if (!['they', 'she', 'he'].includes(this.pronouns)) add(this.textRow('Your pronouns', this.pronouns, 'e.g. xe/xem', (v) => (this.pronouns = v), 20));
-        add(this.section('Where you\'re coming from'));
-        {
-          const grid = el('div', 'cr-cards');
-          for (const b of BACKGROUNDS) grid.append(el('button', { class: `cr-card${this.background === b.id ? ' on' : ''}`, onclick: () => { this.background = b.id; this.renderTab(); } }, el('b', {}, `${b.icon} ${b.label}`), el('span', {}, b.blurb)));
-          add(grid);
-        }
         break;
       case 'body':
         add(this.chipRow('Build', BODY_TYPES, L.body, (v) => this.set({ body: v as Look['body'], height: v === 'giant' ? Math.max(L.height, 4) : Math.min(L.height, 4) }), true));
@@ -676,7 +675,6 @@ class CreatorScene implements Scene {
         add(this.swatchRow('Eye color', EYE_COLORS, L.eyeColor, (c) => this.set({ eyeColor: c })));
         add(this.chipRow('Facial hair', FACIAL_STYLES, L.facial, (v) => this.set({ facial: v }), true));
         add(this.toggleRow('Little details', FEATURES.filter((f) => f.id !== 'notch'), L.features ?? [], (id) => { const f = new Set(L.features ?? []); if (f.has(id)) f.delete(id); else f.add(id); this.set({ features: [...f] }); }));
-        if (this.mode === 'self') add(this.chipRow('Face paint (bold!)', PAINT_STYLES, L.paint ?? 'none', (v) => this.set({ paint: v, paintColor: L.paintColor ?? '#fbf0d9' })));
         break;
       case 'hair':
         add(this.chipRow('Style', HAIR_STYLES, L.hair, (v) => this.set({ hair: v }), true));

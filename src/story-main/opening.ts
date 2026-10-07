@@ -2,7 +2,7 @@ import { audio } from '../audio';
 import { game } from '../core/game';
 import { newState, setState, G, setFlag, addItem } from '../core/state';
 import { sting } from '../core/sting';
-import { BACKGROUND_CARDS, STARTER_DECK } from '../match/cards';
+import { STARTER_DECK } from '../match/cards';
 import { BusScene } from '../scenes/bus';
 import { choose, narrate, say, toast } from '../ui/dialog';
 import { showLetter } from '../systems/mail';
@@ -98,6 +98,7 @@ export async function apartmentScene(): Promise<void> {
     'Tucked inside: a bus ticket, an old brass key with a faded blue ribbon, and a Polaroid.',
     'Two women in sequined 80s ring gear, back to back, holding one championship belt between them. On the back, in younger handwriting: *The Velvet Hammers. 1981. Never better.*',
   );
+  // The mirror: who you are. Who you are *in the ring* waits for Turnbuckle Alley.
   await narrate('The mirror by your dresser catches you staring.');
   const c = await choose(null, 'Who is looking back at you?', [
     { label: '🪞 Look in the mirror (create your character)', value: 'mirror', style: 'primary' },
@@ -106,7 +107,6 @@ export async function apartmentScene(): Promise<void> {
   if (c === 'mirror') await openCreator('self');
   else randomLook();
   await narrate('You pack one bag. On the way to the depot you buy a gas station coffee, a candy bar, and one deep breath of courage.');
-  G.player.deck = [...STARTER_DECK, ...(BACKGROUND_CARDS[G.player.background] ?? [])];
   // The bus ride.
   game.scenes.transition(() => {
     game.scenes.reset(new BusScene(() => arrive()));

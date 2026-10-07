@@ -1,9 +1,10 @@
 import { audio } from '../audio';
 import { game } from '../core/game';
-import { G, setFlag, addItem, hasItem } from '../core/state';
+import { G, setFlag, addItem, hasItem, type BackgroundId } from '../core/state';
 import { sting } from '../core/sting';
 import { absDay, weekday } from '../core/time';
 import { NPC_BY_ID } from '../data/npcs';
+import { BACKGROUND_CARDS, BACKGROUNDS, STARTER_DECK } from '../match/cards';
 import { MatchScene } from '../match/scene';
 import { buildMatchConfig } from '../systems/shows';
 import { sendLetter } from '../systems/mail';
@@ -95,7 +96,9 @@ async function meetBirdie(): Promise<void> {
   ]);
   if (c === 'grandkid') await say(b, "I know whose grandkid you are. Whole town knows. Mo saw your light on at midnight and called me at 12:01.", "I don't do favors for Duprees.");
   else await say(b, "Everybody wants to learn to wrestle. Nobody wants to learn to *fall.*", "I don't do favors for Duprees, by the way. Just so we're clear.");
-  await say(b, "...But I'm short a body for Wednesday, and you look like you could take a bump without crying.", "*Dex!* Get in here. Let's see what the city sent us.");
+  await say(b, "...But I'm short a body for Wednesday, and you look like you could take a bump without crying.");
+  await wrestlingRoots(b);
+  await say(b, "*Dex!* Get in here. Let's see what the city sent us.");
   await w.walkTo('dex', 14, 9, 'down');
   await say(speakerFor('dex'), "Hey! You're the new one? Cool cool cool. Don't worry, I'll make you look good. That's literally the job.");
   await say(b, "Get in the ring. Show me something. And *listen to him*. In this business you don't beat your opponent. You dance with them.");
@@ -133,6 +136,23 @@ async function meetBirdie(): Promise<void> {
   w.despawn('birdie');
   sting('story-beat');
   toast('📌 New goal: visit Marigold at Sew What? on Second Street.');
+}
+
+/** Where you learned (or didn't): your wrestling background, chosen in town. */
+async function wrestlingRoots(b: ReturnType<typeof speakerFor>): Promise<void> {
+  const pick = await choose(b, '"So. Where\'d you learn? Or did you?"', BACKGROUNDS.map((bg) => ({ label: `${bg.icon} ${bg.label}`, value: bg.id, hint: bg.blurb })));
+  const id = (BACKGROUNDS.find((bg) => bg.id === pick)?.id ?? 'backyard') as BackgroundId;
+  G.player.background = id;
+  G.player.deck = [...STARTER_DECK, ...(BACKGROUND_CARDS[id] ?? [])];
+  const lines: Record<BackgroundId, string[]> = {
+    backyard: ["A trampoline and a garden hose. Lord help me.", "...Dottie learned on a mattress in a barn, so I won't say a word. Fearless is a start."],
+    amateur: ["A shooter. Good. You'll know where your feet are.", "Now forget about winning. In here the mat is a stage, not a scoreboard."],
+    theater: ["Ha! A ham. Don't look so hurt, sugar, it's a compliment.", "Half this business is making the back row believe. You've got the half most people don't."],
+    gymrat: ["I can see that from here. Those arms have opinions.", "Strong is good. Strong and *gentle* is a career. We'll work on gentle."],
+    superfan: ["A tape kid.", "...Dottie would've liked you. Knowing the story before it happens is the whole job. Doing it is the other whole job."],
+  };
+  await say(b, ...lines[id]);
+  toast(`New moves for your deck: ${(BACKGROUND_CARDS[id] ?? []).length} ${BACKGROUNDS.find((bg) => bg.id === id)?.label ?? ''} cards.`);
 }
 
 async function marigoldPersona(): Promise<void> {

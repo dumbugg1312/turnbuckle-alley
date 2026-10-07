@@ -122,10 +122,12 @@ export function lightSprite(color: string, r: number, squash = 1, levels = 6, po
     const dx = (x + 0.5 - rr) / rr;
     const dy = (y + 0.5 - ry) / ry;
     const d = Math.sqrt(dx * dx + dy * dy);
-    if (d >= 1) return rgba(0, 0, 0, 255);
+    // Intensity lives in alpha (not a black background), so a glow can never
+    // show up as a dark square whatever composite mode it lands in.
+    if (d >= 1) return rgba(0, 0, 0, 0);
     const i = Math.pow(1 - d, pow);
     const q = Math.floor(i * levels + bay(x, y)) / levels;
-    return rgba(cr * q, cg * q, cb * q, 255);
+    return rgba(cr, cg, cb, 255 * q);
   });
   lightCache.set(key, c);
   return c;
@@ -141,10 +143,10 @@ export function spillSprite(color: string, w0: number, h: number): HTMLCanvasEle
     const t = y / h;
     const hw = w0 / 2 + y * 0.5;
     const dx = Math.abs(x + 0.5 - W / 2) / hw;
-    if (dx >= 1) return rgba(0, 0, 0, 255);
+    if (dx >= 1) return rgba(0, 0, 0, 0);
     const i = Math.pow(1 - t, 1.4) * (1 - dx * dx * 0.7);
     const q = Math.floor(i * 5 + bay(x, y)) / 5;
-    return rgba(cr * q, cg * q, cb * q, 255);
+    return rgba(cr, cg, cb, 255 * q);
   });
   lightCache.set(key, c);
   return c;
@@ -297,7 +299,7 @@ function rays(): HTMLCanvasElement {
       if (t > 0 && t < 1) v = Math.max(v, Math.sin(t * Math.PI) * bi);
     }
     const q = Math.floor(v * 5 + bay(x, y)) / 5;
-    return rgba(255 * q, 225 * q, 150 * q, 255);
+    return rgba(255, 225, 150, 255 * q);
   });
   return rayStrip;
 }

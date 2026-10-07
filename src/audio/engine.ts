@@ -277,6 +277,10 @@ export class Playback {
     return this.disposed || this.tracks.every((t) => t.done);
   }
 
+  get debugStop(): number {
+    return this.stopTime;
+  }
+
   /** Fade out and stop. */
   fadeOut(now: number, dur: number): void {
     if (this.stopTime < Infinity) {
@@ -513,6 +517,13 @@ export class Engine {
 
   get now(): number {
     return this.ctx.currentTime;
+  }
+
+  /** Debug: every playback that is still alive. */
+  debugState(): { id: string; stop: number; gain: number }[] {
+    const all = this.current ? [this.current, ...this.others] : [...this.others];
+    if (this.preview) all.push(this.preview);
+    return all.map((p) => ({ id: p.song.id, stop: p.debugStop, gain: p.out.gain.value }));
   }
 
   get currentSong(): CompiledSong | null {
