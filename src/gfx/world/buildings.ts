@@ -4107,102 +4107,134 @@ function gasPump(x: number, y: number, body: Color, trim: Color): void {
 }
 function drawGasStation(): void {
   const W = 112;
-  const GY = 72;
+  const GY = 84;
   // --- the shop on the right (x 62..112)
-  flatRoof(62, 10, 50, 8, 201);
-  vent(100, 11);
-  R(62, 18, 50, GY - 18, (x: number, y: number) => {
-    const n = hash2(x, y, 202);
-    return n < 0.05 ? '#fff6e6' : n > 0.96 ? '#e0d4c4' : '#f4ead8';
-  });
-  R(62, 18, 50, 4, '#3f9a92');
-  HL(62, 111, 18, '#6ac0b0');
-  R(W - 4, 22, 4, GY - 22, (x: number, y: number, o: number) => (dth(x, y, 8) ? shA(o, 0.15) : o));
+  flatRoof(62, 10, 50, 12, 201);
+  ventF(100, 12, 5);
+  acUnit(66, 13);
+  stucco(62, 22, 50, GY - 22, '#f4ead8', 202);
+  R(62, 22, 50, 4, '#3f9a92');
+  fh(62, 112, 22, '#7ad0c0');
+  fh(62, 112, 25.5, '#24605c');
+  aoTop(62, 26, 50, 3, 0.2);
+  shadeRight(W - 6, 26, 6, GY - 26, 0.16);
   // BAIT sign with a fish, over the coolers
-  RRB(88, 24, 22, 10, 2, '#2f6a74', '#fff4dc');
-  T('BAIT', 90, 26, '#2f6a74', FT, {});
-  ell(106, 28, 2.5, 1.5, '#5ab0e0');
-  P(103, 27, '#5ab0e0');
-  P(103, 29, '#5ab0e0');
-  P(107, 27, AK);
+  signBoardF(89, 28, 21, 11, '#2f6a74', '#fff4dc');
+  T('BAIT', 90.5, 30.5, enamel('#2f6a74'), FT, {});
+  ell(105.5, 33.5, 2.75, 1.5, '#5ab0e0');
+  fh(103.5, 107.5, 33, '#9ad8f0');
+  poly([[102, 32], [103.5, 33.5], [102, 35]], '#5ab0e0');
+  P1(107, 33, AK);
   // window full of snacks
-  R(65, 37, 16, 18, '#3f9a92');
-  glass(66, 38, 14, 16, () => {
-    R(66, 38, 14, 16, '#f6e6c8');
+  R(65, 44, 16, 21, '#3f9a92');
+  fh(65, 81, 44, '#7ad0c0');
+  glassF(66, 45, 14, 19, () => {
+    R(66, 45, 14, 19, '#f6e6c8');
     for (let r = 0; r < 3; r++) {
-      HL(66, 79, 43 + r * 5, '#c8a888');
-      for (let k = 0; k < 5; k++) R(67 + k * 3, 40 + r * 5, 2, 3, ['#d8434b', '#f4b63f', '#3f9a92', '#9a6ad0', '#ff94b4'][(k + r) % 5]);
+      R(66, 50.5 + r * 6, 14, 0.5, '#c8a888');
+      for (let k = 0; k < 5; k++) {
+        const c = ['#d8434b', '#f4b63f', '#3f9a92', '#9a6ad0', '#ff94b4'][(k + r) % 5];
+        R(67 + k * 2.6, 47 + r * 6, 2, 3.5, c);
+        fh(67 + k * 2.6, 69 + k * 2.6, 47 + r * 6, liA(c, 0.45));
+        P1(67.5 + k * 2.6, 48.5 + r * 6, '#fff4e0');
+      }
     }
   });
-  RR(64, 25, 24, 8, 1, '#2f2440');
-  neon('SNACKS', 65, 26, '#fff4e6', '#ff8a4a', FT, {});
+  R(65, 65, 16, 1.5, '#3f9a92');
+  RR(64, 29, 24, 8, 1, '#2f2440');
+  fh(65, 87, 29, '#4a3a5a');
+  neon('SNACKS', 65, 30, '#fff4e6', '#ff8a4a', FT, {});
   // door (centre x = 88)
-  doorA(82, 44, 12, 28, '#3f9a92', { glass: true, frame: '#fff4dc' });
-  RR(83, 56, 10, 7, 1, '#fff4dc');
-  T('HI', 85, 57, '#d8434b', FT, {});
+  doorF(81, 50, 14, 34, '#3f9a92', { frame: '#fff4dc', lite: true, liteH: 14, wall: '#f6e6c8', seed: 203, kick: '#c8c4d8', step: '#c8c0c4' });
+  RR(82.5, 67, 11, 6, 1, '#fff4dc');
+  T('HI', 85.5, 67.5, enamel('#d8434b'), FT, {});
   // ice chest + soda cooler
-  R(97, GY - 14, 12, 14, '#e8f0f8');
-  box(97, GY - 14, 12, 14, '#5a8ac8');
-  T('ICE', 98, GY - 11, '#3a6ab0', FT, {});
-  HL(97, 108, GY - 14, '#ffffff');
-  R(96, 37, 14, 10, '#d8434b');
-  R(97, 38, 12, 7, '#ff9a90');
-  T('POP', 97, 39, '#fff4e6', FT, {});
+  R(97, GY - 15, 12, 15, '#e8f0f8');
+  box(97, GY - 15, 12, 15, '#5a8ac8');
+  fh(97.5, 108.5, GY - 14.5, '#ffffff');
+  T('ICE', 98, GY - 12, enamel('#3a6ab0'), FT, {});
+  FR(97.5, GY - 6, 11, 5, (_fx, fy, o) => (fy % 3 === 0 ? '#c8d8e8' : o));
+  R(96, 44, 14, 11, '#d8434b');
+  fh(96, 110, 44, '#ff8a80');
+  R(97, 45, 12, 7, '#ff9a90');
+  glassF(97, 45, 12, 7, () => {
+    R(97, 45, 12, 7, '#a8d8e0');
+    for (let k = 0; k < 6; k++) R(97.5 + k * 2, 46, 1.5, 5, ['#d8434b', '#3f9a92', '#f4b63f'][k % 3]);
+  });
+  T('POP', 98, 52.5, '#fff4e6', FT, {});
+  grime(62, GY - 8, 50, 7, 0.2);
   // --- canopy over the pumps (x 0..62)
   R(0, 10, 64, 4, '#6a6488');
-  HL(0, 63, 10, '#9a94b8');
-  R(0, 14, 64, 10, (x: number, y: number) => (y === 14 ? '#ffffff' : Math.floor(x / 4) % 2 ? '#fbf0e4' : '#d8434b'));
-  R(2, 15, 60, 8, '#fbf0e4');
-  HL(2, 61, 23, '#b8a8b0');
-  T('GAS', 4, 17, '#d8434b', FT, {});
-  P(17, 19, '#3f9a92');
-  T('BAIT', 21, 17, '#2f6a74', FT, {});
-  P(38, 19, '#3f9a92');
-  T('SNACKS', 41, 17, '#d8434b', FT, {});
+  metalF(0, 10, 64, 4, '#6a6488', 204, 3, 0.2);
+  fh(0, 64, 10, '#9a94b8');
+  R(0, 14, 64, 12, (x: number) => (Math.floor(x / 4) % 2 ? '#fbf0e4' : '#d8434b'));
+  fh(0, 64, 14, '#ffffff');
+  R(2, 15.5, 60, 9, '#fbf0e4');
+  FR(2, 15.5, 60, 9, (fx, fy, o) => (hash2(fx, fy, 205) < 0.04 ? '#e8dcd0' : o));
+  fh(2, 62, 24.5, '#b8a8b0');
+  fh(0, 64, 25.5, '#8a2c44');
+  T('GAS', 4, 18, enamel('#d8434b'), FT, {});
+  P1(17.5, 20, '#3f9a92');
+  T('BAIT', 21, 18, enamel('#2f6a74'), FT, {});
+  P1(38.5, 20, '#3f9a92');
+  T('SNACKS', 41, 18, enamel('#d8434b'), FT, {});
   // under-canopy lights
   for (const lx of [12, 32, 52]) {
-    R(lx - 2, 24, 5, 1, '#fff8d8');
-    for (let k = 1; k < 4; k++) for (let d = -k - 1; d <= k + 1; d++) P(lx + d, 24 + k, (a: number, b: number, o: number) => (o && dth(a, b, 5 - k) ? mix(o, '#fff4c8', 0.3) : o));
+    R(lx - 2.5, 26, 5, 1, '#fff8d8');
+    fh(lx - 2.5, lx + 2.5, 26.5, '#e8dca8');
+    for (let k = 1; k < 5; k++) FR(lx - k - 1, 26 + k, k * 2 + 2, 1, (a, b, o) => (o && dth(a, b, 6 - k) ? mixc(o, '#fff4c8', 0.3) : o));
   }
   // posts
   for (const px of [3, 57]) {
-    R(px, 24, 4, GY - 24, '#e8e4f0');
-    VL(px, 24, GY - 1, '#ffffff');
-    VL(px + 3, 24, GY - 1, '#a8a0c0');
+    R(px, 26, 4, GY - 26, '#e8e4f0');
+    fv(px, 26, GY, '#ffffff');
+    fv(px + 3.5, 26, GY, '#a8a0c0');
+    for (let y = 30; y < GY - 4; y += 8) fh(px, px + 4, y, '#d0cce0');
     R(px - 1, GY - 3, 6, 3, '#c8c4d8');
+    fh(px - 1, px + 5, GY - 3, '#e8e4f0');
+    FR(px - 1, GY - 3, 6, 3, (fx, fy) => ((fx + fy) % 4 < 2 ? '#f4b63f' : '#3a3048'));
   }
   // pump island and two vintage pumps
   RR(10, GY - 6, 44, 6, 2, '#d8d0d4');
-  HL(11, 52, GY - 6, '#f4eef0');
-  HL(10, 53, GY - 1, '#a8a0a8');
-  gasPump(14, GY - 32, '#d8434b', '#8a2c44');
-  gasPump(36, GY - 32, '#3f9a92', '#2f6a74');
+  fh(11, 53, GY - 6, '#f4eef0');
+  fh(10, 54, GY - 1, '#a8a0a8');
+  FR(10, GY - 5, 44, 4, (fx, fy, o) => (o && hash2(fx, fy, 206) < 0.08 ? shA(o, 0.12) : o));
+  gasPump(14, GY - 33, '#d8434b', '#8a2c44');
+  gasPump(36, GY - 33, '#3f9a92', '#2f6a74');
+  // squeegee bucket and an oil-can pyramid
+  R(26, GY - 9, 4, 3, '#4a6ab0');
+  fh(26, 30, GY - 9, '#7a9ae0');
+  fv(28, GY - 13, GY - 9, '#c8a070');
+  for (let k = 0; k < 3; k++) R(48 + k * 2, GY - 9, 1.75, 3, '#3a3048');
+  for (let k = 0; k < 2; k++) R(49 + k * 2, GY - 12, 1.75, 3, '#3a3048');
   // price board on the post
-  R(58, 34, 10, 12, '#3a3048');
-  T('$1', 59, 35, '#ffd34a', FT, {});
-  T('09', 59, 41, '#ffd34a', FT, {});
+  R(58, 40, 10, 13, '#3a3048');
+  fh(58, 68, 40, '#5a5070');
+  T('$1', 59, 41, '#ffd34a', FT, {});
+  T('09', 59, 47, '#ffd34a', FT, {});
+  micro('9/10', 63.5, 50, '#ffd34a');
 }
 building('b-gasstation', {
   w: 112,
-  h: 72,
+  h: 84,
   door: 32,
   draw: drawGasStation,
   label: 'Gas Station',
-  solid: { x: 6, y: -52, w: 50, h: 52 },
+  solid: { x: 6, y: -60, w: 50, h: 60 },
   shadow: (ox, oy) => {
     // soft shade under the canopy, and the shop's cast shadow
-    for (let y = oy + 24; y < oy + 72; y++) for (let x = ox; x < ox + 62; x++) if (dth(x, y, 6)) P(x, y, SH2);
-    bShadow(ox + 62, oy, 50, 72, 10);
+    for (let y = oy + 26; y < oy + 84; y++) for (let x = ox; x < ox + 62; x++) if (dth(x, y, 6)) P(x, y, SH2);
+    bShadow(ox + 62, oy, 50, 84, 10);
   },
   lights: [
-    [12, 30, 22, '#fff4d0'],
-    [32, 30, 22, '#fff4d0'],
-    [52, 30, 22, '#fff4d0'],
-    [73, 46, 14, WARM],
-    [88, 52, 12, WARM],
-    [76, 29, 12, '#ff8a4a'],
-    [19, 34, 6, '#ffffff'],
-    [41, 34, 6, '#ffffff'],
+    [12, 32, 22, '#fff4d0'],
+    [32, 32, 22, '#fff4d0'],
+    [52, 32, 22, '#fff4d0'],
+    [73, 54, 14, WARM],
+    [88, 58, 12, WARM],
+    [76, 33, 12, '#ff8a4a'],
+    [19, 53, 6, '#ffffff'],
+    [41, 53, 6, '#ffffff'],
   ],
 });
 
@@ -4210,84 +4242,126 @@ building('b-gasstation', {
 //  Sweet Lou's Airstream  72 x 40, door +18
 // =====================================================================
 function airLights(f: number): void {
-  bulbs([[34, 13], [52, 15, 2], [70, 13, 2]], f, 4, '#4a3550', 4);
+  bulbs([[34, 15], [52, 17, 2], [70, 15, 2]], f, 4, '#4a3550', 4);
 }
 function drawAirstream(): void {
   // fishing rods leaning on the back end
-  L(2, 38, 8, 2, '#c8a070');
-  L(4, 38, 12, 4, '#a88050');
-  curve(8, 2, 14, 18, 4, '#e8e4f0');
-  // hitch
-  R(0, 30, 6, 2, '#6a6488');
-  R(0, 32, 2, 6, '#6a6488');
+  L(2, 46, 8, 4, '#c8a070');
+  L(4, 46, 12, 6, '#a88050');
+  curve(8, 4, 14, 22, 4, '#e8e4f0');
+  // hitch and a propane tank
+  R(0, 36, 6, 2, '#6a6488');
+  R(0, 38, 2, 8, '#6a6488');
+  fv(0, 36, 46, '#9a94b8');
+  RR(1, 29, 4, 7, 2, '#e8e4ec');
+  fh(1.5, 4.5, 29.5, '#ffffff');
   // the aluminium body (rounded loaf)
-  RR(4, 4, 64, 30, 10, '#c8ccdc');
-  R(4, 4, 64, 30, (x: number, y: number, o: number) => {
+  RR(4, 4, 64, 38, 12, '#c8ccdc');
+  FR(4, 4, 64, 38, (fx, fy, o) => {
     if (!o) return null;
-    const v = (y - 4) / 30;
-    // bright band of reflected sky near the top, dark band near the belly
-    if (v < 0.12) return '#f4f6fc';
-    if (v < 0.28) return '#e2e6f2';
-    if (v > 0.82) return '#8a8eac';
-    if (v > 0.7) return '#a8acc4';
-    return x % 9 === 0 ? '#b8bcd0' : '#c8ccdc';
+    const v = (fy / 2 - 4) / 38;
+    const x = fx / 2;
+    // reflected sky up top, warm ground bounce low, a dark belly band
+    let c: Color;
+    if (v < 0.08) c = '#f8f9fe';
+    else if (v < 0.22) c = mixc('#e6eaf6', '#cfe0f2', (v - 0.08) / 0.14);
+    else if (v > 0.86) c = '#8a8eac';
+    else if (v > 0.74) c = '#a8acc4';
+    else if (v > 0.62) c = mixc('#c8ccdc', '#e8d8c8', 0.25);
+    else c = '#c8ccdc';
+    // panel seams
+    if (fx % 18 === 0) c = shA(c, 0.12);
+    else if (fx % 18 === 1) c = liA(c, 0.25);
+    if (x < 10 && v > 0.2 && v < 0.6 && dth(fx, fy, 6)) c = liA(c, 0.12);
+    return c;
   });
   // rivet seams
-  for (const sy of [10, 20, 28]) for (let x = 8; x < 64; x += 3) P(x, sy, '#9a9eb8');
+  for (const sy of [12, 24, 34]) for (let x = 8; x < 64; x += 1.5) P1(x, sy, '#9a9eb8');
+  // a teal belt stripe
+  R(4, 27, 64, 1.5, '#3f9a92');
+  fh(4, 68, 27, '#7ad0c0');
+  FR(4, 27, 64, 1.5, (fx, _fy, o) => {
+    const x = fx / 2;
+    return x < 6 || x > 66 ? null : o;
+  });
   // windows
   for (const wx of [12, 24]) {
-    RR(wx - 1, 11, 10, 7, 2, '#7a7e9a');
-    glass(wx, 12, 8, 5, () => roomA(wx, 12, 8, 5, '#f2c890', wx));
+    RR(wx - 1, 13, 10, 8, 2, '#7a7e9a');
+    fh(wx, wx + 8, 13, '#a8acc4');
+    glassF(wx, 14, 8, 6, () => {
+      room(wx, 14, 8, 6, '#f2c890', wx);
+      curtainsF(wx, 14, 8, 6, '#fff4e6');
+    });
+    // awning flap over each window
+    R(wx - 1, 11.5, 10, 1.5, '#9a9eb8');
+    fh(wx - 1, wx + 9, 11.5, '#e8ecf6');
   }
   // door (centre x = 54)
-  RR(48, 12, 12, 21, 2, '#7a7e9a');
-  RR(49, 13, 10, 20, 2, '#d8dcea');
-  glass(51, 15, 6, 5, () => roomA(51, 15, 6, 5, '#f2c890', 2));
-  R(57, 23, 2, 2, '#f4b63f');
-  R(47, 33, 14, 2, '#9a94b0');
-  HL(47, 60, 33, '#c8c4d8');
+  RR(47.5, 13, 13, 29, 2, '#7a7e9a');
+  RR(48.5, 14, 11, 28, 2, '#d8dcea');
+  fv(48.5, 15, 41, '#f4f6fc');
+  fv(59, 15, 41, '#a8acc4');
+  glassF(50.5, 16, 7, 7, () => room(50.5, 16, 7, 7, '#f2c890', 2));
+  R(50.5, 26, 7, 8, '#c8ccdc');
+  box(50.5, 26, 7, 8, '#a8acc4');
+  R(57, 27, 1.5, 2, '#f4b63f');
+  P1(57, 27, '#fff0a0');
+  // steps
+  R(47, 42, 14, 2, '#9a94b0');
+  fh(47, 61, 42, '#c8c4d8');
+  R(48, 44, 12, 2, '#8a84a0');
+  fh(48, 60, 44, '#b8b4c8');
   // striped awning over the door, poles out front
-  for (let x = 32; x < 70; x++) {
+  for (let x = 32; x < 70; x += 0.5) {
     const c = Math.floor((x - 32) / 4) % 2 ? '#fbf0e4' : '#3f9a92';
-    VL(x, 8, 12, c);
-    P(x, 8, liA(c, 0.4));
-    if ((x - 32) % 4 > 0 && (x - 32) % 4 < 3) P(x, 13, c);
+    R(x, 9, 0.5, 5, c);
+    P1(x, 9, liA(c, 0.45));
+    P1(x, 13.5, shA(c, 0.2));
+    const k = (x - 32) % 4;
+    if (k > 0.5 && k < 3.5) P1(x, 14, c);
   }
-  VL(33, 13, 38, '#8a84a0');
-  VL(69, 13, 38, '#8a84a0');
-  // wheel
-  R(20, 31, 16, 3, '#6a6e8a');
-  circ(28, 34, 4.5, '#3a3048');
-  circ(28, 34, 2.5, '#9a9eb8');
-  P(28, 34, '#e8ecf6');
-  // lawn chair (webbed) and a cooler
-  R(37, 28, 8, 1, '#3f9a92');
-  for (let y = 24; y < 30; y += 2) HL(38, 43, y, '#f4b63f');
-  VL(38, 24, 30, '#c8c4d8');
-  VL(43, 24, 30, '#c8c4d8');
-  L(37, 30, 44, 37, '#c8c4d8');
-  L(44, 30, 37, 37, '#c8c4d8');
-  R(62, 32, 8, 6, '#d8434b');
-  R(62, 32, 8, 2, '#fbf0e4');
+  FR(32, 14.5, 38, 2, (fx, fy, o) => (o && dth(fx, fy, 6) ? shA(o, 0.2) : o));
+  fv(33, 14, 46, '#8a84a0');
+  fv(69, 14, 46, '#8a84a0');
+  // wheel in its skirt
+  R(20, 38, 16, 3, '#6a6e8a');
+  fh(20, 36, 38, '#9a9eb8');
+  circ(28, 42, 4.5, '#3a3048');
+  circ(28, 42, 2.5, '#9a9eb8');
+  P1(27.5, 41.5, '#e8ecf6');
+  P1(28.5, 42.5, '#6a6e8a');
+  // lawn chair (webbed) and a cooler with a radio on it
+  R(37, 35, 8, 1, '#3f9a92');
+  for (let y = 31; y < 37; y += 1) fh(38, 44, y, y % 2 ? '#f4b63f' : '#f8d070');
+  fv(38, 31, 37, '#c8c4d8');
+  fv(43.5, 31, 37, '#c8c4d8');
+  L(37, 37, 44, 45, '#c8c4d8');
+  L(44, 37, 37, 45, '#c8c4d8');
+  R(62, 39, 8, 7, '#d8434b');
+  R(62, 39, 8, 2, '#fbf0e4');
+  fh(62, 70, 39, '#ffffff');
+  RR(63, 36, 6, 3, 1, '#5a5a7a');
+  P1(64, 37, '#c8c4d8');
+  fv(68, 33, 36, '#9a9eb8');
   airLights(0);
 }
 building('airstream', {
   w: 72,
-  h: 40,
+  h: 48,
   door: 18,
   draw: drawAirstream,
   label: "Sweet Lou's Airstream",
-  solid: { x: -32, y: -26, w: 66, h: 26 },
+  solid: { x: -32, y: -32, w: 66, h: 32 },
   shadow: (ox, oy) => {
-    shadowEll(ox + 38, oy + 36, 34, 4);
+    shadowEll(ox + 38, oy + 44, 34, 4);
   },
-  anims: [{ fps: 3, frames: 4, rect: [32, 12, 40, 6], draw: (f) => airLights(f) }],
+  anims: [{ fps: 3, frames: 4, rect: [32, 14, 40, 6], draw: (f) => airLights(f) }],
   lights: [
-    [16, 15, 10, WARM],
-    [28, 15, 10, WARM],
-    [54, 18, 10, WARM],
-    [44, 16, 16, '#ffd77a'],
-    [62, 16, 16, '#ffd77a'],
+    [16, 17, 10, WARM],
+    [28, 17, 10, WARM],
+    [54, 20, 10, WARM],
+    [44, 18, 16, '#ffd77a'],
+    [62, 18, 16, '#ffd77a'],
   ],
 });
 
