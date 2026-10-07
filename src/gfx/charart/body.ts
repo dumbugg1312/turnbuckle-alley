@@ -216,6 +216,8 @@ const lb = (a: number, b: number, up?: number): Lb => ({ a, b, up });
 export const WALK_FRAMES = 8;
 /** Frames per run cycle (two strides). */
 export const RUN_FRAMES = 6;
+/** Walk arm swing as a fraction of the style's swing (calmer than the raw values). */
+const WALK_SWING = 0.6;
 /** A run stride is this much longer than a walk cycle. */
 const RUN_STRIDE = 1.55;
 
@@ -411,7 +413,9 @@ function gaitPose(view: View, p: number, run: boolean, stance: boolean, m: Met, 
   const jiggle = st.jiggle * Math.max(0, Math.cos(4 * Math.PI * (p - 0.15))) > st.jiggle * 0.6 ? st.jiggle : 0;
   const lowest = Math.min(smp.near.y, smp.far.y);
   const lift = lowest / K + bounce;
-  const arm = run ? st.arm + 16 : st.arm;
+  // A relaxed walk swings the arms gently from the shoulder; the full style
+  // value read as flailing (D-027). The run keeps its bent-elbow pump.
+  const arm = run ? st.arm + 16 : st.arm * WALK_SWING;
   const elbow = run ? 78 + st.elbow * 0.3 : st.elbow;
   const lean = (run ? st.lean + 8 : st.lean) + (stance ? 6 : 0);
   if (view === 'side') {
@@ -420,9 +424,9 @@ function gaitPose(view: View, p: number, run: boolean, stance: boolean, m: Met, 
     const fwdN = Math.max(0, -c);
     const fwdF = Math.max(0, c);
     let armF = lb(2 + st.armOut * 0.3 - arm * c, 0);
-    armF.b = armF.a + elbow + fwdN * arm * 0.8;
+    armF.b = armF.a + elbow + fwdN * arm * (run ? 0.8 : 0.45);
     let armB = lb(-1 + arm * c, 0);
-    armB.b = armB.a + elbow + fwdF * arm * 0.8;
+    armB.b = armB.a + elbow + fwdF * arm * (run ? 0.8 : 0.45);
     if (stance) {
       armF = lb(36 - c * 8, 146);
       armB = lb(22 + c * 8, 136);

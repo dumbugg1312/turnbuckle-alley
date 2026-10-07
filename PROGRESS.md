@@ -40,6 +40,7 @@ Status of the overnight build (night of 2026-10-06).
 
 ## Shoulders and smooth walking (2026-10-07 evening, D-025, D-026)
 - Characters: sloped trapezius shoulders, arms tucked into a deltoid cap with an armpit crease, arms hanging closer, slimmer relaxed hands, jackets following the slope. Arms sized from the body so the wrist hangs at the crotch and fingertips at mid-thigh (they had reached the knee). Checked on all 34 looks in front, back and side, idle, walking and the glasses and stretch quirks.
+- Walk arm swing calmed (D-027): about 60% of the old swing with less elbow pump, so arms stay near the body; the run is unchanged.
 - Walking: render interpolation between fixed steps, a camera locked to the player, and shared snapping for camera and actors. Measured in headless Chromium: the player's screen position holds constant while walking and the camera steps evenly.
 - Not done yet: the Dungeon scene still uses its own lagging, whole-pixel camera with no interpolation; the match side-view wrestlers (src/match/wrestler-art.ts) have their own shoulder code that hasn't been reviewed.
 
