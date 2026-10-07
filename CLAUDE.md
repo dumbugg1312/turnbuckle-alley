@@ -6,6 +6,7 @@ A cozy Stardew-style life sim set in small-town pro wrestling. It's a browser ga
 - `npm run dev` starts the dev server on :5173 (launch config "turnbuckle-dev"). HMR is off on purpose: several people edit at once.
 - `npx tsc --noEmit` must stay clean.
 - `npx vitest run` runs the tests: match simulation, maps, story, audio and others.
+- Deploy: every push to `main` builds and publishes to GitHub Pages (`.github/workflows/deploy.yml`). Live at https://dumbugg1312.github.io/turnbuckle-alley/. The repo (github.com/dumbugg1312/turnbuckle-alley) is public.
 
 Dev routes:
 - `#town` and `#farm` start a test save. Query params: `?day=&t=&map=&x=&y=`.
