@@ -75,7 +75,7 @@ export class Hud {
     this.date.textContent = `${WEEKDAYS[weekday()]} ${t.day} · ${SEASONS[t.season]}`;
     this.clock.textContent = clockString();
     this.money.textContent = `$${G.player.money.toLocaleString()}`;
-    this.weather.textContent = { sun: '☀', rain: '☂', storm: '⛈', wind: '🍃', snow: '❄' }[G.weather.today];
+    this.weather.textContent = { sun: 'Fair', rain: 'Rain', storm: 'Storm', wind: 'Windy', snow: 'Snow' }[G.weather.today];
     const k = (t.minutes - DAY_START) / (DAY_END - DAY_START);
     this.sun.style.setProperty('--k', String(k));
     this.sun.classList.toggle('night', t.minutes >= 20 * 60);
