@@ -8,7 +8,7 @@ import { defaultLook, type Look } from '../gfx/look';
 import { el, uiRoot } from '../ui/dom';
 import { buildInterior, layout, type Interior, type Layout } from './bus/interior';
 import { buildJourney, type Journey, type Obj } from './bus/journey';
-import { CAPTIONS, DURATION, morningAt, pulse, rainAt, ramp, RATE, scroll, SKY, skyAt, speedAt, STOP_T, sunAt, type Layer } from './bus/route';
+import { CAPTIONS, DURATION, morningAt, pulse, rainAt, ramp, scroll, SKY, skyAt, speedAt, STOP_T, sunAt, type Layer } from './bus/route';
 import { skyStrip } from './bus/sky';
 
 /**
@@ -733,4 +733,3 @@ export class BusScene implements Scene {
   }
 }
 
-export { RATE };

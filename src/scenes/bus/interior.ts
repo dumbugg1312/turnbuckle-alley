@@ -250,6 +250,33 @@ function paintFrame(L: Layout): void {
   R(px - 1.5, py - 0.5, 6, 0.5, '#f08a80');
   R(px + 1, py + 1, 1, 8, '#4a3a4a');
   R(px - 0.5, py + 1, 4, 2, '#5a5a6a');
+  // the stop-request cord strung along above the windows, on little brackets
+  const cordY = wt - 9;
+  if (cordY > rackY + 8 * u) {
+    for (let x = 0; x < w; x += 0.5) P1(x, cordY + Math.sin((x / 70) * Math.PI) * 0.6, '#e8c86a');
+    for (let x = 0; x < w; x += 0.5) if (hash2(Math.floor(x * 2), 3, 1) < 0.3) P1(x, cordY + 0.5 + Math.sin((x / 70) * Math.PI) * 0.6, '#b08a40');
+    for (let x = 35; x < w; x += 70) {
+      R(x - 0.5, cordY - 3, 1, 3.5, '#8a8098');
+      R(x - 1, cordY - 3.5, 2, 1, '#c8c0d4');
+    }
+    T('PULL CORD FOR STOP', wr - 74, cordY - 7, '#6a5e7e', FT, {});
+  }
+  // a no-smoking sticker on the left pillar and the window latch
+  const nx = Math.round(wl * 0.45) - 6;
+  const ny = Math.round(wt + L.wh * 0.2);
+  circ(nx, ny, 4.5, '#f6f0e6');
+  circ(nx, ny, 4, '#d8443c');
+  circ(nx, ny, 3, '#f6f0e6');
+  R(nx - 2, ny - 0.25, 3, 0.75, '#5a5060');
+  R(nx + 1, ny - 0.25, 1, 0.75, '#e8a050');
+  line(nx - 2, ny + 2, nx + 2, ny - 2, '#d8443c');
+  RR(wl + L.ww * 0.5 - 6, wb + 0.5, 12, 3, 1, '#8a8098');
+  R(wl + L.ww * 0.5 - 5, wb + 0.5, 10, 0.5, '#d8d0e0');
+  // rivets along the lower wall seam
+  for (let x = wl; x < wr; x += 18) {
+    P1(x, wb + 17 * u, '#6e6484');
+    P1(x + 0.5, wb + 17 * u - 0.5, '#c8bed0');
+  }
   // shadow from the rack on the top of the window frame
   R(0, rackY + 2 * u, w, 4, over(0.15, 6));
 }
