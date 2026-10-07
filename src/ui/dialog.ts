@@ -199,8 +199,14 @@ export async function choose<T = string>(sp: Speaker | null, prompt: string | nu
     const paint = () => buttons.forEach((b, i) => b.classList.toggle('focus', i === focus));
     paint();
     return await new Promise<T>((resolve) => {
+      // Every option disabled: nothing could ever be picked, so never hang on it.
+      if (focus < 0) {
+        console.warn('[choose] every option is disabled:', prompt);
+        resolve(opts.cancelValue !== undefined ? opts.cancelValue : choices[0].value);
+        return;
+      }
       const pickIdx = (i: number) => {
-        if (choices[i]?.disabled) return;
+        if (!choices[i] || choices[i].disabled) return;
         audio.sfx('confirm');
         cleanup();
         resolve(choices[i].value);

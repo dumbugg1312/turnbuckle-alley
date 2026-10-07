@@ -34,7 +34,14 @@ export function toggleDebug(): void {
   panel.append(el('div', 'label', 'Explorer tools'));
   add('+$500', () => void (G.player.money += 500));
   add('Full energy', () => void (G.player.energy = G.player.maxEnergy));
+  // Same gate as the in-game menu: saving mid-cutscene stores half-applied story flags.
+  const idle = () => {
+    const ok = game.blockers === 0 && !WORLD?.busy && !game.sleeping;
+    if (!ok) toast('Busy: finish the scene first.');
+    return ok;
+  };
   add('Next day (sleep)', async () => {
+    if (!idle()) return;
     const { sleep } = await import('../systems/day');
     await sleep(false);
   });
@@ -80,7 +87,7 @@ export function toggleDebug(): void {
     void WORLD?.warpTo(sel.value, w ? w.tx : 5, w ? w.ty : 5);
   });
   panel.append(el('div', 'label', 'Warp to map'), sel);
-  add('Save', () => void saveGame());
+  add('Save', () => void (idle() && saveGame()));
   add('Close', () => toggleDebug());
   uiRoot().append(panel);
 }
