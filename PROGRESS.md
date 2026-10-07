@@ -45,3 +45,13 @@ Status of the overnight build (night of 2026-10-06).
 - Listening: the music and sound mix by ear.
 - Real-device touch testing on iPhone and iPad.
 - Feel of the timing mini-games (kickout, Dungeon reps, VHS tracking) by hand.
+
+## Charm pass (2026-10-07 evening, D-025)
+- World life: birds, moths, a creek fish and Biscuit the diner cat; rustling plants; physical pickups; NPC greetings, rain shelter and idle emotes; snow, storms, gusts and 9 footstep surfaces.
+- 506 of the placed objects now answer the action button (was 84); festival days with a playable fair (Ferris wheel, fortunes that come true, strongman bell, Wanda, stage shows); Grandma's garden.
+- Writing: town memory and gossip, gift replies that name the item, second-talk and fallback lines per character, real match results in Grandma's calls and the back booth, item descriptions rewritten, repeated tics cut ("don't tell" 115 to 30, "eleven" 65 to 5).
+- Looks: calmer ground with clustered detail, fewer words on facades, belt title logo, softer flickering night light, windows that follow time and weather, hand-placed wear.
+- Follow-ups: nothing calls `setSeason()`, so terrain and trees stay in spring art all year; settled snow reads as hard-edged blobs (src/world/weather.ts); 6 lore objects are out of reach; Second Street facades still word-heavy; new sounds and the strongman bell timing need a human.
+
+## Needs a human (charm pass)
+- Write your own lines in src/data/dialogue/handwritten.ts (guide: docs/YOUR_LINES.md).
