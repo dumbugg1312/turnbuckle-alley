@@ -22,6 +22,12 @@ export const game = {
   clock: new Clock(),
   /** Real seconds since boot (for animation). */
   t: 0,
+  /**
+   * How far the renderer is between the last two fixed simulation steps (0..1).
+   * Scenes interpolate moving things by it so motion is even on 120 Hz screens
+   * and when a frame runs 0 or 2 steps.
+   */
+  alpha: 1,
   /** While > 0, world simulation (clock, NPCs, player control) is paused. */
   blockers: 0,
   bus: new Emitter<GameEvents>(),

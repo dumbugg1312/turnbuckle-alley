@@ -431,7 +431,7 @@ function gaitPose(view: View, p: number, run: boolean, stance: boolean, m: Met, 
   const frontArm = (w: number): Lb => {
     const f = Math.max(0, w);
     const bk = Math.max(0, -w);
-    const a = 7 + st.armOut + bk * 5 - f * 4;
+    const a = 4 + st.armOut * 0.6 + bk * 5 - f * 4;
     const b = a - f * (run ? 70 : 34) + (run ? -20 : 0);
     return { a, b, up: (f * (run ? 2 : 1) + bk * 0.5) * (arm / 26) };
   };
@@ -470,7 +470,7 @@ function idlePose(view: View, frame: number, stance: boolean, st: GaitStyle): Po
   const breath = frame & 1;
   const base: PoseDef = side
     ? { view, torso: 0, head: 0, armF: lb(5, 12), armB: lb(-4, 4), legF: lb(3, 0), legB: lb(-3, 0), expr: 'neutral', item: true, hand: 'relax' }
-    : { view, torso: 0, head: 0, armF: lb(7 + st.armOut * 0.5, 3 + st.armOut * 0.5), armB: lb(7 + st.armOut * 0.5, 3 + st.armOut * 0.5), legF: lb(0, 0), legB: lb(0, 0), expr: 'neutral', item: true, hand: 'relax', wide: st.width };
+    : { view, torso: 0, head: 0, armF: lb(4 + st.armOut * 0.4, 1 + st.armOut * 0.3), armB: lb(4 + st.armOut * 0.4, 1 + st.armOut * 0.3), legF: lb(0, 0), legB: lb(0, 0), expr: 'neutral', item: true, hand: 'relax', wide: st.width };
   let d: PoseDef = base;
   if (stance) {
     d = side
@@ -721,13 +721,16 @@ export function solve(def: PoseDef, m: Met, k = 1): Rig {
   let shF: Pt;
   let shB: Pt;
   if (side) {
-    const s0 = add(torsoBase, up, m.torsoH - Math.max(1.5, m.armD * 0.6));
+    const s0 = add(torsoBase, up, m.torsoH - Math.max(1.5, m.armD * 0.6) - Math.max(2 * k, Math.min(m.torsoH * 0.3, m.shW * 0.2)) * 0.3);
     const tw = (def.twist ?? 0) * k;
     shF = add(s0, fw, 0.5 + tw);
     shB = add(s0, fw, -1 - tw);
   } else {
-    const sy = torsoBase.y - m.torsoH + m.armD / 2 + 0.5;
-    const ax = m.shW / 2 + m.armD / 2 - 1;
+    // The shoulder joint sits inside the deltoid, below the sloping trapezius,
+    // so the arm hangs against the body instead of pegging out of a box corner.
+    const drop = Math.max(2 * k, Math.min(m.torsoH * 0.3, m.shW * 0.2));
+    const sy = torsoBase.y - m.torsoH + drop * 0.8 + m.armD * 0.5;
+    const ax = m.shW / 2 - m.armD * 0.15;
     const tl = (def.shTilt ?? 0) * k;
     shF = { x: hip.x + ax, y: sy + tl };
     shB = { x: hip.x - ax, y: sy - tl };

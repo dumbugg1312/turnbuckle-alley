@@ -38,6 +38,11 @@ Status of the overnight build (night of 2026-10-06).
 - Stardew scale (D-022): buildings 7–18 tiles wide and low with 16×32 doors; the town grew to 104×70 and every coordinate moved; the camera aims for 270 px. Not rescaled yet: Grandma's house and the shed on the farm map; #gallery cells are too small for the wider buildings.
 - Bus ride rebuilt (D-023). All 25 interiors redone (D-024). Interior follow-ups: bake rugs into the (now 2×) ground canvas again; redraw the bed, couch, piano, bleachers, folding chairs and fireplace; wire actions for new display pieces in systems/actions.ts. Weaker spots helpers flagged: fair set pieces (water tower, Ferris wheel, tents), winter trees, the show poster and entrance CSS, the Dungeon and tapes screens' CSS, and town ground load time (~1.8 s first build).
 
+## Shoulders and smooth walking (2026-10-07 evening, D-025, D-026)
+- Characters: sloped trapezius shoulders, arms tucked into a deltoid cap with an armpit crease, arms hanging closer, slimmer relaxed hands, jackets following the slope. Checked on all 34 looks in front, back and side, idle and walking.
+- Walking: render interpolation between fixed steps, a camera locked to the player, and shared snapping for camera and actors. Measured in headless Chromium: the player's screen position holds constant while walking and the camera steps evenly.
+- Not done yet: the Dungeon scene still uses its own lagging, whole-pixel camera with no interpolation; the match side-view wrestlers (src/match/wrestler-art.ts) have their own shoulder code that hasn't been reviewed.
+
 ## In progress at the end of the night
 - Done since: all 34 characters have dialogue files; the main story runs through the Homecoming finale and credits (src/story-main/chapters/).
 

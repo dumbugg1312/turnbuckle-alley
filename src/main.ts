@@ -53,6 +53,7 @@ function frame(now: number) {
       acc -= STEP;
       step();
     }
+    game.alpha = acc / STEP;
     draw();
   } catch (e) {
     acc = 0;

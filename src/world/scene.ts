@@ -1,6 +1,7 @@
 import { audio } from '../audio';
 import { game } from '../core/game';
 import type { Scene } from '../core/scene';
+import { DENSITY } from '../core/screen';
 import { G, ext, type Dir } from '../core/state';
 import { isShowDay, isSupershow, weekday } from '../core/time';
 import { currentEntry, NPCS, type DayCtx, type NpcDef } from '../data/npcs';
@@ -427,6 +428,7 @@ export class WorldScene implements Scene {
   // ------------------------------------------------------------ update
 
   update(dt: number): void {
+    this.snapshot();
     if (this.attract) {
       const a = this.attract;
       a.t += dt;
@@ -791,11 +793,75 @@ export class WorldScene implements Scene {
     else tx = Math.max(0, Math.min(this.map.pxW - w, tx));
     if (this.map.pxH <= h) ty = (this.map.pxH - h) / 2;
     else ty = Math.max(0, Math.min(this.map.pxH - h, ty));
-    const k = Math.min(1, dt * 8);
-    this.cam.x += (tx - this.cam.x) * k;
-    this.cam.y += (ty - this.cam.y) * k;
-    if (Math.abs(tx - this.cam.x) < 0.3) this.cam.x = tx;
-    if (Math.abs(ty - this.cam.y) < 0.3) this.cam.y = ty;
+    // Locked to the player, as in Stardew: a lagging, easing camera keeps the
+    // player's screen spot drifting by fractions of a pixel, and once both are
+    // snapped to pixels the world and the player shimmer against each other.
+    void dt;
+    this.cam.x = tx;
+    this.cam.y = ty;
+  }
+
+  /** Positions at the start of the latest fixed step, for render interpolation. */
+  private prevPos = new WeakMap<Actor, { x: number; y: number }>();
+  private prevCam = { x: 0, y: 0 };
+
+  private snapshot(): void {
+    for (const a of [this.player, ...this.npcs.values()]) {
+      const p = this.prevPos.get(a);
+      if (p) {
+        p.x = a.x;
+        p.y = a.y;
+      } else this.prevPos.set(a, { x: a.x, y: a.y });
+    }
+    this.prevCam.x = this.cam.x;
+    this.prevCam.y = this.cam.y;
+  }
+
+  /**
+   * The grid the camera and actors snap to: half pixels when the zoom is even
+   * (they land on whole device pixels), whole pixels when it is odd (a half
+   * pixel would be drawn 1 or 2 device pixels wide and shimmer while scrolling).
+   */
+  private snapGrid(): number {
+    return game.screen.scale % DENSITY === 0 ? 1 / DENSITY : 1;
+  }
+
+  render(ctx: CanvasRenderingContext2D): void {
+    // Draw everything where it is between the last two simulation steps, then
+    // put the simulation state back exactly as it was.
+    const alpha = Math.max(0, Math.min(1, game.alpha));
+    const q = this.snapGrid();
+    const snap = (v: number) => Math.round(v / q) * q;
+    const lerpTo = (from: number, to: number) => (Math.abs(to - from) > 24 ? to : from + (to - from) * alpha);
+    const saved: [Actor, number, number][] = [];
+    const camX = this.cam.x;
+    const camY = this.cam.y;
+    this.cam.x = lerpTo(this.prevCam.x, camX);
+    this.cam.y = lerpTo(this.prevCam.y, camY);
+    // Actors keep their exact offset from the camera, so the player never
+    // shimmers against the screen while the world scrolls under them.
+    const cx = snap(this.cam.x);
+    const cy = snap(this.cam.y);
+    for (const a of [this.player, ...this.npcs.values()]) {
+      saved.push([a, a.x, a.y]);
+      const p = this.prevPos.get(a);
+      const x = p ? lerpTo(p.x, a.x) : a.x;
+      const y = p ? lerpTo(p.y, a.y) : a.y;
+      a.x = cx + snap(x - this.cam.x);
+      a.y = cy + snap(y - this.cam.y);
+    }
+    this.cam.x = cx;
+    this.cam.y = cy;
+    try {
+      this.renderFrame(ctx);
+    } finally {
+      for (const [a, x, y] of saved) {
+        a.x = x;
+        a.y = y;
+      }
+      this.cam.x = camX;
+      this.cam.y = camY;
+    }
   }
 
   private updateWeather(dt: number): void {
@@ -817,11 +883,11 @@ export class WorldScene implements Scene {
 
   // ------------------------------------------------------------ render
 
-  render(ctx: CanvasRenderingContext2D): void {
+  private renderFrame(ctx: CanvasRenderingContext2D): void {
     const { w, h } = game.screen;
     const g = this.grade;
-    const cx = Math.round(this.cam.x);
-    const cy = Math.round(this.cam.y);
+    const cx = this.cam.x;
+    const cy = this.cam.y;
     // Objects are drawn first onto a cleared buffer while their sprites are
     // collected as shadow casters; the sun shadows and the ground then go in
     // behind them with destination-over, so shadows land on the ground only.

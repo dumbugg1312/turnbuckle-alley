@@ -25,7 +25,29 @@ export function interp(keys: [number, number][], t: number): number {
 export function frontHalfWidth(t: number): number {
   const m = B.m;
   const bump = m.belly * Math.sin(Math.PI * clamp((t - 0.02) / 0.62, 0, 1));
-  return interp([[0, m.hipW / 2], [0.3, m.waistW / 2], [0.74, m.shW / 2], [1, m.shW / 2 - (m.shW > 12 * K ? 2 : 1) * K]], t) + bump * 0.5;
+  // The chest stops short of the deltoids; the arms' rounded caps finish the shoulder line.
+  const chest = m.shW / 2 - m.armD * 0.3;
+  const body = interp([[0, m.hipW / 2], [0.3, m.waistW / 2], [0.7, chest]], t) + bump * 0.5;
+  return Math.min(body, shoulderSlope((1 - t) * m.torsoH));
+}
+
+/**
+ * Half width of the trapezius line `d` art px below the top of the torso: it
+ * leaves the neck and rolls down and out to the shoulder, rather than the flat,
+ * square top that read as a toy figure.
+ */
+export function shoulderSlope(d: number): number {
+  const m = B.m;
+  const neck = Math.max(2 * K, Math.round(m.headW * 0.42)) / 2 + 0.5 * K;
+  const chest = m.shW / 2 - m.armD * 0.3;
+  const drop = shoulderDrop(m);
+  const k = clamp(d / drop, 0, 1);
+  return neck + (chest - neck) * Math.sqrt(k) * (1.15 - 0.15 * k);
+}
+
+/** How far the shoulder line falls from the neck to the shoulder point (art px). */
+export function shoulderDrop(m: { shW: number; torsoH: number }): number {
+  return Math.max(2 * K, Math.min(m.torsoH * 0.3, m.shW * 0.2));
 }
 export function sideEdges(t: number): [number, number] {
   const m = B.m;
@@ -115,9 +137,19 @@ export function drawArm(sh: Pt, el: Pt, ha: Pt, hand: Hand, near: boolean): void
   layer({ sh: 0.3, hl: 0.06 });
   const wide = B.sleeveLen > 0.9 ? B.sleeveWide * K : 0;
   const w0 = m.armD + wide;
-  const paint = (off: number, span: number, dmax: number) => (s: number, v: number, _x: number, _y: number, _c: number, t: number): Color => {
+  // Front / back: the edge of the arm that lies against the body below the
+  // deltoid takes a shadow crease, so arm and torso read as separate forms.
+  const front = B.view !== 'side';
+  const towardBody = Math.sign(X(B.r.hip) - X(sh)) || 1;
+  const paint = (off: number, span: number, dmax: number) => (s: number, v: number, x: number, _y: number, _c: number, t: number): Color => {
     const base = dk(armColor((off + s * span) / K, total / K));
     let idx = toneIdx(v, dmax >= 4 * K) + GF;
+    if (front && Math.abs(t) > 0.55 && off + s * span > m.armD * 0.6) {
+      const a0 = off === 0 ? sh : el;
+      const a1 = off === 0 ? el : ha;
+      const axis = X(a0) + (X(a1) - X(a0)) * s;
+      if (Math.sign(x + 0.5 - axis) === towardBody) idx = Math.min(idx, -1);
+    }
     // A lit seam along a sleeve, a crease where the sleeve ends.
     if (GK !== 'skin' && GK !== 'fur' && dmax >= 5 * K) {
       const col = Math.floor(((t + 1) / 2) * dmax);
@@ -189,8 +221,9 @@ function drawHand(h: Pt, dir: Pt, kind: Hand, near: boolean): void {
     return;
   }
   // Relaxed: a soft ball with a finger line near the far end and a thumb.
-  const rr = d / 2 + 0.15 * K;
-  oval(cx, cy, rr, rr + 0.3 * K, (x, y) => toneAt(rp, idxAt(x, y, rr, rr + 0.3 * K)));
+  // A hanging hand is longer than it is wide, a touch narrower than the wrist ball it used to be.
+  const rr = d / 2 - 0.15 * K;
+  oval(cx + ux * 0.2 * K, cy + uy * 0.2 * K, rr, rr + 0.6 * K, (x, y) => toneAt(rp, idxAt(x, y, rr, rr + 0.6 * K)));
   if (d >= 3 * K) {
     for (let i = -1; i <= 1; i++) px(cx + ux * (rr - 0.6 * K) - uy * i * 1.1, cy + uy * (rr - 0.6 * K) + ux * i * 1.1, i === 0 ? rp.d1 : rp.m);
     px(cx + px0 * (rr - 0.4 * K) - ux * 0.4 * K, cy + py0 * (rr - 0.4 * K) - uy * 0.4 * K, rp.l1);
@@ -429,8 +462,10 @@ function drawBackViewCover(): void {
       continue;
     }
     if (['jacket', 'blazer', 'cardigan', 'vest'].includes(e.id)) {
-      const x0 = sx - m.shW / 2;
-      rect(x0, sy - K, m.shW, m.torsoH - K, (x, y) => {
+      const top = sy - K;
+      const half = (y: number) => frontHalfWidth(1 - (y + 0.5 - top) / m.torsoH) + 0.5 * K;
+      rect(sx - m.shW / 2 - K, top, m.shW + 2 * K, m.torsoH - K, (x, y) => {
+        if (Math.abs(x + 0.5 - sx) > half(y)) return null;
         const base = pattern(e.pattern, (x + 64) / K, y / K, c, a, 1, B.tw);
         let idx = toneIdx(formV((x + 0.5 - sx) / (m.shW / 2), 0, LATV, UPV), true);
         if (x === Math.round(sx)) idx -= 1;
@@ -498,6 +533,7 @@ export function drawOverExtras(): void {
             const pts: [number, number][] = [
               [bx + s * inner, by - H],
               [bx + s * (hw(H) + (long ? 1 : 0.5) * K), by - H + 0.5 * K],
+              [bx + s * (hw(H - shoulderDrop(m)) + (long ? 1 : 0.5) * K), by - H + shoulderDrop(m)],
               [bx + s * (hw(H * 0.4) + (long ? 1.5 : 0.5) * K), by - H * 0.4],
               [bx + s * (hw(0) + (long ? 2.5 : 0.5) * K), by + bottom],
               [bx + s * (inner + (long ? 1.5 : 0) * K), by + bottom],
