@@ -1,4 +1,5 @@
 import { ctx2d, makeCanvas } from '../gfx/draw';
+import { getSeason } from '../gfx/world/terrain';
 import { objectKind, terrain } from './registry';
 import { TILE, type MapDef, type MapObject, type TerrainId, type Warp } from './types';
 
@@ -26,6 +27,7 @@ export class GameMap {
   /** 1 = blocked for pathfinding, per tile. Rebuilt when objects change. */
   blocked: Uint8Array;
   private groundCanvas: HTMLCanvasElement | null = null;
+  private groundSeason = '';
   private wallBoxes: Box[];
 
   constructor(def: MapDef) {
@@ -95,6 +97,8 @@ export class GameMap {
       n++;
     }
     if (n === 0 || this.terrainAt(cx, row).startsWith('wall') || this.terrainAt(cx, row) === 'void') return b;
+    // Furniture under it (a counter, lockers, a bed): reach past it to the first open floor.
+    for (let m = 0; m < 3 && this.blocked[row * this.w + cx] && row + 1 < this.h; m++) row++;
     const x0 = Math.floor(b.x / TILE);
     const x1 = Math.floor((b.x + b.w - 1) / TILE);
     const door = this.def.warps.some((w) => w.x <= x1 && w.x + w.w > x0 && w.y <= row && w.y + w.h > row - 1);
@@ -159,7 +163,8 @@ export class GameMap {
 
   /** Pre-render the ground layer once. */
   ground(): HTMLCanvasElement {
-    if (this.groundCanvas) return this.groundCanvas;
+    // Terrain art follows the season, so a ground baked in another season is stale.
+    if (this.groundCanvas && this.groundSeason === getSeason()) return this.groundCanvas;
     // Double density (D-018): dense terrain tiles land on the fine grid; the
     // tagged canvas still draws at its logical size.
     const c = makeCanvas(this.pxW * 2, this.pxH * 2);
@@ -178,6 +183,7 @@ export class GameMap {
       if (k.flat && !o.hidden) k.draw(x, o, 0);
     }
     this.groundCanvas = c;
+    this.groundSeason = getSeason();
     return c;
   }
 

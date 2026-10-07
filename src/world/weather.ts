@@ -59,8 +59,6 @@ const SNOW_HOLD: Partial<Record<TerrainId, number>> = {
   grass: 0.85, 'grass-dark': 1, flowers: 0.8, dirt: 0.7, 'dirt-dark': 0.7, path: 0.5, tilled: 0.65, sand: 0.5, gravel: 0.6, parking: 0.34,
   brick: 0.28, sidewalk: 0.17, concrete: 0.3, stone: 0.4, mud: 0.17,
 };
-/** World px the drift field repeats over. */
-const COVER_SIZE = 128;
 
 export class Weather {
   private flakes: Flake[] = [];
@@ -84,7 +82,8 @@ export class Weather {
   /** A small camera rumble after close thunder, in px. */
   rumble = 0;
   private rumbleT = 0;
-  private snowCover: HTMLCanvasElement[] = [];
+  private cover: HTMLCanvasElement | null = null;
+  private coverFor = '';
 
   update(dt: number, weather: string, outdoor: boolean, view: { x: number; y: number; w: number; h: number }): void {
     const cam = { x: view.x, y: view.y };
@@ -230,81 +229,16 @@ export class Weather {
    * blanketed, paths are patchy and the shovelled street keeps a dusting at
    * the kerbs.
    */
-  drawSnowCover(ctx: CanvasRenderingContext2D, terrainAt: (tx: number, ty: number) => TerrainId, cam: { x: number; y: number }, w: number, h: number): void {
-    if (!this.snowCover.length) this.buildCover();
-    const S = COVER_SIZE;
-    const x0 = Math.floor(cam.x / TILE);
-    const y0 = Math.floor(cam.y / TILE);
-    const x1 = Math.ceil((cam.x + w) / TILE);
-    const y1 = Math.ceil((cam.y + h) / TILE);
-    const LV = this.snowCover.length;
-    const hold = (tx: number, ty: number) => SNOW_HOLD[terrainAt(tx, ty)] ?? 0;
-    const Q = TILE / 2;
-    for (let ty = y0; ty <= y1; ty++)
-      for (let tx = x0; tx <= x1; tx++) {
-        const here = hold(tx, ty);
-        if (!here) continue;
-        // Each quarter tile leans toward its neighbours' depth, so drifts thin out across a border instead of stopping at a tile edge.
-        for (let q = 0; q < 4; q++) {
-          const dx = q & 1 ? 1 : -1;
-          const dy = q & 2 ? 1 : -1;
-          const v = (here * 2 + hold(tx + dx, ty) + hold(tx, ty + dy)) / 4;
-          const lvl = Math.round(v * LV) - 1;
-          if (lvl < 0) continue;
-          const px = tx * TILE + (q & 1 ? Q : 0);
-          const py = ty * TILE + (q & 2 ? Q : 0);
-          ctx.drawImage(this.snowCover[Math.min(LV - 1, lvl)], ((px % S) + S) % S, ((py % S) + S) % S, Q, Q, px, py, Q, Q);
-        }
-      }
-  }
-
-  /** The drift field at several depths: seamless, on the half-pixel grid. */
-  private buildCover(): void {
-    const S = COVER_SIZE;
-    const F = S * 2;
-    // Tileable value noise: two octaves of bilinear hashes on a wrapped grid.
-    const vn = (x: number, y: number, cell: number, seed: number) => {
-      const n = F / cell;
-      const gx = x / cell;
-      const gy = y / cell;
-      const ix = Math.floor(gx);
-      const iy = Math.floor(gy);
-      const fx = gx - ix;
-      const fy = gy - iy;
-      const sm = (t: number) => t * t * (3 - 2 * t);
-      const hh = (a: number, b: number) => hash2(((a % n) + n) % n, ((b % n) + n) % n, seed);
-      const a = hh(ix, iy) + (hh(ix + 1, iy) - hh(ix, iy)) * sm(fx);
-      const b = hh(ix, iy + 1) + (hh(ix + 1, iy + 1) - hh(ix, iy + 1)) * sm(fx);
-      return a + (b - a) * sm(fy);
-    };
-    const field = new Float32Array(F * F);
-    for (let y = 0; y < F; y++) for (let x = 0; x < F; x++) field[y * F + x] = 0.65 * vn(x, y, 32, 91) + 0.35 * vn(x, y, 12, 93);
-    const LV = 6;
-    for (let l = 0; l < LV; l++) {
-      const c = document.createElement('canvas');
-      c.width = F;
-      c.height = F;
-      (c as unknown as { __k: number }).__k = 2;
-      const x = c.getContext('2d')!;
-      const img = x.createImageData(F, F);
-      const d = new Uint32Array(img.data.buffer);
-      // Deeper levels cover more ground.
-      const cut = 0.22 + (l / (LV - 1)) * 0.62;
-      for (let py = 0; py < F; py++)
-        for (let px = 0; px < F; px++) {
-          const v = field[py * F + px];
-          if (v > cut) continue;
-          // The drift's rim is a lilac shadow on the lower side and dithered so it melts into the ground.
-          const rim = cut - v;
-          if (rim < 0.035 && ((px + py) & 1)) continue;
-          const below = py + 2 < F ? field[(py + 2) * F + px] : v;
-          const shade = rim < 0.06 || below > cut;
-          // ABGR: soft blue-white body, lilac rim.
-          d[py * F + px] = shade ? 0xb8e8d6d0 : 0xe0fcf7f2;
-        }
-      x.putImageData(img, 0, 0);
-      this.snowCover.push(c);
+  drawSnowCover(ctx: CanvasRenderingContext2D, map: { def: { id: string }; w: number; h: number; terrainAt: (tx: number, ty: number) => TerrainId }, cam: { x: number; y: number }, w: number, h: number): void {
+    if (this.coverFor !== map.def.id || !this.cover) {
+      this.cover = buildCover(map);
+      this.coverFor = map.def.id;
     }
+    const sx = Math.max(0, Math.floor(cam.x));
+    const sy = Math.max(0, Math.floor(cam.y));
+    const sw = Math.min(this.cover.width - sx, Math.ceil(w) + 1);
+    const sh = Math.min(this.cover.height - sy, Math.ceil(h) + 1);
+    if (sw > 0 && sh > 0) ctx.drawImage(this.cover, sx, sy, sw, sh, sx, sy, sw, sh);
   }
 
   /** Screen-space layers: blown leaves and snowflakes. Call with an identity (native-pixel) transform. */
@@ -376,4 +310,65 @@ export class Weather {
     ctx.globalCompositeOperation = 'source-over';
     ctx.globalAlpha = 1;
   }
+}
+
+/**
+ * The settled snow for a whole map, baked once per map: depth is blended per
+ * pixel between tile centres, so drifts thin out smoothly across terrain
+ * borders instead of stepping at tile or quarter-tile edges.
+ */
+function buildCover(map: { w: number; h: number; terrainAt: (tx: number, ty: number) => TerrainId }): HTMLCanvasElement {
+  const W = map.w * TILE;
+  const H = map.h * TILE;
+  const hold = new Float32Array(map.w * map.h);
+  for (let ty = 0; ty < map.h; ty++) for (let tx = 0; tx < map.w; tx++) hold[ty * map.w + tx] = SNOW_HOLD[map.terrainAt(tx, ty)] ?? 0;
+  const holdAt = (tx: number, ty: number) => hold[Math.min(map.h - 1, Math.max(0, ty)) * map.w + Math.min(map.w - 1, Math.max(0, tx))];
+  const sm = (t: number) => t * t * (3 - 2 * t);
+  const vn = (x: number, y: number, cell: number, seed: number) => {
+    const gx = x / cell;
+    const gy = y / cell;
+    const ix = Math.floor(gx);
+    const iy = Math.floor(gy);
+    const fx = sm(gx - ix);
+    const fy = sm(gy - iy);
+    const a = hash2(ix, iy, seed) + (hash2(ix + 1, iy, seed) - hash2(ix, iy, seed)) * fx;
+    const b = hash2(ix, iy + 1, seed) + (hash2(ix + 1, iy + 1, seed) - hash2(ix, iy + 1, seed)) * fx;
+    return a + (b - a) * fy;
+  };
+  const c = document.createElement('canvas');
+  c.width = W;
+  c.height = H;
+  const x = c.getContext('2d')!;
+  const img = x.createImageData(W, H);
+  const d = new Uint32Array(img.data.buffer);
+  const field = (px: number, py: number) => 0.65 * vn(px, py, 16, 91) + 0.35 * vn(px, py, 6, 93);
+  for (let py = 0; py < H; py++) {
+    const gy = py / TILE - 0.5;
+    const ty = Math.floor(gy);
+    const fy = sm(gy - ty);
+    for (let px = 0; px < W; px++) {
+      const gx = px / TILE - 0.5;
+      const tx = Math.floor(gx);
+      const fx = sm(gx - tx);
+      const top = holdAt(tx, ty) + (holdAt(tx + 1, ty) - holdAt(tx, ty)) * fx;
+      const bot = holdAt(tx, ty + 1) + (holdAt(tx + 1, ty + 1) - holdAt(tx, ty + 1)) * fx;
+      const depth = top + (bot - top) * fy;
+      if (depth < 0.05) continue;
+      const cut = 0.15 + depth * 0.7;
+      const v = field(px, py);
+      if (v > cut) continue;
+      // The drift thins out over a wide rim: sparse flecks, then a translucent lilac edge, then the body.
+      const rim = cut - v;
+      if (rim < 0.03 && hash2(px, py, 97) > rim / 0.03) continue;
+      const below = field(px, py + 1);
+      if (rim < 0.07 || below > cut) {
+        d[py * W + px] = rim < 0.04 ? 0x80e8d6d0 : 0xb0ecdcd6; // ABGR lilac edge, fainter outside
+        continue;
+      }
+      // Body: soft blue-white with brighter crests, so it reads as heaped snow, not paint.
+      d[py * W + px] = v < 0.3 ? 0xe6fcf8f4 : 0xdcf6efe9;
+    }
+  }
+  x.putImageData(img, 0, 0);
+  return c;
 }

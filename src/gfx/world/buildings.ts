@@ -3118,8 +3118,6 @@ function drawTailor(): void {
   signBoardF(C - 32, 29, 64, 12, '#7a3a7a', '#fff4dc');
   TC('SEW WHAT?', C + 0.5, 31.5, '#f4b63f', FM, {});
   TC('SEW WHAT?', C, 31, enamel('#b8307a'), FM, {});
-  micro('ALTERATIONS', 8, 32, '#fff4dc');
-  micro('SEQUINS', W - 26, 32, '#fff4dc');
   // hanging spool sign on an iron bracket
   fh(W - 9, W, 43, '#4a3550');
   L(W - 8, 43, W - 2, 40, '#4a3550');
@@ -3199,9 +3197,6 @@ function drawTailor(): void {
   boxF(114, wy + wh + 1.5, 22, 6, '#7a3a7a');
   // door (centre x = 72, a 16 x 32 opening)
   doorF(C - 8, GY - 32, 16, 32, '#f4b63f', { frame: '#fff4dc', lite: true, liteH: 11, wall: '#f2c8d8', seed: 64, step: '#c8b0a8' });
-  RR(C - 5.5, 72, 11, 5, 1, '#fff4dc');
-  T('SEW', C - 4.5, 72, enamel('#7a3a7a'), FT, {});
-  fv(C, 70, 72, '#8a7a6a');
   sconce(C - 13, 50, '#7a3a7a', 3);
   sconce(C + 13, 50, '#7a3a7a', 3);
   // pincushion tomato pot by the step, a bench with a hatbox
@@ -3406,8 +3401,6 @@ function drawStudio(): void {
       P1(x + 0.5, y - 0.5, '#c8d4ff');
     }
   }
-  micro('CLASSES DAILY', 8, 27, '#4a6a5a');
-  micro('BREATHE IN', W - 28, 27, '#4a6a5a');
   // four calm windows
   const wy = 52;
   const pane = (wx: number, kind: number) =>
@@ -3634,9 +3627,6 @@ function drawPawn(): void {
   // door (centre x = 72, a 16 x 32 opening)
   doorF(C - 8, GY - 32, 16, 32, '#6a5a7a', { frame: '#d8c8b8', lite: true, liteH: 13, wall: '#5a4a5e', seed: 97, kick: '#9a92a8', step: '#b8a8a0' });
   for (let x = C - 5.5; x < C + 6; x += 2.5) R(x, GY - 30, 0.5, 13, '#3a3048');
-  R(C - 5, 72, 10, 5, '#fff4dc');
-  fh(C - 5, C + 5, 72, '#ffffff');
-  T('BUY', C - 4.5, 72, enamel('#b8303e'), FT, {});
   // milk crates of records and a cracked step
   for (const [cx2, cy2] of [[W - 10, GY - 8], [W - 17, GY - 8], [W - 13.5, GY - 16]] as [number, number][]) {
     R(cx2, cy2, 7, 8, '#3f6ab0');
@@ -3728,8 +3718,6 @@ function drawSalon(): void {
     P1(sx + 0.25, sy - 1, '#ffd34a');
     P1(sx + 0.25, sy + 1.5, '#ffd34a');
   }
-  micro('WALK-INS', 16, 28, '#c8307a');
-  micro('& WIGS', W - 30, 28, '#c8307a');
   // pink and gold awnings
   awning(3, 40, 58, 5, '#ff5d8f', '#ffe8a0', 3);
   awning(W - 61, 40, 58, 5, '#ff5d8f', '#ffe8a0', 3);
@@ -3759,8 +3747,6 @@ function drawSalon(): void {
     // Miss Opal under the second dryer, reading a magazine
     circ(22, wy + 9.5, 1.5, '#e8b090');
     ell(22, wy + 8, 2, 1.25, '#d8d4e8');
-    R(19.5, wy + 11.5, 5, 3, '#fff4dc');
-    micro('GLAM', 19.8, wy + 12, '#c8307a');
   });
   R(27.5, wy, 1, wh, '#f4b63f');
   // right window: gold mirrors and styling chairs, a wig on a stand
@@ -4045,8 +4031,6 @@ function drawVFW(): void {
   fh(O + 20, O + 92, 37.5, '#1a2048');
   TC('VFW POST 316', O + 56.5, 30, '#1a2048', FM, {});
   TC('VFW POST 316', O + 56, 29.5, enamel('#fbf0e4'), FM, {});
-  micro('VETERANS OF FOREIGN WARS', 10, 30, '#fbf0e4');
-  micro('ALL WELCOME', W - 34, 30, '#fbf0e4');
   for (const sx of [O + 23, O + 88]) {
     const st = ['..#..', '.###.', '#####', '.###.', '.#.#.'];
     st.forEach((row, yy) => [...row].forEach((ch, xx) => ch === '#' && P1(sx - 1 + xx * 0.5, 30.5 + yy * 0.5, '#f4b63f')));

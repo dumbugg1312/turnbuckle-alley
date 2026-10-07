@@ -1,3 +1,4 @@
+import { setSeason } from '../gfx/world/terrain';
 import { audio } from '../audio';
 import { game } from '../core/game';
 import type { Scene } from '../core/scene';
@@ -518,6 +519,8 @@ export class WorldScene implements Scene {
   // ------------------------------------------------------------ update
 
   update(dt: number): void {
+    // Keep terrain and tree art on the calendar season (cheap: a no-op unless it changed).
+    setSeason((['spring', 'summer', 'fall', 'winter'] as const)[G.time.season]);
     if (this.attract) {
       const a = this.attract;
       a.t += dt;
@@ -1162,7 +1165,7 @@ export class WorldScene implements Scene {
     ctx.globalCompositeOperation = 'destination-over';
     drawCastShadows(ctx, g, { x: cx, y: cy, w, h });
     // Fresh snow lies on the ground (under the shadows, over the ground).
-    if (G.weather.today === 'snow' && !this.map.def.indoor) this.weather.drawSnowCover(ctx, (x, y) => this.map.terrainAt(x, y), { x: cx, y: cy }, w, h);
+    if (G.weather.today === 'snow' && !this.map.def.indoor) this.weather.drawSnowCover(ctx, this.map, { x: cx, y: cy }, w, h);
     ctx.drawImage(this.map.ground(), 0, 0);
     ctx.restore();
     ctx.globalCompositeOperation = 'destination-over';

@@ -51,7 +51,8 @@ Status of the overnight build (night of 2026-10-06).
 - 506 of the placed objects now answer the action button (was 84); festival days with a playable fair (Ferris wheel, fortunes that come true, strongman bell, Wanda, stage shows); Grandma's garden.
 - Writing: town memory and gossip, gift replies that name the item, second-talk and fallback lines per character, real match results in Grandma's calls and the back booth, item descriptions rewritten, repeated tics cut ("don't tell" 115 to 30, "eleven" 65 to 5).
 - Looks: calmer ground with clustered detail, fewer words on facades, belt title logo, softer flickering night light, windows that follow time and weather, hand-placed wear.
-- Follow-ups: nothing calls `setSeason()`, so terrain and trees stay in spring art all year; settled snow reads as hard-edged blobs (src/world/weather.ts); 6 lore objects are out of reach; Second Street facades still word-heavy; new sounds and the strongman bell timing need a human.
+- Fixed after the pass: terrain and trees now follow the calendar season (the ground rebakes on a season change); settled snow is baked once per map with depth blended per pixel, so it no longer steps at tile edges; wall pieces reach past furniture to open floor (519 of 519 lore objects reachable, enforced by tests/lore.test.ts); Second Street facades lost their redundant words.
+- Still open: new sounds and the strongman bell timing need a human.
 
 ## Needs a human (charm pass)
 - Write your own lines in src/data/dialogue/handwritten.ts (guide: docs/YOUR_LINES.md).

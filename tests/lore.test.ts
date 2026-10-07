@@ -99,7 +99,7 @@ describe('every object has something to say', () => {
       }
     }
     console.log(`reachable by the action button: ${total - unreachable.length}/${total}; out of reach: ${unreachable.join(', ')}`);
-    expect(unreachable.length / total).toBeLessThan(0.12);
+    expect(unreachable).toEqual([]);
   });
 
   it('points every id, map/kind, tile and prop condition at something that exists', () => {
