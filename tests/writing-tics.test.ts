@@ -52,7 +52,10 @@ function strings(src: string): string[] {
 
 const charText: Record<string, string[]> = Object.fromEntries(Object.entries(CHAR_SRC).map(([f, src]) => [f.split('/').pop()!.replace('.ts', ''), strings(src)]));
 const storyText: string[] = Object.values(STORY_SRC).flatMap(strings);
-const allText = [...Object.values(charText).flat(), ...storyText];
+/** gossip.ts, handwritten.ts: shared tables of lines. */
+const SHARED_SRC = import.meta.glob<string>('../src/data/dialogue/*.ts', { query: '?raw', import: 'default', eager: true });
+const sharedText: string[] = Object.entries(SHARED_SRC).filter(([f]) => !f.endsWith('types.ts')).flatMap(([, src]) => strings(src));
+const allText = [...Object.values(charText).flat(), ...storyText, ...sharedText];
 
 const count = (texts: string[], re: RegExp) => texts.reduce((n, t) => n + (t.match(new RegExp(re.source, re.flags.includes('g') ? re.flags : re.flags + 'g'))?.length ?? 0), 0);
 const hits = (texts: string[], re: RegExp) => texts.filter((t) => re.test(t));
@@ -110,7 +113,7 @@ describe('writing tics', () => {
     const morals = Object.values(DIALOGUE).flatMap((ds) =>
       ds.lines.map((l) => (Array.isArray(l.text) ? l.text[l.text.length - 1] : l.text)).filter(isMoral).map((t) => `${ds.npc}: ${t}`),
     );
-    expect(morals.length, morals.join('\n')).toBeLessThanOrEqual(6);
+    expect(morals.length, morals.join("\n")).toBeLessThanOrEqual(3);
   });
 
   it('birthday replies belong to one person each', () => {

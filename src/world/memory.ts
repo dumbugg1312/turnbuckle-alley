@@ -52,7 +52,8 @@ interface MemoryState {
 }
 
 export function memory(): MemoryState {
-  const m = ext<MemoryState>('memory', () => ({ last: null, history: [], gifts: {}, talks: {}, news: [], seen: [] }));
+  // A save from before the town had a memory: whatever already happened is old news.
+  const m = ext<MemoryState>('memory', () => ({ last: null, history: [], gifts: {}, talks: {}, news: [], seen: NEWS_FLAGS.filter((nf) => G.flags[nf.flag]).map((nf) => `${nf.flag}=${nf.value ?? ''}`) }));
   m.history ??= [];
   m.gifts ??= {};
   m.talks ??= {};
@@ -162,7 +163,7 @@ export function freshNews(id: string, within = 7): NewsItem | null {
  * Story flags that become town talk. Some are only known to insiders: the
  * lines that react to those stay in insider places (kayfabe).
  */
-export const NEWS_FLAGS: { flag: string; value?: string | number | boolean; news: string; subject?: string }[] = [
+export const NEWS_FLAGS: { flag: string; value?: string | number | boolean; also?: string; news: string; subject?: string }[] = [
   { flag: 'earl_book', value: 'pebble', news: 'earl_book_pebble' },
   { flag: 'earl_book', value: 'own', news: 'earl_book_own', subject: 'earl' },
   { flag: 'mothman_revealed', news: 'mothman_revealed' },
@@ -174,7 +175,8 @@ export const NEWS_FLAGS: { flag: string; value?: string | number | boolean; news
   { flag: 'bev_badge', news: 'bev_badge', subject: 'bev' },
   { flag: 'patty_regionals', news: 'patty_regionals', subject: 'patty' },
   { flag: 'wanda_ten', news: 'wanda_ten', subject: 'wanda' },
-  { flag: 'clint_unmask_ring', news: 'clint_unmask', subject: 'clint' },
+  // Only public if he unmasked in the ring (his 8-heart choice), not at the kitchen table.
+  { flag: 'clint_last_match', also: 'clint_unmask_ring', news: 'dust_devil_unmasked', subject: 'clint' },
   { flag: 'pip_ten', news: 'pip_ten', subject: 'pip' },
   { flag: 'grandma_in_town', news: 'grandma_in_town', subject: 'grandma' },
   { flag: 'truth_revealed', news: 'truth_revealed', subject: 'birdie' },
@@ -194,7 +196,7 @@ export function syncNews(): void {
   const mem = memory();
   for (const nf of NEWS_FLAGS) {
     const v = G.flags[nf.flag];
-    if (!v || (nf.value !== undefined && v !== nf.value)) continue;
+    if (!v || (nf.value !== undefined && v !== nf.value) || (nf.also && !G.flags[nf.also])) continue;
     const key = `${nf.flag}=${nf.value ?? ''}`;
     if (mem.seen.includes(key)) continue;
     mem.seen.push(key);
@@ -239,7 +241,7 @@ export function fillMemory(s: string, npc: string, extra: Record<string, string>
       case 'stars':
         return m ? String(Math.round(m.stars * 2) / 2) : 'some';
       case 'lastGift':
-        return g ? item(g.item).name.replace(/^(The|Your) /, '').toLowerCase() : 'that thing';
+        return g ? (item(g.item).said ?? item(g.item).name.toLowerCase()) : 'gift';
       case 'Opponent':
         return m?.opponentName ?? 'Your opponent';
       default:

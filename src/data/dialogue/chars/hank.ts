@@ -36,7 +36,7 @@ export default {
     { text: "Need a hand carrying lumber? Don't talk while you carry. Talking drops planks.", when: { hearts: [3, 8], place: ['public'] } },
     { text: "Heard you ran {opponent} into my turnbuckle. Middle pad's split. I'll fix it. Next time pick the top one. It's newer.", when: { place: ['public'], alignment: ['heel'], lastMatch: { maxDaysAgo: 4 } } },
     { text: "Saw you hit the ropes against {opponent}. They held. That's me. (She goes back to sanding.)", when: { place: ['public'], alignment: ['face', 'tweener'], lastMatch: { maxDaysAgo: 4 } } },
-    { text: "You landed {opponent} dead center for the {finisher}. Middle of the ring rings. I heard it from the shop.", when: { place: ['insider'], lastMatch: { won: true, maxDaysAgo: 3 } } },
+    { text: "You landed {opponent} square in the middle for the {finisher}. Middle of the ring rings. I heard it from the shop.", when: { place: ['insider'], lastMatch: { won: true, maxDaysAgo: 3 } } },
     { text: "Ring's up. Ropes are tight. Whatever happens tonight, it's not the ring's fault.", when: { showDay: true, place: ['public', 'show'] }, weight: 2 },
     { text: ["Cribbage with Gus tonight.", "He counts fifteen-two, fifteen-four, and then a number I've never heard. I count his counting."], when: { weekday: [6] } },
     { text: "Seven a.m. Best light for sanding. Worst light for conversation.", when: { time: [400, 540] } },
