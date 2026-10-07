@@ -6,6 +6,7 @@ import { STARTER_DECK } from '../match/cards';
 import { BusScene } from '../scenes/bus';
 import { choose, narrate, say, toast } from '../ui/dialog';
 import { showLetter } from '../systems/mail';
+import { showEnvelopeContents } from './keepsakes';
 import { WorldScene, WORLD } from '../world/scene';
 import { HAIR_COLORS, SKIN_TONES } from '../gfx/look';
 import { speakerFor } from '../world/talk';
@@ -94,10 +95,7 @@ export async function apartmentScene(): Promise<void> {
   addItem('grandmas-letter', 1);
   addItem('house-key', 1);
   sting('reveal');
-  await narrate(
-    'Tucked inside: a bus ticket, an old brass key with a faded blue ribbon, and a Polaroid.',
-    'Two women in sequined 80s ring gear, back to back, holding one championship belt between them. On the back, in younger handwriting: *The Velvet Hammers. 1981. Never better.*',
-  );
+  await showEnvelopeContents();
   // The mirror: who you are. Who you are *in the ring* waits for Turnbuckle Alley.
   await narrate('The mirror by your dresser catches you staring.');
   const c = await choose(null, 'Who is looking back at you?', [

@@ -59,12 +59,17 @@ export function showLetter(l: Letter): Promise<void> {
     for (const p of l.body) sheet.append(el('p', { html: markup(fmt(p)), style: 'font-size: calc(var(--u) * 8.5); line-height: 1.45; margin: 0 0 calc(var(--u) * 4)' }));
     sheet.append(el('p', { html: markup(fmt(`- ${l.from}`)), style: 'text-align: right; font-size: calc(var(--u) * 9)' }));
     sheet.append(el('div', 'tattler-foot', 'Tap to fold the letter'));
+    let folding = false;
     const done = () => {
-      overlay.remove();
+      if (folding) return;
+      folding = true;
       off();
-      unblock();
-      game.input.clear();
-      resolve();
+      void foldAway(sheet).then(() => {
+        overlay.remove();
+        unblock();
+        game.input.clear();
+        resolve();
+      });
     };
     overlay.addEventListener('click', done);
     const off = game.input.onKey((_k, c) => {
@@ -73,4 +78,30 @@ export function showLetter(l: Letter): Promise<void> {
     overlay.append(sheet);
     uiRoot().append(overlay);
   });
+}
+
+/**
+ * Fold a letter in thirds: crease lines appear, the bottom panel folds up,
+ * the top panel folds down over it, and the folded letter drops away.
+ */
+function foldAway(sheet: HTMLElement): Promise<void> {
+  const r = sheet.getBoundingClientRect();
+  const tilt = sheet.style.transform || 'none';
+  const stage = el('div', 'fold-stage');
+  Object.assign(stage.style, { left: `${r.left}px`, top: `${r.top}px`, width: `${r.width}px`, height: `${r.height}px`, transform: tilt });
+  const slice = (i: number): HTMLElement => {
+    const c = sheet.cloneNode(true) as HTMLElement;
+    c.classList.add('fold-slice', `fold-${['top', 'mid', 'bot'][i]}`);
+    Object.assign(c.style, { width: `${r.width}px`, height: `${r.height}px`, maxHeight: 'none', transform: '', animation: 'none' });
+    c.scrollTop = sheet.scrollTop;
+    if (i !== 1) c.append(el('div', 'fold-back'));
+    return c;
+  };
+  stage.append(slice(1), slice(2), slice(0), el('div', 'fold-crease c1'), el('div', 'fold-crease c2'));
+  sheet.parentElement?.append(stage);
+  sheet.style.visibility = 'hidden';
+  audio.sfx('card-draw', { pitch: 0.8 });
+  setTimeout(() => audio.sfx('card-draw', { pitch: 0.9 }), 330);
+  setTimeout(() => audio.sfx('pickup', { pitch: 0.7 }), 700);
+  return new Promise((res) => setTimeout(res, 1050));
 }
