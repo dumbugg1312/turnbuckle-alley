@@ -4,7 +4,8 @@
  * size adapts to the device so phones, iPads and desktops all fill the screen
  * without stretching pixels (see DECISIONS.md D-002).
  */
-export const TARGET_NATIVE_H = 220;
+/** About how tall the world view is, in game pixels: Stardew's 480x270 view, about 17 tiles (D-022). */
+export const TARGET_NATIVE_H = 270;
 /**
  * Draw buffer pixels per native pixel. The world still draws in native pixels
  * (under a base transform), so every world pixel lands on exactly `scale`
@@ -50,7 +51,8 @@ export class Screen {
     const cssH = window.innerHeight > 0 ? window.innerHeight : 540;
     const devW = Math.round(cssW * this.dpr);
     const devH = Math.round(cssH * this.dpr);
-    this.scale = Math.max(1, Math.floor(devH / TARGET_NATIVE_H));
+    // The whole-number zoom that lands closest to the target height (about 230-330 px tall).
+    this.scale = Math.max(1, Math.round(devH / TARGET_NATIVE_H));
     // Very wide or very narrow screens: keep at least ~300 native pixels across.
     while (this.scale > 1 && devW / this.scale < 300) this.scale--;
     this.w = Math.ceil(devW / this.scale);
