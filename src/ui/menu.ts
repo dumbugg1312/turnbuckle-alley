@@ -169,7 +169,7 @@ const RENDER: Record<Tab, (rerender: () => void) => HTMLElement> = {
         el('div', 'person-name', def.short + (def.wrestler ? ` · ${def.wrestler.ringName}` : '')),
         el('div', 'person-role', def.role),
         heartsEl,
-        el('div', 'person-flags', `${r.talkedToday ? '✓ Talked today' : '○ Not talked today'} · ${r.giftedToday ? '✓ Gift given' : '○ No gift yet'}${bday ? ` · 🎂 ${seasons[bday.season]} ${bday.day}` : ''}`),
+        el('div', 'person-flags', `${r.talkedToday ? '✓ Talked today' : '○ Not talked today'} · ${r.giftedToday ? '✓ Gift given' : '○ No gift yet'}${bday ? ` · Birthday ${seasons[bday.season]} ${bday.day}` : ''}`),
       );
       row.append(info);
       list.append(row);
@@ -180,7 +180,7 @@ const RENDER: Record<Tab, (rerender: () => void) => HTMLElement> = {
   stories: () => {
     const wrap = el('div', 'menu-page');
     wrap.append(el('h2', {}, 'Stories'), el('div', 'menu-sub', "Every feud, alliance and slow-burn grudge you're part of lives on Birdie's corkboard."));
-    const b = el('button', { class: 'btn primary' }, "📌 Open the corkboard");
+    const b = el('button', { class: 'btn primary' }, "Open the corkboard");
     b.addEventListener('click', async () => {
       const { story } = await import('../story');
       await story.openJournal();
@@ -200,7 +200,7 @@ const RENDER: Record<Tab, (rerender: () => void) => HTMLElement> = {
     stat('Folding chairs', String(chairs), 'Each one is a seat at the show');
     stat('Trading cards', String(Object.keys(cards).length), 'Open packs from the gas station');
     wrap.append(grid);
-    const binder = el('button', { class: 'btn gold' }, '📒 Open the card binder');
+    const binder = el('button', { class: 'btn gold' }, 'Open the card binder');
     binder.addEventListener('click', async () => {
       const { openBinder } = await import('../systems/cards');
       await openBinder();
@@ -260,7 +260,7 @@ const RENDER: Record<Tab, (rerender: () => void) => HTMLElement> = {
     row('Auto kick-outs', seg(s.autoKickout ? 'on' : 'off', [['off', 'Off'], ['on', 'On']], (v) => (s.autoKickout = v === 'on')), 'Skip the timing tap when you get pinned');
     row('Reduce motion', seg(s.reduceMotion ? 'on' : 'off', [['off', 'Off'], ['on', 'On']], (v) => (s.reduceMotion = v === 'on')));
     const actions = el('div', 'menu-actions');
-    const save = el('button', { class: 'btn teal' }, '💾 Save now');
+    const save = el('button', { class: 'btn teal' }, 'Save now');
     save.addEventListener('click', () => toast(saveGame() ? 'Saved!' : "Couldn't save (storage blocked)."));
     const quit = el('button', { class: 'btn' }, 'Save & return to title');
     quit.addEventListener('click', () => {

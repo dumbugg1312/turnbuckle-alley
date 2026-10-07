@@ -50,6 +50,7 @@ export function updateUiScale(): void {
   const h = window.innerHeight;
   const w = window.innerWidth;
   let u = Math.min(Math.max(h / 300, 1.3), 2.6);
-  u = Math.min(u, w / 400);
+  // Portrait phones are narrow but tall: allow a slightly larger scale so text stays legible.
+  u = Math.min(u, w / (w < h ? 300 : 400));
   document.documentElement.style.setProperty('--u', `${u.toFixed(3)}px`);
 }
