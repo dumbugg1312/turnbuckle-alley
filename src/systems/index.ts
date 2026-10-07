@@ -5,4 +5,5 @@ import './shows';
 import './farm';
 import '../story-main';
 import '../ui/debug';
+import './garden';
 import './lore';
