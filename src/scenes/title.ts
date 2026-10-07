@@ -51,7 +51,13 @@ export class TitleScene implements Scene {
 
   enter(): void {
     const tap = el('div', 'title-tap', 'Tap to start');
-    tap.style.marginTop = '0';
+    // a little plum tag so it reads over the bright sidewalk (whole-pixel frame, no pill: D-020)
+    Object.assign(tap.style, {
+      marginTop: '0',
+      background: 'var(--plum)',
+      padding: 'calc(var(--u) * 2.5) calc(var(--u) * 7) calc(var(--u) * 2)',
+      boxShadow: '0 0 0 var(--px) var(--ak), 0 calc(var(--px) * 3) 0 0 var(--shade)',
+    });
     this.lower.append(tap);
     this.ui.append(this.lower, el('div', 'title-credit', 'Made with love for the indies, the territories, and everyone in the front row.'));
     uiRoot().append(this.ui);
