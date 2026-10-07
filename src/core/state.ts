@@ -166,10 +166,42 @@ export function setState(s: GameState): void {
   G = s;
 }
 
+const isPlain = (v: unknown): v is Record<string, unknown> => !!v && typeof v === 'object' && !Array.isArray(v);
+
+/** Fill keys a save is missing (fields added after it was written). Existing values win. */
+export function fillDefaults(target: Record<string, unknown>, defaults: Record<string, unknown>): void {
+  for (const [k, v] of Object.entries(defaults)) if (!(k in target)) target[k] = v;
+}
+
+/** Bring an older save up to the current shape before it goes live. */
+export function upgradeState(s: GameState): GameState {
+  const d = newState(s.seed);
+  const raw = s as unknown as Record<string, unknown>;
+  fillDefaults(raw, d as unknown as Record<string, unknown>);
+  for (const k of ['player', 'time', 'weather', 'settings'] as const) {
+    if (!isPlain(raw[k])) raw[k] = d[k];
+    else fillDefaults(raw[k] as Record<string, unknown>, d[k] as unknown as Record<string, unknown>);
+  }
+  for (const k of ['relationships', 'flags', 'ext'] as const) if (!isPlain(raw[k])) raw[k] = d[k];
+  if (!Array.isArray(s.showHistory)) s.showHistory = [];
+  s.version = SAVE_VERSION;
+  return s;
+}
+
+const filledSlices = new WeakSet<object>();
+
 /** Module-owned state slice, created with defaults on first access. */
 export function ext<T extends object>(key: string, defaults: () => T): T {
+  const cur = G.ext[key];
   if (!(key in G.ext)) G.ext[key] = defaults();
-  return G.ext[key] as T;
+  else if (isPlain(cur) && !filledSlices.has(cur)) {
+    // A slice from an older save may lack fields its module added since.
+    const d = defaults();
+    if (isPlain(d)) fillDefaults(cur, d);
+  }
+  const slice = G.ext[key] as T;
+  filledSlices.add(slice);
+  return slice;
 }
 
 export function rel(id: string): Relationship {

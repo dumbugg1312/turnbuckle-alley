@@ -162,8 +162,51 @@ export class WorldScene implements Scene {
       this.loadMap(a.map, a.x0 * TILE, a.y0 * TILE, 'down');
       return;
     }
-    this.loadMap(G.player.map, G.player.x, G.player.y, G.player.facing);
+    // A save can name a map that no longer exists (renamed or removed).
+    // Fall back to waking up next to the bed at home.
+    if (MAPS.has(G.player.map)) this.loadMap(G.player.map, G.player.x, G.player.y, G.player.facing);
+    else this.loadMap('grandma-house', 13 * TILE + TILE / 2, 7 * TILE + TILE - 3, 'down');
+    this.ensureSafeSpawn();
     WORLD = this;
+  }
+
+  /**
+   * Older saves could hold a position from a different map (the actor's spot was
+   * never written back), which spawned the player off screen. If the loaded spot
+   * is outside the map or inside something solid, move to the nearest open tile.
+   */
+  private ensureSafeSpawn(): void {
+    const m = this.map;
+    const p = this.player;
+    if (Number.isFinite(p.x) && Number.isFinite(p.y) && !m.collides(p.box())) return;
+    const cx = Math.floor(Math.min(Math.max(Number.isFinite(p.x) ? p.x : 0, 0), m.pxW - 1) / TILE);
+    const cy = Math.floor(Math.min(Math.max(Number.isFinite(p.y) ? p.y : 0, 0), m.pxH - 1) / TILE);
+    let best: { x: number; y: number } | null = null;
+    let bestD = Infinity;
+    for (let ty = 0; ty < m.h; ty++)
+      for (let tx = 0; tx < m.w; tx++) {
+        const d = (tx - cx) ** 2 + (ty - cy) ** 2;
+        if (d >= bestD) continue;
+        const x = tx * TILE + TILE / 2;
+        const y = ty * TILE + TILE - 3;
+        // Skip doors and edge warps so loading never bounces the player to another map.
+        if (m.warpAt(x, y, true) || m.collides(p.box(x, y))) continue;
+        best = { x, y };
+        bestD = d;
+      }
+    if (!best) return;
+    p.x = best.x;
+    p.y = best.y;
+    this.syncPlayerState();
+    this.snapCamera();
+  }
+
+  /** Write the actor's spot back into the save state so the next save reloads here. */
+  private syncPlayerState(): void {
+    if (this.attract) return;
+    G.player.x = this.player.x;
+    G.player.y = this.player.y;
+    G.player.facing = this.player.facing;
   }
 
   hud: Hud | null = null;
@@ -183,7 +226,11 @@ export class WorldScene implements Scene {
       return;
     }
     this.hud = new Hud(
-      () => void import('../ui/menu').then((m) => m.openMenu()),
+      () => {
+        // Same gate as the menu key: saving mid-cutscene stores half-applied story flags.
+        if (game.blockers > 0 || this.busy || this.warping) return;
+        void import('../ui/menu').then((m) => m.openMenu());
+      },
       () => this.interact(),
     );
     this.onPrompt = (l) => this.hud?.setAction(l);
@@ -253,6 +300,7 @@ export class WorldScene implements Scene {
     this.player.facing = facing;
     this.player.stop();
     G.player.map = id;
+    this.syncPlayerState();
     const ws = worldState();
     if (!ws.visited.includes(id)) ws.visited.push(id);
     this.npcs.clear();
@@ -445,6 +493,7 @@ export class WorldScene implements Scene {
       if (!G.flags['prologue']) game.clock.update(dt);
       this.handleInput(dt);
     }
+    this.syncPlayerState();
     // 10-minute ticks: NPC schedules, hooks, music changes.
     const tick = Math.floor(G.time.minutes / 10);
     if (tick !== this.lastTick) {

@@ -51,6 +51,9 @@ export async function sleep(passedOut = false): Promise<void> {
   if (sleeping) return;
   sleeping = true;
   const w = WORLD;
+  // Keep the menu (and its save button) shut until the morning routine is done.
+  const wasBusy = w?.busy ?? false;
+  if (w) w.busy = true;
   try {
     audio.sfx('sleep');
     audio.music(null);
@@ -75,6 +78,7 @@ export async function sleep(passedOut = false): Promise<void> {
     if (isShowDay()) lines.push(weekday() === 2 ? "It's *Wednesday*: show night at the VFW. Doors at 6, bell at 7." : "It's *Saturday*: show night at the Sportatorium! Doors at 6, bell at 7.");
     await narrate(...lines);
   } finally {
+    if (w) w.busy = wasBusy;
     sleeping = false;
   }
 }

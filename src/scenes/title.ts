@@ -1,9 +1,9 @@
 import { audio } from '../audio';
 import { game } from '../core/game';
-import { hasSave, loadGame, saveSummary, deleteSave } from '../core/save';
+import { hasSave, loadGame, saveSummary } from '../core/save';
 import type { Scene } from '../core/scene';
 import { newState, setState, G } from '../core/state';
-import { choose } from '../ui/dialog';
+import { choose, toast } from '../ui/dialog';
 import { el, uiRoot } from '../ui/dom';
 import { WorldScene } from '../world/scene';
 
@@ -63,7 +63,11 @@ export class TitleScene implements Scene {
   private continueGame(): void {
     audio.sfx('confirm');
     game.scenes.transition(() => {
-      if (!loadGame()) return;
+      if (!loadGame()) {
+        toast("That save couldn't be read.");
+        return;
+      }
+      audio.volumes(G.settings.music, G.settings.sfx);
       this.ui.remove();
       void import('../systems').then(() => game.scenes.reset(new WorldScene()));
     });
@@ -77,7 +81,8 @@ export class TitleScene implements Scene {
         { label: 'Never mind', value: 'no' },
       ], { cancelValue: 'no' });
       if (c !== 'yes') return;
-      deleteSave();
+      // Don't delete the old save here: the first save of the new game overwrites it,
+      // so quitting during the prologue keeps the old one, as the prompt promises.
     }
     const { startNewGame } = await import('../story-main/opening');
     this.ui.remove();

@@ -1,4 +1,4 @@
-import { G, SAVE_VERSION, setState, type GameState } from './state';
+import { G, setState, upgradeState, type GameState } from './state';
 
 const KEY = 'turnbuckle-alley-save-v1';
 
@@ -25,8 +25,7 @@ export function loadGame(): boolean {
     if (!raw) return false;
     const s = JSON.parse(raw) as GameState;
     if (!s || typeof s !== 'object' || !s.player) return false;
-    s.version = SAVE_VERSION;
-    setState(s);
+    setState(upgradeState(s));
     return true;
   } catch {
     return false;
