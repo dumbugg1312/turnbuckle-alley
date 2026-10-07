@@ -254,7 +254,9 @@ function eyeFront(ex0: number, ey: number, out: number, expr: Expr, blink: boole
   const outer = out > 0 ? ex0 + EW - 1 : ex0;
   const lid = sk.d2;
   const irisD = shA(iris, 0.35);
-  const ix = ex0 + Math.floor((EW - 2) / 2); // iris left column
+  // Iris left column; idle glances slide it one art pixel either way.
+  const gz = Math.max(-1, Math.min(1, Math.round(B.r.def.gaze ?? 0)));
+  const ix = ex0 + Math.floor((EW - 2) / 2) + gz;
   const lidRow = (y: number) => drect(ex0, y, EW, 1, INK);
   const whitesRow = (y: number) => drect(ex0, y, EW, 1, EYE_WHITE);
   const irisRows = (y: number) => {

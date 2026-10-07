@@ -4,7 +4,7 @@ import type { Scene } from '../core/scene';
 import { G, ext, type Dir } from '../core/state';
 import { isShowDay, isSupershow, weekday } from '../core/time';
 import { currentEntry, NPCS, type DayCtx, type NpcDef } from '../data/npcs';
-import { drawCharacter, type Pose } from '../gfx/characters';
+import { drawCharacter, RUN_FRAMES, WALK_FRAMES, type Pose, type Quirk } from '../gfx/characters';
 import { pixelTextOutlined } from '../gfx/draw';
 import { Fx } from '../gfx/fx';
 import { defaultLook, type Look } from '../gfx/look';
@@ -19,6 +19,7 @@ import { MAPS } from './maps/index';
 import { boxesOverlap, GameMap } from './map';
 import { findPath } from './pathfind';
 import { objectKind } from './registry';
+import { StepFx } from './stepfx';
 import { TILE, type MapObject, type Warp } from './types';
 
 /** Looks come from the character module when it exists. */
@@ -47,6 +48,47 @@ export function worldState(): WorldState {
 
 export let WORLD: WorldScene | null = null;
 
+/** Emote icons, two characters per world pixel (# ink, o fill, + highlight). */
+const EMOTE_ICONS: Record<string, { px: string[]; ink: string; fill: string; hi: string }> = {
+  '♥': {
+    ink: '#8a2238', fill: '#e2445a', hi: '#ffb4bc',
+    px: [
+      '..####..####..',
+      '.#oooo##oooo#.',
+      '#o++ooooooooo#',
+      '#o+oooooooooo#',
+      '#oooooooooooo#',
+      '.#oooooooooo#.',
+      '..#oooooooo#..',
+      '...#oooooo#...',
+      '....#oooo#....',
+      '.....#oo#.....',
+      '......##......',
+    ],
+  },
+  '!': {
+    ink: '#8a2238', fill: '#d8434b', hi: '#ff9aa0',
+    px: ['.##.', '#+o#', '#oo#', '#oo#', '#oo#', '.##.', '....', '.##.', '#oo#', '.##.'],
+  },
+  '♪': {
+    ink: '#2b2140', fill: '#5a4a8a', hi: '#9a8ad0',
+    px: ['....####', '....#oo#', '....#.##', '....#...', '....#...', '....#...', '.####...', '#oo+#...', '#ooo#...', '.###....'],
+  },
+};
+
+/** Main characters' idle habits (gfx/charart/body.ts idlePose). */
+const IDLE_QUIRK: Record<string, Quirk> = {
+  birdie: 'tap',
+  pip: 'bounce',
+  earl: 'glasses',
+  professor: 'glasses',
+  dex: 'stretch',
+  hazel: 'stretch',
+  clint: 'tap',
+  lacey: 'tap',
+  bo: 'stretch',
+};
+
 class NpcActor extends Actor {
   def: NpcDef;
   idle: string = 'still';
@@ -57,7 +99,8 @@ class NpcActor extends Actor {
   constructor(def: NpcDef, x: number, y: number) {
     super(def.id, lookFor(def.id), x, y);
     this.def = def;
-    this.speed = 42;
+    // Elders take their time.
+    this.speed = this.look.age === 'elder' ? 36 : 42;
   }
 }
 
@@ -91,11 +134,12 @@ export class WorldScene implements Scene {
   cam = { x: 0, y: 0 };
   fx = new Fx();
   private maps = new Map<string, GameMap>();
-  private stepT = 0;
   private interactTarget: { kind: 'npc'; npc: NpcActor } | { kind: 'obj'; obj: MapObject } | { kind: 'warp'; warp: Warp } | null = null;
   private rain: { x: number; y: number; v: number }[] = [];
   private lightCanvas = document.createElement('canvas');
   private particles = new Particles();
+  private steps = new StepFx();
+  private lastStepSfx = 0;
   private grade: Grade = gradeAt(9 * 60, 'sun', false);
   private warping = false;
   private lastTick = -1;
@@ -390,6 +434,7 @@ export class WorldScene implements Scene {
       this.player.x = a.x0 + (a.x1 - a.x0) * k;
       this.player.y = a.y0 + (a.y1 - a.y0) * k;
       for (const n of this.npcs.values()) if (n.path.length) n.followPath(this.map, dt, []);
+      this.animateActors([this.player, ...this.npcs.values()], dt);
       this.updateCamera(dt * 0.6);
       this.fx.update(dt);
       this.updateAtmosphere(dt);
@@ -427,12 +472,8 @@ export class WorldScene implements Scene {
           }
         }
       }
-      if (n.emote) {
-        n.emote.t -= dt;
-        if (n.emote.t <= 0) n.emote = null;
-      }
     }
-    void actors;
+    this.animateActors(actors, dt);
     this.updateCamera(dt);
     this.hud?.update();
     this.fx.update(dt);
@@ -473,15 +514,17 @@ export class WorldScene implements Scene {
     }
     const run = inp.isHeld('run') ? 1.45 : 1;
     if (vx || vy) {
-      const moved = p.move(this.map, vx * p.speed * run * dt, vy * p.speed * run * dt, [...this.npcs.values()]);
+      // A quick ease into the walk (about a tenth of a second), so starts aren't a jolt.
+      p.ramp = Math.min(1, p.ramp + dt / 0.1);
+      const sp = p.speed * run * (0.55 + 0.45 * p.ramp);
+      p.running = run > 1;
+      const moved = p.move(this.map, vx * sp * dt, vy * sp * dt, [...this.npcs.values()]);
       p.moving = moved;
-      if (moved) p.walkT += dt * run;
-      this.stepSound(dt * run);
       // Walking up into a door enters it.
       if (vy < -0.5) this.tryDoor(true);
     } else if (p.path.length) {
+      p.running = false;
       p.followPath(this.map, dt, [...this.npcs.values()]);
-      this.stepSound(dt);
     } else {
       p.moving = false;
     }
@@ -497,12 +540,41 @@ export class WorldScene implements Scene {
     if (inp.consume('menu') || inp.consume('cancel')) void import('../ui/menu').then((m) => m.openMenu());
   }
 
-  private stepSound(dt: number): void {
-    this.stepT += dt;
-    if (this.stepT > 0.32) {
-      this.stepT = 0;
-      audio.sfx('step', { volume: 0.4, pitch: 0.9 + Math.random() * 0.2 });
+  /** Turn frames, hops, emotes; footfalls become dust, splashes and step sounds. */
+  private animateActors(actors: Actor[], dt: number): void {
+    const raining = (G.weather.today === 'rain' || G.weather.today === 'storm') && !this.map.def.indoor;
+    const now = performance.now();
+    for (const a of actors) {
+      const hopping = a.hopT >= 0;
+      a.animate(dt);
+      if (hopping && a.hopT < 0 && a.visible) this.footfall(a, raining, 1.6, 0);
+      if (!a.stepped) continue;
+      a.stepped = 0;
+      if (!a.visible) continue;
+      this.footfall(a, raining, a.running ? 1.4 : 1, a.phase);
+      if (a === this.player && now - this.lastStepSfx > 170) {
+        this.lastStepSfx = now;
+        // Alternate feet a touch, like real footfalls.
+        const left = Math.floor(a.phase * 2) & 1;
+        audio.sfx('step', { volume: a.running ? 0.42 : 0.34, pitch: (left ? 0.92 : 1.02) + Math.random() * 0.08 });
+      }
     }
+    this.steps.update(dt);
+  }
+
+  /** Dust or a splash where a foot just landed. */
+  private footfall(a: Actor, raining: boolean, strength: number, phase: number): void {
+    const left = Math.floor(phase * 2) & 1;
+    const f = a.facing;
+    let x = a.x;
+    let y = a.y;
+    if (f === 'left' || f === 'right') x += (f === 'right' ? 1 : -1) * 3;
+    else {
+      x += left ? -2 : 2;
+      y += f === 'down' ? 1 : -1;
+    }
+    const t = this.map.terrainAt(Math.floor(x / TILE), Math.floor((y - 1) / TILE));
+    this.steps.step(x, y, f, t, raining, strength);
   }
 
   private async useWarp(w: Warp): Promise<void> {
@@ -775,16 +847,26 @@ export class WorldScene implements Scene {
     }
     const drawActor = (a: Actor, npc?: NpcActor) => {
       // Soft dithered contact shadow, leaning with the sun.
+      const hop = a.hopState();
       drawActorShadow(ctx, a.x, a.y, g);
-      let pose: Pose = a.moving ? 'walk' : 'idle';
-      if (npc && !a.moving) {
+      const walking = a.moving || a.settling;
+      let pose: Pose = walking ? (a.running && a.moving ? 'run' : 'walk') : 'idle';
+      if (npc && !walking) {
         if (npc.idle === 'sit') pose = 'sit';
         else if (npc.idle === 'wave' && Math.sin(game.t * 2 + a.x) > 0.6) pose = 'wave';
       }
+      let frame = Math.floor(a.phase * (pose === 'run' ? RUN_FRAMES : WALK_FRAMES));
+      let y = a.y;
+      if (hop && !a.moving && pose !== 'sit') {
+        pose = 'hop';
+        frame = hop.frame;
+        y -= Math.round(hop.h * 2) / 2;
+      }
       if (a.pose) pose = a.pose as Pose;
-      drawCharacter(ctx, a.look, a.x, a.y, { facing: a.facing, pose, frame: Math.floor(a.walkT * 8), t: game.t + (npc ? a.x * 0.01 : 0) });
-      if (a.emote) this.drawEmote(ctx, a);
+      drawCharacter(ctx, a.look, a.x, y, { facing: a.shownFacing, pose, frame, t: game.t + (npc ? a.x * 0.01 : 0), quirk: npc ? IDLE_QUIRK[npc.id] : undefined });
+      if (a.emote) this.drawEmote(ctx, a, y - a.y);
     };
+    this.steps.draw(ctx);
     if (this.player.visible) list.push({ y: this.player.y, draw: () => drawActor(this.player) });
     for (const n of this.npcs.values()) if (n.visible) list.push({ y: n.y, draw: () => drawActor(n, n) });
     list.sort((a, b) => a.y - b.y);
@@ -795,7 +877,8 @@ export class WorldScene implements Scene {
     this.particles.draw(ctx, g, game.t);
     // Interaction marker above target.
     const t = this.interactTarget;
-    if (t && game.blockers === 0 && !this.busy) {
+    // (An emote bubble takes the spot over an NPC's head while it shows.)
+    if (t && game.blockers === 0 && !this.busy && !(t.kind === 'npc' && t.npc.emote)) {
       let mx = 0;
       let my = 0;
       if (t.kind === 'npc') {
@@ -839,15 +922,69 @@ export class WorldScene implements Scene {
     if (game.debug) pixelTextOutlined(ctx, `${this.map.id} ${this.player.tx},${this.player.ty}`, 4, h - 10, '#fff', '#000');
   }
 
-  private drawEmote(ctx: CanvasRenderingContext2D, a: Actor): void {
+  private drawEmote(ctx: CanvasRenderingContext2D, a: Actor, yOff = 0): void {
     const e = a.emote!;
+    const age = e.age ?? 0;
+    // Pop in with squash and stretch: shoot up tall and thin, splat wide, settle; then a gentle float.
+    const K = [
+      [0, 0.2, 1.7],
+      [0.07, 1.25, 0.8],
+      [0.13, 0.9, 1.12],
+      [0.2, 1.05, 0.96],
+      [0.27, 1, 1],
+    ];
+    let sx = 1;
+    let sy = 1;
+    for (let i = 0; i < K.length - 1; i++) {
+      if (age >= K[i][0] && age < K[i + 1][0]) {
+        const k = (age - K[i][0]) / (K[i + 1][0] - K[i][0]);
+        sx = K[i][1] + (K[i + 1][1] - K[i][1]) * k;
+        sy = K[i][2] + (K[i + 1][2] - K[i][2]) * k;
+      }
+    }
+    // Shrink away in the last tenth of a second.
+    if (e.t < 0.12) {
+      const k = Math.max(0, e.t / 0.12);
+      sx *= 0.4 + 0.6 * k;
+      sy *= 1.3 - 0.3 * k;
+    }
+    const rise = age < 0.2 ? (1 - age / 0.2) * 4 : 0;
+    const float = age > 0.27 ? Math.round(Math.sin((age - 0.27) * 4) * 1) : 0;
     const x = Math.round(a.x);
-    const y = Math.round(a.y - 40 - Math.max(0, (e.t - 1.2) * 10));
+    const by = Math.round(a.y + yOff - 34 + rise + float);
+    const w = Math.max(3, Math.round(13 * sx));
+    const h = Math.max(3, Math.round(11 * sy));
+    const x0 = x + 0.5 - w / 2;
+    // The bubble sits on its tail, so it grows upward from it.
+    const y0 = by - h;
     ctx.fillStyle = '#2b2140';
-    ctx.fillRect(x - 6, y - 6, 13, 11);
+    ctx.fillRect(Math.round(x0), y0, w, h);
+    ctx.fillRect(x - 1, by, 3, 1);
+    ctx.fillRect(x, by + 1, 1, 1);
     ctx.fillStyle = '#fbf0d9';
-    ctx.fillRect(x - 5, y - 5, 11, 9);
-    pixelTextOutlined(ctx, e.icon, x - 1, y - 3, '#d8434b', '#fbf0d9');
+    ctx.fillRect(Math.round(x0) + 1, y0 + 1, w - 2, h - 2);
+    ctx.fillRect(x, by, 1, 1);
+    if (sx > 0.7 && sy > 0.7 && sy < 1.3) {
+      const ic = EMOTE_ICONS[e.icon];
+      if (!ic) pixelTextOutlined(ctx, e.icon, x - 1, y0 + Math.round((h - 5) / 2), '#d8434b', '#fbf0d9');
+      else {
+        // Hand-placed icons on the half-pixel grid: ink, fill and a highlight.
+        const rows = ic.px;
+        const iw = rows[0].length / 2;
+        const ih = rows.length / 2;
+        const ix = x + 0.5 - iw / 2;
+        // A heart gives a little beat.
+        const beat = e.icon === '♥' && age > 0.27 && (age - 0.27) % 0.9 < 0.12 ? 0.5 : 0;
+        const iy = y0 + Math.round((h - ih) / 2) - beat;
+        for (let r = 0; r < rows.length; r++)
+          for (let c = 0; c < rows[r].length; c++) {
+            const ch = rows[r][c];
+            if (ch === '.') continue;
+            ctx.fillStyle = ch === '#' ? ic.ink : ch === 'o' ? ic.fill : ic.hi;
+            ctx.fillRect(ix + c / 2, iy + r / 2, 0.5, 0.5);
+          }
+      }
+    }
   }
 
   private renderLighting(ctx: CanvasRenderingContext2D, cx: number, cy: number, w: number, h: number): void {
@@ -977,7 +1114,16 @@ export class WorldScene implements Scene {
   /** Small helper for systems: show an emote over an actor. */
   emote(id: string, icon: string, seconds = 1.8): void {
     const a = id === 'player' ? this.player : this.npcs.get(id);
-    if (a) a.emote = { icon, t: seconds };
+    if (!a) return;
+    a.emote = { icon, t: seconds, age: 0 };
+    // Hearts and delight get a happy little hop.
+    if (icon === '♥' || icon === '♪' || icon === '!') a.hop();
+  }
+
+  /** A happy hop (gifts that land, heart events). */
+  hop(id: string): void {
+    const a = id === 'player' ? this.player : this.npcs.get(id);
+    a?.hop();
   }
 
   notify(text: string): void {

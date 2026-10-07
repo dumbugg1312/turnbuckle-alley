@@ -1,7 +1,7 @@
 import type { Dir } from '../core/state';
 import { mkSpr, toCanvas } from './kit';
 import { EXTRA_SLOT, type Look } from './look';
-import { K, metrics, metricsArt, POSES, resolvePose, solve, totalHeight, type Expr, type Pose } from './charart/body';
+import { cycleLength, gaitStyle, IDLE_LOOK_A, IDLE_LOOK_B, IDLE_QUIRK0, IDLE_QUIRKS, IDLE_SHIFT, K, metrics, metricsArt, POSES, resolvePose, RUN_FRAMES, solve, totalHeight, WALK_FRAMES, type Expr, type Pose, type Quirk } from './charart/body';
 import { buildRaccoon, RACCOON_SHEET } from './charart/critters';
 import { B, makeBC } from './charart/garments';
 import { drawBearHead, drawFace, drawFaceExtras, drawFacial, drawHair, drawHairBack, drawHead, drawHeadExtras, drawMask, drawPaint, headBox } from './charart/head';
@@ -20,8 +20,8 @@ import { beginLayers, crop, finish, lightPass, mirrorAll, OUTLINE_W, rotateAll, 
  * shading knows about both transforms, so everything stays lit from the
  * top-left on screen.
  */
-export type { Pose };
-export { POSES };
+export type { Pose, Quirk };
+export { POSES, IDLE_QUIRKS, WALK_FRAMES, RUN_FRAMES, cycleLength };
 
 export interface DrawOpts {
   facing: Dir;
@@ -34,6 +34,8 @@ export interface DrawOpts {
   flash?: boolean;
   /** Hide hand-held props (mic, book...) for this draw. */
   noItem?: boolean;
+  /** A personal idle habit ('tap', 'bounce', 'glasses', 'stretch'). */
+  quirk?: Quirk;
 }
 
 export type Expression = 'neutral' | 'happy' | 'sad' | 'angry' | 'surprised' | 'smug' | 'love';
@@ -82,9 +84,14 @@ function drawBody(expr: Expr, blink: boolean): void {
     drawSkirt();
     drawOverExtras();
     drawWings(true);
-    drawArm(r.shB, r.elB, r.haB, hand, false);
-    drawArm(r.shF, r.elF, r.haF, hand, true);
+    // A hand raised to the face (pushing up glasses) goes over the head.
+    const upB = !!r.def.armB.reach;
+    const upF = !!r.def.armF.reach;
+    if (!upB) drawArm(r.shB, r.elB, r.haB, hand, false);
+    if (!upF) drawArm(r.shF, r.elF, r.haF, hand, true);
     drawHeadStack(expr, blink);
+    if (upB) drawArm(r.shB, r.elB, r.haB, hand, false);
+    if (upF) drawArm(r.shF, r.elF, r.haF, hand, true);
     drawHandItem();
     return;
   }
@@ -163,7 +170,7 @@ function buildSpriteInner(look: Look, pose: Pose, facing: Dir, frame: number, bl
   setLineWeights(K, K);
   if (look.species === 'raccoon') {
     setLight(facing === 'left');
-    const spr = buildRaccoon(look, pose, facing, frame, blink);
+    const spr = buildRaccoon(look, pose === 'run' ? 'walk' : pose === 'hop' ? 'idle' : pose, facing, pose === 'idle' ? frame & 1 : frame, blink);
     if (facing === 'left') mirrorAll(spr);
     lightPass(spr);
     const { s: cs, ox, oy, lay, flg } = crop(spr);
@@ -172,9 +179,7 @@ function buildSpriteInner(look: Look, pose: Pose, facing: Dir, frame: number, bl
   }
   const m = metricsArt(look);
   const stance = isRingGear(look);
-  const { def, mirror } = resolvePose(pose, facing, frame, stance);
-  // Breathing: the chest settles by one art pixel on alternate frames.
-  if (pose === 'idle') def.bob = (frame & 1) / K;
+  const { def, mirror } = resolvePose(pose, facing, frame, stance, m, gaitStyle(look));
   setLight(mirror, def.rot);
   const tall = totalHeight(m);
   const wings = look.extras?.some((e) => e.id === 'moth-wings' || e.id === 'wings' || e.id === 'robe' || e.id === 'cape') ? 12 * K : 0;
@@ -279,18 +284,73 @@ export function characterSize(look: Look): { w: number; h: number } {
   return { w: m.shW + m.armD * 2 + 2, h: totalHeight(m) + 2 };
 }
 
+function hash1(n: number): number {
+  const x = Math.sin(n * 127.1 + 311.7) * 43758.5453;
+  return x - Math.floor(x);
+}
+
+/** Sub-frame of a quirk `u` seconds into it, or -1 once it is over. */
+function quirkSub(q: Quirk, u: number): number {
+  if (u < 0) return -1;
+  switch (q) {
+    case 'tap':
+      return u < 2.2 ? Math.floor(u * 5) & 1 : -1;
+    case 'bounce':
+      return u < 1.65 ? Math.floor(u * 6) & 1 : -1;
+    case 'glasses':
+      return u < 0.22 ? 0 : u < 0.75 ? 1 : u < 0.95 ? 0 : -1;
+    case 'stretch':
+      return u < 0.3 ? 0 : u < 1.7 ? 1 : u < 2 ? 0 : -1;
+  }
+}
+
+/**
+ * The idle program: slow uneven breathing, and every few seconds a chance
+ * to shift weight, glance around or indulge a personal quirk. Each look
+ * gets its own breathing rate and slot length (seed), so a crowd never
+ * moves in step. Frames are state * 2 + breath (see idlePose in body.ts).
+ */
+function idleFrame(t: number, seed: number, quirk: number): number {
+  const bp = 2.9 + seed * 0.9;
+  const breath = (t / bp) % 1 < 0.46 ? 0 : 1;
+  const slot = 4.5 + seed * 2.5;
+  const n = Math.floor(t / slot);
+  const u = t - n * slot;
+  const h = hash1(n + seed * 977);
+  if (h < 0.28) return IDLE_SHIFT * 2 + breath;
+  if (h < 0.48) {
+    if (u > 0.8 && u < 1.9) return IDLE_LOOK_A * 2;
+    if (u > 2.3 && u < 3.2) return IDLE_LOOK_B * 2;
+  } else if (h < 0.74 && quirk >= 0) {
+    const sub = quirkSub(IDLE_QUIRKS[quirk], u - 0.6);
+    if (sub >= 0) return (IDLE_QUIRK0 + quirk * 2 + sub) * 2;
+  }
+  return breath;
+}
+
 /** Which animation frame a pose shows at time t (shared by drawCharacter and previews). */
 function frameFor(pose: Pose, opts: DrawOpts, seed: number, sequins: boolean): { frame: number; blink: boolean; tw: number } {
   const t = (opts.t ?? 0) + seed * 7;
   let frame = opts.frame ?? 0;
-  if (pose === 'idle') frame = opts.t === undefined ? 0 : Math.floor(t * 1.1) & 1;
-  else if (pose === 'celebrate') frame = Math.floor(t * 4) & 1;
+  let canBlink = true;
+  if (pose === 'idle') {
+    // Without a clock, an explicit frame picks the idle state (previews, tests).
+    frame = opts.t === undefined ? (opts.frame ?? 0) : idleFrame(t, seed, opts.quirk ? IDLE_QUIRKS.indexOf(opts.quirk) : -1);
+    canBlink = frame >> 1 <= IDLE_SHIFT;
+  } else if (pose === 'celebrate') frame = Math.floor(t * 4) & 1;
   else if (pose === 'wave') frame = Math.floor(t * 3.5) & 1;
   else if (pose === 'fireup') frame = Math.floor(t * 14) & 1;
-  else if (pose === 'walk') frame = ((frame % 12) + 12) % 12;
+  else if (pose === 'walk' || pose === 'run') {
+    // Walk frames are driven by distance (Actor.phase), so feet stay planted.
+    const n = pose === 'run' ? RUN_FRAMES : WALK_FRAMES;
+    frame = ((frame % n) + n) % n;
+    canBlink = false;
+  } else if (pose === 'hop') frame &= 1;
   else frame = 0;
-  const eyesOpen = !['down', 'pinned', 'held', 'sell', 'lifted', 'aerial', 'kick'].includes(pose);
-  const blink = opts.t !== undefined && eyesOpen && t % 3.9 < 0.13;
+  const eyesOpen = canBlink && !['down', 'pinned', 'held', 'sell', 'lifted', 'aerial', 'kick'].includes(pose);
+  // Blinks: every ~4 s, with the odd double blink.
+  const bt = t % 3.9;
+  const blink = opts.t !== undefined && eyesOpen && (bt < 0.13 || (hash1(Math.floor(t / 3.9) + seed * 31) < 0.2 && bt > 0.26 && bt < 0.37));
   const tw = sequins && opts.t !== undefined ? Math.floor(t * 6) & 3 : 0;
   return { frame, blink, tw };
 }

@@ -1,8 +1,12 @@
 import type { Dir } from '../core/state';
+import { cycleLength, WALK_FRAMES } from '../gfx/characters';
 import type { Look } from '../gfx/look';
 import type { GameMap } from './map';
 import { findPath } from './pathfind';
 import { TILE } from './types';
+
+/** Hop timeline (seconds): crouch, airborne until `land`, squash until `end`. */
+const HOP = { crouch: 0.07, land: 0.37, end: 0.46, height: 5 };
 
 /** Anything that walks around a map: the player and townsfolk. */
 export class Actor {
@@ -13,7 +17,29 @@ export class Actor {
   facing: Dir = 'down';
   speed = 62; // px/s
   moving = false;
-  walkT = 0;
+  /** Running gait (longer stride, flight phase) while moving. */
+  running = false;
+  /**
+   * Gait phase in cycles (two steps per cycle). It advances by distance
+   * actually travelled, not time, so planted feet never skate.
+   */
+  phase = 0.25;
+  /** Set when a foot lands; the scene consumes it for dust and step sounds. */
+  stepped = 0;
+  /** The facing actually drawn: lags `facing` by one quick turn frame. */
+  shownFacing: Dir = 'down';
+  private turnT = 0;
+  private lastFacing: Dir = 'down';
+  /** Settling into a stand after stopping mid-stride. */
+  settling = false;
+  private wasMoving = false;
+  private lastMoveAt = 0;
+  /** Frame time from animate(); scenes that don't call it fall back to the wall clock. */
+  private dtHint = 0;
+  /** Seconds into a happy hop, or -1. */
+  hopT = -1;
+  /** Start-up ease for the player's walk (0..1). */
+  ramp = 0;
   path: { x: number; y: number }[] = [];
   /** Called when a path finishes. */
   onArrive: (() => void) | null = null;
@@ -21,14 +47,111 @@ export class Actor {
   bw = 5;
   bh = 3;
   visible = true;
-  /** Emote bubble shown over the head. */
-  emote: { icon: string; t: number } | null = null;
+  /** Emote bubble shown over the head (t = seconds left, age = seconds shown). */
+  emote: { icon: string; t: number; age?: number } | null = null;
   pose: string | null = null;
   constructor(id: string, look: Look, x: number, y: number) {
     this.id = id;
     this.look = look;
     this.x = x;
     this.y = y;
+  }
+
+  /**
+   * Legacy walk clock: Math.floor(walkT * 8) is the walk frame. It now reads
+   * the distance-driven phase; writes are ignored because move() advances
+   * the phase itself (scenes that still add time keep working, now in sync).
+   */
+  get walkT(): number {
+    return (this.phase * WALK_FRAMES) / 8;
+  }
+  set walkT(_v: number) {
+    // Driven by distance in advance().
+  }
+
+  /** World px per gait cycle for this actor's body and gait. */
+  cycle(): number {
+    return cycleLength(this.look, this.running);
+  }
+
+  /** Advance the gait by a distance moved; flags footfalls. */
+  advance(dist: number): void {
+    if (dist <= 0) return;
+    const now = performance.now();
+    const dt = this.dtHint > 0 ? Math.min(0.05, this.dtHint) : Math.min(0.05, Math.max(0.004, (now - this.lastMoveAt) / 1000));
+    this.lastMoveAt = now;
+    // Planted feet need cadence = speed / stride. Past a brisk cap the
+    // stride stretches instead (a little skate beats frantic legs).
+    const cap = this.running ? 3.4 : 3.1;
+    const C = Math.max(this.cycle(), dist / dt / cap);
+    const before = this.phase;
+    this.phase += dist / C;
+    this.settling = false;
+    // Footfalls at phase 0 and 0.5 (contact frames).
+    if (Math.floor(before * 2) !== Math.floor(this.phase * 2)) this.stepped++;
+    if (this.phase > 1e6) this.phase -= 1e6;
+  }
+
+  /** Per-frame animation upkeep: turn frames, stop settling, hops, emotes. */
+  animate(dt: number): void {
+    this.dtHint = dt;
+    // Turning round: show the in-between facing for a beat.
+    if (this.facing !== this.lastFacing) {
+      const opp = (this.facing === 'left' && this.lastFacing === 'right') || (this.facing === 'right' && this.lastFacing === 'left') || (this.facing === 'up' && this.lastFacing === 'down') || (this.facing === 'down' && this.lastFacing === 'up');
+      if (opp) {
+        this.shownFacing = this.facing === 'left' || this.facing === 'right' ? 'down' : this.facing === 'up' ? 'left' : 'right';
+        this.turnT = 0.07;
+      } else {
+        this.shownFacing = this.facing;
+        this.turnT = 0;
+      }
+      this.lastFacing = this.facing;
+    }
+    if (this.turnT > 0) {
+      this.turnT -= dt;
+      if (this.turnT <= 0) this.shownFacing = this.facing;
+    } else this.shownFacing = this.facing;
+    // Stopping: finish the step into the passing pose rather than snapping to a stand.
+    let target = 0;
+    if (this.wasMoving && !this.moving) {
+      // Mid-step: finish into the next passing pose. Just past passing: close enough to stand.
+      const q = this.phase % 0.5;
+      this.settling = (q > 0.02 && q < 0.23) || q > 0.4;
+    }
+    if (!this.moving) this.ramp = 0;
+    this.wasMoving = this.moving;
+    if (this.settling) {
+      const q = this.phase % 0.5;
+      target = Math.floor(this.phase / 0.5) * 0.5 + (q <= 0.25 ? 0.25 : 0.75);
+      this.phase = Math.min(target, this.phase + dt * 3.5);
+      if (this.phase >= target - 1e-4) this.settling = false;
+    }
+    if (this.hopT >= 0) {
+      this.hopT += dt;
+      if (this.hopT > HOP.end) this.hopT = -1;
+    }
+    if (this.emote) {
+      this.emote.age = (this.emote.age ?? 0) + dt;
+      this.emote.t -= dt;
+      if (this.emote.t <= 0) this.emote = null;
+    }
+  }
+
+  /** A happy little hop (heart events, gifts that land). */
+  hop(): void {
+    if (this.hopT < 0) this.hopT = 0;
+  }
+
+  /** Hop state for drawing: pose frame (0 crouch, 1 airborne) and height in px. */
+  hopState(): { frame: number; h: number } | null {
+    const t = this.hopT;
+    if (t < 0) return null;
+    if (t < HOP.crouch) return { frame: 0, h: 0 };
+    if (t < HOP.land) {
+      const k = (t - HOP.crouch) / (HOP.land - HOP.crouch);
+      return { frame: 1, h: HOP.height * 4 * k * (1 - k) };
+    }
+    return { frame: 0, h: 0 };
   }
 
   get tx(): number {
@@ -45,6 +168,8 @@ export class Actor {
   /** Try to move by (dx, dy) with sliding collision. Returns true if moved. */
   move(map: GameMap, dx: number, dy: number, blockers: Actor[] = []): boolean {
     let moved = false;
+    const x0 = this.x;
+    const y0 = this.y;
     const hits = (bx: number, by: number) => {
       if (map.collides(this.box(bx, by))) return true;
       for (const a of blockers) {
@@ -78,6 +203,7 @@ export class Actor {
     }
     if (Math.abs(dx) > Math.abs(dy)) this.facing = dx > 0 ? 'right' : 'left';
     else if (dy) this.facing = dy > 0 ? 'down' : 'up';
+    if (moved) this.advance(Math.hypot(this.x - x0, this.y - y0));
     return moved;
   }
 
@@ -108,6 +234,7 @@ export class Actor {
     if (d <= step + 0.5) {
       // Snap only if free; otherwise let sliding resolve it.
       if (!map.collides(this.box(gx, gy))) {
+        this.advance(Math.hypot(gx - this.x, gy - this.y));
         this.x = gx;
         this.y = gy;
       }
@@ -126,7 +253,6 @@ export class Actor {
       }
     }
     this.moving = true;
-    this.walkT += dt;
     return true;
   }
 
