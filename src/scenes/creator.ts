@@ -686,7 +686,7 @@ class CreatorScene implements Scene {
       el('div', 'cr-sub', this.mode === 'self' ? 'The bathroom mirror in your city apartment. ' + rr(FLAVOR.self) : 'Marigold\'s sewing shop, Turnbuckle Alley. ' + rr(FLAVOR.ring)),
     );
     const quick = el('div', 'cr-quick');
-    const rollBtn = el('button', { class: 'btn gold cr-roll', onclick: () => this.roll() }, '🎲 Roll me one');
+    const rollBtn = el('button', { class: 'btn gold cr-roll', onclick: () => this.roll() }, 'Roll me one');
     const presets = el('div', 'cr-presets');
     for (const p of PRESETS) {
       const b = el('button', { class: 'cr-preset', 'data-id': p.id, title: this.mode === 'self' ? p.selfBlurb : p.blurb, onclick: () => this.applyPreset(p) }, el('div', 'cr-preset-pic'), el('div', 'cr-preset-text', el('b', {}, this.mode === 'self' ? p.selfLabel : p.label), el('span', {}, this.mode === 'self' ? p.selfBlurb : p.blurb)));
@@ -852,7 +852,7 @@ class CreatorScene implements Scene {
         const row = el('div', 'cr-btnrow');
         row.append(
           el('button', { class: 'btn teal', onclick: () => this.playTheme() }, '▶ Play'),
-          el('button', { class: 'btn gold', onclick: () => { th.seed = Math.floor(Math.random() * 99999); this.renderTab(); this.playTheme(); } }, '🎲 Remix'),
+          el('button', { class: 'btn gold', onclick: () => { th.seed = Math.floor(Math.random() * 99999); this.renderTab(); this.playTheme(); } }, 'Remix'),
           el('button', { class: 'btn small', onclick: () => audioAny.stopPreview?.() }, '■ Stop'),
         );
         add(row);
@@ -935,7 +935,7 @@ class CreatorScene implements Scene {
       if ((e as KeyboardEvent).key === 'Enter') input.blur();
     });
     wrap.append(input);
-    if (gen) wrap.append(el('button', { class: 'btn gold small cr-gen', 'aria-label': `Generate ${label}`, onclick: gen }, '🎲'));
+    if (gen) wrap.append(el('button', { class: 'btn gold small cr-gen', 'aria-label': `Generate ${label}`, onclick: gen }, 'Roll'));
     row.append(wrap);
     return row;
   }
