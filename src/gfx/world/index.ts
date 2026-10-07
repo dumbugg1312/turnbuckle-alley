@@ -5,3 +5,4 @@ import './buildings';
 import './props';
 import './interiors';
 import './farm';
+import './decals';

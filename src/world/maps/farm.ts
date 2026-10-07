@@ -1,4 +1,5 @@
 import { MapBuilder, registerMap } from './index';
+import { contextDecals } from './decals';
 import type { ObjectPlacement } from '../types';
 
 /** Grandma's place: the old blue house, the overgrown backyard ring, the yard to clear. */
@@ -52,6 +53,17 @@ for (const [x, y, v] of [[2, 3, 0], [6, 2.5, 1], [26, 3, 2], [31, 2.5, 0], [35, 
 for (const x of [3, 9, 15, 21, 27, 33, 38]) o('tree-pine', x, 29.3, { variant: x % 3 });
 o('tree-blossom', 36, 11.2);
 o('sign', 37.2, 13.6, { text: "→ Town. ← Dupree place. (The sign's been here longer than the road.)" });
+
+// Ground decals: the yard wears where people walk, tufts gather at the fences, moss on the stumps.
+objects.push(
+  ...contextDecals(objects, {
+    at: (x, y) => (x < 0 || y < 0 || x >= W || y >= H ? 'void' : b.get(x, y)),
+    w: W,
+    h: H,
+    doors: [{ x: 10, y: 10 }, { x: 21, y: 8 }],
+    seed: 3,
+  }),
+);
 
 export const FARM = registerMap({
   id: 'farm',

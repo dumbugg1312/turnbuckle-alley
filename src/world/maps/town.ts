@@ -1,4 +1,5 @@
 import { MapBuilder, registerMap } from './index';
+import { contextDecals } from './decals';
 import type { ObjectPlacement, Warp } from '../types';
 
 /**
@@ -229,6 +230,17 @@ export const TOWN_ENTRY = {
   east: { x: TOWN_W - 2, y: MAIN + 3 },
   bus: { x: 96, y: MAIN + 2 },
 };
+
+// ---- Ground decals: wear at the doors, tufts along fences, cracks off the curbs (gfx/world/decals.ts)
+objects.push(
+  ...contextDecals(objects, {
+    at: (x, y) => (x < 0 || y < 0 || x >= TOWN_W || y >= TOWN_H ? 'void' : b.get(x, y)),
+    w: TOWN_W,
+    h: TOWN_H,
+    doors: [...TOWN_DOORS.map((d) => ({ x: d.zoneX + ((d.w ?? 1) - 1) / 2, y: d.zoneY })), AIRSTREAM_DOOR],
+    seed: 7,
+  }),
+);
 
 export const TOWN = registerMap({
   id: 'town',
