@@ -467,11 +467,16 @@ onEnterMap(async (mapId) => {
   return false;
 });
 
-/** The morning paper. */
+/** The morning paper: it lands on the breakfast table (day.ts) instead of in your face. */
 onNewDay(async () => {
   const paper = story.morningPaper();
   if (paper) {
     G.ext['paper'] = paper;
+    const m = await import('./morning');
+    if (m.morningCollecting()) {
+      m.morningPaper(paper);
+      return;
+    }
     const { showPaper } = await import('./paper');
     await showPaper(paper);
   }

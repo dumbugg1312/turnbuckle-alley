@@ -34,17 +34,26 @@ export async function checkMail(): Promise<void> {
     await narrate(['The mailbox is empty. A spider has moved in.', 'Nothing today. Mo will be by tomorrow.', 'Empty, except for a coupon for the Hot Tag Diner. (Expired in 1997.)'][Math.floor(Math.random() * 3)]);
     return;
   }
-  while (s.inbox.length) {
-    const l = s.inbox.shift()!;
-    s.read.push(l.id);
-    await showLetter(l);
-    if (l.gift) {
-      const { addItem } = await import('../core/state');
-      addItem(l.gift, 1);
-      // Tell the player they actually got something.
-      const [{ toast }, { item }, { iconFor }] = await Promise.all([import('../ui/dialog'), import('../data/items'), import('../gfx/icons')]);
-      toast(`Got ${item(l.gift).name}`, iconFor(l.gift));
-    }
+  while (s.inbox.length) await openLetter(s.inbox[0]);
+}
+
+/** Called after a letter is read (surprises pin Pip's drawings to the fridge). */
+export const LETTER_READ_HOOKS: ((l: Letter) => void)[] = [];
+
+/** Take one letter out of the mailbox, read it, and collect anything tucked inside. */
+export async function openLetter(l: Letter): Promise<void> {
+  const s = mailState();
+  const i = s.inbox.findIndex((x) => x.id === l.id);
+  if (i >= 0) s.inbox.splice(i, 1);
+  if (!s.read.includes(l.id)) s.read.push(l.id);
+  await showLetter(l);
+  for (const h of LETTER_READ_HOOKS) h(l);
+  if (l.gift) {
+    const { addItem } = await import('../core/state');
+    addItem(l.gift, 1);
+    // Tell the player they actually got something.
+    const [{ toast }, { item }, { iconFor }] = await Promise.all([import('../ui/dialog'), import('../data/items'), import('../gfx/icons')]);
+    toast(`Got ${item(l.gift).name}`, iconFor(l.gift));
   }
 }
 
