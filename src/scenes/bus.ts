@@ -1,152 +1,116 @@
 import { audio } from '../audio';
 import { game } from '../core/game';
 import type { Scene } from '../core/scene';
-import { T, TC } from '../gfx/font';
-import { AK, circ, curve, ell, hash2, liA, mixc, mkSpr, OUT, poly, R, RR, rng, selA, shA, toCanvas, VG, type Spr } from '../gfx/kit';
+import { G } from '../core/state';
+import { renderPortrait } from '../gfx/characters';
+import { hex, lh, lw, mixc } from '../gfx/kit';
+import { defaultLook, type Look } from '../gfx/look';
 import { el, uiRoot } from '../ui/dom';
+import { buildInterior, layout, type Interior, type Layout } from './bus/interior';
+import { buildJourney, type Journey, type Obj } from './bus/journey';
+import { CAPTIONS, DURATION, morningAt, pulse, rainAt, ramp, scroll, SKY, skyAt, speedAt, STOP_T, sunAt, type Layer } from './bus/route';
+import { skyStrip } from './bus/sky';
 
 /**
- * The bus ride from the city to Turnbuckle Alley: a parallax montage from a
- * gray dawn skyline to golden-hour farmland, ending at the town sign.
+ * The bus ride from the city to Turnbuckle Alley. You sit by the window,
+ * seen from behind, while the whole day goes by outside: a rainy grey-blue
+ * city dawn (towers, the MaxxMedia billboard, the last overpass), the
+ * suburbs, the open highway, farmland at golden hour (silos, barns, cows, a
+ * windmill, power lines dipping between poles), then Route 9 into town: the
+ * water tower, the Sportatorium roof, and the welcome sign, where the bus
+ * stops. Every caption describes what's in the window while it shows.
  */
-const DURATION = 24;
+const LAYER_BASE: Record<Layer, number> = { cloud: 0, far: 3, midfar: 9, mid: 30, near: 62 };
+const GROUND_TOP: Record<Layer, number> = { cloud: 0, far: 0, midfar: 1, mid: 10, near: 33 };
+const PARALLAX: Layer[] = ['midfar', 'mid', 'near'];
+const BEATS: [number, string, number][] = [
+  [10.6, 'whoosh', 0.35],
+  [46.2, 'door', 0.6],
+];
 
-function strip(w: number, h: number, seed: number, fn: (r: () => number) => void): HTMLCanvasElement {
-  return toCanvas(mkSpr(w, h, () => fn(rng(seed))));
+/** Interior light over the day: ambient multiply, rim colour, rim strength. */
+const LIGHT: { t: number; amb: string; rim: string; rimA: number }[] = [
+  { t: 0, amb: '#7c84ae', rim: '#aeb8e6', rimA: 0.25 },
+  { t: 10, amb: '#8a8cb4', rim: '#c8c4e8', rimA: 0.3 },
+  { t: 15, amb: '#dcdcea', rim: '#fff0d8', rimA: 0.45 },
+  { t: 22, amb: '#f2f0ea', rim: '#fff8e8', rimA: 0.5 },
+  { t: 28.5, amb: '#f0c6a6', rim: '#ffc274', rimA: 0.9 },
+  { t: 39, amb: '#dca49e', rim: '#ffac6c', rimA: 0.95 },
+  { t: 48, amb: '#cc9298', rim: '#ff9c66', rimA: 0.85 },
+];
+function lightAt(t: number): { amb: string; rim: string; rimA: number } {
+  for (let i = 1; i < LIGHT.length; i++) {
+    if (t <= LIGHT[i].t) {
+      const a = LIGHT[i - 1];
+      const b = LIGHT[i];
+      const k = (t - a.t) / (b.t - a.t);
+      return { amb: hex(mixc(a.amb, b.amb, k)), rim: hex(mixc(a.rim, b.rim, k)), rimA: a.rimA + (b.rimA - a.rimA) * k };
+    }
+  }
+  const z = LIGHT[LIGHT.length - 1];
+  return { amb: z.amb, rim: z.rim, rimA: z.rimA };
+}
+
+interface Drop {
+  x: number;
+  y: number;
+  r: number;
+  vx: number;
+  vy: number;
+  life: number;
+  run: boolean;
 }
 
 export class BusScene implements Scene {
   private t = 0;
   private onDone: () => void;
-  private layers: Record<string, HTMLCanvasElement> = {};
   private caption: HTMLElement;
   private skip: HTMLElement;
   private shown = -1;
   private done = false;
-  private sign: HTMLCanvasElement;
-  private frame: HTMLCanvasElement | null = null;
-  private frameKey = '';
+  private look: Look;
+  private L: Layout | null = null;
+  private inter: Interior | null = null;
+  private jr: Journey | null = null;
+  private sizeKey = '';
+  private fx: HTMLCanvasElement = document.createElement('canvas');
+  private reflect: HTMLCanvasElement | null = null;
+  private drops: Drop[] = [];
+  private motes: { x: number; y: number; s: number; p: number }[] = [];
+  private seed = 1;
+  private nearH = 60;
+  private beats = new Set<string>();
 
   constructor(onDone: () => void) {
     this.onDone = onDone;
     this.caption = el('div', 'bus-caption');
+    // Longer lines wrap instead of running off a phone screen.
+    Object.assign(this.caption.style, { whiteSpace: 'normal', maxWidth: 'min(86vw, 34em)', textAlign: 'center', lineHeight: '1.25', textWrap: 'balance' });
     this.skip = el('button', { class: 'btn small bus-skip' }, 'Skip ▸');
     this.skip.addEventListener('click', () => this.finish());
-    this.sign = this.buildSign();
+    let look: Look | undefined;
+    try {
+      look = G?.player?.look;
+    } catch {
+      look = undefined;
+    }
+    this.look = look ?? defaultLook();
+    for (let i = 0; i < 46; i++) this.motes.push({ x: this.rand(), y: this.rand(), s: 0.3 + this.rand() * 0.7, p: this.rand() * 6.28 });
+  }
+
+  private rand(): number {
+    this.seed = (this.seed * 16807) % 2147483647;
+    return this.seed / 2147483647;
   }
 
   enter(): void {
     uiRoot().append(this.caption, this.skip);
     audio.music('bus');
-    this.build();
   }
 
   exit(): void {
     this.caption.remove();
     this.skip.remove();
-  }
-
-  private build(): void {
-    const W = 512;
-    // Far city skyline.
-    this.layers.city = strip(W, 90, 3, (r) => {
-      let x = 0;
-      while (x < W) {
-        const bw = 14 + Math.floor(r() * 26);
-        const bh = 24 + Math.floor(r() * 62);
-        const c = mixc('#6a6a8a', '#8a8aa8', r());
-        R(x, 90 - bh, bw, bh, c);
-        R(x, 90 - bh, 1, bh, liA(c, 0.15));
-        for (let wy = 90 - bh + 4; wy < 86; wy += 5) for (let wx = x + 2; wx < x + bw - 2; wx += 4) if (r() < 0.45) R(wx, wy, 2, 2, r() < 0.3 ? '#f6e2a0' : shA(c, 0.25));
-        if (r() < 0.3) R(x + bw / 2, 90 - bh - 8, 1, 8, c);
-        x += bw + Math.floor(r() * 3);
-      }
-    });
-    // Rolling hills (two tones).
-    this.layers.hills = strip(W, 70, 9, (r) => {
-      for (let x = 0; x < W; x++) {
-        const h = 30 + Math.sin(x / 40) * 10 + Math.sin(x / 17 + 2) * 6 + Math.sin((x / W) * Math.PI * 2) * 6;
-        R(x, 70 - h, 1, h, '#7aa07a');
-        R(x, 70 - h, 1, 2, '#9ac08a');
-      }
-      for (let i = 0; i < 40; i++) {
-        const x = r() * W;
-        const y = 34 + r() * 30;
-        ell(x, y, 4 + r() * 4, 3 + r() * 2, '#5a8a6a');
-      }
-    });
-    // Mid layer: trees, barns, silos, poles.
-    this.layers.mid = strip(W, 80, 21, (r) => {
-      let x = 4;
-      while (x < W - 30) {
-        const k = r();
-        if (k < 0.18) {
-          // Red barn
-          poly([[x, 80], [x, 58], [x + 14, 48], [x + 28, 58], [x + 28, 80]], '#c0453f');
-          poly([[x - 2, 59], [x + 14, 47], [x + 30, 59], [x + 28, 60], [x + 14, 50], [x, 60]], '#f2e6c9');
-          R(x + 10, 66, 8, 14, '#7a2a2f');
-          R(x + 11, 67, 6, 1, '#f2e6c9');
-          x += 40;
-        } else if (k < 0.28) {
-          // Silo
-          R(x, 46, 10, 34, '#c8c8d8');
-          ell(x + 5, 46, 5, 4, '#9a9ab0');
-          R(x, 46, 2, 34, '#e8e8f0');
-          x += 20;
-        } else if (k < 0.5) {
-          // Telephone pole with crossbar
-          R(x + 3, 30, 2, 50, '#7a5a3a');
-          R(x, 34, 8, 1, '#7a5a3a');
-          x += 26;
-        } else {
-          // Round tree
-          const tr = 8 + r() * 6;
-          R(x + tr - 1, 70, 3, 10, '#6a4a3a');
-          ell(x + tr, 66 - tr / 2, tr, tr * 0.85, '#4a8a5a');
-          ell(x + tr - 2, 63 - tr / 2, tr * 0.6, tr * 0.5, '#6aaa6a');
-          x += tr * 2 + 6;
-        }
-      }
-      // Wires between poles, gently sagging.
-      curve(0, 35, W, 35, 4, '#3a3048');
-    });
-    // Near field with fence posts.
-    this.layers.near = strip(W, 40, 33, (r) => {
-      VG(0, 0, W, 40, ['#a8c068', '#88a858', '#6a8a48']);
-      for (let y = 4; y < 40; y += 5) for (let x = (y * 3) % 7; x < W; x += 7) if (r() < 0.6) R(x, y, 2, 1, '#c8d888');
-      for (let x = 0; x < W; x += 32) {
-        R(x, 2, 3, 16, '#8a6a4a');
-        R(x, 2, 3, 1, '#b08a5a');
-      }
-      R(0, 6, W, 1, '#8a6a4a');
-      R(0, 11, W, 1, '#8a6a4a');
-    });
-    this.layers.cloud = strip(W, 40, 41, (r) => {
-      for (let i = 0; i < 9; i++) {
-        const cx = r() * W;
-        const cy = 8 + r() * 24;
-        for (let j = 0; j < 4; j++) ell(cx + j * 7 - 10, cy + Math.sin(j) * 2, 8 + r() * 4, 5, '#ffffff');
-        R(cx - 14, cy + 2, 32, 3, '#f0eaf6');
-      }
-    });
-  }
-
-  private buildSign(): HTMLCanvasElement {
-    const s: Spr = mkSpr(150, 74, () => {
-      R(18, 44, 4, 30, '#6a4a3a');
-      R(128, 44, 4, 30, '#6a4a3a');
-      RR(0, 0, 150, 50, 3, '#2f6a5a');
-      RR(2, 2, 146, 46, 2, '#3f8a6a');
-      R(4, 4, 142, 1, '#5aaa8a');
-      TC('WELCOME TO', 75, 6, '#fbf0d9', undefined, {});
-      TC('TURNBUCKLE ALLEY', 75, 16, '#f6d38a', undefined, { bold: true, shadow: AK });
-      TC('Home of the Velvet Hammers', 75, 28, '#fbf0d9');
-      TC('Pop. 2,814', 75, 38, '#cfe8d8');
-      // A little star sticker someone added.
-      circ(138, 10, 4, '#f4b63f');
-      void T;
-    });
-    return toCanvas(OUT(s, selA));
   }
 
   private finish(): void {
@@ -156,128 +120,616 @@ export class BusScene implements Scene {
   }
 
   update(dt: number): void {
-    this.t += dt;
+    // Dev: window.__busHold freezes the clock for screenshots.
+    if (!(window as unknown as { __busHold?: boolean }).__busHold) this.t += Math.min(dt, 0.1);
     if (game.input.consume('interact') && this.t > 2) this.finish();
-    const captions: [number, string][] = [
-      [0.5, 'Route 9 · The City → Turnbuckle Alley'],
-      [5, 'Mile 40. The city gives up.'],
-      [10, 'Mile 120. Cows. Lots of cows.'],
-      [15, "Mile 190. Something about the light changes."],
-      [20, ''],
-    ];
     let idx = -1;
-    for (let i = 0; i < captions.length; i++) if (this.t >= captions[i][0]) idx = i;
+    for (let i = 0; i < CAPTIONS.length; i++) if (this.t >= CAPTIONS[i][0]) idx = i;
     if (idx !== this.shown) {
       this.shown = idx;
-      this.caption.textContent = idx >= 0 ? captions[idx][1] : '';
+      this.caption.textContent = idx >= 0 ? CAPTIONS[idx][1] : '';
       this.caption.classList.remove('show');
       void this.caption.offsetWidth;
-      if (idx >= 0 && captions[idx][1]) this.caption.classList.add('show');
+      if (idx >= 0 && CAPTIONS[idx][1]) this.caption.classList.add('show');
     }
-    if (this.t > DURATION + 1.5) this.finish();
+    // a couple of sound beats: rushing under the overpass, the door at the stop
+    for (const [at, id, vol] of BEATS) if (this.t >= at && !this.beats.has(id)) {
+      this.beats.add(id);
+      audio.sfx(id, { volume: vol });
+    }
+    this.updateRain(dt);
+    if (this.t > DURATION) this.finish();
   }
 
+  // ---------------------------------------------------------------- setup
+  private ensure(w: number, h: number): void {
+    const key = `${w}x${h}`;
+    if (key === this.sizeKey && this.L) return;
+    this.sizeKey = key;
+    const L = layout(w, h);
+    this.L = L;
+    this.inter = buildInterior(L, this.look);
+    const nearTop = L.yh + GROUND_TOP.near;
+    const nearH = Math.max(40, Math.min(96, L.wb - nearTop + 2));
+    this.nearH = nearH;
+    this.jr = buildJourney(nearH, L.wt - 3 - (L.yh + LAYER_BASE.near), L.yh + LAYER_BASE.near);
+    this.fx.width = w * 2;
+    this.fx.height = h * 2;
+    try {
+      this.reflect = renderPortrait(this.look, 'neutral', Math.round(L.head.r * 2.6), { bg: false });
+    } catch {
+      this.reflect = null;
+    }
+  }
+
+  // ---------------------------------------------------------------- render
   render(ctx: CanvasRenderingContext2D): void {
     const { w, h } = game.screen;
-    const k = Math.min(1, this.t / DURATION);
-    // Sky: dawn gray → blue → golden hour.
-    const top = k < 0.4 ? mixc('#7a84a8', '#6aa8e0', k / 0.4) : mixc('#6aa8e0', '#f08a6a', (k - 0.4) / 0.6);
-    const bottom = k < 0.4 ? mixc('#c8c0c8', '#cfe8f6', k / 0.4) : mixc('#cfe8f6', '#ffd08a', (k - 0.4) / 0.6);
-    const g = ctx.createLinearGradient(0, 0, 0, h * 0.7);
-    const toHex = (n: number) => '#' + [n & 255, (n >> 8) & 255, (n >> 16) & 255].map((v) => v.toString(16).padStart(2, '0')).join('');
-    g.addColorStop(0, toHex(top));
-    g.addColorStop(1, toHex(bottom));
-    ctx.fillStyle = g;
+    game.screen.resetTransform(ctx);
+    ctx.imageSmoothingEnabled = false;
+    this.ensure(w, h);
+    const L = this.L!;
+    const jr = this.jr!;
+    const t = this.t;
+    const ww = L.ww;
+
+    ctx.fillStyle = '#2b2140';
     ctx.fillRect(0, 0, w, h);
-    // Sun
-    const sunX = w * (0.2 + k * 0.6);
-    const sunY = h * (0.5 - Math.sin(k * Math.PI) * 0.32 + k * 0.12);
-    ctx.globalAlpha = 0.35;
-    ctx.fillStyle = k > 0.6 ? '#ffd890' : '#fff8e0';
+
+    // ---- the view through the window
+    ctx.save();
     ctx.beginPath();
-    ctx.arc(sunX, sunY, 22, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.globalAlpha = 1;
-    ctx.fillStyle = k > 0.6 ? '#ffb070' : '#fffbe8';
-    ctx.beginPath();
-    ctx.arc(sunX, sunY, 11, 0, Math.PI * 2);
-    ctx.fill();
-    const speed = this.t;
-    const tile = (img: HTMLCanvasElement, y: number, rate: number, alpha = 1) => {
-      ctx.globalAlpha = alpha;
-      const off = Math.floor((speed * rate) % img.width);
-      for (let x = -off; x < w; x += img.width) ctx.drawImage(img, x, Math.round(y));
+    ctx.rect(L.wl, L.wt, ww, L.wh);
+    ctx.clip();
+    ctx.translate(L.wl, 0);
+
+    // sky
+    const sk = skyAt(t);
+    this.tileY(ctx, skyStrip(sk.a, L.wh), L.wt, ww, 0, 1);
+    if (sk.k > 0) this.tileY(ctx, skyStrip(sk.b, L.wh), L.wt, ww, 0, sk.k);
+    const horizon = hex(mixc(SKY[sk.a].stops[3], SKY[sk.b].stops[3], sk.k));
+
+    // the sun
+    this.drawSun(ctx, L, t);
+
+    // clouds
+    this.tileY(ctx, jr.rain, L.wt - 4, ww, scroll('cloud', t) + t * 3, rainAt(t) * 0.95 + 0.05 * (1 - ramp(t, 12, 16)));
+    for (const o of jr.objs) if (o.L === 'cloud') this.drawObj(ctx, o, L, t);
+
+    // far: the city skyline recedes into haze, hills take over and change light
+    const far = scroll('far', t);
+    const yFar = L.yh + LAYER_BASE.far;
+    const cityA = 1 - ramp(t, 7, 14);
+    if (cityA > 0) this.tileY(ctx, jr.ridges.city, yFar - lh(jr.ridges.city), ww, far, cityA);
+    const hillA = ramp(t, 9, 15);
+    if (hillA > 0) {
+      const rm = jr.ridges;
+      const y = yFar - lh(rm.morning);
+      const kn = pulse(t, 17, 21, 24, 28);
+      const kg = ramp(t, 24, 29);
+      const ks = ramp(t, 35, 41);
+      this.tileY(ctx, rm.morning, y, ww, far, hillA);
+      if (kn > 0) this.tileY(ctx, rm.noon, y, ww, far, kn * hillA);
+      if (kg > 0) this.tileY(ctx, rm.golden, y, ww, far, kg);
+      if (ks > 0) this.tileY(ctx, rm.sunset, y, ww, far, ks);
+    }
+    this.haze(ctx, L, horizon, 0.32, 46);
+
+    for (const Ly of PARALLAX) {
+      this.drawBands(ctx, Ly, L, t);
+      for (const o of jr.objs) if (o.L === Ly) this.drawObj(ctx, o, L, t);
+      if (Ly === 'mid') this.drawWires(ctx, L, t);
+      if (Ly === 'midfar') this.haze(ctx, L, horizon, 0.16, 60);
+    }
+    this.drawRoad(ctx, L, t);
+
+    // rain falling outside
+    const rain = rainAt(t);
+    if (rain > 0) {
+      ctx.fillStyle = 'rgba(200,200,232,0.35)';
+      ctx.globalAlpha = rain;
+      for (let i = 0; i < 90; i++) {
+        const sx = (i * 73.13 + t * 40) % (ww + 40) - 20;
+        const sy = L.wt + ((i * 37.7 + t * 260) % L.wh);
+        for (let k = 0; k < 5; k++) ctx.fillRect(Math.round((sx - k * 0.7) * 2) / 2, Math.round((sy + k * 1.5) * 2) / 2, 0.5, 1);
+      }
       ctx.globalAlpha = 1;
-    };
-    tile(this.layers.cloud, h * 0.06, 6, 0.85);
-    const horizon = h * 0.62;
-    // City fades out over the first third.
-    if (k < 0.45) tile(this.layers.city, horizon - 90, 10, Math.max(0, 1 - k / 0.4));
-    tile(this.layers.hills, horizon - 64, 18, Math.min(1, k * 2.5));
-    tile(this.layers.mid, horizon - 72, 40, Math.min(1, Math.max(0, (k - 0.15) * 3)));
-    ctx.fillStyle = k < 0.3 ? '#8a8a9a' : '#7a9a5a';
-    ctx.fillRect(0, horizon, w, h - horizon);
-    tile(this.layers.near, horizon, 110);
-    // Road
-    ctx.fillStyle = '#5a5468';
-    ctx.fillRect(0, horizon + 38, w, h - horizon - 38);
-    ctx.fillStyle = '#f6d38a';
-    const dash = Math.floor((speed * 160) % 40);
-    for (let x = -dash; x < w; x += 40) ctx.fillRect(x, horizon + 50, 18, 2);
-    // Golden-hour wash.
-    if (k > 0.55) {
-      ctx.globalAlpha = (k - 0.55) * 0.5;
-      ctx.fillStyle = '#ff9a5a';
+    }
+    // golden haze over everything outside as the day warms
+    const gold = ramp(t, 25, 31);
+    if (gold > 0) {
       ctx.globalCompositeOperation = 'soft-light';
-      ctx.fillRect(0, 0, w, h);
+      ctx.globalAlpha = gold * 0.35;
+      ctx.fillStyle = '#ff9a50';
+      ctx.fillRect(0, L.wt, ww, L.wh);
       ctx.globalCompositeOperation = 'source-over';
       ctx.globalAlpha = 1;
     }
-    // The town sign slides in at the end and the bus slows.
-    if (this.t > DURATION - 5) {
-      const s = Math.min(1, (this.t - (DURATION - 5)) / 4);
-      const ease = 1 - Math.pow(1 - s, 3);
-      const sx = w + 20 - ease * (w * 0.5 + this.sign.width / 2 + 20);
-      ctx.drawImage(this.sign, Math.round(sx), Math.round(horizon - this.sign.height + 24));
+    ctx.restore();
+
+    // ---- on the glass
+    this.drawGlass(ctx, L, t);
+
+    // ---- inside the bus (with a little road bob)
+    const v = speedAt(t);
+    const bob = t < STOP_T ? (Math.sin(t * 9.1) * Math.sin(t * 2.3) > 0.55 ? 0.5 : 0) * Math.min(1, v * 2) : 0;
+    ctx.save();
+    ctx.translate(0, bob);
+    const it = this.inter!;
+    ctx.drawImage(it.frame, 0, 0);
+    ctx.drawImage(it.glass, 0, 0);
+    ctx.drawImage(it.fg, 0, 0);
+    this.drawSteam(ctx, L, t);
+    this.lightPass(ctx, L, t);
+    ctx.restore();
+
+    this.drawFlare(ctx, L, t);
+    this.drawMotes(ctx, L, t);
+
+    // fade in from the depot, and settle at the end
+    const fadeIn = 1 - ramp(t, 0, 1.6);
+    if (fadeIn > 0) {
+      ctx.globalAlpha = fadeIn;
+      ctx.fillStyle = '#0b0712';
+      ctx.fillRect(0, 0, w, h);
+      ctx.globalAlpha = 1;
     }
-    // Bus window frame (cached per size).
-    const key = `${w}x${h}`;
-    if (this.frameKey !== key) {
-      this.frameKey = key;
-      this.frame = this.buildFrame(w, h);
-    }
-    ctx.drawImage(this.frame!, 0, 0);
-    // A gentle road bob.
-    void hash2;
   }
 
-  private buildFrame(w: number, h: number): HTMLCanvasElement {
-    return toCanvas(
-      mkSpr(w, h, () => {
-        const wall = '#3a4a6a';
-        const m = Math.round(Math.min(w, h) * 0.07);
-        // Body of the bus around the window.
-        R(0, 0, w, m, wall);
-        R(0, h - m * 1.6, w, m * 1.6, wall);
-        R(0, 0, m, h, wall);
-        R(w - m, 0, m, h, wall);
-        // Window rubber and highlight.
-        R(m - 2, m - 2, w - m * 2 + 4, 2, AK);
-        R(m - 2, h - m * 1.6, w - m * 2 + 4, 2, AK);
-        R(m - 2, m, 2, h - m * 2.6, AK);
-        R(w - m, m, 2, h - m * 2.6, AK);
-        R(m + 4, m + 4, 30, 1, '#ffffff');
-        R(m + 4, m + 4, 1, 12, '#ffffff');
-        // Seat back in the bottom-left corner.
-        RR(m - 10, h - m * 1.6 - 22, 70, 40, 4, '#b0453f');
-        R(m - 8, h - m * 1.6 - 20, 66, 3, '#d0655f');
-        // A duffel bag on the seat.
-        RR(m + 48, h - m * 1.6 - 14, 44, 18, 4, '#2fa59a');
-        R(m + 58, h - m * 1.6 - 18, 24, 5, '#1d6e6b');
-        R(m + 50, h - m * 1.6 - 8, 40, 1, '#5ac8bd');
-        // Wall rivets.
-        for (let x = m; x < w - m; x += 24) R(x, h - m * 0.7, 2, 2, '#5a6a8a');
-      }),
-    );
+  /** Tile a canvas horizontally across the window at y, scrolled by off. */
+  private tileY(ctx: CanvasRenderingContext2D, c: HTMLCanvasElement, y: number, ww: number, off: number, alpha: number): void {
+    if (alpha <= 0) return;
+    const tw = lw(c);
+    const o = ((off % tw) + tw) % tw;
+    ctx.globalAlpha = Math.min(1, alpha);
+    for (let x = -o; x < ww; x += tw) ctx.drawImage(c, Math.round(x * 2) / 2, Math.round(y * 2) / 2);
+    ctx.globalAlpha = 1;
+  }
+
+  private haze(ctx: CanvasRenderingContext2D, L: Layout, color: string, a: number, span: number): void {
+    const y1 = L.yh + 12;
+    const y0 = y1 - span;
+    const g = ctx.createLinearGradient(0, y0, 0, y1);
+    g.addColorStop(0, color + '00');
+    g.addColorStop(1, color + Math.round(a * 255).toString(16).padStart(2, '0'));
+    ctx.fillStyle = g;
+    ctx.fillRect(0, y0, L.ww, span);
+  }
+
+  private sx(lx: number, Ly: Layer, t: number, ww: number): number {
+    return ww / 2 + lx - scroll(Ly, t);
+  }
+
+  private drawBands(ctx: CanvasRenderingContext2D, Ly: Layer, L: Layout, t: number): void {
+    const off = scroll(Ly, t);
+    const top = L.yh + GROUND_TOP[Ly];
+    for (const b of this.jr!.bands) {
+      if (b.L !== Ly) continue;
+      const x0 = Math.max(0, L.ww / 2 + b.lx0 - off);
+      const x1 = Math.min(L.ww, L.ww / 2 + b.lx1 - off);
+      if (x1 <= x0) continue;
+      ctx.save();
+      ctx.beginPath();
+      ctx.rect(x0, L.wt, x1 - x0, L.wh);
+      ctx.clip();
+      const tw = lw(b.tile);
+      const y = top + b.dy;
+      if (b.fill && y + lh(b.tile) < L.wb) {
+        ctx.fillStyle = b.fill;
+        ctx.fillRect(x0, y + lh(b.tile) - 0.5, x1 - x0, L.wb - y - lh(b.tile) + 1);
+      }
+      const o = ((off % tw) + tw) % tw;
+      for (let x = -o; x < L.ww; x += tw) if (x + tw > x0 && x < x1) ctx.drawImage(b.tile, Math.round(x * 2) / 2, Math.round(y * 2) / 2);
+      ctx.restore();
+    }
+  }
+
+  private drawObj(ctx: CanvasRenderingContext2D, o: Obj, L: Layout, t: number): void {
+    const ww = L.ww;
+    let x = this.sx(o.lx, o.L, t, ww);
+    if (o.drift) x -= t * o.drift;
+    const cw = lw(o.c);
+    if (x + cw / 2 < -4 || x - cw / 2 > ww + 4) return;
+    let alpha = 1;
+    if (o.fade) alpha = pulse(t, o.fade[0], o.fade[1], o.fade[2], o.fade[3]);
+    if (alpha <= 0) return;
+    const c = o.alt && t >= (o.altAt ?? 0) ? o.alt : o.c;
+    const ch = lh(c);
+    let y: number;
+    if (o.L === 'cloud') y = L.wt + o.dy;
+    else if (o.kind === 'overpass') y = L.wt - 3;
+    else y = L.yh + LAYER_BASE[o.L] + o.dy - ch;
+    const dx = Math.round((x - cw / 2) * 2) / 2;
+    const dy = Math.round(y * 2) / 2;
+    ctx.globalAlpha = alpha;
+    ctx.drawImage(c, dx, dy);
+    ctx.globalAlpha = 1;
+    if (o.kind === 'windmill') {
+      const wheels = this.jr!.wheels;
+      const f = Math.floor(t * 9) % wheels.length;
+      ctx.drawImage(wheels[f], dx + 13 - 12, dy + 7 - 12);
+    } else if (o.kind === 'lamp') {
+      // sodium glow around the lamp head and a pool on the wet road
+      const gx = dx + 17;
+      const gy = dy + 8;
+      const g = ctx.createRadialGradient(gx, gy, 0, gx, gy, 18);
+      g.addColorStop(0, 'rgba(255,214,140,0.55)');
+      g.addColorStop(1, 'rgba(255,170,90,0)');
+      ctx.globalCompositeOperation = 'lighter';
+      ctx.fillStyle = g;
+      ctx.fillRect(gx - 18, gy - 18, 36, 36);
+      ctx.globalCompositeOperation = 'source-over';
+    } else if (o.kind === 'tower' && Math.floor(t * 1.2 + o.lx) % 2 === 0) {
+      ctx.fillStyle = '#ff6a6a';
+      ctx.fillRect(dx + cw / 2 - 0.5, dy, 1, 1);
+    }
+  }
+
+  /** The bus's own lane, only seen on tall (portrait) windows. */
+  private drawRoad(ctx: CanvasRenderingContext2D, L: Layout, t: number): void {
+    const y = L.yh + GROUND_TOP.near + this.nearH - 1;
+    if (y >= L.wb) return;
+    const wet = t < 13;
+    ctx.fillStyle = wet ? '#3a3654' : '#57526a';
+    ctx.fillRect(0, y, L.ww, L.wb - y);
+    ctx.fillStyle = wet ? '#2c2846' : '#46425a';
+    ctx.fillRect(0, y, L.ww, 1);
+    ctx.fillStyle = '#e8e2d4';
+    ctx.fillRect(0, y + 3, L.ww, 1);
+    // the centre dashes rush past
+    ctx.fillStyle = '#f2c84a';
+    const off = (scroll('near', t) * 1.4) % 48;
+    const dy = y + Math.min(26, (L.wb - y) * 0.6);
+    for (let x = -off; x < L.ww; x += 48) ctx.fillRect(Math.round(x * 2) / 2, dy, 22, 1.5);
+  }
+
+  /** Power lines sagging between consecutive poles. */
+  private drawWires(ctx: CanvasRenderingContext2D, L: Layout, t: number): void {
+    const ww = L.ww;
+    const poles: number[] = [];
+    let base = 0;
+    for (const o of this.jr!.objs) {
+      if (o.kind !== 'pole') continue;
+      const x = this.sx(o.lx, 'mid', t, ww);
+      if (x < -120 || x > ww + 120) continue;
+      poles.push(x);
+      base = L.yh + LAYER_BASE.mid + o.dy - lh(o.c);
+    }
+    if (poles.length < 2) return;
+    const gold = ramp(t, 25, 30);
+    for (let i = 0; i + 1 < poles.length; i++) {
+      const a = poles[i];
+      const b = poles[i + 1];
+      if (b - a > 140) continue;
+      for (const [k, ox] of [[0, -8], [1, 0], [2, 8]] as [number, number][]) {
+        const y0 = base + 3.5;
+        const sag = 7 + k * 0.6;
+        ctx.fillStyle = gold > 0.5 ? (k === 1 ? '#ffd9a0' : '#4a3a56') : '#3f3a56';
+        for (let x = Math.max(0, Math.ceil((a + ox) * 2) / 2); x <= Math.min(ww, b + ox); x += 0.5) {
+          const u = (x - a - ox) / (b - a);
+          const y = y0 + sag * 4 * u * (1 - u);
+          ctx.fillRect(x, Math.round(y * 2) / 2, 0.5, 0.5);
+        }
+      }
+    }
+  }
+
+  private sunPos(L: Layout, t: number): { x: number; y: number } {
+    // morning sun high left (out of frame), golden sun lowering on the right
+    const k = ramp(t, 26, 47);
+    return { x: L.ww * (0.86 - k * 0.14), y: L.wt + L.wh * (0.12 + k * 0.3) };
+  }
+
+  private drawSun(ctx: CanvasRenderingContext2D, L: Layout, t: number): void {
+    // dawn: a pale glow trying to get through the rain deck
+    const dawn = pulse(t, 0, 3, 11, 15);
+    if (dawn > 0) {
+      const gx = L.ww * 0.18;
+      const gy = L.yh - 30;
+      const g = ctx.createRadialGradient(gx, gy, 0, gx, gy, 70);
+      g.addColorStop(0, `rgba(255,214,190,${0.35 * dawn})`);
+      g.addColorStop(1, 'rgba(255,200,190,0)');
+      ctx.fillStyle = g;
+      ctx.fillRect(gx - 70, gy - 70, 140, 140);
+    }
+    const sun = sunAt(t);
+    if (sun <= 0) return;
+    const { x, y } = this.sunPos(L, t);
+    const g = ctx.createRadialGradient(x, y, 0, x, y, 90);
+    g.addColorStop(0, `rgba(255,236,190,${0.75 * sun})`);
+    g.addColorStop(0.15, `rgba(255,200,130,${0.45 * sun})`);
+    g.addColorStop(1, 'rgba(255,160,110,0)');
+    ctx.fillStyle = g;
+    ctx.fillRect(x - 90, y - 90, 180, 180);
+    // the disc, finely stepped
+    ctx.globalAlpha = sun;
+    ctx.fillStyle = '#fff4d0';
+    for (let dy = -6; dy <= 6; dy += 0.5) {
+      const half = Math.sqrt(Math.max(0, 36 - dy * dy));
+      ctx.fillRect(Math.round((x - half) * 2) / 2, Math.round((y + dy) * 2) / 2, Math.round(half * 4) / 2, 0.5);
+    }
+    ctx.globalAlpha = 1;
+  }
+
+  // ---------------------------------------------------------------- glass
+  private updateRain(dt: number): void {
+    const L = this.L;
+    if (!L) return;
+    const rain = rainAt(this.t);
+    const target = Math.round(rain * 70);
+    while (this.drops.length < target) {
+      this.drops.push({ x: L.wl + this.rand() * L.ww, y: L.wt + this.rand() * L.wh, r: 0.5 + this.rand() * 1.1, vx: 0, vy: 0, life: 1, run: this.rand() < 0.35 });
+    }
+    const v = speedAt(this.t);
+    for (const d of this.drops) {
+      if (d.run) {
+        // pushed back along the glass by the wind of the bus
+        d.vx = -(14 + d.r * 10) * (0.4 + v);
+        d.vy = 10 + d.r * 14;
+        d.x += d.vx * dt;
+        d.y += d.vy * dt;
+      } else if (this.rand() < dt * 0.25) d.run = true;
+      if (rain < 0.98) d.life -= dt * (0.25 + this.rand() * 0.3);
+      if (d.x < L.wl - 4 || d.y > L.wb + 2 || d.life <= 0) {
+        if (rain > 0.2) {
+          d.x = L.wl + this.rand() * (L.ww + 40);
+          d.y = L.wt + this.rand() * L.wh * 0.6;
+          d.run = this.rand() < 0.3;
+          d.life = 1;
+        } else d.life = 0;
+      }
+    }
+    this.drops = this.drops.filter((d) => d.life > 0);
+  }
+
+  private drawGlass(ctx: CanvasRenderingContext2D, L: Layout, t: number): void {
+    ctx.save();
+    ctx.beginPath();
+    ctx.rect(L.wl, L.wt, L.ww, L.wh);
+    ctx.clip();
+    // your reflection, faint over the dark city, gone once the day is up
+    const refl = (1 - ramp(t, 8.5, 13.5)) * 0.13 + pulse(t, 10.4, 10.8, 11.3, 12.1) * 0.12;
+    if (this.reflect && refl > 0.005) {
+      const s = this.reflect.width;
+      ctx.save();
+      ctx.globalAlpha = refl;
+      ctx.globalCompositeOperation = 'screen';
+      const rx = L.head.x + L.head.r * 0.9;
+      const ry = L.head.y - L.head.r * 2.7;
+      ctx.translate(rx + s / 2, ry);
+      ctx.scale(-1, 1);
+      ctx.drawImage(this.reflect, -s / 2, 0);
+      ctx.restore();
+    }
+    // drops and their trails
+    for (const d of this.drops) {
+      const a = Math.min(1, d.life);
+      if (d.run) {
+        ctx.fillStyle = `rgba(214,220,246,${0.18 * a})`;
+        for (let k = 1; k < 9; k++) ctx.fillRect(Math.round((d.x - (d.vx / d.vy) * -k * 1.2) * 2) / 2, Math.round((d.y - k * 1.2) * 2) / 2, 0.5, 0.5);
+      }
+      ctx.fillStyle = `rgba(60,56,92,${0.4 * a})`;
+      ctx.fillRect(Math.round(d.x * 2) / 2, Math.round((d.y + d.r * 0.5) * 2) / 2, Math.max(0.5, Math.round(d.r * 2) / 2), 0.5);
+      ctx.fillStyle = `rgba(226,230,255,${0.6 * a})`;
+      ctx.fillRect(Math.round(d.x * 2) / 2, Math.round((d.y - d.r * 0.5) * 2) / 2, 0.5, 0.5);
+    }
+    // a soft sheen band across the glass
+    const sh = ctx.createLinearGradient(L.wl + L.ww * 0.45, L.wt, L.wl + L.ww * 0.75, L.wb);
+    sh.addColorStop(0, 'rgba(255,255,255,0)');
+    sh.addColorStop(0.5, `rgba(255,250,240,${0.05 + 0.03 * ramp(t, 25, 30)})`);
+    sh.addColorStop(1, 'rgba(255,255,255,0)');
+    ctx.fillStyle = sh;
+    ctx.fillRect(L.wl, L.wt, L.ww, L.wh);
+    ctx.restore();
+  }
+
+  private drawSteam(ctx: CanvasRenderingContext2D, L: Layout, t: number): void {
+    // the coffee steams until it's gone cold
+    const a = 1 - ramp(t, 14, 19.5);
+    if (a <= 0) return;
+    const ch = 13 * L.u;
+    for (let i = 0; i < 26; i++) {
+      const k = ((t * 0.55 + i / 26) % 1);
+      const x = L.cup.x + Math.sin(k * 7 + i) * (1 + k * 3) + (i % 3) - 1;
+      const y = L.cup.y - 3 - ch - k * 16 * L.u;
+      ctx.fillStyle = `rgba(244,240,255,${0.35 * a * (1 - k)})`;
+      ctx.fillRect(Math.round(x * 2) / 2, Math.round(y * 2) / 2, 0.5, 0.5);
+    }
+  }
+
+  // ---------------------------------------------------------------- light
+  private fxCtx(): CanvasRenderingContext2D {
+    const c = this.fx.getContext('2d')!;
+    c.setTransform(1, 0, 0, 1, 0, 0);
+    c.globalCompositeOperation = 'source-over';
+    c.globalAlpha = 1;
+    c.clearRect(0, 0, this.fx.width, this.fx.height);
+    c.setTransform(2, 0, 0, 2, 0, 0);
+    c.imageSmoothingEnabled = false;
+    return c;
+  }
+  private masked(c: CanvasRenderingContext2D, mask: HTMLCanvasElement): void {
+    c.globalCompositeOperation = 'destination-in';
+    c.drawImage(mask, 0, 0);
+    c.globalCompositeOperation = 'source-over';
+  }
+  private blit(ctx: CanvasRenderingContext2D, op: GlobalCompositeOperation, alpha = 1): void {
+    ctx.globalCompositeOperation = op;
+    ctx.globalAlpha = alpha;
+    ctx.drawImage(this.fx, 0, 0, this.L!.w, this.L!.h);
+    ctx.globalCompositeOperation = 'source-over';
+    ctx.globalAlpha = 1;
+  }
+
+  /** Under the overpass: 0..1 for how much of the window its deck covers. */
+  private underness(L: Layout, t: number): number {
+    const o = this.jr!.objs.find((q) => q.kind === 'overpass');
+    if (!o) return 0;
+    const x = this.sx(o.lx, 'near', t, L.ww);
+    const half = lw(o.c) / 2;
+    const left = Math.max(0, x - half);
+    const right = Math.min(L.ww, x + half);
+    return Math.max(0, right - left) / L.ww;
+  }
+
+  private lightPass(ctx: CanvasRenderingContext2D, L: Layout, t: number): void {
+    const it = this.inter!;
+    const lt = lightAt(t);
+    const under = this.underness(L, t);
+    const sun = sunAt(t);
+    const occ = this.sunOcclusion(L, t);
+
+    // 1. ambient: the whole interior takes the colour of the hour
+    let c = this.fxCtx();
+    c.fillStyle = under > 0 ? hex(mixc(lt.amb, '#4a4878', under * 0.7)) : lt.amb;
+    c.fillRect(0, 0, L.w, L.h);
+    this.masked(c, it.mask);
+    this.blit(ctx, 'multiply');
+
+    // 2. warm sunlight washing in, with shadows of poles and trees sweeping across
+    const morning = morningAt(t);
+    if (sun > 0 || morning > 0) {
+      c = this.fxCtx();
+      // a slanted shaft of window light falling across you and the seats;
+      // everything is drawn skewed so the shadow bands lean with the sun
+      const sk = 0.45;
+      const top = L.wt + L.wh * 0.35;
+      c.save();
+      c.transform(1, 0, -sk, 1, sk * top, 0);
+      const g = c.createLinearGradient(0, top, 0, L.h);
+      const col = sun > 0 ? `rgba(255,172,96,${0.5 * sun})` : `rgba(255,240,214,${0.24 * morning})`;
+      g.addColorStop(0, 'rgba(255,170,96,0)');
+      g.addColorStop(0.25, col);
+      g.addColorStop(1, col);
+      c.fillStyle = g;
+      c.fillRect(L.wl + L.ww * 0.05, top, L.ww * 1.1, L.h - top);
+      c.globalCompositeOperation = 'destination-out';
+      for (const s of this.shadowBands(L, t)) {
+        c.fillStyle = `rgba(0,0,0,${s.a})`;
+        c.fillRect(s.x, top, s.w, L.h - top);
+        c.fillStyle = `rgba(0,0,0,${s.a * 0.4})`;
+        c.fillRect(s.x - 1, top, 1, L.h - top);
+        c.fillRect(s.x + s.w, top, 1, L.h - top);
+      }
+      c.restore();
+      c.globalCompositeOperation = 'source-over';
+      this.masked(c, it.mask);
+      this.blit(ctx, 'screen');
+    }
+
+    // 3. sodium street lamps sliding past in the city
+    if (t < 11.6) {
+      c = this.fxCtx();
+      let any = false;
+      for (const o of this.jr!.objs) {
+        if (o.kind !== 'lamp') continue;
+        const x = L.wl + this.sx(o.lx, 'near', t, L.ww) + 12;
+        if (x < -80 || x > L.w + 80) continue;
+        any = true;
+        const sweep = x - 20;
+        const g = c.createLinearGradient(sweep - 46, 0, sweep + 46, 0);
+        g.addColorStop(0, 'rgba(255,180,100,0)');
+        g.addColorStop(0.5, 'rgba(255,190,110,0.32)');
+        g.addColorStop(1, 'rgba(255,180,100,0)');
+        c.fillStyle = g;
+        c.fillRect(sweep - 46, 0, 92, L.h);
+      }
+      if (any) {
+        this.masked(c, it.mask);
+        this.blit(ctx, 'screen', 1 - ramp(t, 9.6, 11.1));
+      }
+    }
+
+    // 4. rim light on the edges facing the window
+    const rimA = lt.rimA * (1 - under * 0.8) * (sun > 0 ? 1 - occ * 0.75 : 1);
+    if (rimA > 0.01) {
+      c = this.fxCtx();
+      c.fillStyle = lt.rim;
+      c.fillRect(0, 0, L.w, L.h);
+      this.masked(c, it.rim);
+      this.blit(ctx, 'lighter', Math.min(1, rimA));
+    }
+  }
+
+  /** Near and mid objects passing between the sun and you cast moving shadow bands. */
+  private shadowBands(L: Layout, t: number): { x: number; w: number; a: number }[] {
+    const out: { x: number; w: number; a: number }[] = [];
+    for (const o of this.jr!.objs) {
+      if (o.L !== 'near' && o.L !== 'mid') continue;
+      if (o.kind !== 'pole' && o.kind !== 'occluder' && o.kind !== 'windmill') continue;
+      const x = L.wl + this.sx(o.lx, o.L, t, L.ww);
+      if (x < L.wl - 40 || x > L.wr + 40) continue;
+      const near = o.L === 'near';
+      const w = o.kind === 'pole' ? 1.5 : o.kind === 'windmill' ? 3 : lw(o.c) * (near ? 0.6 : 0.35);
+      // nearer things throw wider, darker shadows a little further left
+      out.push({ x: x - (near ? 30 : 14) - w / 2, w, a: near ? 0.8 : o.kind === 'pole' ? 0.55 : 0.5 });
+    }
+    return out;
+  }
+
+  /** How much the sun itself is blocked right now (dims the rim and flare). */
+  private sunOcclusion(L: Layout, t: number): number {
+    if (sunAt(t) <= 0) return 0;
+    const sp = this.sunPos(L, t);
+    let occ = 0;
+    for (const o of this.jr!.objs) {
+      if (o.kind !== 'pole' && o.kind !== 'occluder' && o.kind !== 'windmill') continue;
+      const x = this.sx(o.lx, o.L, t, L.ww);
+      const half = o.kind === 'pole' ? 2 : lw(o.c) * 0.4;
+      const top = L.yh + LAYER_BASE[o.L] + o.dy - lh(o.c);
+      if (sp.y < top) continue;
+      const d = Math.abs(x - sp.x);
+      if (d < half + 4) occ = Math.max(occ, o.kind === 'pole' ? 0.35 : 1 - Math.max(0, d - half) / 4);
+    }
+    return occ;
+  }
+
+  private drawFlare(ctx: CanvasRenderingContext2D, L: Layout, t: number): void {
+    const sun = sunAt(t) * (1 - this.sunOcclusion(L, t) * 0.85);
+    if (sun <= 0.02) return;
+    const sp = this.sunPos(L, t);
+    const sx = L.wl + sp.x;
+    const sy = sp.y;
+    const cx = L.w / 2;
+    const cy = L.h / 2;
+    ctx.globalCompositeOperation = 'lighter';
+    // a soft anamorphic streak through the sun
+    const st = ctx.createLinearGradient(sx - 120, 0, sx + 120, 0);
+    st.addColorStop(0, 'rgba(255,170,110,0)');
+    st.addColorStop(0.5, `rgba(255,214,160,${0.2 * sun})`);
+    st.addColorStop(1, 'rgba(255,170,110,0)');
+    ctx.fillStyle = st;
+    ctx.fillRect(sx - 120, sy - 0.5, 240, 1);
+    // ghosts down the line through the middle of the frame
+    const ghosts: [number, number, string][] = [
+      [0.55, 5, '255,200,140'],
+      [1.15, 3, '200,240,200'],
+      [1.45, 9, '255,160,180'],
+      [1.8, 4, '180,200,255'],
+    ];
+    for (const [k, r, rgb] of ghosts) {
+      const gx = sx + (cx - sx) * k;
+      const gy = sy + (cy - sy) * k;
+      const g = ctx.createRadialGradient(gx, gy, 0, gx, gy, r);
+      g.addColorStop(0, `rgba(${rgb},${0.08 * sun})`);
+      g.addColorStop(0.7, `rgba(${rgb},${0.12 * sun})`);
+      g.addColorStop(1, `rgba(${rgb},0)`);
+      ctx.fillStyle = g;
+      ctx.fillRect(gx - r, gy - r, r * 2, r * 2);
+    }
+    ctx.globalCompositeOperation = 'source-over';
+  }
+
+  private drawMotes(ctx: CanvasRenderingContext2D, L: Layout, t: number): void {
+    const a = Math.max(sunAt(t), morningAt(t) * 0.5) * (1 - this.sunOcclusion(L, t) * 0.6);
+    if (a <= 0.02) return;
+    for (const m of this.motes) {
+      const x = L.wl + ((m.x * L.ww + Math.sin(t * 0.3 + m.p) * 12 + t * 2 * m.s) % L.ww);
+      const y = L.wt + L.wh * 0.25 + ((m.y * L.wh * 0.9 + Math.cos(t * 0.23 + m.p) * 8 - t * 1.5 * m.s) % (L.wh * 0.9) + L.wh * 0.9) % (L.wh * 0.9);
+      const tw = 0.5 + 0.5 * Math.sin(t * 2 + m.p * 3);
+      ctx.fillStyle = `rgba(255,240,200,${0.55 * a * tw * m.s})`;
+      ctx.fillRect(Math.round(x * 2) / 2, Math.round(y * 2) / 2, 0.5, 0.5);
+    }
   }
 }
+
