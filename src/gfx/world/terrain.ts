@@ -1559,11 +1559,12 @@ INFO['rubber'] = {
     const ly = md(Y, 64);
     if (lx === 0 || ly === 0) return C('#221e2e');
     if (lx === 1 || ly === 1) return C('#4a4258');
-    // recycled-rubber flecks
-    if (n < 0.03) return C('#6aa0a0');
-    if (n < 0.055) return C('#a06a7a');
-    if (n < 0.09) return C('#8a8098');
-    if (n > 0.95) return C('#2a2436');
+    // recycled-rubber flecks, sparse and muted
+    if (n < 0.012) return C('#5a8a8e');
+    if (n < 0.022) return C('#8a5e70');
+    if (n < 0.04) return C('#5e566e');
+    if (n > 0.96) return C('#2e2838');
+    if (lx === 2 || ly === 2) return C('#463e54');
     return band(fbF(X, Y, 312, 1.5), [C('#363044'), C('#3c3548'), C('#42394e')], X, Y, 0.5);
   },
   post: floorPost(),
