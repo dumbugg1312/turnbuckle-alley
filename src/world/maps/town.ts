@@ -88,8 +88,10 @@ function building(kind: string, cx: number, ay: number, doorDx: number, interior
 }
 
 // ---- North woods
-for (let x = 1; x < TOWN_W; x += 5.5) o('tree-pine', x, 2.5 + (Math.floor(x) % 2) * 0.3, { variant: Math.floor(x) % 3 });
-for (const x of [9.5, 26.5, 43, 58, 74, 87, 99]) o('tree', x, 5.8, { variant: Math.floor(x) % 3 });
+/** A small fixed wobble so rows of trees and lamps never sit on a ruler. */
+const wob = (i: number, k: number) => Math.sin(i * 12.9898 + k * 78.233) * 0.5;
+for (let x = 1, i = 0; x < TOWN_W; x += 5.5, i++) o('tree-pine', x + wob(i, 1) * 1.4, 2.5 + (Math.floor(x) % 2) * 0.3 + wob(i, 2) * 0.5, { variant: Math.floor(x) % 3 });
+[9.5, 26.5, 43, 58, 74, 87, 99].forEach((x, i) => o('tree', x + wob(i, 3) * 0.8, 5.8 + wob(i, 4) * 0.6, { variant: Math.floor(x) % 3 }));
 
 // ---- Ropewood Lane (houses face south, bottoms on LANE)
 building('b-house', 5.5, LANE, -16, 'house-abernathy', 'The Abernathys', { variant: 0 });
@@ -105,7 +107,10 @@ o('mailbox', 26.6, LANE + 0.6);
 o('fence-h', 6.5, LANE, { w: 3 });
 o('flowerbed', 37, LANE + 0.8);
 o('flowerbed', 84, LANE + 0.8);
-for (const x of [10, 30, 47, 64, 81, 96]) o('lamp', x, LANE + 1.2);
+for (const [x, dy] of [[10.3, 1.2], [29.6, 1.25], [47.4, 1.15], [63.8, 1.2], [81.3, 1.3], [96.2, 1.2]]) o('lamp', x, LANE + dy);
+// The Abernathys' paper, still on the step; a lost mitten on the end picket (winter only).
+o('newspaper', 5.25, LANE + 0.35, { text: 'The Tattler, still rolled in its rubber band. The bit of headline you can see says CHAIR.' });
+o('mitten', 7.92, LANE + 0.02, { text: 'A red mitten pushed onto a picket, thumb up. Whoever lost it has been doing everything one-handed.' });
 o('bench', 62, LANE + 0.8);
 o('bench', 80, LANE + 0.8);
 o('tree-blossom', 19.2, LANE - 0.6);
@@ -135,12 +140,29 @@ o('crate', 28.2, 24.2);
 o('barrel', 28.4, 22.6);
 o('chair', 25.6, 26.2, {}, 'chair-alley');
 // Main street furniture
-for (const x of [2.2, 16.6, 30.4, 58.6, 67.6, 79.6, 92.4]) o('lamp', x, MAIN + 1.2);
+for (const [x, dy] of [[2.2, 1.2], [16.6, 1.25], [58.6, 1.15], [67.6, 1.3], [79.6, 1.2], [92.4, 1.25]]) o('lamp', x, MAIN + dy);
+// The lamp by the alley has buzzed since anyone can remember.
+o('lamp', 30.4, MAIN + 1.2, { buzz: true, text: 'The lamp buzzes like a held note. Every so often it loses the thread and has to start again.' }, 'buzz-lamp');
+o('flyers', 16.6, MAIN + 1.28, { text: 'LOST: ONE COWBELL. ANSWERS TO NOTHING. Under it, half a pink flyer: ...RESTLERS WANTED. BRING YOUR OWN...' });
+o('flyers', 58.6, MAIN + 1.18, { text: 'The same lost-cowbell flyer. Someone has taken three of the phone-number tabs.' });
+// Outside the Hot Tag: a kid's bike against the wall and a chalk drawing that changes every week.
+o('bike', 13.3, MAIN + 0.25, { text: "A red bike with handlebar streamers and a playing card in the spokes. The bell's been taped over." });
+const CHALK_LINES = [
+  'Chalk hopscotch. Square seven is colored in so hard the chalk must have been a stub by the end.',
+  'A chalk wrestler holding a belt three times their size. The belt got most of the chalk.',
+  'A chalk sun in sunglasses. Somebody added a lawn chair next to it, then a smaller lawn chair.',
+  'A chalk heart with two sets of initials. One set was rubbed out and drawn again, bigger.',
+  'A chalk ring with two stick wrestlers. One of them is mid-air. An arrow points at that one.',
+  'A chalk rocket aimed straight at the diner. The flames go all the way to the curb.',
+];
+o('chalk', 8.1, MAIN + 1.7, { text: CHALK_LINES[0], lines: CHALK_LINES });
 o('newsstand', 14.8, MAIN + 1.2, {}, 'newsstand');
 o('hydrant', 48.8, MAIN + 1.3);
 o('bench', 57.3, MAIN + 0.5);
 o('trashcan', 66.2, MAIN + 1.2);
 o('bench', 45.5, MAIN + 6.6);
+o('puddle', 40.6, MAIN + 6.85, { variant: 0, text: 'A puddle from the rain. The sky in it is a shade bluer than the real one.' });
+o('puddle', 25.9, 25.9, { variant: 2, text: 'A puddle right where everybody steps. Everybody steps in it anyway.' });
 o('phone-booth', 79, MAIN - 0.6, {}, 'phone-booth');
 o('poster-board', 48, MAIN - 0.7, {}, 'poster-board');
 o('bus-stop', 97, MAIN + 0.8, {}, 'bus-stop');
@@ -179,18 +201,21 @@ o('tapebin', 100.5, MAIN + 14.6, { bin: 'flea' }, 'bin-flea-3');
 o('crate', 93.5, MAIN + 14.8);
 o('crate', 102.6, MAIN + 9);
 o('sign', 89.8, MAIN + 8.4, { text: 'FLEA MARKET: SAT & SUN. Tapes, toys, treasures.' }, 'sign-flea');
-for (const x of [13.4, 36, 62.5, 83.5, 99]) o('lamp', x, SECOND + 0.4);
+for (const [x, dy] of [[13.1, 0.4], [36.4, 0.45], [62.2, 0.35], [83.8, 0.4], [99.3, 0.5]]) o('lamp', x, SECOND + dy);
 
 // ---- Town square
 o('gazebo', 36.5, SECOND + 10.2, {}, 'gazebo');
-for (const [x, y] of [[19, SECOND + 6], [54.5, SECOND + 6], [19, SECOND + 11.5], [54.5, SECOND + 11.5]] as const) o('tree', x, y, { variant: Math.floor(x + y) % 3 });
-o('bench', 29, SECOND + 6.2);
-o('bench', 44, SECOND + 6.2);
-o('bench', 26, SECOND + 10.6);
-o('flowerbed', 31, SECOND + 11.3);
-o('flowerbed', 42, SECOND + 11.3);
-o('lamp', 23.5, SECOND + 8.5);
-o('lamp', 49.5, SECOND + 8.5);
+for (const [x, y, v] of [[19.3, SECOND + 6.15, 1], [54.1, SECOND + 5.85, 0], [18.8, SECOND + 11.6, 2], [54.8, SECOND + 11.35, 1]] as const) o('tree', x, y, { variant: v });
+o('bench', 28.6, SECOND + 6.3);
+o('bench', 44.5, SECOND + 6.15);
+o('bench', 25.7, SECOND + 10.7);
+o('flowerbed', 30.6, SECOND + 11.35);
+o('flowerbed', 42.5, SECOND + 11.2);
+o('lamp', 23.2, SECOND + 8.6);
+o('lamp', 49.9, SECOND + 8.35);
+o('puddle', 33.6, SECOND + 6.5, { variant: 1, text: 'A puddle. A leaf is going around in it very slowly, like it has somewhere to be.' });
+// summer: someone's ice cream didn't make it
+o('dropped-cone', 40.3, SECOND + 11.1, { text: 'A dropped ice cream cone, upside down on the path. The ants have already called a meeting about it.' });
 o('picnic-table', 8, SECOND + 8.5);
 o('picnic-table', 66, SECOND + 7);
 o('tree-blossom', 13.5, SECOND + 8.6);
@@ -216,7 +241,7 @@ o('lilypad', 90, CREEK + 2.4);
 o('rock', 42, CREEK - 0.2, { variant: 1 });
 o('rock', 8, CREEK - 0.2, { variant: 0 });
 o('log', 76, CREEK - 0.2);
-for (let x = 2; x < TOWN_W; x += 5) o('tree-pine', x, TOWN_H - 0.8, { variant: x % 3 });
+for (let x = 2, i = 0; x < TOWN_W; x += 5, i++) o('tree-pine', x + wob(i, 5) * 1.2, TOWN_H - 0.8 - Math.abs(wob(i, 6)) * 0.5, { variant: x % 3 });
 for (const x of [6, 22, 52, 70, 88]) o('tree', x, CREEK + 7.5, { variant: x % 3 });
 o('sign', 38.5, CREEK + 4.8, { text: 'THE WOODS. Folks say something with wings lives out here. Folks say a lot of things.' });
 

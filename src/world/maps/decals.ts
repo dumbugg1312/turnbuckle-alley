@@ -70,12 +70,14 @@ export function contextDecals(objects: ObjectPlacement[], c: DecalCtx): ObjectPl
       const w = Number(p.w ?? 3);
       if (!grassy(tileAt(o.x, o.y + 0.2))) continue;
       // in pieces, not one long strip
+      // long hedges get a few gangs of tufts with real gaps; short fences get more
+      const long = w > 8;
       for (let x0 = o.x - w / 2; x0 < o.x + w / 2; ) {
-        const seg = 1 + Math.floor(hsh(x0, o.y, 5) * 2.5);
+        const seg = 1 + Math.floor(hsh(x0, o.y, 5) * (long ? 1.6 : 2.5));
         const x1 = Math.min(o.x + w / 2, x0 + seg);
-        if (hsh(x0, o.y, 6) < 0.88 && grassy(tileAt((x0 + x1) / 2, o.y + 0.2))) add('tufts', (x0 + x1) / 2, o.y + 0.12, { w: Math.round((x1 - x0) * 16) + 4, h: 9 });
+        if (hsh(x0, o.y, 6) < (long ? 0.5 : 0.88) && grassy(tileAt((x0 + x1) / 2, o.y + 0.2))) add('tufts', (x0 + x1) / 2, o.y + 0.12, { w: Math.round((x1 - x0) * 16) + 4, h: 9 });
         if (hsh(x0, o.y, 7) < 0.45) add('clover', x0 + hsh(x0, o.y, 8) * seg, o.y + 0.55);
-        x0 = x1 + 0.5 + hsh(x0, o.y, 9) * 1.5;
+        x0 = x1 + (long ? 1.5 + hsh(x0, o.y, 9) * 4 : 0.5 + hsh(x0, o.y, 9) * 1.5);
       }
     }
     if (o.kind === 'fence-v') {

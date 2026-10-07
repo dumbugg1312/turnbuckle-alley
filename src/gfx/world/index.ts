@@ -6,3 +6,4 @@ import './props';
 import './interiors';
 import './farm';
 import './decals';
+import './charm';
