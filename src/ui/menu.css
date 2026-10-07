@@ -288,3 +288,18 @@
 .shop-info { flex: 1; min-width: 0; }
 .shop-name { font-family: var(--font-display); font-size: calc(var(--u) * 11); line-height: 0.95; letter-spacing: 0.02em; }
 .shop-desc { font-size: calc(var(--u) * 6.5); color: var(--ink-soft); line-height: 1.25; }
+
+/* Phones in landscape: let the journal use the screen. */
+@media (max-height: 500px) {
+  .menu-book {
+    width: min(calc(var(--u) * 460), calc(100vw - var(--u) * 16 - env(safe-area-inset-left) - env(safe-area-inset-right)));
+    height: calc(100vh - var(--u) * 12 - env(safe-area-inset-top) - env(safe-area-inset-bottom));
+    height: calc(100dvh - var(--u) * 12 - env(safe-area-inset-top) - env(safe-area-inset-bottom));
+  }
+}
+@media (orientation: portrait) {
+  .menu-book { height: min(calc(var(--u) * 420), calc(100dvh - var(--u) * 24 - env(safe-area-inset-top) - env(safe-area-inset-bottom))); }
+}
+/* Touch floor: every tab and segment stays at least 30px square. */
+.menu-tab { min-width: 36px; }
+.seg-b { min-width: var(--tap); }

@@ -313,8 +313,8 @@
 
 /* Comfortable touch targets regardless of UI scale. */
 .cr-chip { min-height: max(calc(var(--u) * 14), 30px); }
-.cr-chip.small { min-height: max(calc(var(--u) * 12), 28px); }
-.cr-swatch { width: max(calc(var(--u) * 13), 26px); height: max(calc(var(--u) * 13), 26px); }
+.cr-chip.small { min-height: max(calc(var(--u) * 12), 30px); }
+.cr-swatch { width: max(calc(var(--u) * 13), 30px); height: max(calc(var(--u) * 13), 30px); }
 .cr-arrow { width: max(calc(var(--u) * 14), 32px); height: max(calc(var(--u) * 14), 32px); }
 .cr-tab { min-height: max(calc(var(--u) * 14), 30px); }
 .cr-rot { width: max(calc(var(--u) * 18), 36px); height: max(calc(var(--u) * 18), 36px); }

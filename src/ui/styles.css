@@ -581,3 +581,7 @@ button { font-family: inherit; color: inherit; font-variant-ligatures: none; }
 }
 .debug-panel .label { width: 100%; color: var(--gold); }
 .debug-select { font-family: var(--font-body); font-size: calc(var(--u) * 7); width: 100%; }
+
+/* While someone is talking, the corner widgets step aside for the dialogue card. */
+#ui:has(.dialog-wrap) .hud-energy, #ui:has(.dialog-wrap) .hud-action { opacity: 0; transition: opacity 0.15s; }
+#ui:has(.dialog-wrap) .toasts { bottom: auto; top: calc(var(--u) * 34 + env(safe-area-inset-top)); }
