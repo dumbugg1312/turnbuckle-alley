@@ -18,9 +18,15 @@ export function chairState(): ChairState {
   return ext<ChairState>('chairs', () => ({ found: 0 }));
 }
 
-function gain(id: string, n = 1): void {
+/**
+ * Add items to the bag. When they come out of something in the world, they
+ * pop out of it and fly into your hands (with a "+1" over your head);
+ * otherwise a toast says what you got.
+ */
+function gain(id: string, n = 1, from?: { x: number; y: number }, delay = 0): void {
   addItem(id, n);
-  toast(`+${n} ${item(id).name}`, iconFor(id));
+  if (from && WORLD) WORLD.flyPickup(iconFor(id), from.x, from.y - 6, n, item(id).name, delay);
+  else toast(`+${n} ${item(id).name}`, iconFor(id));
 }
 
 function spendEnergy(n: number): boolean {
@@ -46,7 +52,10 @@ onAction('bed', async () => {
 onAction('chair', async ({ object }) => {
   const cs = chairState();
   cs.found++;
+  // Lift it, fold it (CLACK), and it flies into your arms.
+  if (WORLD) await WORLD.breakObject(object, { pose: 'lift' });
   audio.sfx('chair');
+  WORLD?.flyObject(object, `Chair #${cs.found}`);
   WORLD?.hideObject(object, 5 + Math.floor(Math.random() * 4));
   WORLD?.fx.burst(object.x, object.y - 6, 10, ['#f8f6fc', '#cfcae0', '#f4b63f'], { kind: 'star', speed: 40, gravity: 40 });
   const lines = [
@@ -55,25 +64,28 @@ onAction('chair', async ({ object }) => {
     'Another chair for the Sportatorium. Somebody will sit in this and scream.',
     'You fold the chair with a satisfying CLACK.',
   ];
-  toast(`🪑 Folding chair #${cs.found}! (${lines[cs.found % lines.length]})`);
+  toast(`Folding chair #${cs.found}! (${lines[cs.found % lines.length]})`);
   sting('item-get');
 });
 
 // ---- Yard debris on the farm
-const DEBRIS: Record<string, { energy: number; loot: [string, number][]; sound: string; text: string }> = {
-  weeds: { energy: 2, loot: [['fiber', 1]], sound: 'dig', text: 'You yank the weeds out by the roots.' },
-  junk: { energy: 6, loot: [['scrap', 2], ['plank', 1]], sound: 'thud', text: 'You haul the junk pile apart. Somewhere in here was a toaster.' },
-  stone: { energy: 4, loot: [['river-stone', 1]], sound: 'thud', text: 'You roll the stone out of the way.' },
-  stump: { energy: 6, loot: [['plank', 2]], sound: 'thud', text: 'The stump finally gives.' },
-  'old-tire': { energy: 3, loot: [['scrap', 1]], sound: 'thud', text: 'An old tire. You stack it by the shed. (Tire flips later? Tire flips later.)' },
+/** bits: what flies off as it comes loose (leaf-like bits that settle on the ground). */
+const DEBRIS: Record<string, { energy: number; loot: [string, number][]; sound: string; text: string; pose: 'grapple' | 'lift'; bits: string[] }> = {
+  weeds: { energy: 2, loot: [['fiber', 1]], sound: 'dig', text: 'You yank the weeds out by the roots.', pose: 'grapple', bits: ['#6a9a4a', '#8ab868', '#a0784a', '#f6f2e8'] },
+  junk: { energy: 6, loot: [['scrap', 2], ['plank', 1]], sound: 'thud', text: 'You haul the junk pile apart. Somewhere in here was a toaster.', pose: 'lift', bits: ['#9a9ab0', '#a8704f', '#c8944a', '#6a6a80'] },
+  stone: { energy: 4, loot: [['river-stone', 1]], sound: 'thud', text: 'You roll the stone out of the way.', pose: 'grapple', bits: ['#a8a2b8', '#8a8498', '#a0784a', '#6a9a4a'] },
+  stump: { energy: 6, loot: [['plank', 2]], sound: 'thud', text: 'The stump finally gives.', pose: 'grapple', bits: ['#c8944a', '#8a5a2a', '#e0b878', '#a0784a'] },
+  'old-tire': { energy: 3, loot: [['scrap', 1]], sound: 'thud', text: 'An old tire. You stack it by the shed. (Tire flips later? Tire flips later.)', pose: 'lift', bits: ['#5a5470', '#a0784a', '#6a9a4a'] },
 };
 for (const [kind, d] of Object.entries(DEBRIS)) {
   onAction(kind, async ({ object }) => {
     if (!spendEnergy(d.energy)) return;
+    // Reach in, it shudders and squashes, then gives way.
+    if (WORLD) await WORLD.breakObject(object, { pose: d.pose, bits: d.bits });
     audio.sfx(d.sound);
     WORLD?.fx.burst(object.x, object.y - 4, 8, ['#6a9a4a', '#a0784a', '#c8c0a0'], { kind: 'dust', speed: 40, gravity: 60 });
     WORLD?.hideObject(object);
-    for (const [id, n] of d.loot) gain(id, n);
+    d.loot.forEach(([id, n], i) => gain(id, n, object, i * 0.12));
     G.player.skills.strength += 3;
     const ws = worldState();
     const cleared = Object.keys(ws.hidden).filter((k) => k.startsWith('debris-')).length;

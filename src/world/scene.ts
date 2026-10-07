@@ -1,9 +1,9 @@
 import { audio } from '../audio';
 import { game } from '../core/game';
 import type { Scene } from '../core/scene';
-import { G, ext, type Dir } from '../core/state';
+import { G, ext, hearts, type Dir } from '../core/state';
 import { isShowDay, isSupershow, weekday } from '../core/time';
-import { currentEntry, NPCS, type DayCtx, type NpcDef } from '../data/npcs';
+import { currentEntry, NPCS, type DayCtx, type NpcDef, type ScheduleEntry } from '../data/npcs';
 import { drawCharacter, RUN_FRAMES, WALK_FRAMES, type Pose, type Quirk } from '../gfx/characters';
 import { pixelTextOutlined } from '../gfx/draw';
 import { Fx } from '../gfx/fx';
@@ -19,8 +19,11 @@ import { MAPS } from './maps/index';
 import { boxesOverlap, GameMap } from './map';
 import { findPath } from './pathfind';
 import { objectKind } from './registry';
-import { StepFx } from './stepfx';
-import { TILE, type MapObject, type Warp } from './types';
+import { Critters } from './critters';
+import { Foliage } from './foliage';
+import { StepFx, stepSound } from './stepfx';
+import { Weather } from './weather';
+import { TILE, type MapObject, type TerrainId, type Warp } from './types';
 
 /** Looks come from the character module when it exists. */
 const looksMod = import.meta.glob<{ LOOKS?: Record<string, Look> }>('../data/looks.ts', { eager: true });
@@ -74,6 +77,11 @@ const EMOTE_ICONS: Record<string, { px: string[]; ink: string; fill: string; hi:
     ink: '#2b2140', fill: '#5a4a8a', hi: '#9a8ad0',
     px: ['....####', '....#oo#', '....#.##', '....#...', '....#...', '....#...', '.####...', '#oo+#...', '#ooo#...', '.###....'],
   },
+  // A sigh: three little dots (rainy days, long waits).
+  '…': {
+    ink: '#2b2140', fill: '#6a5a8a', hi: '#a89ad0',
+    px: ['.##..##..##.', '#+o##+o##+o#', '#oo##oo##oo#', '.##..##..##.'],
+  },
 };
 
 /** Main characters' idle habits (gfx/charart/body.ts idlePose). */
@@ -96,6 +104,16 @@ class NpcActor extends Actor {
   homeY = 0;
   leaving = false;
   wanderT = Math.random() * 4;
+  /** The way the schedule wants them to face (they turn back to it after looking at you). */
+  schedFacing: Dir = 'down';
+  /** Seconds since they last had the player close; turns them back after a beat. */
+  lookAway = 0;
+  /** Seconds until their next idle emote (a hum at work, a sigh in the rain). */
+  ambT = 8 + Math.random() * 20;
+  /** A pose we set (a wave), and how long it lasts; cutscene poses are left alone. */
+  lifePose: { pose: string; t: number } | null = null;
+  /** Seconds left of a cold or wet shiver. */
+  shiver = 0;
   constructor(def: NpcDef, x: number, y: number) {
     super(def.id, lookFor(def.id), x, y);
     this.def = def;
@@ -134,11 +152,24 @@ export class WorldScene implements Scene {
   cam = { x: 0, y: 0 };
   fx = new Fx();
   private maps = new Map<string, GameMap>();
-  private interactTarget: { kind: 'npc'; npc: NpcActor } | { kind: 'obj'; obj: MapObject } | { kind: 'warp'; warp: Warp } | null = null;
+  private interactTarget: { kind: 'npc'; npc: NpcActor } | { kind: 'obj'; obj: MapObject } | { kind: 'warp'; warp: Warp } | { kind: 'cat' } | null = null;
   private rain: { x: number; y: number; v: number }[] = [];
   private lightCanvas = document.createElement('canvas');
   private particles = new Particles();
   private steps = new StepFx();
+  /** Birds, moths, the creek fish and Biscuit the diner cat. */
+  readonly critters = new Critters();
+  /** Plants that shake when you brush them (and pickups' squash). */
+  readonly foliage = new Foliage();
+  /** Snow, gusts, lightning. */
+  readonly weather = new Weather();
+  /** NPC id -> clock minutes when they last greeted the player today. */
+  private greeted = new Map<string, number>();
+  private greetDay = -1;
+  private dripAcc = 0;
+  /** Stacked "+1" pickup labels: when the last one went up. */
+  private lastPickupText = 0;
+  private pickupStack = 0;
   private lastStepSfx = 0;
   private grade: Grade = gradeAt(9 * 60, 'sun', false);
   private warping = false;
@@ -325,7 +356,7 @@ export class WorldScene implements Scene {
         this.npcs.delete(def.id);
         continue;
       }
-      const e = currentEntry(def, ctx, minutes);
+      const e = this.shelterFromRain(currentEntry(def, ctx, minutes), def.id);
       if (!e) continue;
       const here = this.npcs.get(def.id);
       if (e.map === this.map.id) {
@@ -350,14 +381,16 @@ export class WorldScene implements Scene {
           a.homeX = gx;
           a.homeY = gy;
           a.facing = (e.facing ?? 'down') as Dir;
+          a.schedFacing = a.facing;
           this.npcs.set(def.id, a);
-          if (!initial) a.goTo(this.map, spot.x, spot.y, () => (a.facing = (e.facing ?? 'down') as Dir));
+          if (!initial) a.goTo(this.map, spot.x, spot.y, () => (a.facing = a.schedFacing));
         } else if (Math.abs(here.homeX - gx) > 1 || Math.abs(here.homeY - gy) > 1 || here.leaving) {
           here.leaving = false;
           here.homeX = gx;
           here.homeY = gy;
           here.idle = e.idle ?? 'still';
-          here.goTo(this.map, spot.x, spot.y, () => (here.facing = (e.facing ?? 'down') as Dir));
+          here.schedFacing = (e.facing ?? 'down') as Dir;
+          here.goTo(this.map, spot.x, spot.y, () => (here.facing = here.schedFacing));
         }
       } else if (here && !here.leaving) {
         here.leaving = true;
@@ -366,6 +399,64 @@ export class WorldScene implements Scene {
         else this.npcs.delete(def.id);
       }
     }
+  }
+
+  // ------------------------------------------------------------ rain shelter
+
+  private shelterCache: { map: string; tiles: Set<number> } | null = null;
+  /** Walkable tiles right under a building's front, a porch or a canopy: dry spots in the rain. */
+  private shelterTiles(): Set<number> {
+    if (this.shelterCache?.map === this.map.id) return this.shelterCache.tiles;
+    const tiles = new Set<number>();
+    const m = this.map;
+    for (const o of m.objects) {
+      if (!(o.kind.startsWith('b-') || o.kind === 'gazebo' || o.kind === 'bus-stop' || o.kind === 'tent' || o.kind === 'airstream')) continue;
+      const sb = m.objectSolid(o);
+      if (!sb) continue;
+      const ty = Math.floor((sb.y + sb.h) / TILE);
+      for (let tx = Math.floor(sb.x / TILE); tx <= Math.floor((sb.x + sb.w - 1) / TILE); tx++) {
+        if (tx < 0 || ty < 0 || tx >= m.w || ty >= m.h || m.blocked[ty * m.w + tx]) continue;
+        tiles.add(ty * m.w + tx);
+      }
+    }
+    this.shelterCache = { map: m.id, tiles };
+    return tiles;
+  }
+
+  /**
+   * On a wet day, townsfolk scheduled out in the open wait it out under the
+   * nearest awning or porch instead (standing, facing the street), and nobody
+   * wanders. Indoor spots and spots already under cover are left alone.
+   */
+  private shelterFromRain(e: ScheduleEntry | null, id: string): ScheduleEntry | null {
+    const wet = G.weather.today === 'rain' || G.weather.today === 'storm';
+    if (!e || !wet || e.map !== this.map.id || this.map.def.indoor || id === 'mothman') return e;
+    const m = this.map;
+    const dry = this.shelterTiles();
+    if (!dry.size || dry.has(e.y * m.w + e.x)) return e;
+    // Breadth-first over walkable tiles to the nearest dry one, not too far.
+    const seen = new Set<number>([e.y * m.w + e.x]);
+    let frontier = [[e.x, e.y]];
+    for (let r = 0; r < 18 && frontier.length; r++) {
+      const next: number[][] = [];
+      for (const [x, y] of frontier)
+        for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) {
+          const nx = x + dx;
+          const ny = y + dy;
+          const k = ny * m.w + nx;
+          if (nx < 0 || ny < 0 || nx >= m.w || ny >= m.h || seen.has(k) || m.blocked[k]) continue;
+          seen.add(k);
+          if (dry.has(k)) {
+            // Several folk under one awning spread out a little (freeTile does the rest).
+            const off = (id.length % 3) - 1;
+            const sx = dry.has(k + off) ? nx + off : nx;
+            return { ...e, x: sx, y: ny, facing: 'down', idle: e.idle === 'work' ? 'work' : 'still' };
+          }
+          next.push([nx, ny]);
+        }
+      frontier = next;
+    }
+    return { ...e, idle: e.idle === 'wander' ? 'still' : e.idle };
   }
 
   /** The scheduled tile, or the nearest free walkable one if another NPC already holds it. */
@@ -438,6 +529,7 @@ export class WorldScene implements Scene {
       this.updateCamera(dt * 0.6);
       this.fx.update(dt);
       this.updateAtmosphere(dt);
+      this.updateLife(dt, [...this.npcs.values()]);
       return;
     }
     const blocked = game.blockers > 0 || this.busy || this.warping;
@@ -473,13 +565,132 @@ export class WorldScene implements Scene {
         }
       }
     }
+    if (!blocked) this.npcLife(dt);
     this.animateActors(actors, dt);
     this.updateCamera(dt);
     this.hud?.update();
     this.fx.update(dt);
     this.updateWeather(dt);
     this.updateAtmosphere(dt);
+    this.updateLife(dt, actors);
     this.updatePrompt();
+  }
+
+  /** Critters, plants that answer to touch, and the weather layers. */
+  private updateLife(dt: number, actors: Actor[]): void {
+    const { w, h } = game.screen;
+    const indoor = !!this.map.def.indoor;
+    const view = { x: this.cam.x, y: this.cam.y, w, h };
+    this.weather.update(dt, G.weather.today, !indoor, view);
+    this.foliage.update(dt, this.map, actors, this.player, this.steps, { front: this.weather.gustFront, strength: this.weather.gust, camX: this.cam.x });
+    this.critters.update(dt, {
+      map: this.map,
+      minutes: G.time.minutes,
+      weather: G.weather.today,
+      season: G.time.season,
+      day: absDayNow(),
+      player: this.player,
+      npcs: [...this.npcs.values()],
+      view,
+      steps: this.steps,
+      night: this.grade.lights,
+    });
+    // Rain landing on the ground around you.
+    if ((G.weather.today === 'rain' || G.weather.today === 'storm') && !indoor) {
+      this.dripAcc += dt * (G.weather.today === 'storm' ? 70 : 40);
+      while (this.dripAcc >= 1) {
+        this.dripAcc -= 1;
+        const x = view.x + Math.random() * w;
+        const y = view.y + Math.random() * h;
+        const t = this.map.terrainAt(Math.floor(x / TILE), Math.floor(y / TILE));
+        if (t !== 'void' && !this.map.blocked[Math.floor(y / TILE) * this.map.w + Math.floor(x / TILE)]) this.steps.drip(x, y);
+      }
+    }
+  }
+
+  // ------------------------------------------------------------ townsfolk notice you
+
+  /**
+   * NPCs react to the player: the first time you come near on a given day
+   * they notice you ("!" from strangers, a wave from people who know you, a
+   * heart from close friends, who say hello again every couple of hours).
+   * Standing close, they turn to face you, and turn back a moment after you
+   * leave. Now and then they hum at work, and on a wet day they sigh or
+   * shiver.
+   */
+  private npcLife(dt: number): void {
+    const p = this.player;
+    const day = absDayNow();
+    if (day !== this.greetDay) {
+      this.greetDay = day;
+      this.greeted.clear();
+    }
+    const wet = (G.weather.today === 'rain' || G.weather.today === 'storm' || G.weather.today === 'snow') && !this.map.def.indoor;
+    const { w, h } = game.screen;
+    for (const n of this.npcs.values()) {
+      if (n.lifePose) {
+        n.lifePose.t -= dt;
+        if (n.lifePose.t <= 0 || n.moving) {
+          if (n.pose === n.lifePose.pose) n.pose = null;
+          n.lifePose = null;
+        }
+      }
+      n.shiver = Math.max(0, n.shiver - dt);
+      if (!n.visible || n.leaving || n.path.length || n.pose) continue;
+      const d = Math.hypot(p.x - n.x, (p.y - n.y) * 1.25);
+      const sitting = n.idle === 'sit';
+      // Look at the player while they're close; turn back a beat after they go.
+      if (d < 30 && p.visible && !sitting) {
+        n.lookAway = 0.9;
+        const dx = p.x - n.x;
+        const dy = p.y - n.y;
+        const want: Dir = Math.abs(dx) > Math.abs(dy) * 1.2 ? (dx > 0 ? 'right' : 'left') : dy > 0 ? 'down' : 'up';
+        if (n.facing !== want && !(want === 'up' && n.idle === 'work')) n.facing = want;
+      } else if (n.lookAway > 0) {
+        n.lookAway -= dt;
+        if (n.lookAway <= 0) n.facing = n.schedFacing;
+      }
+      // Hello!
+      if (d < 34 && p.visible && !n.emote) {
+        const hs = hearts(n.id);
+        const last = this.greeted.get(n.id);
+        const again = hs >= 6 ? 120 : hs >= 3 ? 240 : Infinity;
+        if (last === undefined || G.time.minutes - last >= again) {
+          this.greeted.set(n.id, G.time.minutes);
+          this.greet(n, hs);
+          continue;
+        }
+      }
+      // Idle emotes, only on screen and when you're not right there.
+      n.ambT -= dt;
+      if (n.ambT <= 0) {
+        n.ambT = 16 + Math.random() * 26;
+        const sx = n.x - this.cam.x;
+        const sy = n.y - this.cam.y;
+        if (n.emote || d < 40 || sx < 8 || sx > w - 8 || sy < 30 || sy > h) continue;
+        if (wet) {
+          if (Math.random() < 0.5) this.emote(n.id, '…', 2);
+          else n.shiver = 0.7;
+        } else if (n.idle === 'work' && Math.random() < 0.6) this.emote(n.id, '♪', 1.6);
+      }
+    }
+  }
+
+  private greet(n: NpcActor, hs: number): void {
+    const met = (G.relationships[n.id]?.points ?? 0) > 0;
+    if (!met) {
+      this.emote(n.id, '!', 1.2);
+      return;
+    }
+    if (hs >= 6) this.emote(n.id, '♥', 1.6);
+    if (n.idle !== 'sit') {
+      // A wave hello, turned your way.
+      n.faceToward(this.player.x, this.player.y);
+      if (n.facing === 'up') n.facing = 'down';
+      n.lookAway = 1.2;
+      n.pose = 'wave';
+      n.lifePose = { pose: 'wave', t: 1 };
+    } else if (hs < 6) this.emote(n.id, '♪', 1.2);
   }
 
   /** Time-of-day grade and ambient particles (rendering state only). */
@@ -543,27 +754,30 @@ export class WorldScene implements Scene {
   /** Turn frames, hops, emotes; footfalls become dust, splashes and step sounds. */
   private animateActors(actors: Actor[], dt: number): void {
     const raining = (G.weather.today === 'rain' || G.weather.today === 'storm') && !this.map.def.indoor;
+    const snowy = G.weather.today === 'snow' && !this.map.def.indoor;
     const now = performance.now();
     for (const a of actors) {
       const hopping = a.hopT >= 0;
       a.animate(dt);
-      if (hopping && a.hopT < 0 && a.visible) this.footfall(a, raining, 1.6, 0);
+      if (hopping && a.hopT < 0 && a.visible) this.footfall(a, raining, 1.6, 0, snowy);
       if (!a.stepped) continue;
       a.stepped = 0;
       if (!a.visible) continue;
-      this.footfall(a, raining, a.running ? 1.4 : 1, a.phase);
+      const t = this.footfall(a, raining, a.running ? 1.4 : 1, a.phase, snowy);
       if (a === this.player && now - this.lastStepSfx > 170) {
         this.lastStepSfx = now;
-        // Alternate feet a touch, like real footfalls.
+        // The surface underfoot picks the sound; alternate feet a touch, like real footfalls.
         const left = Math.floor(a.phase * 2) & 1;
-        audio.sfx('step', { volume: a.running ? 0.42 : 0.34, pitch: (left ? 0.92 : 1.02) + Math.random() * 0.08 });
+        const kind = stepSound(t, { raining, snowy });
+        const vol = kind === 'carpet' ? 0.5 : kind === 'grass' ? 0.42 : 0.36;
+        audio.sfx('step-' + kind, { volume: vol * (a.running ? 1.2 : 1), pitch: (left ? 0.93 : 1.02) + Math.random() * 0.07 });
       }
     }
     this.steps.update(dt);
   }
 
-  /** Dust or a splash where a foot just landed. */
-  private footfall(a: Actor, raining: boolean, strength: number, phase: number): void {
+  /** Dust or a splash where a foot just landed. Returns the terrain underfoot. */
+  private footfall(a: Actor, raining: boolean, strength: number, phase: number, snowy = false): TerrainId {
     const left = Math.floor(phase * 2) & 1;
     const f = a.facing;
     let x = a.x;
@@ -574,7 +788,8 @@ export class WorldScene implements Scene {
       y += f === 'down' ? 1 : -1;
     }
     const t = this.map.terrainAt(Math.floor(x / TILE), Math.floor((y - 1) / TILE));
-    this.steps.step(x, y, f, t, raining, strength);
+    this.steps.step(x, y, f, t, raining, strength, snowy);
+    return t;
   }
 
   private async useWarp(w: Warp): Promise<void> {
@@ -710,6 +925,7 @@ export class WorldScene implements Scene {
       }
     }
     if (bestN) return { kind: 'npc', npc: bestN };
+    if (this.critters.catAt(fx, fy + 2) || this.critters.catAt(p.x, p.y)) return { kind: 'cat' };
     const probe = { x: fx - 4, y: fy - 4, w: 8, h: 8 };
     for (const o of this.map.objects) {
       if (o.hidden || !this.isInteractable(o)) continue;
@@ -730,6 +946,7 @@ export class WorldScene implements Scene {
     this.interactTarget = t;
     let label: string | null = null;
     if (t?.kind === 'npc') label = 'Talk';
+    else if (t?.kind === 'cat') label = 'Pet';
     else if (t?.kind === 'warp') label = t.warp.label ?? 'Enter';
     else if (t?.kind === 'obj') label = objectKind(t.obj.kind).label?.(t.obj) ?? (typeof t.obj.props.text === 'string' ? 'Read' : 'Check');
     if (label !== this.promptLabel) {
@@ -745,6 +962,30 @@ export class WorldScene implements Scene {
     if (t.kind === 'npc') void this.talk(t.npc);
     else if (t.kind === 'obj') void this.useObject(t.obj);
     else if (t.kind === 'warp') void this.useWarp(t.warp);
+    else if (t.kind === 'cat') this.petCat();
+  }
+
+  /** A scratch behind Biscuit's ears. Once a day it does you some good too. */
+  private petCat(): void {
+    const c = this.critters.cat;
+    if (!c || c.pet > 0.4) return;
+    this.player.faceToward(c.x, c.y);
+    this.player.pose = 'grapple';
+    setTimeout(() => {
+      if (this.player.pose === 'grapple') this.player.pose = null;
+    }, 450);
+    this.critters.pet();
+    const st = ext<{ petDay: number; pets: number }>('biscuit', () => ({ petDay: -1, pets: 0 }));
+    st.pets++;
+    if (st.petDay !== absDayNow()) {
+      st.petDay = absDayNow();
+      const gain = Math.min(8, G.player.maxEnergy - G.player.energy);
+      if (gain > 0) {
+        G.player.energy += gain;
+        this.fx.text(`+${gain} Energy`, this.player.x, this.player.y - 40, '#ffd0dc');
+      }
+      if (st.pets === 1) toast("Biscuit purrs like an outboard motor. (The diner's cat. Nobody remembers getting her.)");
+    }
   }
 
   private async talk(n: NpcActor): Promise<void> {
@@ -757,7 +998,8 @@ export class WorldScene implements Scene {
       await talkTo(n.def.id, placeKind(this.map.id, n.tx, n.ty));
     } finally {
       this.busy = false;
-      n.facing = (n.def.schedule(dayCtx()).find((e) => e.map === this.map.id)?.facing ?? n.facing) as Dir;
+      n.facing = n.schedFacing;
+      n.lookAway = 0;
     }
   }
 
@@ -820,7 +1062,8 @@ export class WorldScene implements Scene {
   render(ctx: CanvasRenderingContext2D): void {
     const { w, h } = game.screen;
     const g = this.grade;
-    const cx = Math.round(this.cam.x);
+    // (Close thunder gives the camera a little rumble.)
+    const cx = Math.round(this.cam.x) + this.weather.rumble;
     const cy = Math.round(this.cam.y);
     // Objects are drawn first onto a cleared buffer while their sprites are
     // collected as shadow casters; the sun shadows and the ground then go in
@@ -842,9 +1085,12 @@ export class WorldScene implements Scene {
       if (o.x < view.x || o.x > view.x + view.w || o.y < view.y || o.y > view.y + view.h + 140) continue;
       const k = objectKind(o.kind);
       if (k.flat) continue;
-      if (k.above) above.push(() => k.draw(ctx, o, game.t));
-      else list.push({ y: o.y + (k.sortY ?? 0), draw: () => k.draw(ctx, o, game.t) });
+      const bend = this.foliage.busy ? this.foliage.bend(o) : null;
+      const draw = bend ? () => this.drawBent(ctx, o, bend) : () => k.draw(ctx, o, game.t);
+      if (k.above) above.push(draw);
+      else list.push({ y: o.y + (k.sortY ?? 0), draw });
     }
+    this.critters.collect(list, above, ctx, game.t);
     const drawActor = (a: Actor, npc?: NpcActor) => {
       // Soft dithered contact shadow, leaning with the sun.
       const hop = a.hopState();
@@ -863,7 +1109,9 @@ export class WorldScene implements Scene {
         y -= Math.round(hop.h * 2) / 2;
       }
       if (a.pose) pose = a.pose as Pose;
-      drawCharacter(ctx, a.look, a.x, y, { facing: a.shownFacing, pose, frame, t: game.t + (npc ? a.x * 0.01 : 0), quirk: npc ? IDLE_QUIRK[npc.id] : undefined });
+      // A shiver on a cold wet day: a quick half-pixel jitter.
+      const jx = npc && npc.shiver > 0 ? (Math.floor(game.t * 28) % 2 ? 0.5 : -0.5) : 0;
+      drawCharacter(ctx, a.look, a.x + jx, y, { facing: a.shownFacing, pose, frame, t: game.t + (npc ? a.x * 0.01 : 0), quirk: npc ? IDLE_QUIRK[npc.id] : undefined });
       if (a.emote) this.drawEmote(ctx, a, y - a.y);
     };
     this.steps.draw(ctx);
@@ -873,12 +1121,16 @@ export class WorldScene implements Scene {
     for (const d of list) d.draw();
     for (const a of above) a();
     setCollecting(false);
+    // Leaves still on their way down fall in front of the scenery.
+    this.steps.draw(ctx, true);
+    const cat = this.critters.cat;
+    if (cat?.emote) this.drawEmote(ctx, { x: cat.x, y: cat.y, emote: cat.emote }, 0, 14);
     // Ambient particles (pollen, petals, fireflies) float above the scenery.
     this.particles.draw(ctx, g, game.t);
     // Interaction marker above target.
     const t = this.interactTarget;
     // (An emote bubble takes the spot over an NPC's head while it shows.)
-    if (t && game.blockers === 0 && !this.busy && !(t.kind === 'npc' && t.npc.emote)) {
+    if (t && game.blockers === 0 && !this.busy && !(t.kind === 'npc' && t.npc.emote) && !(t.kind === 'cat' && (!this.critters.cat || this.critters.cat.emote))) {
       let mx = 0;
       let my = 0;
       if (t.kind === 'npc') {
@@ -888,6 +1140,10 @@ export class WorldScene implements Scene {
         const hb = this.map.objectHit(t.obj)!;
         mx = hb.x + hb.w / 2;
         my = hb.y - 14;
+      } else if (t.kind === 'cat') {
+        const c = this.critters.cat!;
+        mx = c.x;
+        my = c.y - 22;
       } else {
         mx = (t.warp.x + t.warp.w / 2) * TILE;
         my = t.warp.y * TILE - 14;
@@ -905,6 +1161,8 @@ export class WorldScene implements Scene {
     // Sun shadows, then the ground, then the outside colour: all behind what is drawn.
     ctx.globalCompositeOperation = 'destination-over';
     drawCastShadows(ctx, g, { x: cx, y: cy, w, h });
+    // Fresh snow lies on the ground (under the shadows, over the ground).
+    if (G.weather.today === 'snow' && !this.map.def.indoor) this.weather.drawSnowCover(ctx, (x, y) => this.map.terrainAt(x, y), { x: cx, y: cy }, w, h);
     ctx.drawImage(this.map.ground(), 0, 0);
     ctx.restore();
     ctx.globalCompositeOperation = 'destination-over';
@@ -913,16 +1171,23 @@ export class WorldScene implements Scene {
     ctx.globalCompositeOperation = 'source-over';
 
     this.renderLighting(ctx, cx, cy, w, h);
-    // Rain on top.
+    ctx.save();
+    ctx.translate(-cx, -cy);
+    this.critters.drawLit(ctx, game.t);
+    ctx.restore();
+    // Rain, snow and blown leaves on top, then any lightning.
     if (this.rain.length) {
       ctx.fillStyle = 'rgba(200,215,255,0.55)';
       for (const r of this.rain) ctx.fillRect(Math.round(r.x), Math.round(r.y), 1, 4);
     }
+    this.weather.drawScreen(ctx);
+    this.weather.drawFlash(ctx, w, h);
     // Map name card on arrival.
     if (game.debug) pixelTextOutlined(ctx, `${this.map.id} ${this.player.tx},${this.player.ty}`, 4, h - 10, '#fff', '#000');
   }
 
-  private drawEmote(ctx: CanvasRenderingContext2D, a: Actor, yOff = 0): void {
+  /** An emote bubble over someone's head (`head` px above their feet; critters are shorter). */
+  private drawEmote(ctx: CanvasRenderingContext2D, a: { x: number; y: number; emote: Actor['emote'] }, yOff = 0, head = 34): void {
     const e = a.emote!;
     const age = e.age ?? 0;
     // Pop in with squash and stretch: shoot up tall and thin, splat wide, settle; then a gentle float.
@@ -951,7 +1216,7 @@ export class WorldScene implements Scene {
     const rise = age < 0.2 ? (1 - age / 0.2) * 4 : 0;
     const float = age > 0.27 ? Math.round(Math.sin((age - 0.27) * 4) * 1) : 0;
     const x = Math.round(a.x);
-    const by = Math.round(a.y + yOff - 34 + rise + float);
+    const by = Math.round(a.y + yOff - head + rise + float);
     const w = Math.max(3, Math.round(13 * sx));
     const h = Math.max(3, Math.round(11 * sy));
     const x0 = x + 0.5 - w / 2;
@@ -987,12 +1252,49 @@ export class WorldScene implements Scene {
     }
   }
 
+  /**
+   * Draw an object leaning (a shear pivoting on its base) and/or squashed.
+   * Hedges bend only around the touch: the hedge is drawn as is, then the
+   * stretch near the touch is drawn again over it, leaning.
+   */
+  private drawBent(ctx: CanvasRenderingContext2D, o: MapObject, b: { shear: number; sx: number; sy: number; at?: number }): void {
+    const k = objectKind(o.kind);
+    const bent = () => {
+      ctx.save();
+      ctx.translate(o.x, o.y);
+      ctx.transform(b.sx, 0, -b.shear, b.sy, 0, 0);
+      ctx.translate(-o.x, -o.y);
+      k.draw(ctx, o, game.t);
+      ctx.restore();
+    };
+    if (b.at === undefined) {
+      bent();
+      return;
+    }
+    k.draw(ctx, o, game.t);
+    setCollecting(false);
+    for (const [half, f] of [[16, 0.5], [8, 1]] as const) {
+      ctx.save();
+      ctx.beginPath();
+      ctx.rect(b.at - half, o.y - 40, half * 2, 44);
+      ctx.clip();
+      const s = b.shear;
+      b.shear = s * f;
+      bent();
+      b.shear = s;
+      ctx.restore();
+    }
+    setCollecting(true);
+  }
+
   private renderLighting(ctx: CanvasRenderingContext2D, cx: number, cy: number, w: number, h: number): void {
     if (w < 1 || h < 1) return;
     const g = this.grade;
     const indoor = !!this.map.def.indoor;
     // Light sources in view (plus a faint glow on the player outdoors so they never vanish).
-    const amb = g.amb;
+    // Lightning lifts the whole lightmap toward a cool lavender for a moment.
+    const fl = this.weather.flash;
+    const amb = fl > 0.01 ? [g.amb[0] + (246 - g.amb[0]) * fl, g.amb[1] + (242 - g.amb[1]) * fl, g.amb[2] + (255 - g.amb[2]) * fl] : g.amb;
     const lights: { x: number; y: number; r: number; color: string; base: number; kind: string; wallH: number }[] = [];
     if (g.lights > 0.02) {
       for (const o of this.map.objects) {
@@ -1064,6 +1366,76 @@ export class WorldScene implements Scene {
     }
   }
 
+  // ------------------------------------------------------------ pickups
+
+  /**
+   * The moment before something comes loose: the player reaches for it (a
+   * grab or lift pose, turned toward it), it shudders and squashes for a
+   * beat, then bits fly off. Resolves when it should break.
+   */
+  breakObject(o: MapObject, opts: { pose?: 'grapple' | 'lift'; bits?: string[] } = {}): Promise<void> {
+    const p = this.player;
+    // The reach poses are side views: turn left or right toward it.
+    p.facing = o.x < p.x - 2 ? 'left' : o.x > p.x + 2 ? 'right' : p.facing === 'left' ? 'left' : 'right';
+    p.pose = 'grapple';
+    this.foliage.squash(o, 0.16);
+    audio.sfx('yank', { volume: 0.6, pitch: 0.9 + Math.random() * 0.2 });
+    return new Promise((resolve) => {
+      setTimeout(() => {
+        if (opts.bits) {
+          this.steps.leaves(o.x, o.y - 6, opts.bits, 5, 10, o.y + 2, 0, 1.5);
+          this.steps.step(o.x, o.y, 'down', 'dirt', false, 1.6);
+        }
+        // Yank it up and hold for a beat, then let the arms come down.
+        p.pose = opts.pose ?? 'lift';
+        setTimeout(() => {
+          if (p.pose === (opts.pose ?? 'lift')) p.pose = null;
+        }, 240);
+        resolve();
+      }, 160);
+    });
+  }
+
+  /** Items out of something in the world: they pop, bounce and fly into the player, with a "+n Name" overhead. */
+  flyPickup(icon: HTMLCanvasElement, x: number, y: number, n: number, name: string, delay = 0): void {
+    const shown = Math.min(n, 3);
+    const p = this.player;
+    for (let i = 0; i < shown; i++) {
+      const last = i === shown - 1;
+      this.fx.fly(icon, x, y, () => ({ x: p.x, y: p.y - 4 }), () => {
+        audio.sfx('pickup', { volume: 0.55, pitch: 1 + i * 0.12 + Math.random() * 0.04 });
+        p.hop();
+        if (last) this.pickupText(`+${n} ${name}`);
+      }, { delay: delay + i * 0.07 });
+    }
+  }
+
+  /** A whole object (a folding chair) lifts out of the world and into your arms. */
+  flyObject(o: MapObject, label: string): void {
+    const c = document.createElement('canvas');
+    c.width = 64;
+    c.height = 80;
+    (c as unknown as { __k: number }).__k = 2;
+    const x = c.getContext('2d')!;
+    x.imageSmoothingEnabled = false;
+    x.setTransform(2, 0, 0, 2, 0, 0);
+    objectKind(o.kind).draw(x, { ...o, x: 16, y: 34, hidden: false }, 0);
+    const p = this.player;
+    this.fx.fly(c, o.x, o.y + 6, () => ({ x: p.x, y: p.y + 6 }), () => {
+      audio.sfx('pickup', { volume: 0.6 });
+      p.hop();
+      this.pickupText(label);
+    }, { w: 16, h: 20, spread: 0.4 });
+  }
+
+  /** Floating pickup labels stack up instead of overlapping. */
+  private pickupText(text: string): void {
+    const now = game.t;
+    this.pickupStack = now - this.lastPickupText < 0.5 ? this.pickupStack + 1 : 0;
+    this.lastPickupText = now;
+    this.fx.text(text, this.player.x, this.player.y - 40 - this.pickupStack * 7, '#fff4dc');
+  }
+
   // ------------------------------------------------------------ cutscene helpers
 
   /** Place an NPC on this map for a scripted scene (outside their schedule). */
@@ -1081,6 +1453,7 @@ export class WorldScene implements Scene {
     a.homeX = a.x;
     a.homeY = a.y;
     a.facing = facing;
+    a.schedFacing = facing;
     a.idle = 'still';
     a.leaving = false;
     a.stop();
@@ -1095,6 +1468,7 @@ export class WorldScene implements Scene {
       const ok = a.goTo(this.map, tx, ty, () => {
         if (facing) a.facing = facing;
         if (a instanceof NpcActor) {
+          if (facing) a.schedFacing = facing;
           a.homeX = a.x;
           a.homeY = a.y;
         }
