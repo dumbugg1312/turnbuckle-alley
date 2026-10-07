@@ -1,22 +1,32 @@
-import { G, hasItem } from '../core/state';
+import { G } from '../core/state';
 import { absDay, isShowDay, weekday } from '../core/time';
 
-/** The gentle "what should I do?" ribbon under the clock. */
+/**
+ * The little note under the clock. Through the first week it reads like
+ * something somebody told you, in their words; after your debut it goes
+ * away, except on show nights, and the town's own hints carry you.
+ */
 export function currentGoal(): string | null {
   const f = G.flags;
   if (f['prologue']) return null;
-  if (!f['seen_farm']) return 'Head west down Main Street to the Dupree place.';
-  if (!f['first_night'] && absDay() === 0) return "Go inside Grandma's house and get some sleep.";
-  if (!f['met_birdie']) return absDay() === 0 ? 'Rest up. Tomorrow: find Birdie at the Sportatorium.' : 'Meet Birdie at the Sportatorium (Main Street, the big red barn).';
-  if (!G.player.persona) return "Visit Marigold at Sew What? on Second Street. You can't wrestle in jeans.";
+  // Arrival evening.
+  if (!f['seen_farm']) return f['pip_tour_done'] ? 'Pip says keep going west till the road gets tired.' : 'Pip knows the way. Supposedly.';
+  if (absDay() === 0) {
+    if (!f['first_night']) return 'The key on the blue ribbon fits the blue house.';
+    if (!f['dottie_fridge_note']) return 'Something is stuck to the fridge.';
+    if (!f['porch_sat']) return "Sit a spell on the porch. Somebody ought to. - D.";
+    return 'Bed. Birdie tomorrow.';
+  }
+  // The first week.
+  if (!f['met_birdie']) return "Birdie's note: Sportatorium, ten o'clock. The big red barn on Main.";
+  if (!G.player.persona) return "Birdie: see Marigold at Sew What? on Second Street. Nobody wrestles in jeans.";
   if (!f['debuted']) {
-    if (isShowDay() && weekday() === 2) return G.time.minutes < 19 * 60 ? 'Debut tonight! VFW Hall on Second Street. Talk to Birdie there after 5 PM.' : 'Get to the VFW Hall, the show is on!';
-    return 'Your debut is Wednesday at the VFW Hall, 7 PM. Explore town and meet people!';
+    if (isShowDay() && weekday() === 2) return G.time.minutes < 19 * 60 ? 'Debut tonight. VFW Hall, Second Street. Birdie wants you there after five.' : 'The VFW. Now. The show is on.';
+    return 'Debut Wednesday, VFW Hall, seven sharp. Birdie says: go meet people.';
   }
+  // After the debut: only show nights.
   if (isShowDay() && G.time.minutes >= 15 * 60 && G.time.minutes < 20 * 60) {
-    return weekday() === 2 ? "Show night! VFW Hall, 7 PM. Find Birdie when you're ready." : "Show night! The Sportatorium, 7 PM. Find Birdie when you're ready.";
+    return weekday() === 2 ? 'VFW tonight, bell at seven. Find Birdie when you get there.' : 'Sportatorium tonight, bell at seven. Find Birdie when you get there.';
   }
-  if (f['lou_key'] && !f['dungeon_visited'] && hasItem('dungeon-key')) return 'Lou gave you the Dungeon key. Stairs in the Sportatorium locker room.';
-  if (!f['yard_cleared'] && absDay() < 14) return "Clear Grandma's yard, then ask Hank about fixing the ring.";
   return null;
 }
