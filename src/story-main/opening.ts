@@ -11,6 +11,7 @@ import { WorldScene, WORLD } from '../world/scene';
 import { HAIR_COLORS, SKIN_TONES } from '../gfx/look';
 import { speakerFor } from '../world/talk';
 import { TILE } from '../world/types';
+import { TOWN_ENTRY } from '../world/maps/town';
 
 /** Optional modules from other teams, loaded if present. */
 const creatorMod = import.meta.glob<{ creatorScene?: (mode: 'self' | 'ring', onDone: () => void) => import('../core/scene').Scene }>('../scenes/creator.ts');
@@ -129,8 +130,8 @@ export function arrive(): void {
   G.time = { year: 1, season: 0, day: 1, minutes: 17 * 60 + 40 };
   G.weather = { today: 'sun', tomorrow: 'sun' };
   G.player.map = 'town';
-  G.player.x = 60 * TILE + 8;
-  G.player.y = 25 * TILE + 12;
+  G.player.x = TOWN_ENTRY.bus.x * TILE + 8;
+  G.player.y = TOWN_ENTRY.bus.y * TILE + 12;
   G.player.facing = 'left';
   game.scenes.reset(new WorldScene());
 }
@@ -140,8 +141,8 @@ export async function arrivalScene(): Promise<void> {
   if (!w) return;
   audio.sfx('door');
   await narrate('The bus wheezes away down Route 9, and the dust settles on *Turnbuckle Alley*.', 'The sun is low and gold. Somewhere, a screen door bangs. The whole town smells like cut grass and fryer oil.');
-  w.spawnTemp('pip', 52, 24, 'right');
-  await w.walkTo('pip', 58, 25, 'right');
+  w.spawnTemp('pip', TOWN_ENTRY.bus.x - 8, TOWN_ENTRY.bus.y - 1, 'right');
+  await w.walkTo('pip', TOWN_ENTRY.bus.x - 2, TOWN_ENTRY.bus.y, 'right');
   const pip = speakerFor('pip');
   await say(pip, 'WHOA. Are you a wrestler? You have wrestler shoulders.', "I'm Pip. I'm the undisputed Pip-weight champion of the world. *(He taps a cardboard belt with PIP painted on it in glitter glue.)*");
   const c = await choose(pip, 'Are you a wrestler?', [
@@ -152,7 +153,7 @@ export async function arrivalScene(): Promise<void> {
   else await say(pip, "Birdie?! She runs the WHOLE Sportatorium! She's the Commissioner! She fined the Bruiser Twins forty casseroles once!");
   await say(pip, "Where are you staying? There's no hotel. There's a motel but it has a raccoon.", '...The old *Dupree* place? Past the Sportatorium, all the way west? Nobody\'s lived there since FOREVER. My dad says it\'s haunted by a really good wrestler.');
   await say(pip, "I gotta go, it's dinner. Bye! Welcome to Turnbuckle Alley! Wednesday is wrestling!");
-  await w.walkTo('pip', 46, 25);
+  await w.walkTo('pip', TOWN_ENTRY.bus.x - 14, TOWN_ENTRY.bus.y);
   w.despawn('pip');
   toast(G.settings.showHints ? 'Tap anywhere to walk, or use WASD/arrows. Head west to the Dupree place.' : '');
 }

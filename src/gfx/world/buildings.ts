@@ -13,7 +13,7 @@ import { noteCaster } from '../../world/atmosphere';
 import { registerObject } from '../../world/registry';
 import type { MapObject, ObjectKind } from '../../world/types';
 import {
-  AK, FX, FY, HL, L, OUT, P, P1, R, RR, RRB, VG, VL, box, circ, clip, col, curve, dense, dth, ell, hash2, liA, mixc, mkSpr, noclip, poly, rng, selA, shA, toCanvas,
+  AK, DS, FX, FY, HL, L, OUT, P, P1, R, RR, RRB, VG, VL, box, circ, clip, col, curve, dense, dth, ell, hash2, liA, mixc, mkSpr, noclip, poly, rng, selA, shA, toCanvas,
   type Color, type Spr,
 } from '../kit';
 import { FM, FT, T, TC, TW, glyph } from '../font';
@@ -66,7 +66,12 @@ export function art(
   ART.set(key, a);
   return a;
 }
+/** Paint fn in its own w x h buffer and stamp it at (dx, dy): reuse a facade piece somewhere else. */
+function at(dx: number, dy: number, w: number, h: number, fn: () => void): void {
+  DS(mkSpr(w, h, fn), dx, dy);
+}
 /** Build density for all world art in this file (and props built through art()). */
+
 export const BK = 2;
 /**
  * A cached overlay positioned in its parent's local coords. By default draw()
@@ -1210,24 +1215,158 @@ function dinerSign(on: boolean[]): void {
     }
   }
 }
+/** Diner interior behind a big pane: wrestler photos, pendant lamps, booth bays every 17 px, patrons by variant. */
+function dinerBooths(wx: number, wy: number, ww: number, wh: number, v: number): void {
+  R(wx, wy, ww, wh, '#e7a468');
+  FR(wx, wy, ww, 12, (fx) => (fx % 8 === 0 ? '#d9955e' : null));
+  // back counter with the pie case
+  R(wx, wy + 9, ww, 3, '#c8b8a8');
+  fh(wx, wx + ww, wy + 9, '#f2eef6');
+  if (v === 0) {
+    R(wx + 30, wy + 6, 10, 3, '#cfe8f0');
+    fh(wx + 30, wx + 40, wy + 6, '#ffffff');
+    for (let k = 0; k < 3; k++) ell(wx + 32 + k * 3, wy + 8, 1.2, 0.7, ['#f0c060', '#e87a8a', '#c8905a'][k]);
+  } else {
+    // the milkshake machine and a row of tall glasses
+    R(wx + 4, wy + 4, 4, 5, '#c8c4d8');
+    fh(wx + 4, wx + 8, wy + 4, '#ffffff');
+    for (let k = 0; k < 4; k++) R(wx + 10 + k * 2.5, wy + 6.5, 1.5, 2.5, ['#ffb0c8', '#fff4dc', '#c8905a', '#ffb0c8'][k]);
+  }
+  R(wx, wy + 12, ww, wh - 12, '#b45a4c');
+  fh(wx, wx + ww, wy + 12, '#cf7458');
+  R(wx, wy + 26, ww, 2, '#8a4a4a');
+  FR(wx, wy + 26, ww, 2, (fx, fy) => (((fx >> 1) + (fy >> 1)) % 2 ? '#d8c8d0' : '#5a3a4a'));
+  // framed wrestler photos
+  for (let fx = wx + 9; fx + 6 < wx + ww; fx += 14) {
+    R(fx, wy + 1.5, 6, 6, '#f2c050');
+    fh(fx, fx + 6, wy + 1.5, '#fff0a0');
+    R(fx + 1, wy + 2.5, 4, 4, ['#6e5a8a', '#3f6a8a', '#8a4a5a'][Math.floor(fx) % 3]);
+    P1(fx + 2.5, wy + 3, '#f2c8a0');
+    P1(fx + 3, wy + 3, '#f2c8a0');
+    R(fx + 2, wy + 4, 2, 2, '#e0505a');
+  }
+  // pendant lamps
+  for (let lx = wx + 3; lx < wx + ww - 2; lx += 14) {
+    fv(lx, wy, wy + 3, '#5a4060');
+    RR(lx - 2, wy + 3, 5, 2, 1, '#3f8a86');
+    fh(lx - 1.5, lx + 2, wy + 3, '#6ac0b0');
+    fh(lx - 1, lx + 1.5, wy + 5, '#fff2b0');
+    for (let k = 0; k < 6; k++) FR(lx - k * 0.7, wy + 5.5 + k * 0.6, 1 + k * 1.4, 0.6, (a, b, o) => (dth(a, b, 7 - k) ? mixc(o, '#ffe6a0', 0.35) : o));
+  }
+  // booths: tall red backs, tables
+  const bays = Math.floor((ww - 1) / 17);
+  for (let i = 0; i < bays; i++) {
+    const bx = wx + 1 + i * 17;
+    for (const ox of [0, 12]) {
+      RR(bx + ox, wy + 12, 4, 16, 2, '#d0444f');
+      fv(bx + ox, wy + 13, wy + 28, '#ee7a72');
+      fv(bx + ox + 3.5, wy + 13, wy + 28, '#8e2c48');
+      for (let y = wy + 15; y < wy + 26; y += 3) fh(bx + ox + 0.5, bx + ox + 3.5, y, '#b8384a');
+    }
+    R(bx + 4, wy + 18, 8, 2, '#fbe6cc');
+    fh(bx + 4, bx + 12, wy + 18, '#ffffff');
+    fh(bx + 4, bx + 12, wy + 19.5, '#c0b0c8');
+    fv(bx + 8, wy + 20, wy + 28, '#9a8eb4');
+  }
+  const pp = (x: number, y: number, shirt: string, skin = '#f0b890') => {
+    R(x, y + 5, 5, 5, shirt);
+    fv(x, y + 5, y + 10, liA(shirt, 0.3));
+    RR(x, y, 5, 6, 2, skin);
+    R(x + 3, y + 2, 2, 4, shA(skin, 0.18));
+  };
+  if (v === 0) {
+    // beehive lady with coffee, trucker reading the Tattler, a slice of pie
+    pp(wx + 6, wy + 12, '#4f9a9a');
+    RR(wx + 5, wy + 6, 7, 8, 3, '#c8b8e0');
+    FR(wx + 5, wy + 6, 7, 8, (fx, fy, o) => (o && (fx + fy) % 3 === 0 ? liA(o, 0.2) : o));
+    RR(wx + 6, wy + 10, 5, 4, 1, '#f0b890');
+    P1(wx + 7, wy + 11, AK);
+    P1(wx + 9, wy + 11, AK);
+    P1(wx + 8, wy + 12.5, '#d06070');
+    R(wx + 11, wy + 16, 2, 2, '#fff');
+    P1(wx + 11.5, wy + 15, over('#ffffff', 0.5));
+    pp(wx + 22, wy + 12, '#e2a040');
+    RR(wx + 21, wy + 11, 7, 2, 1, '#d84a4a');
+    R(wx + 19, wy + 14, 10, 6, '#f4eee0');
+    fv(wx + 24, wy + 14, wy + 20, '#c8c0b8');
+    for (let k = 0; k < 4; k++) fh(wx + 20, wx + 23.5, wy + 16.5 + k, '#a8a0b8');
+    for (let k = 0; k < 3; k++) fh(wx + 25, wx + 28, wy + 16.5 + k, '#a8a0b8');
+    micro('TATTLER', wx + 19.5, wy + 14.5, '#4a3a5a');
+    ell(wx + 44, wy + 18, 2.5, 0.75, '#ffffff');
+    poly([[wx + 42, wy + 17.5], [wx + 46, wy + 17.5], [wx + 44.5, wy + 16]], '#f0c060');
+    P1(wx + 44, wy + 16, '#d04050');
+    T('PIE', wx + 2, wy + 21.5, enamel('#ffd977'), FT, { ls: 1, shadow: '#7a2a3a' });
+    T('COFFEE', wx + 28, wy + 21.5, enamel('#ffd977'), FT, { shadow: '#7a2a3a' });
+  } else {
+    // a couple sharing one milkshake with two straws; a kid in a cape at the next booth
+    pp(wx + 5, wy + 12, '#6a5aa0', '#c8906a');
+    pp(wx + 11, wy + 12, '#e8b84a');
+    RR(wx + 10.5, wy + 10.5, 6, 3, 1, '#7a4a3a');
+    R(wx + 8, wy + 15, 3, 3, '#ffb0c8');
+    fh(wx + 8, wx + 11, wy + 15, '#fff4f8');
+    L(wx + 8.5, wy + 15, wx + 7.5, wy + 12.5, '#e8505a');
+    L(wx + 10.5, wy + 15, wx + 11.5, wy + 12.5, '#5ab0e0');
+    if (ww > 30) {
+      pp(wx + 24, wy + 14, '#e8505a');
+      poly([[wx + 23, wy + 19], [wx + 30, wy + 19], [wx + 31, wy + 26], [wx + 22, wy + 26]], '#3f74d8');
+      R(wx + 27, wy + 17, 3, 1.5, '#fff4dc');
+    }
+    T('SHAKES', wx + 2, wy + 21.5, enamel('#ffd977'), FT, { shadow: '#7a2a3a' });
+  }
+}
+/** The kitchen pass: steel, an order wheel, the cook in a paper hat, fryer steam. */
+function dinerKitchen(wx: number, wy: number, ww: number, wh: number): void {
+  R(wx, wy, ww, wh, '#c8c4d8');
+  FR(wx, wy, ww, wh, (fx, fy) => ((fx & 7) === 0 || (fy & 7) === 0 ? '#b0aac4' : hash2(fx, fy, 61) < 0.05 ? '#e0dcec' : null));
+  // hood and steam
+  R(wx, wy, ww, 5, '#8a84a0');
+  fh(wx, wx + ww, wy + 5, '#5a5478');
+  for (let k = 0; k < 5; k++) ell(wx + 6 + k * 5, wy + 8 - (k % 2), 2, 1.5, over('#ffffff', 0.35));
+  // the cook
+  RR(wx + ww / 2 - 3, wy + 7, 6, 4, 1, '#ffffff');
+  fh(wx + ww / 2 - 3, wx + ww / 2 + 3, wy + 10.5, '#d8d4e8');
+  RR(wx + ww / 2 - 3, wy + 10, 6, 6, 2, '#c8906a');
+  P1(wx + ww / 2 - 1.5, wy + 12, AK);
+  P1(wx + ww / 2 + 1, wy + 12, AK);
+  fh(wx + ww / 2 - 1.5, wx + ww / 2 + 1.5, wy + 14, '#5a3a3a');
+  R(wx + ww / 2 - 4, wy + 16, 8, 6, '#ffffff');
+  // order wheel with tickets
+  ell(wx + 5, wy + 14, 3.5, 1, '#9a94b0');
+  for (let k = 0; k < 4; k++) R(wx + 2 + k * 2, wy + 15, 1.5, 3, '#fff8e8');
+  // the pass shelf with plates under the heat lamp
+  R(wx, wy + wh - 8, ww, 2.5, '#e8e4f0');
+  fh(wx, wx + ww, wy + wh - 8, '#ffffff');
+  fh(wx, wx + ww, wy + wh - 5.5, '#8a84a0');
+  for (const px of [wx + 4, wx + ww - 10]) {
+    ell(px + 3, wy + wh - 9, 3, 0.8, '#ffffff');
+    ell(px + 3, wy + wh - 9.5, 1.8, 0.6, ['#f0c060', '#c8604a'][px > wx + 10 ? 1 : 0]);
+  }
+  R(wx + ww - 9, wy + 4, 6, 1.5, '#e8505a');
+  fh(wx + ww - 9, wx + ww - 3, wy + 5.5, '#ffb070');
+  R(wx, wy + wh - 5.5, ww, 5.5, '#9a94b0');
+  FR(wx, wy + wh - 5.5, ww, 5.5, (fx) => (fx % 6 === 0 ? '#7a7490' : null));
+  micro('ORDER UP', wx + 2, wy + wh - 4, '#fff4dc');
+}
 function drawDiner(): void {
-  const W = 96;
+  const W = 176;
   const GY = 96;
   // flat roof behind the parapet, sign legs standing on it
-  flatRoof(2, 18, 92, 12, 11);
-  FR(2, 18, 92, 12, (fx, fy, o) => (hash2(fx, fy, 12) < 0.12 ? shA(o, 0.12) : o));
-  ventF(80, 20, 5);
+  flatRoof(2, 18, W - 4, 12, 11);
+  FR(2, 18, W - 4, 12, (fx, fy, o) => (hash2(fx, fy, 12) < 0.12 ? shA(o, 0.12) : o));
+  ventF(W - 16, 20, 5);
+  ventF(W - 40, 21, 4);
   acUnit(5, 21);
-  R(14, 22, 5, 5, '#8a84a0');
-  fh(14, 19, 22, '#c8c4d8');
-  wire(19, 24, 30, 27, 2, '#3a3048');
-  for (const sx of [24, 70]) {
+  acUnit(130, 21);
+  R(18, 22, 5, 5, '#8a84a0');
+  fh(18, 23, 22, '#c8c4d8');
+  wire(23, 24, 64, 27, 2, '#3a3048');
+  for (const sx of [64, 110]) {
     R(sx, 20, 3, 9, '#5a4468');
     fv(sx, 20, 29, '#8a6a8a');
     fh(sx - 1, sx + 4, 28.5, '#3a2a48');
     L(sx + 3, 21, sx + 7, 28, '#5a4468');
   }
-  dinerSign([true, true, true]);
+  at(40, 0, 96, 22, () => dinerSign([true, true, true]));
   // parapet cap
   R(0, 29, W, 3, '#f6e4c4');
   fh(0, W, 29, '#fffaf0');
@@ -1240,7 +1379,9 @@ function drawDiner(): void {
   FR(0, 33, W, 9, (fx, fy, o) => ((fx & 7) === 0 ? shA(o, 0.08) : hash2(fx, fy, 14) < 0.03 ? liA(o, 0.15) : o));
   TC('BREAKFAST ALL DAY', W / 2 + 0.5, 35.5, '#8e2c4c', FT, {});
   TC('BREAKFAST ALL DAY', W / 2, 35, enamel('#fff0dc'), FT, {});
-  for (const sx of [5, 90]) {
+  micro('OPEN 6 AM', 10, 36, '#fff0dc');
+  micro('SINCE 1957', W - 30, 36, '#fff0dc');
+  for (const sx of [5, 42, W - 43, W - 6]) {
     P(sx, 37, '#ffd977');
     P1(sx - 1, 37, '#ffe9b0');
     P1(sx + 1.5, 37, '#ffe9b0');
@@ -1265,7 +1406,7 @@ function drawDiner(): void {
   fh(0, W, pT, '#e2f6e2');
   fh(0, W, pT + HF, '#f4fff8');
   aoTop(0, pT, W, 4, 0.18);
-  shadeRight(W - 8, pT, 8, pB - pT, 0.18);
+  shadeRight(W - 10, pT, 10, pB - pT, 0.18);
   // chrome strip + cherry kickplate with ribbing
   R(0, pB, W, 2, '#f2eef6');
   fh(0, W, pB, '#ffffff');
@@ -1275,170 +1416,107 @@ function drawDiner(): void {
   fh(0, W, pB + 2, '#e06a64');
   FR(0, pB + 3, W, GY - pB - 4, (fx, _fy, o) => ((fx % 6) === 0 ? '#a8344a' : (fx % 6) === 1 ? '#e06a64' : o));
   grime(0, GY - 6, W, 6, 0.25);
-  // big window full of booths
-  const wx = 5;
-  const wy = 49;
-  const ww = 52;
-  const wh = 28;
-  R(wx - 2, wy - 2, ww + 4, wh + 4, '#efeaf4');
-  fh(wx - 2, wx + ww + 2, wy - 2, '#ffffff');
-  fv(wx + ww + 1.5, wy - 2, wy + wh + 2, '#9a8eb4');
-  fh(wx - 2, wx + ww + 2, wy + wh + 1.5, '#8a7ea6');
-  fv(wx - 2, wy - 2, wy + wh + 2, '#ffffff');
-  glassF(wx, wy, ww, wh, () => {
-    R(wx, wy, ww, wh, '#e7a468');
-    FR(wx, wy, ww, 12, (fx) => (fx % 8 === 0 ? '#d9955e' : null));
-    // back counter, pie case and stools behind the booths
-    R(wx, wy + 9, ww, 3, '#c8b8a8');
-    fh(wx, wx + ww, wy + 9, '#f2eef6');
-    R(wx + 30, wy + 6, 10, 3, '#cfe8f0');
-    fh(wx + 30, wx + 40, wy + 6, '#ffffff');
-    for (let k = 0; k < 3; k++) {
-      ell(wx + 32 + k * 3, wy + 8, 1.2, 0.7, ['#f0c060', '#e87a8a', '#c8905a'][k]);
+  // chrome-framed panes: two booth windows and the kitchen pass
+  const pane = (wx: number, ww: number, inside: () => void, mullions: number[]) => {
+    const wy = 49;
+    const wh = 28;
+    R(wx - 2, wy - 2, ww + 4, wh + 4, '#efeaf4');
+    fh(wx - 2, wx + ww + 2, wy - 2, '#ffffff');
+    fv(wx + ww + 1.5, wy - 2, wy + wh + 2, '#9a8eb4');
+    fh(wx - 2, wx + ww + 2, wy + wh + 1.5, '#8a7ea6');
+    fv(wx - 2, wy - 2, wy + wh + 2, '#ffffff');
+    glassF(wx, wy, ww, wh, inside);
+    for (const mx of mullions) {
+      R(wx + mx - 0.5, wy, 1.5, wh, '#d8d2e2');
+      fv(wx + mx - 0.5, wy, wy + wh, '#ffffff');
     }
-    R(wx, wy + 12, ww, wh - 12, '#b45a4c');
-    fh(wx, wx + ww, wy + 12, '#cf7458');
-    R(wx, wy + 26, ww, 2, '#8a4a4a');
-    FR(wx, wy + 26, ww, 2, (fx, fy) => ((fx >> 1) + (fy >> 1)) % 2 ? '#d8c8d0' : '#5a3a4a');
-    // framed wrestler photos
-    for (const fx of [wx + 9, wx + 23, wx + 37]) {
-      R(fx, wy + 1.5, 6, 6, '#f2c050');
-      fh(fx, fx + 6, wy + 1.5, '#fff0a0');
-      R(fx + 1, wy + 2.5, 4, 4, '#6e5a8a');
-      P1(fx + 2.5, wy + 3, '#f2c8a0');
-      P1(fx + 3, wy + 3, '#f2c8a0');
-      R(fx + 2, wy + 4, 2, 2, '#e0505a');
-    }
-    // pendant lamps
-    for (const lx of [wx + 3, wx + 17, wx + 31, wx + 46]) {
-      fv(lx, wy, wy + 3, '#5a4060');
-      RR(lx - 2, wy + 3, 5, 2, 1, '#3f8a86');
-      fh(lx - 1.5, lx + 2, wy + 3, '#6ac0b0');
-      fh(lx - 1, lx + 1.5, wy + 5, '#fff2b0');
-      for (let k = 0; k < 6; k++) FR(lx - k * 0.7, wy + 5.5 + k * 0.6, 1 + k * 1.4, 0.6, (a, b, o) => (dth(a, b, 7 - k) ? mixc(o, '#ffe6a0', 0.35) : o));
-    }
-    // booths: tall red backs, tables
-    for (let i = 0; i < 3; i++) {
-      const bx = wx + 1 + i * 17;
-      for (const ox of [0, 12]) {
-        RR(bx + ox, wy + 12, 4, 16, 2, '#d0444f');
-        fv(bx + ox, wy + 13, wy + 28, '#ee7a72');
-        fv(bx + ox + 3.5, wy + 13, wy + 28, '#8e2c48');
-        for (let y = wy + 15; y < wy + 26; y += 3) fh(bx + ox + 0.5, bx + ox + 3.5, y, '#b8384a');
-      }
-      R(bx + 4, wy + 18, 8, 2, '#fbe6cc');
-      fh(bx + 4, bx + 12, wy + 18, '#ffffff');
-      fh(bx + 4, bx + 12, wy + 19.5, '#c0b0c8');
-      fv(bx + 8, wy + 20, wy + 28, '#9a8eb4');
-    }
-    // patrons: beehive lady with coffee, trucker reading the Tattler, a slice of pie
-    const pp = (x: number, y: number, shirt: string) => {
-      R(x, y + 5, 5, 5, shirt);
-      fv(x, y + 5, y + 10, liA(shirt, 0.3));
-      RR(x, y, 5, 6, 2, '#f0b890');
-      R(x + 3, y + 2, 2, 4, '#cf8e78');
-    };
-    pp(wx + 6, wy + 12, '#4f9a9a');
-    RR(wx + 5, wy + 6, 7, 8, 3, '#c8b8e0');
-    FR(wx + 5, wy + 6, 7, 8, (fx, fy, o) => (o && (fx + fy) % 3 === 0 ? liA(o, 0.2) : o));
-    RR(wx + 6, wy + 10, 5, 4, 1, '#f0b890');
-    P1(wx + 7, wy + 11, AK);
-    P1(wx + 9, wy + 11, AK);
-    P1(wx + 8, wy + 12.5, '#d06070');
-    R(wx + 11, wy + 16, 2, 2, '#fff');
-    P1(wx + 11.5, wy + 15, over('#ffffff', 0.5));
-    pp(wx + 22, wy + 12, '#e2a040');
-    RR(wx + 21, wy + 11, 7, 2, 1, '#d84a4a');
-    R(wx + 19, wy + 14, 10, 6, '#f4eee0');
-    fv(wx + 24, wy + 14, wy + 20, '#c8c0b8');
-    for (let k = 0; k < 4; k++) fh(wx + 20, wx + 23.5, wy + 16.5 + k, '#a8a0b8');
-    for (let k = 0; k < 3; k++) fh(wx + 25, wx + 28, wy + 16.5 + k, '#a8a0b8');
-    micro('TATTLER', wx + 19.5, wy + 14.5, '#4a3a5a');
-    ell(wx + 44, wy + 18, 2.5, 0.75, '#ffffff');
-    poly([[wx + 42, wy + 17.5], [wx + 46, wy + 17.5], [wx + 44.5, wy + 16]], '#f0c060');
-    P1(wx + 44, wy + 16, '#d04050');
-    T('PIE', wx + 2, wy + 21.5, enamel('#ffd977'), FT, { ls: 1, shadow: '#7a2a3a' });
-    T('COFFEE', wx + 28, wy + 21.5, enamel('#ffd977'), FT, { shadow: '#7a2a3a' });
-  });
-  for (const mx of [wx + 17, wx + 35]) {
-    R(mx - 0.5, wy, 1.5, wh, '#d8d2e2');
-    fv(mx - 0.5, wy, wy + wh, '#ffffff');
-  }
-  boxF(wx - 2, wy + wh + 1.5, ww + 4, 5, '#d0484f');
-  // door with a scalloped awning (door centre at x = 72)
-  const dx = 64;
-  const dy = 60;
+  };
+  pane(6, 52, () => dinerBooths(6, 49, 52, 28, 0), [17, 35]);
+  boxF(4, 78.5, 56, 5, '#d0484f');
+  pane(64, 30, () => dinerBooths(64, 49, 30, 28, 1), [17]);
+  boxF(62, 78.5, 34, 8, '#d0484f');
+  pane(142, 28, () => dinerKitchen(142, 49, 28, 28), [14]);
+  // door with a scalloped awning (door centre at x = 120, a 16 x 32 opening)
+  const dx = 112;
+  const dy = GY - 32;
   R(dx - 2, dy - 2, 20, GY - dy + 2, '#efeaf4');
   fv(dx - 2, dy - 2, GY, '#ffffff');
   fv(dx + 17.5, dy - 2, GY, '#9a8eb4');
-  glassF(dx, dy, 16, 20, () => {
-    R(dx, dy, 16, 20, '#e7a468');
-    R(dx, dy + 12, 16, 8, '#b45a4c');
-    RR(dx + 6, dy + 4, 5, 10, 2, '#d0444f');
-    fh(dx, dx + 16, dy + 12, '#f2eef6');
+  glassF(dx, dy, 16, 17, () => {
+    R(dx, dy, 16, 17, '#e7a468');
+    R(dx, dy + 10, 16, 7, '#b45a4c');
+    RR(dx + 6, dy + 3, 5, 10, 2, '#d0444f');
+    fh(dx, dx + 16, dy + 10, '#f2eef6');
   });
-  R(dx, dy + 20, 16, GY - dy - 20, '#d4cbe0');
-  fh(dx, dx + 16, dy + 20, '#ffffff');
-  fh(dx, dx + 16, dy + 20.5, '#f2eef6');
-  R(dx + 2, dy + 24, 12, 1, '#a89cc0');
-  fh(dx + 2, dx + 14, dy + 24, '#e8e4f0');
+  R(dx, dy + 17, 16, GY - dy - 17, '#d4cbe0');
+  fh(dx, dx + 16, dy + 17, '#ffffff');
+  fh(dx, dx + 16, dy + 17.5, '#f2eef6');
+  R(dx + 2, dy + 21, 12, 1, '#a89cc0');
+  fh(dx + 2, dx + 14, dy + 21, '#e8e4f0');
   FR(dx, GY - 4, 16, 4, (fx, _fy, o) => (fx % 3 === 0 ? '#a89cc0' : o));
-  R(dx + 13, dy + 14, 2, 5, '#f2eef6');
-  fv(dx + 13, dy + 14, dy + 19, '#ffffff');
+  R(dx + 13, dy + 12, 2, 5, '#f2eef6');
+  fv(dx + 13, dy + 12, dy + 17, '#ffffff');
   RR(dx + 2, dy + 2, 12, 7, 1, '#2f2440');
   neon('OPEN', dx + 2, dy + 3, '#e6fff8', '#38e0c8', FT, { sp: 0 });
   awning(dx - 4, dy - 9, 24, 5, '#d4464e', '#fff1dc', 3);
-  // wall lantern, menu card, house number
-  R(85, 54, 3, 2, '#4a3050');
-  RR(84, 56, 5, 7, 1, '#4a3050');
-  R(85, 57, 3, 4, '#ffe08a');
-  P1(86, 58, '#fffbe8');
-  fh(85, 88, 61, '#f2b84a');
-  R(82, 66, 13, 14, '#fff4dc');
-  fh(82, 95, 66, '#ffffff');
-  fv(82, 66, 80, '#ffffff');
-  fv(94.5, 66, 80, '#c8b8a0');
-  T('ACW', 83, 67, enamel('#c9404c'), FT, { sp: 0 });
-  for (let k = 0; k < 5; k++) micro(['EGGS 2.50', 'PIE .90', 'BLT 3', 'MELT 3.25', 'JOE .45'][k], 83, 73 + k * 1.5, '#7a6a8a');
-  fh(82.5, 95.5, 80, tint('#2b2140', 0.35));
-  RR(83, 45, 9, 6, 1, '#2f5a68');
-  fh(84, 91, 45, '#4a8090');
-  T('12', 84, 46, '#fff4dc', FT, { sp: 1 });
-  // a chrome edge on the left corner
+  // wall lantern, menu card, house number, a gumball machine by the step
+  R(133, 54, 3, 2, '#4a3050');
+  RR(132, 56, 5, 7, 1, '#4a3050');
+  R(133, 57, 3, 4, '#ffe08a');
+  P1(134, 58, '#fffbe8');
+  fh(133, 136, 61, '#f2b84a');
+  R(97, 62, 11, 15, '#fff4dc');
+  fh(97, 108, 62, '#ffffff');
+  fv(97, 62, 77, '#ffffff');
+  fv(107.5, 62, 77, '#c8b8a0');
+  T('ACW', 97.5, 63, enamel('#c9404c'), FT, { sp: 0 });
+  for (let k = 0; k < 5; k++) micro(['EGGS 2.50', 'PIE .90', 'BLT 3', 'MELT 3.25', 'JOE .45'][k], 98, 69 + k * 1.5, '#7a6a8a');
+  fh(97.5, 108.5, 77, tint('#2b2140', 0.35));
+  RR(150, 44.5, 12, 3.5, 1, '#2f5a68');
+  micro('NO. 12', 151, 45, '#fff4dc');
+  ell(137, GY - 12, 3, 3, over('#ffffff', 0.55));
+  P1(136, GY - 13.5, '#ffffff');
+  for (let k = 0; k < 7; k++) P1(135.5 + (k % 3) * 1.25, GY - 13 + Math.floor(k / 3) * 1.25, ['#e8505a', '#f4b63f', '#5ab0e0', '#6fb070'][k % 4]);
+  R(135.5, GY - 9, 3, 2, '#c8343f');
+  R(136.5, GY - 7, 1, 5, '#8a84a0');
+  // chrome edges on both corners
   fv(0, pT, pB, '#ffffff');
   fv(HF, pT, pB, '#f2eef6');
+  fv(W - HF, pT, pB, '#8a7ea6');
 }
 building('b-diner', {
-  w: 96,
+  w: 176,
   h: 96,
-  door: 24,
+  door: 32,
   draw: drawDiner,
   shadowTop: 29,
   label: 'Hot Tag Diner',
-  solid: { x: -48, y: -66, w: 96, h: 66 },
+  solid: { x: -88, y: -66, w: 176, h: 66 },
   anims: [
     {
       // neon flicker: the G stutters now and then
       fps: 0,
       frames: 2,
-      rect: [10, 0, 76, 21],
+      rect: [50, 0, 76, 21],
       pick: neonFlicker(97, [3, 4, 9, 31, 32, 34, 60]),
       skip: (f) => f === 0,
-      draw: () => dinerSign([true, false, true]),
+      draw: () => at(40, 0, 96, 22, () => dinerSign([true, false, true])),
     },
     {
       fps: 3,
       frames: 4,
-      rect: [0, 42, 96, 6],
-      draw: (f) => bulbs([[2, 42], [32, 42, 3], [64, 42, 3], [94, 42, 3]], f, 1),
+      rect: [0, 42, 176, 6],
+      draw: (f) => bulbs([[2, 42], [30, 42, 3], [59, 42, 3], [88, 42, 3], [117, 42, 3], [146, 42, 3], [174, 42, 3]], f, 1),
     },
   ],
   lights: [
-    [31, 63, 32, WARM],
-    [72, 72, 18, WARM],
-    [86, 59, 12, LAMP],
-    [36, 10, 26, '#ff7ab0'],
-    [60, 14, 22, '#5ff2d6'],
+    [32, 63, 32, WARM],
+    [79, 63, 22, WARM],
+    [156, 63, 20, '#fff0c8'],
+    [120, 72, 18, WARM],
+    [134, 59, 12, LAMP],
+    [76, 10, 26, '#ff7ab0'],
+    [100, 14, 22, '#5ff2d6'],
   ],
 });
 
@@ -1447,31 +1525,34 @@ building('b-diner', {
 //  A western false-front in mustard clapboard, chairs fanned in the window.
 // =====================================================================
 function drawHardware(): void {
-  const W = 80;
+  const W = 144;
   const GY = 96;
   const ffTop = 8;
   const sideTop = 22;
+  const ff0 = 18;
+  const ff1 = W - 18;
   // roof behind the false front
   flatRoof(0, 14, W, 10, 21, '#7e7090');
-  ventF(4, 16, 4);
+  ventF(5, 16, 4);
+  ventF(W - 10, 16, 5);
   // clapboard walls
   siding(0, sideTop, W, GY - sideTop, '#e8b45a', 21, 4, 0.02);
-  siding(14, ffTop, W - 28, sideTop - ffTop, '#e8b45a', 22, 4, 0.02);
-  shadeRight(W - 9, sideTop, 9, GY - sideTop, 0.24);
+  siding(ff0, ffTop, ff1 - ff0, sideTop - ffTop, '#e8b45a', 22, 4, 0.02);
+  shadeRight(W - 10, sideTop, 10, GY - sideTop, 0.24);
   // cornice + brackets
-  R(12, ffTop - 3, W - 24, 3, '#3a6f78');
-  fh(12, W - 12, ffTop - 3, '#7ac0b0');
-  fh(12, W - 12, ffTop - 0.5, '#24485a');
-  for (const [x0, x1] of [[0, 16], [W - 16, W]] as [number, number][]) {
+  R(ff0 - 2, ffTop - 3, ff1 - ff0 + 4, 3, '#3a6f78');
+  fh(ff0 - 2, ff1 + 2, ffTop - 3, '#7ac0b0');
+  fh(ff0 - 2, ff1 + 2, ffTop - 0.5, '#24485a');
+  for (const [x0, x1] of [[0, ff0 + 2], [ff1 - 2, W]] as [number, number][]) {
     R(x0, sideTop - 3, x1 - x0, 3, '#3a6f78');
     fh(x0, x1, sideTop - 3, '#7ac0b0');
     fh(x0, x1, sideTop - 0.5, '#24485a');
   }
-  for (let x = 14; x < W - 14; x += 5) {
+  for (let x = ff0; x < ff1; x += 5) {
     R(x, ffTop, 2, 2, '#2f5a68');
     P1(x, ffTop, '#5aa39a');
   }
-  aoTop(14, ffTop, W - 28, 3, 0.25);
+  aoTop(ff0, ffTop, ff1 - ff0, 3, 0.25);
   // corner boards
   for (const [x, lit] of [[0, true], [W - 2, false]] as [number, boolean][]) {
     R(x, sideTop, 2, GY - sideTop, lit ? '#3a6f78' : '#2f5a68');
@@ -1479,19 +1560,21 @@ function drawHardware(): void {
     fv(x + 1.5, sideTop, GY, '#24485a');
   }
   // painted sign board
-  signBoardF(5, 17, 70, 20, '#2f5a68', '#fbefd4');
-  TC('STEEL CHAIR', 40.5, 21.5, '#e8b48a', FM, {});
-  TC('STEEL CHAIR', 40, 21, enamel('#a8323e'), FM, {});
-  TC('HARDWARE', 40, 30, worn('#2f6a74', 31, 0.06), FT, { ls: 1 });
-  chairIcon(8, 27, '#7a7096', '#4e4870');
-  chairIcon(67, 27, '#7a7096', '#4e4870');
-  for (const [sx, sy] of [[7, 18.5], [72.5, 18.5], [7, 35], [72.5, 35]] as [number, number][]) P1(sx, sy, '#8a7a6a');
+  signBoardF(22, 15, W - 44, 22, '#2f5a68', '#fbefd4');
+  TC('STEEL CHAIR', W / 2 + 0.5, 19.5, '#e8b48a', FM, {});
+  TC('STEEL CHAIR', W / 2, 19, enamel('#a8323e'), FM, {});
+  TC('HARDWARE  &  FEED', W / 2, 29, worn('#2f6a74', 31, 0.06), FT, { ls: 1 });
+  chairIcon(26, 26, '#7a7096', '#4e4870');
+  chairIcon(W - 34, 26, '#7a7096', '#4e4870');
+  for (const [sx, sy] of [[24, 16.5], [W - 25, 16.5], [24, 35], [W - 25, 35]] as [number, number][]) P1(sx, sy, '#8a7a6a');
+  micro('EST. 1949', 5, 25, '#2f5a68');
+  micro('ROPE. BOLTS.', W - 17, 25, '#2f5a68');
   // gutter and awning
   awning(3, 42, W - 6, 7, '#5f9a6a', '#fbefd4', 4);
-  // display window (left)
-  const wx = 6;
+  // display window (left), now deep enough for the whole show
+  const wx = 8;
   const wy = 56;
-  const ww = 40;
+  const ww = 60;
   const wh = 30;
   R(wx - 2, wy - 2, ww + 4, wh + 4, '#3a6f78');
   fh(wx - 2, wx + ww + 2, wy - 2, '#7ac0b0');
@@ -1510,8 +1593,13 @@ function drawHardware(): void {
     R(wx + 8, wy + 9, 3, 3, '#9a92b0');
     ell(wx + 4, wy + 15, 2.5, 1.2, '#d84a4a');
     fv(wx + 4, wy + 13, wy + 15, '#4a3a5e');
+    // a coil of rope and a saw on the far pegs
+    ell(wx + ww - 6, wy + 6, 3.5, 3.5, '#d8b070');
+    ell(wx + ww - 6, wy + 6, 2, 2, '#6e5e86');
+    poly([[wx + ww - 14, wy + 3], [wx + ww - 10, wy + 3], [wx + ww - 10, wy + 12], [wx + ww - 14, wy + 10]], '#c8c4d8');
+    R(wx + ww - 10, wy + 2, 2, 4, '#a8603a');
     // fan of folding chairs
-    for (let i = 0; i < 3; i++) chairFront(wx + 13 + i * 8, wy + 7 + (i === 1 ? -2 : 0), '#eeeaf6', i === 1 ? '#c8c2da' : '#aaa2c2', '#6e668a');
+    for (let i = 0; i < 4; i++) chairFront(wx + 13 + i * 8, wy + 7 + (i === 1 || i === 2 ? -2 : 0), '#eeeaf6', i % 2 ? '#c8c2da' : '#aaa2c2', '#6e668a');
     const can = (x: number, y: number, c: string) => {
       R(x, y, 4, 4, c);
       fh(x, x + 4, y, '#e8e4f0');
@@ -1522,76 +1610,112 @@ function drawHardware(): void {
     can(wx + 2, wy + 25, '#e05a5a');
     can(wx + 6, wy + 25, '#4a8ad0');
     can(wx + 10, wy + 25, '#f2c050');
+    can(wx + 14, wy + 25, '#e8e4f0');
     can(wx + 4, wy + 21, '#6fb070');
     can(wx + 8, wy + 21, '#c070c0');
-    RR(wx + 24, wy + 19, 15, 10, 1, '#fff4dc');
-    fh(wx + 24.5, wx + 38.5, wy + 19, '#ffffff');
-    T('SALE', wx + 25, wy + 20, enamel('#c9404c'), FT, { sp: 0 });
-    T('$5', wx + 28, wy + 25, '#2f6a74', FT, { sp: 1 });
-    cat(wx + 33, wy + 15, '#e8a050', '#4a8a4a');
+    can(wx + 12, wy + 21, '#e8904a');
+    RR(wx + 42, wy + 19, 15, 10, 1, '#fff4dc');
+    fh(wx + 42.5, wx + 56.5, wy + 19, '#ffffff');
+    T('SALE', wx + 43, wy + 20, enamel('#c9404c'), FT, { sp: 0 });
+    T('$5', wx + 46, wy + 25, '#2f6a74', FT, { sp: 1 });
+    cat(wx + 32, wy + 22, '#e8a050', '#4a8a4a');
   });
-  R(wx + 19.5, wy, 1.5, wh, '#3a6f78');
-  fv(wx + 19.5, wy, wy + wh, '#5aa39a');
+  for (const mx of [wx + 19.5, wx + 39.5]) {
+    R(mx, wy, 1.5, wh, '#3a6f78');
+    fv(mx, wy, wy + wh, '#5aa39a');
+  }
   T('CHAIRS', wx + 1, wy + 1, '#ffffff', FT, { sp: 0 });
-  micro('KEYS CUT', wx + 21.5, wy + 1.5, '#ffffff');
-  // door (centre x = 56)
-  doorF(49, 60, 14, 36, '#4f9a92', { frame: '#2f5a68', lite: true, liteH: 13, wall: '#7a5a6e', kick: '#c8c4d8', step: '#c8b0a8' });
-  RR(50, 66, 12, 6, 1, '#fff4dc');
-  T('OPEN', 50.5, 66.5, enamel('#a8323e'), FT, { sp: 0 });
-  P1(56, 65, '#8a7a6a');
+  micro('PAINT', wx + 21.5, wy + 1.5, '#ffffff');
+  micro('KEYS CUT', wx + 41.5, wy + 1.5, '#ffffff');
+  boxF(wx - 2, wy + wh + 1.5, ww + 4, 3, '#a8603a');
+  // narrow window of key blanks on hooks
+  win(76, 58, 12, 22, {
+    frame: '#3a6f78',
+    cols: 1,
+    rows: 1,
+    interior: () => {
+      R(76, 58, 12, 22, '#6e5e86');
+      for (let r = 0; r < 4; r++)
+        for (let c = 0; c < 3; c++) {
+          const kx = 77.5 + c * 3.5;
+          const ky = 60 + r * 5;
+          P1(kx + 0.5, ky - 0.5, '#4a3a5e');
+          R(kx, ky, 1.5, 1.5, ['#f2c050', '#c8c4d8', '#e8904a'][(r + c) % 3]);
+          fv(kx + 0.5, ky + 1.5, ky + 3.5, ['#f2c050', '#c8c4d8', '#e8904a'][(r + c) % 3]);
+        }
+    },
+  });
+  // door (centre x = 104, a 16 x 32 opening)
+  doorF(96, GY - 32, 16, 32, '#4f9a92', { frame: '#2f5a68', lite: true, liteH: 12, wall: '#7a5a6e', kick: '#c8c4d8', step: '#c8b0a8' });
+  RR(98, 70, 12, 6, 1, '#fff4dc');
+  T('OPEN', 98.5, 70.5, enamel('#a8323e'), FT, { sp: 0 });
+  P1(104, 69, '#8a7a6a');
   // shop bell bracket
-  fh(62, 65, 58, '#f2c050');
-  ell(64.5, 59.5, 1, 1, '#f2c050');
-  // nail keg + rakes and brooms leaning on the wall
-  for (const [x, h, c] of [[70, 30, '#c88a5a'], [73, 34, '#b87a4a'], [76, 28, '#d89a6a']] as [number, number, string][]) {
+  fh(113, 116, 60, '#f2c050');
+  ell(115.5, 61.5, 1, 1, '#f2c050');
+  // rakes and brooms leaning on the wall, a nail keg, a wheelbarrow of seed sacks
+  for (const [x, h, c] of [[118, 30, '#c88a5a'], [121, 34, '#b87a4a'], [124, 28, '#d89a6a']] as [number, number, string][]) {
     L(x, GY - 2, x + 2, GY - h, c);
     L(x + 0.5, GY - 2, x + 2.5, GY - h, shA(c, 0.3));
   }
-  for (let k = 0; k < 6; k++) fv(69 + k, GY - 30, GY - 28.5, '#9a92b0');
-  R(73, GY - 37, 4, 5, '#e8c070');
-  FR(73, GY - 32, 4, 2, (fx) => (fx % 2 ? '#c89a50' : '#e8c070'));
-  RR(64, GY - 9, 7, 8, 2, '#a8704f');
-  fh(64, 71, GY - 9, '#d09a6a');
-  fh(64, 71, GY - 6, '#5a4a4a');
-  fh(64, 71, GY - 3, '#5a4a4a');
-  FR(64.5, GY - 10, 6, 1.5, (fx, fy) => (hash2(fx, fy, 23) < 0.6 ? '#c8c4d8' : null));
+  for (let k = 0; k < 6; k++) fv(117 + k, GY - 30, GY - 28.5, '#9a92b0');
+  R(121, GY - 37, 4, 5, '#e8c070');
+  FR(121, GY - 32, 4, 2, (fx) => (fx % 2 ? '#c89a50' : '#e8c070'));
+  RR(114, GY - 9, 7, 8, 2, '#a8704f');
+  fh(114, 121, GY - 9, '#d09a6a');
+  fh(114, 121, GY - 6, '#5a4a4a');
+  fh(114, 121, GY - 3, '#5a4a4a');
+  FR(114.5, GY - 10, 6, 1.5, (fx, fy) => (hash2(fx, fy, 23) < 0.6 ? '#c8c4d8' : null));
+  poly([[126, GY - 12], [140, GY - 12], [138, GY - 6], [128, GY - 6]], '#5f9a6a');
+  fh(126, 140, GY - 12, '#8ac09a');
+  for (const [sx, c] of [[128, '#e8d8b0'], [133, '#d8c090']] as [number, string][]) {
+    RR(sx, GY - 17, 5, 6, 1, c);
+    fh(sx + 1, sx + 4, GY - 15, '#a8603a');
+  }
+  ell(130, GY - 3.5, 2.5, 2.5, '#4a3a4a');
+  P1(129.5, GY - 4, '#8a7a8a');
+  L(138, GY - 6, 142, GY - 1, '#7a5a3a');
   downspout(W - 4, sideTop, GY - 1, '#8aa0a8');
   grime(0, GY - 10, W, 10, 0.22);
-  footing(0, GY - 3, 46, 3, '#c8a888', 21);
+  footing(0, GY - 3, 70, 3, '#c8a888', 21);
 }
 building('b-hardware', {
-  w: 80,
+  w: 144,
   h: 96,
-  door: 16,
+  door: 32,
   draw: drawHardware,
   shadowTop: 8,
   label: 'Steel Chair Hardware',
-  solid: { x: -40, y: -70, w: 80, h: 70 },
+  solid: { x: -72, y: -70, w: 144, h: 70 },
   lights: [
-    [26, 71, 28, WARM],
-    [56, 70, 14, WARM],
+    [38, 71, 34, WARM],
+    [82, 68, 12, WARM],
+    [104, 74, 14, WARM],
   ],
 });
 // =====================================================================
-//  THE SPORTATORIUM  (176 x 140, door 0, barn doors 36 wide)
+//  THE SPORTATORIUM  (288 x 140, door 0, barn doors 36 wide; 18 tiles, D-022)
 //  A 1931 hay barn that became the town's arena: red board-and-batten
 //  gambrel, a standing-seam roof, the masked-rooster cupola, a bulb-lit
 //  painted sign, tin lean-tos (box office left, the back door right).
 // =====================================================================
-const SP_W = 176;
+const SP_W = 288;
 const SP_H = 140;
-const SP_CX = 88;
+const SP_CX = 144;
+/** barn wall x (the tin lean-tos fill 0..SP_BX each side) and the gambrel knee inset */
+const SP_BX = 32;
+const SP_KI = 26;
 const SP_WALL = 90; // eave height (y)
 const SP_KNEE = 62; // gambrel break
 const SP_PEAK = 40;
 const spOutline = (dy = 0): [number, number][] => [
-  [16, SP_H],
-  [16, SP_WALL + dy],
-  [34, SP_KNEE + dy],
+  [SP_BX, SP_H],
+  [SP_BX, SP_WALL + dy],
+  [SP_BX + SP_KI, SP_KNEE + dy],
   [SP_CX, SP_PEAK + dy],
-  [SP_W - 34, SP_KNEE + dy],
-  [SP_W - 16, SP_WALL + dy],
-  [SP_W - 16, SP_H],
+  [SP_W - SP_BX - SP_KI, SP_KNEE + dy],
+  [SP_W - SP_BX, SP_WALL + dy],
+  [SP_W - SP_BX, SP_H],
 ];
 /** y of the gambrel profile at x (front face, dy shifts it up/down). */
 function spY(x: number, dy = 0): number {
@@ -1605,11 +1729,11 @@ function spY(x: number, dy = 0): number {
 }
 function spRoofline(): [number, number][] {
   return [
-    [19, SP_WALL + 2],
-    [36, SP_KNEE + 3],
+    [SP_BX + 3, SP_WALL + 2],
+    [SP_BX + SP_KI + 2, SP_KNEE + 3],
     [SP_CX, SP_PEAK + 4],
-    [SP_W - 36, SP_KNEE + 3],
-    [SP_W - 19, SP_WALL + 2],
+    [SP_W - SP_BX - SP_KI - 2, SP_KNEE + 3],
+    [SP_W - SP_BX - 3, SP_WALL + 2],
   ];
 }
 function spBulbs(f: number): void {
@@ -1644,9 +1768,9 @@ function spBulbs(f: number): void {
   }
 }
 // the painted sign (bulb-framed), shared by the base and the chase overlay
-const SG_X = 36;
+const SG_W = 150;
+const SG_X = SP_CX - SG_W / 2;
 const SG_Y = 57;
-const SG_W = 104;
 const SG_H = 25;
 function spSignBulbs(f: number): void {
   let k = 0;
@@ -1690,7 +1814,7 @@ function drawSportatorium(): void {
   const GY = SP_H;
   const cx = SP_CX;
   // ---- the roof receding behind the gambrel, standing seams parallel to the profile
-  FR(16, SP_PEAK - 12, 144, SP_WALL - SP_PEAK + 16, (fx, fy) => {
+  FR(SP_BX, SP_PEAK - 12, SP_W - 2 * SP_BX, SP_WALL - SP_PEAK + 16, (fx, fy) => {
     const x = (fx + 0.5) / 2;
     const y = (fy + 0.5) / 2;
     const front = spY(x, 0);
@@ -1698,7 +1822,7 @@ function drawSportatorium(): void {
     if (y < back || y >= front + 2) return null;
     const d = front - y;
     const left = x < cx;
-    const upper = x > 34 && x < SP_W - 34;
+    const upper = x > SP_BX + SP_KI && x < SP_W - SP_BX - SP_KI;
     let base = left ? (upper ? '#77709a' : '#625b88') : upper ? '#57507c' : '#4a4370';
     const sd = Math.floor(d * 2) % 7;
     if (sd === 0) return liA(base, 0.32);
@@ -1760,26 +1884,48 @@ function drawSportatorium(): void {
   fh(rx + 3, rx + 8, ry + 3, '#6a5070');
   // ---- tin lean-to wings either side
   for (const side of [-1, 1]) {
-    const x0 = side < 0 ? 0 : SP_W - 18;
+    const LT = SP_BX;
+    const x0 = side < 0 ? 0 : SP_W - LT;
     const top = SP_WALL + 1;
     // walls: corrugated tin, a later addition
-    R(x0, top + 5, 18, GY - top - 5, '#8aa0a8');
-    metalF(x0, top + 5, 18, GY - top - 5, '#8aa0a8', 31 + side, 2, 0.35);
+    R(x0, top + 5, LT, GY - top - 5, '#8aa0a8');
+    metalF(x0, top + 5, LT, GY - top - 5, '#8aa0a8', 31 + side, 2, 0.35);
     // shed roof sloping away from the barn
-    for (let i = 0; i < 36; i++) {
+    for (let i = 0; i < LT * 2; i++) {
       const x = x0 + i * HF;
-      const t = side < 0 ? (18 - i * HF) / 18 : (i * HF) / 18;
-      const y = top + t * 4;
+      const t = side < 0 ? (LT - i * HF) / LT : (i * HF) / LT;
+      const y = top + t * 5;
       fv(x, y, top + 6.5, i % 4 === 0 ? '#9a94b8' : i % 4 === 3 ? '#4e4670' : '#6a6488');
       P1(x, y, '#c8c2e0');
     }
-    gutter(x0, x0 + 18, top + 5.5, '#a8a4bc');
-    aoTop(x0, top + 7, 18, 5, 0.3);
-    grime(x0, GY - 12, 18, 9, 0.24);
+    gutter(x0, x0 + LT, top + 5.5, '#a8a4bc');
+    aoTop(x0, top + 7, LT, 5, 0.3);
+    grime(x0, GY - 12, LT, 9, 0.24);
+  }
+  // the old soda machine by the box office, and a sandwich board
+  {
+    const mx = 19;
+    const my = 108;
+    RR(mx, my, 11, GY - my - 3, 1, '#c8343f');
+    fv(mx + 0.5, my + 1, GY - 4, '#ee6a64');
+    fv(mx + 10, my + 1, GY - 4, '#8e2440');
+    RR(mx + 1.5, my + 2, 8, 6, 1, '#fff4dc');
+    T('POP', mx + 2, my + 2.5, enamel('#c8343f'), FT, { sp: 0 });
+    for (let k = 0; k < 4; k++) {
+      R(mx + 2 + k * 2, my + 11, 1.5, 3, ['#f4b63f', '#5ab0e0', '#e86a8a', '#6fb070'][k]);
+      fh(mx + 2 + k * 2, mx + 3.5 + k * 2, my + 11, '#ffffff');
+    }
+    R(mx + 2, my + 17, 7, 2, '#3a2a40');
+    fh(mx + 2, mx + 9, my + 17, '#5a4a60');
+    R(mx + 7.5, my + 21, 1.5, 3, '#f2c050');
+    fh(mx, mx + 11, GY - 3.5, tint('#2b2140', 0.4));
   }
   // left: the box office
   {
     signBoardF(2, 98, 14, 7, '#5b3a62', '#fbefd2');
+    // LINE FORMS HERE, in hand paint across the tin
+    micro('LINE FORMS', 18, 100, '#fff4dc');
+    micro('HERE  >', 19, 102, '#fff4dc');
     T('TIX', 3.5, 99, enamel('#b8303e'), FT, { sp: 0 });
     R(2, 107, 14, 13, '#4a3a4a');
     glassF(3, 108, 12, 11, () => {
@@ -1807,7 +1953,26 @@ function drawSportatorium(): void {
   }
   // right: the stage door side
   {
-    const x0 = SP_W - 18;
+    const x0 = SP_W - SP_BX + 3;
+    // rain barrel and a ladder left against the tin
+    {
+      const bx = SP_W - 12;
+      RR(bx, GY - 14, 9, 12, 2, '#8a5a3a');
+      for (const yy of [GY - 11, GY - 6]) {
+        R(bx, yy, 9, 1, '#5a5468');
+        fh(bx, bx + 9, yy, '#9a94b0');
+      }
+      fv(bx + 1, GY - 13, GY - 3, '#b87a50');
+      fv(bx + 8, GY - 13, GY - 3, '#5a3a2a');
+      ell(bx + 4.5, GY - 14, 4.5, 1, '#4a6a8a');
+      P1(bx + 3, GY - 14.5, '#a8c8e0');
+      for (const lx of [SP_W - 10, SP_W - 5]) L(lx, GY - 16, lx + 3, SP_WALL + 8, '#c89a6a');
+      for (let k = 0; k < 7; k++) {
+        const yy = GY - 18 - k * 4.5;
+        const ox = (3 * (GY - 16 - yy)) / (GY - 16 - SP_WALL - 8);
+        fh(SP_W - 10 + ox, SP_W - 5 + ox, yy, '#a87a50');
+      }
+    }
     // electric meter + conduit up to the roof
     fv(x0 + 4, SP_WALL + 2, 104, '#7a7890');
     fv(x0 + 4.5, SP_WALL + 2, 104, '#a8a6bc');
@@ -1856,13 +2021,13 @@ function drawSportatorium(): void {
   edge(o[3], o[4]);
   edge(o[4], [o[5][0] + 1, o[5][1]]);
   // corner boards
-  for (const x of [16, SP_W - 18]) {
+  for (const x of [SP_BX, SP_W - SP_BX - 2]) {
     R(x, SP_WALL + 1, 2, GY - SP_WALL - 1, '#fbefd2');
     fv(x, SP_WALL + 1, GY, '#fffaf0');
     fv(x + 1.5, SP_WALL + 1, GY, '#d8c0b0');
   }
   // sun from the left: the right of the facade falls into soft shade
-  shadeRight(118, SP_PEAK, 40, GY - SP_PEAK, 0.18);
+  shadeRight(SP_W - SP_BX - 56, SP_PEAK, 56, GY - SP_PEAK, 0.18);
   // hay hood at the peak with its old pulley
   poly([[cx - 6, SP_PEAK + 6], [cx, SP_PEAK - 0.5], [cx + 6, SP_PEAK + 6]], '#9a3442');
   L(cx - 6, SP_PEAK + 6, cx, SP_PEAK, '#fbefd2');
@@ -2006,8 +2171,26 @@ function drawSportatorium(): void {
   sconce(dx - 3, dy - 7, '#3f8a86', 4);
   sconce(dx + dw + 3, dy - 7, '#3f8a86', 4);
   // ---- show posters in glass cases either side, old bills pasted between
-  for (const [px, kind] of [[26, 'wed'], [124, 'sat']] as [number, 'wed' | 'sat'][]) {
-    oldPoster(px < 80 ? px - 7 : px + 29, 103, 4, 11, px < 80 ? '#fbefd8' : '#ffe070', px < 80 ? '#3f8a86' : '#c8307a', px);
+  // stable windows down the long wall: the crowd's glow and a rafter of pennants inside
+  for (const wx of [SP_BX + 14, SP_W - SP_BX - 32]) {
+    win(wx, 101, 18, 15, {
+      frame: '#fbefd2',
+      cols: 3,
+      rows: 2,
+      seed: wx,
+      interior: () => {
+        R(wx, 101, 18, 15, '#e89a5a');
+        FR(wx, 101, 18, 15, (_fx, fy) => mixc('#ffd890', '#b45a4c', (fy / 2 - 101) / 15));
+        for (let k = 0; k < 6; k++) poly([[wx + k * 3, 102], [wx + k * 3 + 2.5, 102], [wx + k * 3 + 1.25, 104.5]], ['#e8505a', '#5ab0e0', '#f4b63f'][k % 3]);
+        fh(wx, wx + 18, 102, '#6a4a4a');
+        for (let k = 0; k < 9; k++) ell(wx + 1 + k * 2, 114.5 - (k % 2) * 0.5, 1, 1.5, k % 3 ? '#6a3a5a' : '#8a4a5a');
+      },
+    });
+    R(wx - 1, 117.5, 20, 1.5, '#b93e3e');
+    boxF(wx - 2, 117.5, 22, wx % 7, '#8a4a3a');
+  }
+  for (const [px, kind] of [[SP_CX - 62, 'wed'], [SP_CX + 36, 'sat']] as [number, 'wed' | 'sat'][]) {
+    oldPoster(px < SP_CX ? px - 7 : px + 29, 103, 4, 11, px < SP_CX ? '#fbefd8' : '#ffe070', px < SP_CX ? '#3f8a86' : '#c8307a', px);
     R(px - 2, 98, 30, 36, '#5b3a62');
     fh(px - 2, px + 28, 98, '#8a5a8e');
     fv(px - 2, 98, 134, '#7a5482');
@@ -2022,7 +2205,7 @@ function drawSportatorium(): void {
     sconce(px + 13, 95, '#3f8a86', 2);
   }
   // ---- grime, splash and the stone footing
-  grime(18, GY - 14, SP_W - 36, 10, 0.2);
+  grime(SP_BX + 2, GY - 14, SP_W - 2 * SP_BX - 4, 10, 0.2);
   footing(0, GY - 4, SP_W, 4, '#b8a0b0', 7);
   // the bulbs (frame 0; overlay animates them)
   spBulbs(0);
@@ -2044,21 +2227,24 @@ building('b-sportatorium', {
   label: 'The Sportatorium',
   shadowTop: 62,
   pad: [0, 0, 12, 4],
-  solid: { x: -88, y: -94, w: 176, h: 94 },
+  solid: { x: -SP_W / 2, y: -94, w: SP_W, h: 94 },
   anims: [
-    { fps: 4, frames: 3, rect: [16, 40, 144, 56], draw: (f) => spBulbs(f) },
+    { fps: 4, frames: 3, rect: [SP_BX, 40, SP_W - 2 * SP_BX, 56], draw: (f) => spBulbs(f) },
     { fps: 6, frames: 4, rect: [SG_X, SG_Y - 1, SG_W, SG_H + 2], draw: (f) => spSignBulbs(f) },
   ],
   lights: [
-    [88, 51, 18, WARM],
-    [88, 120, 34, WARM],
-    [67, 90, 14, LAMP],
-    [109, 90, 14, LAMP],
-    [39, 98, 14, LAMP],
-    [137, 98, 14, LAMP],
-    [88, 70, 48, '#ffc070'],
+    [SP_CX, 51, 18, WARM],
+    [SP_CX, 120, 34, WARM],
+    [SP_CX - 21, 90, 14, LAMP],
+    [SP_CX + 21, 90, 14, LAMP],
+    [SP_CX - 49, 98, 14, LAMP],
+    [SP_CX + 49, 98, 14, LAMP],
+    [SP_CX, 70, 60, '#ffc070'],
     [9, 113, 12, WARM],
+    [SP_BX + 23, 108, 14, WARM],
+    [SP_W - SP_BX - 23, 108, 14, WARM],
   ],
+
 });
 
 
@@ -2107,20 +2293,21 @@ function butterfly(cx: number, cy: number, s = 1): void {
   P(x0 + 5 * s, y0 - 1, '#5a2448');
 }
 function drawTaqueria(): void {
-  const W = 80;
+  const W = 144;
   const GY = 88;
   flatRoof(0, 4, W, 11, 31);
   FR(0, 4, W, 11, (fx, fy, o) => (hash2(fx, fy, 32) < 0.1 ? shA(o, 0.1) : o));
-  ventF(66, 6, 5);
+  ventF(W - 14, 6, 5);
+  ventF(96, 7, 4);
   // rooftop water tank on legs
   R(6, 3, 10, 7, '#8aa0a8');
   metalF(6, 3, 10, 7, '#8aa0a8', 33, 2, 0.4);
   ell(11, 3, 5, 1, '#b8c8d0');
   for (const lx of [7, 14]) R(lx, 10, 1, 4, '#5a4a5a');
   // gold butterfly standing on the roof edge
-  R(39, 9, 2, 5, '#5a4468');
-  fv(39, 9, 14, '#8a6a8a');
-  butterfly(40, 5, 1);
+  R(W / 2 - 1, 9, 2, 5, '#5a4468');
+  fv(W / 2 - 1, 9, 14, '#8a6a8a');
+  butterfly(W / 2, 5, 1);
   tileCoping(0, 14, W);
   // warm stucco with teal + pink trim
   stucco(0, 20, W, GY - 20, '#f6d4b0', 33);
@@ -2133,52 +2320,55 @@ function drawTaqueria(): void {
   R(W - 3, 22, 3, GY - 22, '#24807c');
   fv(W - 3, 22, GY, '#3fb0a4');
   aoTop(3, 22, W - 6, 4, 0.2);
-  papel(3, 23, 77, 3, 1);
+  papel(3, 23, W / 2, 3, 1);
+  papel(W / 2, 23, W - 3, 3, 4);
   // sign board
-  signBoardF(8, 31, 64, 18, '#1f6e6a', '#2fa59a');
-  FR(9, 32, 62, 16, (fx, fy, o) => ((fx + fy) % 12 === 0 ? liA(o, 0.08) : o));
-  TC('TAQUERIA', 40, 33, enamel('#fff4dc'), FT, { ls: 1 });
-  TC('MARIPOSA', 40.5, 40.5, '#1f5a58', FM, {});
-  TC('MARIPOSA', 40, 40, enamel('#ffd34a', 0.35), FM, {});
-  butterfly(15, 40, 1);
-  butterfly(66, 40, 1);
+  const sx = W / 2 - 40;
+  signBoardF(sx, 31, 80, 18, '#1f6e6a', '#2fa59a');
+  FR(sx + 1, 32, 78, 16, (fx, fy, o) => ((fx + fy) % 12 === 0 ? liA(o, 0.08) : o));
+  TC('TAQUERIA', W / 2, 33, enamel('#fff4dc'), FT, { ls: 1 });
+  TC('MARIPOSA', W / 2 + 0.5, 40.5, '#1f5a58', FM, {});
+  TC('MARIPOSA', W / 2, 40, enamel('#ffd34a', 0.35), FM, {});
+  butterfly(sx + 8, 40, 1);
+  butterfly(sx + 72, 40, 1);
   // a crack in the stucco and a patched spot
-  L(74, 52, 76, 58, (_x: number, _y: number, o: number) => shA(o, 0.25));
-  R(58, 50, 6, 4, '#fbe2c4');
-  // arched teal door, centre x = 24
-  const dx = 17;
-  const dy = 52;
-  RR(dx - 2.5, dy - 5, 19, GY - dy + 5, 4, '#ff5d8f');
-  fh(dx, dx + 14, dy - 5, '#ff9ab8');
-  RR(dx - 1, dy - 3.5, 16, GY - dy + 3.5, 3, '#c8406e');
-  RR(dx, dy - 3, 14, GY - dy + 3, 3, '#2fa59a');
-  R(dx, dy, 14, GY - dy, battenPaint('#2fa59a', 34, dy, GY, 3.5));
+  L(138, 52, 140, 58, (_x: number, _y: number, o: number) => shA(o, 0.25));
+  R(124, 32, 6, 4, '#fbe2c4');
+  // arched teal door: a 16 x 32 opening, centre x = 40
+  const dw = 16;
+  const dx = 32;
+  const dy = GY - 32;
+  RR(dx - 2.5, dy - 5, dw + 5, GY - dy + 5, 4, '#ff5d8f');
+  fh(dx, dx + dw, dy - 5, '#ff9ab8');
+  RR(dx - 1, dy - 3.5, dw + 2, GY - dy + 3.5, 3, '#c8406e');
+  RR(dx, dy - 3, dw, GY - dy + 3, 3, '#2fa59a');
+  R(dx, dy, dw, GY - dy, battenPaint('#2fa59a', 34, dy, GY, 4));
   fv(dx, dy - 2, GY, '#7ad8c8');
-  fv(dx + 13.5, dy - 2, GY, '#1f6e6a');
-  glassF(dx + 3, dy, 8, 11, () => room(dx + 3, dy, 8, 11, '#f2a868', 7));
-  RR(dx + 3, dy - 1.5, 8, 2, 1, '#2fa59a');
-  R(dx + 6.75, dy, 0.5, 11, '#2fa59a');
-  R(dx + 3, dy + 14, 8, 10, '#24807c');
-  fh(dx + 3, dx + 11, dy + 14, '#1f6e6a');
-  fh(dx + 3, dx + 11, dy + 23.5, '#5ac8b8');
-  R(dx + 11, dy + 17, 2, 2, '#ffd34a');
-  P1(dx + 11, dy + 17, '#fff0a0');
-  R(dx - 4, GY - 2, 22, 2, '#d0694a');
-  fh(dx - 4, dx + 18, GY - 2, '#ee9070');
-  FR(dx - 4, GY - 2, 22, 2, (fx, _fy, o) => (fx % 8 === 0 ? '#9a3e3e' : o));
+  fv(dx + dw - HF, dy - 2, GY, '#1f6e6a');
+  glassF(dx + 3, dy, 10, 10, () => room(dx + 3, dy, 10, 10, '#f2a868', 7));
+  RR(dx + 3, dy - 1.5, 10, 2, 1, '#2fa59a');
+  R(dx + 7.75, dy, 0.5, 10, '#2fa59a');
+  R(dx + 3, dy + 13, 10, 10, '#24807c');
+  fh(dx + 3, dx + 13, dy + 13, '#1f6e6a');
+  fh(dx + 3, dx + 13, dy + 22.5, '#5ac8b8');
+  R(dx + 13, dy + 16, 2, 2, '#ffd34a');
+  P1(dx + 13, dy + 16, '#fff0a0');
+  R(dx - 4, GY - 2, dw + 8, 2, '#d0694a');
+  fh(dx - 4, dx + dw + 4, GY - 2, '#ee9070');
+  FR(dx - 4, GY - 2, dw + 8, 2, (fx, _fy, o) => (fx % 8 === 0 ? '#9a3e3e' : o));
   // chili ristra by the door
-  fv(36, 48, 51, '#6a4a3a');
+  fv(54, 48, 51, '#6a4a3a');
   for (let k = 0; k < 9; k++) {
     const yy = 51 + k * 1.4;
-    ell(36 + (k % 2) * 0.5, yy, 1, 0.9, k % 3 === 0 ? '#b8202e' : '#e8303a');
-    P1(35.5 + (k % 2) * 0.5, yy - 0.5, '#ff8a80');
+    ell(54 + (k % 2) * 0.5, yy, 1, 0.9, k % 3 === 0 ? '#b8202e' : '#e8303a');
+    P1(53.5 + (k % 2) * 0.5, yy - 0.5, '#ff8a80');
   }
-  P1(36, 50, '#5a9a4a');
-  P1(36.5, 50.5, '#7ab060');
-  // arched window with striped awning
-  const wx = 42;
+  P1(54, 50, '#5a9a4a');
+  P1(54.5, 50.5, '#7ab060');
+  // the long arched window with a striped awning
+  const wx = 62;
   const wy = 61;
-  const ww = 32;
+  const ww = 60;
   const wh = 18;
   RR(wx - 2, wy - 2, ww + 4, wh + 4, 2, '#ff5d8f');
   fh(wx, wx + ww, wy - 2, '#ff9ab8');
@@ -2187,8 +2377,8 @@ function drawTaqueria(): void {
     FR(wx, wy, ww, 12, (fx) => (fx % 10 === 0 ? '#e09858' : null));
     R(wx, wy + 12, ww, wh - 12, '#a8603a');
     fh(wx, wx + ww, wy + 12, '#d88a4e');
-    // hanging lanterns, a menu board, the taco plate and a cook
-    for (const lx of [wx + 5, wx + 16, wx + 27]) {
+    // hanging lanterns, a menu board, the taco plate, a cook, and a table of regulars
+    for (let lx = wx + 5; lx < wx + ww - 2; lx += 11) {
       fv(lx, wy, wy + 2, '#5a4060');
       const lc = ['#ff5d8f', '#ffd34a', '#2fa59a'][(lx >> 2) % 3];
       RR(lx - 1.5, wy + 2, 3, 3.5, 1, lc);
@@ -2211,9 +2401,25 @@ function drawTaqueria(): void {
     R(wx + 25, wy + 8, 3, 4, '#ff5d8f');
     R(wx + 28.5, wy + 9, 2.5, 3, '#ffd34a');
     fh(wx + 25, wx + 28, wy + 8, '#ff9ab8');
+    // Abuela and a masked fan sharing a table, a candle in a jar
+    for (const [px, shirt, skin] of [[wx + 38, '#9a5ab0', '#c88a68'], [wx + 50, '#2fa59a', '#f0b890']] as [number, string, string][]) {
+      R(px, wy + 10, 5, 5, shirt);
+      fv(px, wy + 10, wy + 15, liA(shirt, 0.3));
+      RR(px, wy + 5, 5, 6, 2, skin);
+    }
+    RR(wx + 37.5, wy + 3.5, 6, 3, 1, '#d8d4e8');
+    RR(wx + 50, wy + 5, 5, 4, 2, '#e8303a');
+    P1(wx + 51, wy + 6.5, '#ffd34a');
+    P1(wx + 53, wy + 6.5, '#ffd34a');
+    R(wx + 36, wy + 13, 22, 1.5, '#fff4e6');
+    fh(wx + 36, wx + 58, wy + 13, '#ffffff');
+    R(wx + 46, wy + 11, 1.5, 2, '#ffd34a');
+    P1(wx + 46.5, wy + 10.5, '#fff0b0');
   });
-  R(wx + 15.5, wy, 1, wh, '#ff5d8f');
-  fv(wx + 15.5, wy, wy + wh, '#ff9ab8');
+  for (const mx of [wx + 19.5, wx + 39.5]) {
+    R(mx, wy, 1, wh, '#ff5d8f');
+    fv(mx, wy, wy + wh, '#ff9ab8');
+  }
   awning(wx - 3, wy - 9, ww + 6, 4, '#2fa59a', '#ff5d8f', 3);
   R(wx - 2, wy + wh + 2, ww + 4, 1.5, '#c8406e');
   fh(wx - 2, wx + ww + 2, wy + wh + 2, '#ff8ab0');
@@ -2230,35 +2436,37 @@ function drawTaqueria(): void {
   // marigolds and a little cactus in pots
   pot(wx - 1, GY - 10, '#d0694a', '#5f9a5a', '#ffb030');
   pot(wx + 8, GY - 10, '#2fa59a', '#5f9a5a', '#ff8a30');
-  RR(70, GY - 13, 4, 9, 2, '#5a9a5a');
-  fv(70.5, GY - 12, GY - 5, '#7ac070');
-  RR(67.5, GY - 11, 2, 4, 1, '#5a9a5a');
-  R(68.5, GY - 8, 2, 1, '#5a9a5a');
-  for (let k = 0; k < 4; k++) P1(71 + (k % 2) * 2, GY - 12 + k * 2, '#e8f0c0');
-  P1(72, GY - 13.5, '#ff5d8f');
-  R(68, GY - 4, 8, 4, '#d0694a');
-  fh(68, 76, GY - 4, '#ee9070');
+  pot(wx + 46, GY - 10, '#d0694a', '#5f9a5a', '#ff5d8f');
+  const cx0 = 130;
+  RR(cx0, GY - 13, 4, 9, 2, '#5a9a5a');
+  fv(cx0 + 0.5, GY - 12, GY - 5, '#7ac070');
+  RR(cx0 - 2.5, GY - 11, 2, 4, 1, '#5a9a5a');
+  R(cx0 - 1.5, GY - 8, 2, 1, '#5a9a5a');
+  for (let k = 0; k < 4; k++) P1(cx0 + 1 + (k % 2) * 2, GY - 12 + k * 2, '#e8f0c0');
+  P1(cx0 + 2, GY - 13.5, '#ff5d8f');
+  R(cx0 - 2, GY - 4, 8, 4, '#d0694a');
+  fh(cx0 - 2, cx0 + 6, GY - 4, '#ee9070');
   // painted menu
-  R(4, 52, 10, 13, '#5a3a3a');
-  R(4.5, 52.5, 9, 12, '#3a4a4c');
-  FR(4.5, 52.5, 9, 12, (fx, fy, o) => (hash2(fx, fy, 35) < 0.06 ? mixc(o, '#fff4dc', 0.2) : o));
-  T('$2', 5, 53.5, enamel('#ffd34a'), FT, { sp: 0 });
-  for (let k = 0; k < 4; k++) micro(['TACO', 'SOPA', 'AGUA', 'MOLE'][k], 5, 59 + k * 1.4, '#fff4dc');
+  R(10, 52, 12, 15, '#5a3a3a');
+  R(10.5, 52.5, 11, 14, '#3a4a4c');
+  FR(10.5, 52.5, 11, 14, (fx, fy, o) => (hash2(fx, fy, 35) < 0.06 ? mixc(o, '#fff4dc', 0.2) : o));
+  T('$2', 11.5, 53.5, enamel('#ffd34a'), FT, { sp: 0 });
+  for (let k = 0; k < 5; k++) micro(['TACO', 'SOPA', 'AGUA', 'MOLE', 'FLAN'][k], 11.5, 59 + k * 1.4, '#fff4dc');
   wire(0, 26, 8, 30, 2, '#3a3048');
   grime(3, GY - 12, W - 6, 6, 0.16);
 }
 building('b-taqueria', {
-  w: 80,
+  w: 144,
   h: 88,
-  door: -16,
+  door: -32,
   draw: drawTaqueria,
   shadowTop: 14,
   label: 'Taqueria Mariposa',
-  solid: { x: -40, y: -62, w: 80, h: 62 },
+  solid: { x: -72, y: -62, w: 144, h: 62 },
   lights: [
-    [24, 60, 14, WARM],
-    [58, 69, 22, WARM],
-    [40, 39, 20, '#ffe08a'],
+    [40, 64, 14, WARM],
+    [92, 69, 30, WARM],
+    [72, 39, 22, '#ffe08a'],
   ],
 });
 
@@ -2276,29 +2484,38 @@ function cake(x: number, y: number, c: Color, c2: Color, tiers = 2): void {
   P(x + 2, y - 2, '#e8303a');
 }
 function drawBakery(): void {
-  const W = 80;
+  const W = 128;
   const GY = 88;
   // gentle mansard roof in lavender shingles, the shop sign mounted on it
   shingleF(2, 4, W - 4, 17, '#9a7ab8', 41, 3, 5, 0.12);
   fh(2, W - 2, 4, '#d8c0ec');
   fh(2, W - 2, 20.5, '#5a4070');
-  ventF(56, 1, 4);
-  signBoardF(3, 6, 62, 13, '#8a5a8a', '#fff6ee');
-  TC('TALLBRIDGE', 34.5, 9.5, '#f6c0d0', FM, {});
-  TC('TALLBRIDGE', 34, 9, enamel('#d0507a'), FM, {});
+  ventF(10, 1, 4);
+  // two little dormers either side of the sign
+  for (const dx0 of [8, 84]) {
+    R(dx0, 7, 10, 10, '#fff6ee');
+    poly([[dx0 - 1.5, 7.5], [dx0 + 5, 2.5], [dx0 + 11.5, 7.5]], '#7a5a98');
+    fh(dx0 - 1, dx0 + 11, 7.5, '#d8c0ec');
+    glassF(dx0 + 2, 9, 6, 7, () => room(dx0 + 2, 9, 6, 7, '#ffe2c8', dx0));
+    R(dx0 + 4.75, 9, 0.5, 7, '#fff6ee');
+  }
+  signBoardF(22, 6, 58, 13, '#8a5a8a', '#fff6ee');
+  TC('TALLBRIDGE', 51.5, 9.5, '#f6c0d0', FM, {});
+  TC('TALLBRIDGE', 51, 9, enamel('#d0507a'), FM, {});
   // a giant cupcake on the roof corner
-  R(66, 9, 11, 9, '#d09a5a');
-  FR(66, 9, 11, 9, (fx) => (fx % 3 === 0 ? '#a8703a' : fx % 3 === 1 ? '#e8b878' : '#d09a5a'));
-  fh(66, 77, 9, '#f0c888');
-  RR(64, 0, 14, 10, 4, '#ffb6cc');
-  ell(71, 2.5, 5.5, 2.75, '#ffd0de');
-  ell(70, 2, 2.5, 1.25, '#ffe8f0');
-  FR(64, 6, 14, 4, (fx, fy, o) => (o && (fx + (fy >> 1)) % 5 === 0 ? '#ff9ab8' : o));
-  circ(71, 0.5, 1.5, '#e8303a');
-  P1(70.5, 0, '#ff9a9a');
-  for (const [sx, sy, c] of [[67, 4, '#7ad0e8'], [74, 5, '#ffe070'], [69, 6, '#a8e070'], [75, 3, '#ffffff'], [72, 6.5, '#7ad0e8'], [66, 6, '#ffe070']] as [number, number, string][]) {
-    P1(sx, sy, c);
-    P1(sx + 0.5, sy, c);
+  const cu = W - 14;
+  R(cu - 5, 9, 11, 9, '#d09a5a');
+  FR(cu - 5, 9, 11, 9, (fx) => (fx % 3 === 0 ? '#a8703a' : fx % 3 === 1 ? '#e8b878' : '#d09a5a'));
+  fh(cu - 5, cu + 6, 9, '#f0c888');
+  RR(cu - 7, 0, 14, 10, 4, '#ffb6cc');
+  ell(cu, 2.5, 5.5, 2.75, '#ffd0de');
+  ell(cu - 1, 2, 2.5, 1.25, '#ffe8f0');
+  FR(cu - 7, 6, 14, 4, (fx, fy, o) => (o && (fx + (fy >> 1)) % 5 === 0 ? '#ff9ab8' : o));
+  circ(cu, 0.5, 1.5, '#e8303a');
+  P1(cu - 0.5, 0, '#ff9a9a');
+  for (const [sx, sy, c] of [[-4, 4, '#7ad0e8'], [3, 5, '#ffe070'], [-2, 6, '#a8e070'], [4, 3, '#ffffff'], [1, 6.5, '#7ad0e8'], [-5, 6, '#ffe070']] as [number, number, string][]) {
+    P1(cu + sx, sy, c);
+    P1(cu + sx + 0.5, sy, c);
   }
   // pastel plaster walls
   stucco(0, 21, W, GY - 21, '#fbe2d8', 43);
@@ -2306,25 +2523,26 @@ function drawBakery(): void {
   fh(0, W, 21, '#b8f0dc');
   fh(0, W, 22.5, '#5aa898');
   fv(0, 23, GY, '#fff4ee');
-  shadeRight(W - 6, 23, 6, GY - 23, 0.14);
+  shadeRight(W - 7, 23, 7, GY - 23, 0.14);
   aoTop(0, 23, W, 4, 0.18);
   // BAKERY painted on the wall with little wheat sprigs
-  T('BAKERY', 7.5, 27.5, '#c8e8dc', FM, {});
-  T('BAKERY', 7, 27, worn('#5aa898', 44, 0.07), FM, {});
-  for (const wx2 of [3, 43]) {
+  T('BAKERY', 17.5, 27.5, '#c8e8dc', FM, {});
+  T('BAKERY', 17, 27, worn('#5aa898', 44, 0.07), FM, {});
+  for (const wx2 of [12, 53]) {
     fv(wx2 + 0.25, 27, 34, '#c89040');
     for (let k = 0; k < 4; k++) {
       ell(wx2 - 0.75, 28 + k * 1.6, 0.9, 0.6, '#f2c870');
       ell(wx2 + 1.25, 28 + k * 1.6, 0.9, 0.6, '#e8b858');
     }
   }
+  micro('CAKES  PIES  BREAD', 88, 30, '#5aa898');
   // pastel striped awning over the window
-  awning(3, 38, 40, 6, '#ffb6cc', '#fff6ee', 3);
-  for (let x = 3; x < 43; x += 6) P1(x + 1, 39, '#8ad0b8');
+  awning(3, 38, 64, 6, '#ffb6cc', '#fff6ee', 3);
+  for (let x = 3; x < 67; x += 6) P1(x + 1, 39, '#8ad0b8');
   // window with tiny cakes, loaves on the lower shelf
   const wx = 6;
   const wy = 50;
-  const ww = 34;
+  const ww = 58;
   const wh = 22;
   R(wx - 2, wy - 2, ww + 4, wh + 4, '#fff6ee');
   fh(wx - 2, wx + ww + 2, wy - 2, '#ffffff');
@@ -2336,182 +2554,268 @@ function drawBakery(): void {
       R(wx, sy, ww, 1, '#e8c0a8');
       fh(wx, wx + ww, sy, '#fff0e0');
     }
-    cake(wx + 2, wy + 3, '#ffb6cc', '#fff6ee');
-    cake(wx + 10, wy + 4, '#8ad0b8', '#ffe070', 1);
-    cake(wx + 18, wy + 3, '#fff6ee', '#c8a0e0');
-    cake(wx + 26, wy + 4, '#e8a868', '#ffb6cc', 1);
-    for (let k = 0; k < 5; k++) {
-      const c = ['#d09a5a', '#ffb6cc', '#e8c070', '#c8a0e0', '#8ad0b8'][k];
+    const cakes: [Color, Color, number][] = [['#ffb6cc', '#fff6ee', 2], ['#8ad0b8', '#ffe070', 1], ['#fff6ee', '#c8a0e0', 2], ['#e8a868', '#ffb6cc', 1], ['#c8a0e0', '#fff6ee', 2], ['#ffe070', '#ffb6cc', 1], ['#fff6ee', '#8ad0b8', 2]];
+    cakes.forEach(([c, c2, t], i) => cake(wx + 2 + i * 8, wy + 3 + (i % 2), c, c2, t));
+    for (let k = 0; k < 9; k++) {
+      const c = ['#d09a5a', '#ffb6cc', '#e8c070', '#c8a0e0', '#8ad0b8'][k % 5];
       RR(wx + 2 + k * 6, wy + 14, 4, 3, 1, c);
       fh(wx + 2.5 + k * 6, wx + 5.5 + k * 6, wy + 14, liA(c, 0.5));
       P1(wx + 3 + k * 6, wy + 14.5, '#fff6ee');
     }
-    for (let k = 0; k < 4; k++) {
+    for (let k = 0; k < 7; k++) {
       ell(wx + 5 + k * 8, wy + 20.5, 3, 1.4, '#c8843a');
       fh(wx + 3 + k * 8, wx + 7 + k * 8, wy + 19.5, '#e8b060');
       for (let j = 0; j < 3; j++) P1(wx + 3.5 + k * 8 + j * 1.5, wy + 20, '#f8d898');
     }
     micro('FRESH DAILY', wx + 1, wy + 1, '#d0507a');
   });
-  R(wx + 16.5, wy, 1, wh, '#fff6ee');
+  for (const mx of [wx + 19, wx + 38.5]) R(mx, wy, 1, wh, '#fff6ee');
   boxF(wx - 2, wy + wh + 1.5, ww + 4, 9, '#8ad0b8');
-  // the oversized door (the baker is seven feet tall), centre x = 56
-  const dx = 46;
-  const dy = 40;
-  R(dx - 3, dy - 1, 26, GY - dy + 1, '#8a5a8a');
-  RR(dx - 3, dy - 7, 26, 8, 3, '#8a5a8a');
-  fh(dx - 1, dx + 21, dy - 7, '#b07ab0');
-  RR(dx - 1, dy - 5, 22, 6, 2, '#fff6ee');
-  R(dx - 1, dy, 22, GY - dy, '#fff6ee');
-  doorF(dx, dy, 20, GY - dy, '#8ad0b8', { frame: '#fff6ee', lite: true, liteH: 18, wall: '#ffe2c8', seed: 11, kick: '#5aa898', step: '#c8b0a8' });
+  // the oversized door (the baker is seven feet tall), centre x = 88
+  const dw = 18;
+  const dx = 88 - dw / 2;
+  const dy = 46;
+  R(dx - 3, dy - 1, dw + 6, GY - dy + 1, '#8a5a8a');
+  RR(dx - 3, dy - 7, dw + 6, 8, 3, '#8a5a8a');
+  fh(dx - 1, dx + dw + 1, dy - 7, '#b07ab0');
+  RR(dx - 1, dy - 5, dw + 2, 6, 2, '#fff6ee');
+  R(dx - 1, dy, dw + 2, GY - dy, '#fff6ee');
+  doorF(dx, dy, dw, GY - dy, '#8ad0b8', { frame: '#fff6ee', lite: true, liteH: 15, wall: '#ffe2c8', seed: 11, kick: '#5aa898', step: '#c8b0a8' });
   // rolling pin over the door
-  R(dx + 3, dy - 4, 14, 2, '#e8c08a');
-  fh(dx + 3, dx + 17, dy - 4, '#ffe0b0');
-  fh(dx + 3, dx + 17, dy - 2.5, '#b8885a');
-  R(dx + 1, dy - 3.5, 2, 1, '#a8704a');
-  R(dx + 17, dy - 3.5, 2, 1, '#a8704a');
-  RR(dx + 6, dy + 26, 8, 5, 1, '#fff6ee');
-  T('HI', dx + 7, dy + 26, enamel('#d0507a'), FT, {});
+  R(dx + 2, dy - 4, 14, 2, '#e8c08a');
+  fh(dx + 2, dx + 16, dy - 4, '#ffe0b0');
+  fh(dx + 2, dx + 16, dy - 2.5, '#b8885a');
+  R(dx, dy - 3.5, 2, 1, '#a8704a');
+  R(dx + 16, dy - 3.5, 2, 1, '#a8704a');
+  RR(dx + 5, dy + 22, 8, 5, 1, '#fff6ee');
+  T('HI', dx + 6, dy + 22, enamel('#d0507a'), FT, {});
+  // round window over the bench, a bicycle with a basket of loaves
+  glassF(110, 48, 10, 10, () => room(110, 48, 10, 10, '#ffe2c8', 5));
+  FR(108, 46, 14, 14, (fx, fy, o) => {
+    const d = Math.hypot((fx + 0.5) / 2 - 115, (fy + 0.5) / 2 - 53);
+    if (d <= 5) return o;
+    if (d <= 6.5) return fy / 2 < 53 ? '#ffffff' : '#d8b8c8';
+    return o;
+  });
+  R(114.75, 48, 0.5, 10, '#fff6ee');
+  R(110, 52.75, 10, 0.5, '#fff6ee');
+  for (const wcx of [106, 122]) {
+    FR(wcx - 4.5, GY - 10.5, 9, 9, (fx, fy, o) => {
+      const d = Math.hypot((fx + 0.5) / 2 - wcx, (fy + 0.5) / 2 - (GY - 6));
+      if (d >= 3.4 && d <= 4.4) return fy / 2 < GY - 7 ? '#5a4a6a' : '#3a2a48';
+      if (d < 0.9) return '#c8c4d8';
+      if (d < 3.4 && (Math.abs(fx - fy - Math.round((wcx - GY + 6) * 2)) < 1 || Math.abs(fx + fy - Math.round((wcx + GY - 6) * 2)) < 1)) return '#9a94b0';
+      return o;
+    });
+  }
+  L(106, GY - 6, 113, GY - 6, '#8ad0b8');
+  L(113, GY - 6, 110, GY - 13, '#8ad0b8');
+  L(110, GY - 13, 120, GY - 13, '#8ad0b8');
+  L(120, GY - 13, 122, GY - 6, '#8ad0b8');
+  L(113, GY - 6, 120, GY - 13, '#8ad0b8');
+  R(108.5, GY - 15, 4, 1.5, '#5a3a3a');
+  R(118, GY - 18, 6, 5, '#c8a070');
+  FR(118, GY - 18, 6, 5, (fx, fy) => ((fx + fy) % 3 === 0 ? '#a8804a' : null));
+  for (let k = 0; k < 3; k++) RR(118.5 + k * 1.8, GY - 23, 1.5, 6, 1, '#e8b060');
   // chalkboard easel
-  L(70, GY - 1, 72, GY - 14, '#a8704f');
-  L(78, GY - 1, 76, GY - 14, '#7a4a3a');
-  RR(69, GY - 15, 10, 11, 1, '#a8704f');
-  R(70, GY - 14, 8, 9, '#3a4a4c');
-  micro('ROLLS', 70.5, GY - 13, '#fff4dc');
-  micro('PIE', 70.5, GY - 11, '#ffb6cc');
-  micro('$1', 70.5, GY - 9, '#ffd977');
-  ell(75, GY - 7, 1.5, 1, '#e8b060');
+  L(66, GY - 1, 68, GY - 14, '#a8704f');
+  L(74, GY - 1, 72, GY - 14, '#7a4a3a');
+  RR(65, GY - 15, 10, 11, 1, '#a8704f');
+  R(66, GY - 14, 8, 9, '#3a4a4c');
+  micro('ROLLS', 66.5, GY - 13, '#fff4dc');
+  micro('PIE', 66.5, GY - 11, '#ffb6cc');
+  micro('$1', 66.5, GY - 9, '#ffd977');
+  ell(71, GY - 7, 1.5, 1, '#e8b060');
   grime(0, GY - 9, W, 8, 0.18);
-  footing(0, GY - 3, 43, 3, '#c8b0b8', 45);
+  footing(0, GY - 3, 76, 3, '#c8b0b8', 45);
+  footing(100, GY - 3, W - 100, 3, '#c8b0b8', 46);
 }
 building('b-bakery', {
-  w: 80,
+  w: 128,
   h: 88,
-  door: 16,
+  door: 24,
   draw: drawBakery,
   shadowTop: 6,
   label: 'Tallbridge Bakery',
-  solid: { x: -40, y: -62, w: 80, h: 62 },
+  solid: { x: -64, y: -62, w: 128, h: 62 },
   lights: [
-    [23, 61, 22, WARM],
-    [56, 52, 16, WARM],
+    [35, 61, 30, WARM],
+    [88, 56, 16, WARM],
+    [115, 53, 10, WARM],
   ],
 });
 
 // ---------------------------------------------------------------- WRSL 1340 AM
 const OA_Y = 42;
+const OA_X = 56;
 function onAir(on: boolean): void {
   const y = OA_Y;
-  RR(18, y, 28, 8, 2, '#3a2a40');
-  fh(19, 45, y, '#5a4a60');
+  const x = OA_X - 14;
+  RR(x, y, 28, 8, 2, '#3a2a40');
+  fh(x + 1, x + 27, y, '#5a4a60');
   if (on) {
-    RR(19, y + 1, 26, 6, 1, '#e8303a');
-    fh(20, 44, y + 1, '#ff8a80');
-    neon('ON AIR', 32 - Math.round(TW('ON AIR', FT) / 2), y + 2, '#fff0e8', '#ff4a50', FT);
+    RR(x + 1, y + 1, 26, 6, 1, '#e8303a');
+    fh(x + 2, x + 26, y + 1, '#ff8a80');
+    neon('ON AIR', OA_X - Math.round(TW('ON AIR', FT) / 2), y + 2, '#fff0e8', '#ff4a50', FT);
   } else {
-    RR(19, y + 1, 26, 6, 1, '#7a3a48');
-    fh(20, 44, y + 1, '#9a5060');
-    T('ON AIR', 32 - Math.round(TW('ON AIR', FT) / 2), y + 2, '#a85a64', FT);
+    RR(x + 1, y + 1, 26, 6, 1, '#7a3a48');
+    fh(x + 2, x + 26, y + 1, '#9a5060');
+    T('ON AIR', OA_X - Math.round(TW('ON AIR', FT) / 2), y + 2, '#a85a64', FT);
   }
 }
+/** Glass-block window with a deco surround. */
+function glassBlocks(gx: number, gy: number, cols: number, rows: number): void {
+  const w = cols * 4 + 3;
+  const h = rows * 4.5 + 2;
+  R(gx - 1, gy - 1, w, h, '#d8c8b8');
+  fh(gx - 1, gx + w - 1, gy - 1, '#f2e6d6');
+  for (let y = 0; y < rows; y++)
+    for (let x = 0; x < cols; x++) {
+      const bx = gx + x * 4 + 0.5;
+      const by = gy + y * 4.5 + 0.5;
+      R(bx, by, 3.5, 4, '#a8d0d8');
+      FR(bx, by, 3.5, 4, (fx, fy) => ((fx + fy) % 3 === 0 ? '#c8e8ec' : (fx * 3 + fy) % 7 === 0 ? '#7aa8b8' : null));
+      fh(bx, bx + 3.5, by, '#e8f8f8');
+      fv(bx, by, by + 4, '#e8f8f8');
+      fv(bx + 3, by, by + 4, '#6a9aaa');
+      R(bx + 1, by + 1, 1.5, 2, over('#ffd890', 0.45));
+    }
+  const sy = gy + h - 1;
+  R(gx - 2, sy, w + 2, 1.5, '#e8d8c8');
+  fh(gx - 2, gx + w, sy, '#fff4e4');
+  fh(gx - 2, gx + w, sy + 1.5, tint('#2b2140', 0.35));
+  streaks(gx - 1, sy + 2, w, 5, gx);
+}
 function drawRadio(): void {
-  const W = 64;
-  const GY = 88;
-  flatRoof(0, 4, W, 12, 51);
-  // little roof antenna and dish
-  fv(52, 0, 12, '#9a94b8');
-  fv(52.5, 0, 12, '#5a5478');
-  for (let y = 1; y < 12; y += 3) fh(50, 55, y, '#9a94b8');
-  P(52, 0, '#ff4a50');
-  ell(12, 9, 4, 2, '#d8d4e8');
-  ell(12, 9, 2.5, 1, '#a8a4c0');
-  ell(11, 8.5, 1.5, 0.5, '#f4f2fa');
-  L(12, 9, 15, 6, '#6e688e');
-  fv(12, 10, 14, '#6e688e');
-  wire(14, 13, 52, 11, 1.5, '#3a3048');
+  const W = 128;
+  const GY = 96;
+  const top = 23; // parapet line
+  flatRoof(0, 10, W, 14, 51);
+  // the roof antenna mast and dish
+  fv(112, 0, 18, '#9a94b8');
+  fv(112.5, 0, 18, '#5a5478');
+  for (let y = 1; y < 18; y += 3) fh(110, 115, y, '#9a94b8');
+  P(112, 0, '#ff4a50');
+  ell(22, 14, 5, 2.5, '#d8d4e8');
+  ell(22, 14, 3, 1.25, '#a8a4c0');
+  ell(21, 13.5, 1.5, 0.5, '#f4f2fa');
+  L(22, 14, 26, 10, '#6e688e');
+  fv(22, 15, 20, '#6e688e');
+  wire(26, 18, 112, 15, 2.5, '#3a3048');
+  ventF(70, 15, 5);
   // brick body
-  brickF(0, 15, W, GY - 15, '#b4584a', '#9a4a46', '#7a4a52', 52);
-  R(0, 15, W, 3, '#d8c8b8');
-  fh(0, W, 15, '#f2e6d6');
-  fh(0, W, 17.5, '#9a8a8a');
-  FR(0, 15.5, W, 2, (fx, _fy, o) => (fx % 8 === 0 ? '#b8a898' : o));
-  aoTop(0, 18, W, 3, 0.25);
-  shadeRight(W - 6, 18, 6, GY - 18, 0.22);
+  brickF(0, top, W, GY - top, '#b4584a', '#9a4a46', '#7a4a52', 52);
+  R(0, top, W, 3, '#d8c8b8');
+  fh(0, W, top, '#f2e6d6');
+  fh(0, W, top + 2.5, '#9a8a8a');
+  FR(0, top + 0.5, W, 2, (fx, _fy, o) => (fx % 8 === 0 ? '#b8a898' : o));
+  aoTop(0, top + 3, W, 3, 0.25);
+  shadeRight(W - 8, top + 3, 8, GY - top - 3, 0.22);
   // deco pilasters
-  for (const px of [1, W - 4]) {
-    R(px, 18, 3, GY - 21, '#d8c8b8');
-    fv(px, 18, GY - 3, '#f2e6d6');
-    fv(px + 2.5, 18, GY - 3, '#a89888');
-    for (let y = 22; y < GY - 4; y += 6) fh(px, px + 3, y, '#b8a898');
+  for (const px of [1, 37, 76, W - 4]) {
+    R(px, top + 3, 3, GY - top - 6, '#d8c8b8');
+    fv(px, top + 3, GY - 3, '#f2e6d6');
+    fv(px + 2.5, top + 3, GY - 3, '#a89888');
+    for (let y = top + 7; y < GY - 4; y += 6) fh(px, px + 3, y, '#b8a898');
   }
-  // vintage deco sign
-  RRB(6, 20, 52, 20, 4, '#2f5a68', '#fbefd4');
-  fh(9, 55, 20, '#5a8a98');
-  RR(8, 22, 48, 16, 3, '#f6e2bc');
-  FR(8, 22, 48, 16, (fx, fy, o) => (o && hash2(fx, fy, 53) < 0.05 ? '#e8d0a8' : o));
-  TC('WRSL', 32.5, 24.5, '#e8a24a', FM, { bold: true });
-  TC('WRSL', 32, 24, enamel('#b8303e'), FM, { bold: true });
-  TC('1340 AM', 32, 32, enamel('#2f6a74'), FT, {});
+  // vintage deco sign over the middle bay
+  const sx = OA_X - 30;
+  RRB(sx, 20, 60, 20, 4, '#2f5a68', '#fbefd4');
+  fh(sx + 3, sx + 57, 20, '#5a8a98');
+  RR(sx + 2, 22, 56, 16, 3, '#f6e2bc');
+  FR(sx + 2, 22, 56, 16, (fx, fy, o) => (o && hash2(fx, fy, 53) < 0.05 ? '#e8d0a8' : o));
+  TC('WRSL', OA_X + 0.5, 24.5, '#e8a24a', FM, { bold: true });
+  TC('WRSL', OA_X, 24, enamel('#b8303e'), FM, { bold: true });
+  TC('1340 AM', OA_X, 32, enamel('#2f6a74'), FT, {});
   // lightning zigzags either side
-  for (const sx of [10, 50]) {
-    L(sx, 24, sx + 2, 27, '#e8a24a');
-    L(sx + 2, 27, sx, 28, '#e8a24a');
-    L(sx, 28, sx + 2, 33, '#e8a24a');
-    P1(sx + 0.5, 24, '#fff0a0');
+  for (const zx of [sx + 4, sx + 52]) {
+    L(zx, 24, zx + 2, 27, '#e8a24a');
+    L(zx + 2, 27, zx, 28, '#e8a24a');
+    L(zx, 28, zx + 2, 33, '#e8a24a');
+    P1(zx + 0.5, 24, '#fff0a0');
   }
   onAir(false);
-  // glass-block windows
-  for (const gx of [6, 45]) {
-    R(gx - 1, 55, 15, 20, '#d8c8b8');
-    fh(gx - 1, gx + 14, 55, '#f2e6d6');
-    for (let y = 0; y < 4; y++)
-      for (let x = 0; x < 3; x++) {
-        const bx = gx + x * 4 + 0.5;
-        const by = 56 + y * 4.5 + 0.5;
-        R(bx, by, 3.5, 4, '#a8d0d8');
-        FR(bx, by, 3.5, 4, (fx, fy) => ((fx + fy) % 3 === 0 ? '#c8e8ec' : (fx * 3 + fy) % 7 === 0 ? '#7aa8b8' : null));
-        fh(bx, bx + 3.5, by, '#e8f8f8');
-        fv(bx, by, by + 4, '#e8f8f8');
-        fv(bx + 3, by, by + 4, '#6a9aaa');
-        R(bx + 1, by + 1, 1.5, 2, over('#ffd890', 0.45));
+  // left bay: the broadcast window, the DJ at the mic under a lamp
+  const bx = 7;
+  const by = 46;
+  win(bx, by, 26, 22, {
+    frame: '#d8c8b8',
+    cols: 2,
+    rows: 1,
+    interior: () => {
+      R(bx, by, 26, 22, '#5a4a6e');
+      FR(bx, by, 26, 22, (fx, fy) => ((fx & 3) === 0 && (fy & 3) === 0 ? '#4a3a5e' : null)); // acoustic foam
+      R(bx, by + 15, 26, 7, '#8a6a5a');
+      fh(bx, bx + 26, by + 15, '#b89a7a');
+      // the mixing desk and reels
+      R(bx + 3, by + 13, 14, 3, '#3a3048');
+      for (let k = 0; k < 6; k++) R(bx + 4 + k * 2, by + 13.5, 1, 1.5, ['#e8505a', '#f4b63f', '#6fb070'][k % 3]);
+      for (const rx of [bx + 19, bx + 23.5]) {
+        circ(rx, by + 6, 2.5, '#2b2140');
+        circ(rx, by + 6, 1, '#c8c4d8');
       }
-    R(gx - 2, 75, 17, 1.5, '#e8d8c8');
-    fh(gx - 2, gx + 15, 75, '#fff4e4');
-    fh(gx - 2, gx + 15, 76.5, tint('#2b2140', 0.35));
-    streaks(gx - 1, 77, 15, 5, gx);
-  }
-  // door with a little deco canopy (centre x = 32)
-  R(21, 50, 22, 2.5, '#2f5a68');
-  fh(21, 43, 50, '#7ac0b0');
-  fh(21, 43, 52, '#1a3a48');
-  for (let x = 22; x < 42; x += 2.5) P1(x, 52.5, '#24485a');
-  aoTop(22, 53, 20, 2, 0.3);
-  doorF(25, 55, 14, 33, '#4f9a92', { frame: '#d8c8b8', lite: true, liteH: 12, seed: 54, kick: '#c8c4d8', step: '#c8b0a8' });
-  micro('STUDIO', 27.5, 72, '#fff4dc');
+      // the DJ, headphones on, leaning into the mic
+      RR(bx + 8, by + 4, 6, 7, 2, '#c88a68');
+      R(bx + 7, by + 5, 1.5, 3, '#3a3048');
+      R(bx + 13.5, by + 5, 1.5, 3, '#3a3048');
+      fh(bx + 7.5, bx + 14.5, by + 3.5, '#3a3048');
+      R(bx + 8, by + 10, 6, 3, '#e8b84a');
+      L(bx + 16, by + 7, bx + 14, by + 10, '#9a94b0');
+      RR(bx + 15, by + 5.5, 2.5, 3, 1, '#c8c4d8');
+      // a lamp
+      fv(bx + 3, by, by + 3, '#5a4060');
+      RR(bx + 1.5, by + 3, 3, 2, 1, '#3f8a86');
+      fh(bx + 2, bx + 4, by + 5, '#fff2b0');
+    },
+  });
+  micro('SINCE 1946', bx + 4, by + 25.5, '#fbefd4');
+  glassBlocks(bx + 1, by + 31, 6, 2);
+  // the door with a little deco canopy (centre x = 56, a 16 x 32 opening)
+  const dc = 56;
+  R(dc - 12, GY - 39, 24, 2.5, '#2f5a68');
+  fh(dc - 12, dc + 12, GY - 39, '#7ac0b0');
+  fh(dc - 12, dc + 12, GY - 37, '#1a3a48');
+  for (let x = dc - 11; x < dc + 11; x += 2.5) P1(x, GY - 36.5, '#24485a');
+  aoTop(dc - 11, GY - 36, 22, 2, 0.3);
+  doorF(dc - 8, GY - 32, 16, 32, '#4f9a92', { frame: '#d8c8b8', lite: true, liteH: 11, seed: 54, kick: '#c8c4d8', step: '#c8b0a8' });
+  micro('STUDIO', dc - 5.5, GY - 15, '#fff4dc');
   // record decals
-  for (const [rx, ry] of [[21.5, 66], [42.5, 66]] as [number, number][]) {
+  for (const [rx, ry] of [[dc - 13, GY - 22], [dc + 13, GY - 22]] as [number, number][]) {
     circ(rx, ry, 2.5, '#2b2140');
     FR(rx - 2.5, ry - 2.5, 5, 5, (fx, fy, o) => (o === col('#2b2140') && (fx + fy) % 3 === 0 ? '#3a3050' : o));
     R(rx - 0.5, ry - 0.5, 1, 1, '#ff5d8f');
     P1(rx - 1.5, ry - 1.5, '#6a6088');
   }
-  downspout(W - 2, 18, GY - 1, '#a8a4bc');
+  // right bay: glass blocks over a request line box and a bench for the call-in queue
+  glassBlocks(86, 48, 7, 4);
+  RR(94, 72, 12, 9, 1, '#2f5a68');
+  fh(95, 105, 72, '#5a8a98');
+  micro('REQUEST', 95.5, 73.5, '#fbefd4');
+  micro('LINE', 97, 75.5, '#fbefd4');
+  R(98.5, 77.5, 3, 2.5, '#c8c4d8');
+  R(108, GY - 9, 16, 1.5, '#a8704f');
+  fh(108, 124, GY - 9, '#d09a6a');
+  R(109, GY - 7.5, 1, 6, '#5a4a4a');
+  R(122, GY - 7.5, 1, 6, '#5a4a4a');
+  R(108, GY - 15, 16, 1.5, '#a8704f');
+  fh(108, 124, GY - 15, '#d09a6a');
+  downspout(W - 2, top + 3, GY - 1, '#a8a4bc');
   grime(0, GY - 10, W, 8, 0.22);
   footing(0, GY - 3, W, 3, '#c8b0a8', 55);
 }
 building('b-radio', {
-  w: 64,
-  h: 88,
-  door: 0,
+  w: 128,
+  h: 96,
+  door: -8,
   draw: drawRadio,
-  shadowTop: 10,
+  shadowTop: 18,
   label: 'WRSL 1340 AM',
-  solid: { x: -32, y: -62, w: 64, h: 62 },
+  solid: { x: -64, y: -70, w: 128, h: 70 },
   anims: [
     {
       fps: 0,
       frames: 2,
-      rect: [16, OA_Y - 2, 32, 12],
+      rect: [OA_X - 16, OA_Y - 2, 32, 12],
       pick: (t, o) => {
         const k = (tick(t) + Math.floor(o.x)) % 90;
         return k < 2 || k === 5 || (k > 40 && k < 43) ? 0 : 1;
@@ -2519,14 +2823,14 @@ building('b-radio', {
       skip: (f) => f === 0,
       draw: () => onAir(true),
     },
-    { fps: 2, frames: 2, rect: [50, 0, 5, 3], skip: (f) => f === 1, draw: () => P(52, 0, '#ffb0a8') },
+    { fps: 2, frames: 2, rect: [110, 0, 5, 3], skip: (f) => f === 1, draw: () => P(112, 0, '#ffb0a8') },
   ],
   lights: [
-    [32, OA_Y + 4, 16, '#ff4a50'],
-    [13, 65, 12, WARM],
-    [52, 65, 12, WARM],
-    [32, 65, 12, WARM],
-    [52, 0, 8, '#ff4a50'],
+    [OA_X, OA_Y + 4, 16, '#ff4a50'],
+    [20, 57, 18, WARM],
+    [100, 58, 14, WARM],
+    [56, 74, 12, WARM],
+    [112, 0, 8, '#ff4a50'],
   ],
 });
 
@@ -2543,13 +2847,20 @@ function spool(x: number, y: number): void {
   P(x + 11, y + 13, '#d8d4e8');
 }
 function drawTailor(): void {
-  const W = 64;
+  const W = 144;
   const GY = 88;
-  const gB = 26; // gable base
-  // front gable with scalloped fish-scale shingles
-  poly([[0, gB], [32, 4], [64, gB]], '#c8a0d8');
-  FR(0, 4, W, gB - 4, (fx, fy, o) => {
-    if (!o) return null;
+  const C = W / 2;
+  const gB = 26; // eave line
+  // side-gabled roof running the length of the shop
+  shingleF(0, 12, W, gB - 12, '#9a78b4', 60, 3, 5, 0.1);
+  fh(0, W, 12, '#d8c0ec');
+  ventF(14, 8, 4);
+  chimney(118, 2, 11, '#b45a4c');
+  // central front gable with scalloped fish-scale shingles
+  const g0 = C - 32;
+  poly([[g0, gB], [C, 2], [g0 + 64, gB]], '#c8a0d8');
+  FR(g0, 2, 64, gB - 2, (fx, fy, o) => {
+    if (o !== col('#c8a0d8')) return o;
     const rf = 6;
     const row = Math.floor(fy / rf);
     const k = fy % rf;
@@ -2562,12 +2873,12 @@ function drawTailor(): void {
     if (k === 0) return shA(base, 0.25);
     return k === 5 ? liA(base, 0.3) : hash2(fx, fy, 61) < 0.05 ? liA(base, 0.15) : base;
   });
-  L(0, gB, 32, 4, '#fbefd8');
-  L(32, 4, 64, gB, '#fbefd8');
-  L(1, gB + 1, 32, 6, '#d8b8c8');
-  L(32, 5, 63, gB, '#d8b8c8');
+  L(g0, gB, C, 2, '#fbefd8');
+  L(C, 2, g0 + 64, gB, '#fbefd8');
+  L(g0 + 1, gB + 1, C, 4, '#d8b8c8');
+  L(C, 3, g0 + 63, gB, '#d8b8c8');
   // a big wooden spool emblem in the gable
-  spool(28, 10);
+  spool(C - 4, 9);
   // plum clapboard walls with marigold trim
   siding(0, gB, W, GY - gB, '#a084bc', 61, 4, 0.02);
   aoTop(0, gB + 1, W, 4, 0.25);
@@ -2575,83 +2886,125 @@ function drawTailor(): void {
   fv(0, gB, GY, '#ffe08a');
   R(W - 2, gB, 2, GY - gB, '#c8902a');
   fv(W - 0.5, gB, GY, '#9a6a1a');
-  shadeRight(W - 8, gB, 6, GY - gB, 0.16);
+  shadeRight(W - 10, gB, 8, GY - gB, 0.16);
   // sign
-  signBoardF(4, 29, 56, 12, '#7a3a7a', '#fff4dc');
-  TC('SEW WHAT?', 32.5, 31.5, '#f4b63f', FM, {});
-  TC('SEW WHAT?', 32, 31, enamel('#b8307a'), FM, {});
+  signBoardF(C - 32, 29, 64, 12, '#7a3a7a', '#fff4dc');
+  TC('SEW WHAT?', C + 0.5, 31.5, '#f4b63f', FM, {});
+  TC('SEW WHAT?', C, 31, enamel('#b8307a'), FM, {});
+  micro('ALTERATIONS', 8, 32, '#fff4dc');
+  micro('SEQUINS', W - 26, 32, '#fff4dc');
   // hanging spool sign on an iron bracket
-  fh(55, 64, 43, '#4a3550');
-  L(56, 43, 62, 40, '#4a3550');
-  fv(57, 43, 46, '#4a3550');
-  fv(62, 43, 46, '#4a3550');
-  spool(55, 46);
-  // left window: a mannequin in a sequined robe
-  const wy = 54;
-  const wh = 22;
-  win(5, wy, 16, wh, {
+  fh(W - 9, W, 43, '#4a3550');
+  L(W - 8, 43, W - 2, 40, '#4a3550');
+  fv(W - 7, 43, 46, '#4a3550');
+  fv(W - 2, 43, 46, '#4a3550');
+  spool(W - 9, 46);
+  const wy = 52;
+  const wh = 24;
+  // a mannequin in a sequined robe
+  const mannequin = (wx: number, c: string) => {
+    R(wx, wy, 18, wh, '#f2c8d8');
+    FR(wx, wy, 18, wh, (fx) => (fx % 6 === 0 ? '#ecbcd0' : null));
+    R(wx, wy + 20, 18, 4, '#c898b0');
+    const m = wx + 9;
+    circ(m, wy + 4, 2, '#e8d8c8');
+    P1(m - 0.5, wy + 3, '#fff8f0');
+    poly([[m - 4, wy + 7], [m + 4, wy + 7], [m + 6, wy + 21], [m - 6, wy + 21]], c);
+    FR(m - 6, wy + 7, 12, 14, (fx, fy, o) => (o === col(c) && hash2(fx, fy, 62) < 0.18 ? (hash2(fx, fy, 63) < 0.5 ? '#ffd34a' : '#ffffff') : o));
+    fh(m - 4, m + 4, wy + 7, '#f4b63f');
+    fv(m, wy + 7, wy + 21, shA(c, 0.3));
+    fv(m, wy + 21, wy + 23, '#8a7a6a');
+    fh(m - 2, m + 2, wy + 23.5, '#8a7a6a');
+  };
+  win(10, wy, 18, wh, { frame: '#f4b63f', cols: 1, rows: 1, interior: () => mannequin(10, '#d0307a') });
+  // Marigold's sewing machine under a lamp, a basket of mending
+  win(34, wy, 22, wh, {
     frame: '#f4b63f',
-    cols: 1,
+    cols: 2,
     rows: 1,
     interior: () => {
-      R(5, wy, 16, wh, '#f2c8d8');
-      FR(5, wy, 16, wh, (fx) => (fx % 6 === 0 ? '#ecbcd0' : null));
-      R(5, wy + 18, 16, 4, '#c898b0');
-      circ(13, wy + 3, 2, '#e8d8c8');
-      P1(12.5, wy + 2, '#fff8f0');
-      poly([[9, wy + 6], [17, wy + 6], [19, wy + 19], [7, wy + 19]], '#d0307a');
-      FR(7, wy + 6, 12, 13, (fx, fy, o) => (o === col('#d0307a') && hash2(fx, fy, 62) < 0.18 ? (hash2(fx, fy, 63) < 0.5 ? '#ffd34a' : '#ffffff') : o));
-      fh(9, 17, wy + 6, '#f4b63f');
-      fv(13, wy + 6, wy + 19, '#a8205a');
-      fv(13, wy + 19, wy + 21, '#8a7a6a');
-      fh(11, 15, wy + 21.5, '#8a7a6a');
+      R(34, wy, 22, wh, '#f6dcc4');
+      FR(34, wy, 22, wh, (fx) => (fx % 8 === 0 ? '#ecd0b8' : null));
+      R(34, wy + 15, 22, 9, '#a8704a');
+      fh(34, 56, wy + 15, '#d8a070');
+      // the machine
+      R(38, wy + 10, 3, 5, '#2b2140');
+      R(38, wy + 9, 11, 2.5, '#2b2140');
+      R(46, wy + 9, 3, 6, '#2b2140');
+      fh(38, 49, wy + 9, '#5a4a6a');
+      micro('SINGR', 40, wy + 9.5, '#f4b63f');
+      fv(39.5, wy + 12, wy + 15, '#c8c4d8');
+      R(41, wy + 13.5, 6, 1.5, '#ff94b4');
+      // gooseneck lamp
+      L(52, wy + 15, 52, wy + 6, '#4a3550');
+      L(52, wy + 6, 49, wy + 4, '#4a3550');
+      RR(46.5, wy + 3.5, 4, 2, 1, '#3f9a92');
+      for (let k = 1; k < 5; k++) FR(48.5 - k, wy + 5.5 + k, k * 2, 1, (fx, fy, o) => (dth(fx, fy, 6 - k) ? mixc(o, '#fff0b8', 0.4) : o));
+      // mending basket
+      RR(36, wy + 18, 8, 4, 1, '#c89a5a');
+      ell(38, wy + 18, 1.5, 1, '#5a8ad0');
+      ell(41, wy + 17.5, 1.5, 1, '#e8505a');
     },
   });
-  // right window: bolts of fabric and a tape measure
-  win(43, wy, 16, wh, {
+  // bolts of fabric and a tape measure
+  win(88, wy, 22, wh, {
     frame: '#f4b63f',
-    cols: 1,
+    cols: 2,
     rows: 1,
     cat: true,
     interior: () => {
-      R(43, wy, 16, wh, '#f6dcc4');
-      const bolts = ['#3f9a92', '#f4b63f', '#d8434b', '#9a6ad0', '#ff94b4', '#5a8ad0'];
-      for (let i = 0; i < 6; i++) {
-        const bx = 44 + (i % 3) * 5;
-        const by = wy + 1 + Math.floor(i / 3) * 9;
+      R(88, wy, 22, wh, '#f6dcc4');
+      const bolts = ['#3f9a92', '#f4b63f', '#d8434b', '#9a6ad0', '#ff94b4', '#5a8ad0', '#6fb070', '#fff4dc'];
+      for (let i = 0; i < 8; i++) {
+        const bx = 89 + (i % 4) * 5;
+        const by = wy + 1 + Math.floor(i / 4) * 9;
         R(bx, by, 4, 8, bolts[i]);
         fv(bx, by, by + 8, liA(bolts[i], 0.4));
         fv(bx + 3.5, by, by + 8, shA(bolts[i], 0.3));
         for (let y = by + 1; y < by + 8; y += 1.5) fh(bx + 0.5, bx + 3.5, y, shA(bolts[i], 0.12));
       }
-      curve(44, wy + 19, 58, wy + 19, 1.5, '#ffe070');
+      curve(89, wy + 21, 108, wy + 21, 1.5, '#ffe070');
     },
   });
-  // door (centre x = 32)
-  doorF(25, 54, 14, 34, '#f4b63f', { frame: '#fff4dc', lite: true, liteH: 12, wall: '#f2c8d8', seed: 64, step: '#c8b0a8' });
-  RR(26.5, 70, 11, 5, 1, '#fff4dc');
-  T('SEW', 27.5, 70, enamel('#7a3a7a'), FT, {});
-  fv(32, 68, 70, '#8a7a6a');
-  // pincushion tomato pot by the step
-  ell(42, GY - 3, 2, 1.5, '#e8303a');
-  P1(41.5, GY - 4, '#ff8a80');
-  P1(42, GY - 5, '#5a9a4a');
+  win(116, wy, 18, wh, { frame: '#f4b63f', cols: 1, rows: 1, interior: () => mannequin(116, '#3f74d8') });
+  // flower boxes under the outer windows
+  boxF(8, wy + wh + 1.5, 22, 3, '#7a3a7a');
+  boxF(114, wy + wh + 1.5, 22, 6, '#7a3a7a');
+  // door (centre x = 72, a 16 x 32 opening)
+  doorF(C - 8, GY - 32, 16, 32, '#f4b63f', { frame: '#fff4dc', lite: true, liteH: 11, wall: '#f2c8d8', seed: 64, step: '#c8b0a8' });
+  RR(C - 5.5, 72, 11, 5, 1, '#fff4dc');
+  T('SEW', C - 4.5, 72, enamel('#7a3a7a'), FT, {});
+  fv(C, 70, 72, '#8a7a6a');
+  sconce(C - 13, 50, '#7a3a7a', 3);
+  sconce(C + 13, 50, '#7a3a7a', 3);
+  // pincushion tomato pot by the step, a bench with a hatbox
+  ell(C + 13, GY - 3, 2, 1.5, '#e8303a');
+  P1(C + 12.5, GY - 4, '#ff8a80');
+  P1(C + 13, GY - 5, '#5a9a4a');
+  R(C + 20, GY - 8, 14, 1.5, '#a8704f');
+  fh(C + 20, C + 34, GY - 8, '#d09a6a');
+  R(C + 21, GY - 6.5, 1, 6, '#5a4a4a');
+  R(C + 32, GY - 6.5, 1, 6, '#5a4a4a');
+  RR(C + 25, GY - 13, 6, 5, 1, '#ff94b4');
+  fh(C + 25, C + 31, GY - 11, '#ffffff');
   grime(0, GY - 9, W, 7, 0.2);
-  footing(0, GY - 3, 24, 3, '#b8a0b0', 65);
-  footing(40, GY - 3, 24, 3, '#b8a0b0', 66);
+  footing(0, GY - 3, C - 10, 3, '#b8a0b0', 65);
+  footing(C + 10, GY - 3, C - 10, 3, '#b8a0b0', 66);
 }
 building('b-tailor', {
-  w: 64,
+  w: 144,
   h: 88,
   door: 0,
   draw: drawTailor,
   shadowTop: 12,
   label: 'Sew What?',
-  solid: { x: -32, y: -62, w: 64, h: 62 },
+  solid: { x: -72, y: -62, w: 144, h: 62 },
   lights: [
-    [13, 65, 14, WARM],
-    [51, 65, 14, WARM],
-    [32, 63, 10, WARM],
+    [19, 64, 14, WARM],
+    [45, 64, 16, WARM],
+    [99, 64, 16, WARM],
+    [125, 64, 14, WARM],
+    [72, 66, 10, WARM],
   ],
 });
 
@@ -2663,13 +3016,15 @@ function spineLogo(cx: number, y: number, c: Color, c2: Color): void {
   }
 }
 function drawClinic(): void {
-  const W = 64;
+  const W = 144;
   const GY = 88;
+  const C = W / 2;
   flatRoof(0, 4, W, 12, 71, '#9a92ae');
   ventF(8, 6, 5);
-  R(44, 7, 12, 6, '#c8c4d8');
-  fh(44, 56, 7, '#eeeaf6');
-  FR(45, 8.5, 10, 3.5, (fx) => (fx % 2 ? '#9a94b0' : '#c8c4d8'));
+  ventF(W - 30, 7, 4);
+  R(100, 7, 12, 6, '#c8c4d8');
+  fh(100, 112, 7, '#eeeaf6');
+  FR(101, 8.5, 10, 3.5, (fx) => (fx % 2 ? '#9a94b0' : '#c8c4d8'));
   // crisp white siding with teal trim
   siding(0, 15, W, GY - 15, '#f2f0ec', 72, 5, 0.01);
   R(0, 15, W, 3, '#3f9a92');
@@ -2679,69 +3034,105 @@ function drawClinic(): void {
   R(0, 18, 2, GY - 18, '#3f9a92');
   fv(0, 18, GY, '#7ad0c0');
   R(W - 2, 18, 2, GY - 18, '#2f7a76');
-  shadeRight(W - 8, 18, 6, GY - 18, 0.14);
-  // sign with spine logo
-  signBoardF(3, 20, 58, 18, '#2f7a76', '#ffffff');
-  TC('HALLORAN', 32, 22, enamel('#2f6a74'), FM, {});
-  TC('CHIROPRACTIC', 32, 31, enamel('#3f9a92'), FT, {});
+  shadeRight(W - 10, 18, 8, GY - 18, 0.14);
+  // sign with spine logos either side
+  signBoardF(C - 36, 20, 72, 18, '#2f7a76', '#ffffff');
+  TC('HALLORAN', C, 22, enamel('#2f6a74'), FM, {});
+  TC('CHIROPRACTIC', C, 31, enamel('#3f9a92'), FT, {});
+  spineLogo(C - 30, 23, '#3f9a92', '#7fd0c0');
+  spineLogo(C + 30, 23, '#3f9a92', '#7fd0c0');
+  micro('MON-SAT 8 TO 5', 6, 24, '#2f6a74');
+  micro('DR. R. HALLORAN', W - 34, 24, '#2f6a74');
   // projecting blade sign with the spine logo
-  fh(56, 64, 44, '#4a3550');
-  R(57, 45, 6, 13, '#ffffff');
-  box(57, 45, 6, 13, '#2f7a76');
-  fv(57.5, 45.5, 57.5, '#e8f4f0');
-  spineLogo(60, 46, '#3f9a92', '#7fd0c0');
-  // teal awning
-  awning(3, 41, 58, 4, '#3f9a92', '#ffffff', 4);
-  // windows with blinds and a skeleton model
-  const wy = 54;
-  for (const wx of [5, 45]) {
-    win(wx, wy, 14, 18, {
+  fh(W - 8, W, 44, '#4a3550');
+  R(W - 7, 45, 6, 13, '#ffffff');
+  box(W - 7, 45, 6, 13, '#2f7a76');
+  fv(W - 6.5, 45.5, 57.5, '#e8f4f0');
+  spineLogo(W - 4, 46, '#3f9a92', '#7fd0c0');
+  // teal awnings over each pair of windows
+  awning(6, 41, 52, 4, '#3f9a92', '#ffffff', 4);
+  awning(W - 58, 41, 52, 4, '#3f9a92', '#ffffff', 4);
+  // windows with blinds: the skeleton model, the adjusting table, the waiting room, a fern
+  const wy = 52;
+  const wh = 20;
+  const pane = (wx: number, kind: number) =>
+    win(wx, wy, 18, wh, {
       frame: '#3f9a92',
       cols: 1,
       rows: 1,
+      blinds: '#c8dcdc',
       interior: () => {
-        R(wx, wy, 14, 18, '#dcecec');
-        if (wx < 30) {
-          circ(wx + 7, wy + 9, 1.5, '#f4f0e8');
-          fv(wx + 7, wy + 10, wy + 16, '#f4f0e8');
-          for (let k = 0; k < 3; k++) fh(wx + 5.5, wx + 8.5, wy + 11.5 + k * 1.2, '#f4f0e8');
-          fv(wx + 7, wy + 16, wy + 18, '#8a8aa0');
+        R(wx, wy, 18, wh, '#dcecec');
+        if (kind === 0) {
+          circ(wx + 9, wy + 9, 1.5, '#f4f0e8');
+          fv(wx + 9, wy + 10, wy + 17, '#f4f0e8');
+          for (let k = 0; k < 3; k++) fh(wx + 7.5, wx + 10.5, wy + 11.5 + k * 1.2, '#f4f0e8');
+          L(wx + 9, wy + 11, wx + 6.5, wy + 14, '#f4f0e8');
+          L(wx + 9, wy + 11, wx + 11.5, wy + 14, '#f4f0e8');
+          fv(wx + 9, wy + 17, wy + 20, '#8a8aa0');
+        } else if (kind === 1) {
+          RR(wx + 2, wy + 12, 14, 5, 1, '#9ac0b0');
+          fh(wx + 2, wx + 16, wy + 12, '#c8e8dc');
+          RR(wx + 13, wy + 10.5, 4, 2, 1, '#ffffff');
+          fv(wx + 3, wy + 17, wy + 20, '#6a8a80');
+          fv(wx + 15, wy + 17, wy + 20, '#6a8a80');
+        } else if (kind === 2) {
+          for (let k = 0; k < 3; k++) {
+            R(wx + 1 + k * 6, wy + 13, 5, 2, '#5a8ab0');
+            R(wx + 1 + k * 6, wy + 9, 1.5, 4, '#5a8ab0');
+            fv(wx + 1.5 + k * 6, wy + 15, wy + 20, '#4a5a70');
+          }
+          RR(wx + 7, wy + 6, 5, 6, 2, '#c8906a');
+          R(wx + 7, wy + 11, 5, 3, '#e8b84a');
+          R(wx + 3, wy + 3, 6, 4, '#ffffff');
+          micro('SIT UP', wx + 3.5, wy + 4, '#2f6a74');
         } else {
-          RR(wx + 2, wy + 10, 10, 6, 1, '#9ac0b0');
-          fh(wx + 2, wx + 12, wy + 10, '#c8e8dc');
-          fv(wx + 3, wy + 16, wy + 18, '#6a8a80');
-          fv(wx + 11, wy + 16, wy + 18, '#6a8a80');
+          RR(wx + 6, wy + 14, 6, 6, 1, '#c8704f');
+          for (let k = 0; k < 7; k++) L(wx + 9, wy + 14, wx + 3 + k * 2, wy + 6 + Math.abs(k - 3), k % 2 ? '#5f9a5a' : '#4f8a4a');
         }
       },
-      blinds: '#c8dcdc',
     });
-  }
-  pot(56, GY - 10, '#3f9a92', '#5f9a5a', null);
-  R(56.5, GY - 15, 0.5, 6, '#4f8a5a');
-  ell(57, GY - 15, 1.5, 2.5, '#6fb070');
-  // door (centre x = 32)
-  doorF(25, 54, 14, 34, '#3f9a92', { frame: '#ffffff', lite: true, liteH: 13, wall: '#dcecec', seed: 73, kick: '#c8c4d8', step: '#d8d0d8' });
-  RR(27, 46, 10, 6, 1, '#ffffff');
-  spineLogo(32, 46.5, '#3f9a92', '#7fd0c0');
-  RR(26.5, 70, 11, 4, 1, '#fff4dc');
-  micro('WALK INS', 27, 70.5, '#2f6a74');
-  micro('WELCOME', 27, 72, '#2f6a74');
+  pane(10, 0);
+  pane(36, 1);
+  pane(90, 2);
+  pane(116, 3);
+  pot(W - 12, GY - 10, '#3f9a92', '#5f9a5a', null);
+  R(W - 11.5, GY - 15, 0.5, 6, '#4f8a5a');
+  ell(W - 11, GY - 15, 1.5, 2.5, '#6fb070');
+  // door (centre x = 72, a 16 x 32 opening)
+  doorF(C - 8, GY - 32, 16, 32, '#3f9a92', { frame: '#ffffff', lite: true, liteH: 12, wall: '#dcecec', seed: 73, kick: '#c8c4d8', step: '#d8d0d8' });
+  RR(C - 5, 46, 10, 6, 1, '#ffffff');
+  spineLogo(C, 46.5, '#3f9a92', '#7fd0c0');
+  RR(C - 5.5, 72, 11, 4, 1, '#fff4dc');
+  micro('WALK INS', C - 5, 72.5, '#2f6a74');
+  micro('WELCOME', C - 5, 74, '#2f6a74');
+  // the bench for the bad backs, a little ramp rail
+  R(14, GY - 9, 20, 1.5, '#a8a4bc');
+  fh(14, 34, GY - 9, '#e8e4f0');
+  R(15, GY - 7.5, 1, 6, '#6a6488');
+  R(32, GY - 7.5, 1, 6, '#6a6488');
+  R(14, GY - 15, 20, 1.5, '#a8a4bc');
+  fh(14, 34, GY - 15, '#e8e4f0');
+  for (const px of [C + 12, C + 24]) fv(px, GY - 9, GY - 1, '#9a94b0');
+  fh(C + 12, C + 24.5, GY - 9, '#c8c4d8');
   downspout(1.5, 18, GY - 1, '#c8c4d8');
   grime(0, GY - 9, W, 7, 0.16);
   footing(0, GY - 3, W, 3, '#d8d4e0', 74);
 }
 building('b-clinic', {
-  w: 64,
+  w: 144,
   h: 88,
   door: 0,
   draw: drawClinic,
   shadowTop: 10,
   label: 'Halloran Chiropractic',
-  solid: { x: -32, y: -62, w: 64, h: 62 },
+  solid: { x: -72, y: -62, w: 144, h: 62 },
   lights: [
-    [12, 63, 14, WARM],
-    [52, 63, 14, WARM],
-    [32, 63, 10, WARM],
+    [19, 62, 14, WARM],
+    [45, 62, 14, WARM],
+    [99, 62, 14, WARM],
+    [125, 62, 14, WARM],
+    [72, 66, 10, WARM],
   ],
 });
 
@@ -2757,25 +3148,30 @@ function lotusBolt(cx: number, cy: number): void {
   L(cx + 1, cy, cx - 1, cy + 4, '#f4b63f');
 }
 function drawStudio(): void {
-  const W = 64;
+  const W = 144;
   const GY = 88;
+  const C = W / 2;
   // low hip roof in sage-teal shingles
   shingleF(1, 3, W - 2, 15, '#5a8a7a', 81, 3, 4, 0.2);
   fh(1, W - 1, 3, '#a8d0b8');
-  poly([[1, 3], [6, 3], [1, 9]], 0);
-  poly([[W - 1, 3], [W - 6, 3], [W - 1, 9]], 0);
+  poly([[1, 3], [10, 3], [1, 12]], 0);
+  poly([[W - 1, 3], [W - 10, 3], [W - 1, 12]], 0);
   fh(1, W - 1, 17.5, '#2a4a40');
+  // a skylight over the studio floor
+  R(30, 6, 14, 7, '#4a6a5a');
+  glassF(31, 7, 12, 5, () => R(31, 7, 12, 5, '#cfe2f2'));
+  ventF(W - 24, 6, 4);
   // sage plaster
   stucco(0, 18, W, GY - 18, '#b0cca4', 83);
   fh(0, W, 18, '#e0ecd4');
   aoTop(0, 18, W, 4, 0.22);
-  shadeRight(W - 7, 18, 7, GY - 18, 0.16);
+  shadeRight(W - 8, 18, 8, GY - 18, 0.16);
   // sign
-  signBoardF(3, 21, 58, 18, '#4a6a5a', '#f6f2e6');
-  TC('HURRICANE', 32, 23, enamel('#3a6a6a'), FM, {});
-  TC('PHYSIO & YOGA', 32, 32, enamel('#7a9a6a'), FT, {});
-  // a vine of morning glories over the sign
-  for (let x = 4; x < 60; x += 1.5) {
+  signBoardF(C - 34, 21, 68, 18, '#4a6a5a', '#f6f2e6');
+  TC('HURRICANE', C, 23, enamel('#3a6a6a'), FM, {});
+  TC('PHYSIO & YOGA', C, 32, enamel('#7a9a6a'), FT, {});
+  // a vine of morning glories along the whole eave
+  for (let x = 2; x < W - 2; x += 1.5) {
     const y = 20 + Math.sin(x * 0.4) * 1.2;
     P1(x, y, '#5f9a5a');
     if (hash2(x * 2, 0, 84) < 0.25) {
@@ -2783,77 +3179,100 @@ function drawStudio(): void {
       P1(x + 0.5, y - 0.5, '#c8d4ff');
     }
   }
-  // two calm windows: yoga mats and plants on the left, a fern and a ball on the right
+  micro('CLASSES DAILY', 8, 27, '#4a6a5a');
+  micro('BREATHE IN', W - 28, 27, '#4a6a5a');
+  // four calm windows
   const wy = 52;
-  for (const [wx, left] of [[4, true], [43, false]] as [number, boolean][]) {
-    win(wx, wy, 17, 19, {
+  const pane = (wx: number, kind: number) =>
+    win(wx, wy, 19, 19, {
       frame: '#f6f2e6',
       cols: 2,
       rows: 1,
       box: wx,
       boxC: '#7a9a6a',
       interior: () => {
-        R(wx, wy, 17, 19, '#f2e2c4');
-        R(wx, wy + 13, 17, 6, '#d8b890');
-        FR(wx, wy + 13, 17, 6, (fx) => (fx % 6 === 0 ? '#c8a880' : null));
-        if (left) {
-          for (const [mx, c] of [[wx + 1, '#7a9ad0'], [wx + 9, '#e88aa0']] as [number, string][]) {
-            R(mx, wy + 15, 7, 3, c);
-            fh(mx, mx + 7, wy + 15, liA(c, 0.4));
-            fh(mx, mx + 7, wy + 17.5, shA(c, 0.3));
+        R(wx, wy, 19, 19, '#f2e2c4');
+        R(wx, wy + 13, 19, 6, '#d8b890');
+        FR(wx, wy + 13, 19, 6, (fx) => (fx % 6 === 0 ? '#c8a880' : null));
+        if (kind === 0) {
+          for (const [mx, c] of [[wx + 1, '#7a9ad0'], [wx + 10, '#e88aa0']] as [number, string][]) {
+            R(mx, wy + 15, 8, 3, c);
+            fh(mx, mx + 8, wy + 15, liA(c, 0.4));
+            fh(mx, mx + 8, wy + 17.5, shA(c, 0.3));
           }
           ell(wx + 4, wy + 6, 2, 3, '#5f9a5a');
           P1(wx + 3.5, wy + 4, '#8ac070');
           R(wx + 3, wy + 9, 3, 3, '#a8704a');
-          // a stretcher mid-pose
-          circ(wx + 12, wy + 5, 1.25, '#c88a68');
-          L(wx + 12, wy + 6, wx + 12, wy + 11, '#7a9ad0');
-          L(wx + 12, wy + 7, wx + 9, wy + 4, '#c88a68');
-          L(wx + 12, wy + 7, wx + 15, wy + 4, '#c88a68');
-          L(wx + 12, wy + 11, wx + 10, wy + 14, '#4a5a7a');
-          L(wx + 12, wy + 11, wx + 14, wy + 14, '#4a5a7a');
-        } else {
-          fv(wx + 12, wy, wy + 3, '#6a5a4a');
-          ell(wx + 12, wy + 5, 3, 2, '#5f9a5a');
-          for (let k = 0; k < 5; k++) P1(wx + 10 + k, wy + 7 + (k % 2) * 0.5, '#4f8a5a');
+        } else if (kind === 1) {
+          // a stretcher mid-pose (tree pose)
+          circ(wx + 10, wy + 4, 1.25, '#c88a68');
+          L(wx + 10, wy + 5, wx + 10, wy + 10, '#7a9ad0');
+          L(wx + 10, wy + 6, wx + 7, wy + 2, '#c88a68');
+          L(wx + 10, wy + 6, wx + 13, wy + 2, '#c88a68');
+          L(wx + 10, wy + 10, wx + 10, wy + 15, '#4a5a7a');
+          L(wx + 10, wy + 10, wx + 13, wy + 12, '#4a5a7a');
+          L(wx + 13, wy + 12, wx + 10.5, wy + 13, '#4a5a7a');
+          R(wx + 5, wy + 15.5, 10, 2, '#9ad0a0');
+        } else if (kind === 2) {
+          fv(wx + 13, wy, wy + 3, '#6a5a4a');
+          ell(wx + 13, wy + 5, 3, 2, '#5f9a5a');
+          for (let k = 0; k < 5; k++) P1(wx + 11 + k, wy + 7 + (k % 2) * 0.5, '#4f8a5a');
           circ(wx + 5, wy + 13, 3.5, '#8ac0d0');
           ell(wx + 4, wy + 11.5, 1.2, 0.8, '#d8f0f4');
           fh(wx + 2, wx + 8, wy + 13, '#6aa0b4');
+        } else {
+          // the physio side: a treatment table and a spine chart
+          RR(wx + 2, wy + 11, 15, 3, 1, '#7aa890');
+          fh(wx + 2, wx + 17, wy + 11, '#a8d0b8');
+          fv(wx + 3, wy + 14, wy + 18, '#5a6a60');
+          fv(wx + 16, wy + 14, wy + 18, '#5a6a60');
+          R(wx + 6, wy + 2, 6, 7, '#fff8ec');
+          spineLogo(wx + 9, wy + 2.5, '#7a9a6a', '#a8c8a0');
         }
       },
     });
-  }
-  // door (centre x = 32)
-  doorF(25, 54, 14, 34, '#7aa890', { frame: '#f6f2e6', lite: true, liteH: 14, wall: '#f2e2c4', seed: 85, step: '#c8c0b0' });
-  RR(26, 46, 12, 6, 1, '#4a6a5a');
-  fh(27, 37, 46, '#6a8a7a');
-  lotusBolt(32, 48.5);
+  pane(8, 0);
+  pane(33, 1);
+  pane(92, 2);
+  pane(117, 3);
+  // door (centre x = 72, a 16 x 32 opening)
+  doorF(C - 8, GY - 32, 16, 32, '#7aa890', { frame: '#f6f2e6', lite: true, liteH: 13, wall: '#f2e2c4', seed: 85, step: '#c8c0b0' });
+  RR(C - 6, 46, 12, 6, 1, '#4a6a5a');
+  fh(C - 5, C + 5, 46, '#6a8a7a');
+  lotusBolt(C, 48.5);
   // a rolled mat leaning by the door and a bamboo pot
-  RR(40.5, GY - 13, 3, 12, 1, '#e88aa0');
-  fv(40.5, GY - 13, GY - 1, '#ffb0c0');
-  ell(42, GY - 13, 1.5, 0.75, '#c86a80');
-  R(18.5, GY - 6, 4, 5, '#c8b8a0');
-  fh(18.5, 22.5, GY - 6, '#e8dcc8');
-  for (const [bx, h] of [[19.5, 12], [21, 15], [20.5, 9]] as [number, number][]) {
+  RR(C + 10.5, GY - 13, 3, 12, 1, '#e88aa0');
+  fv(C + 10.5, GY - 13, GY - 1, '#ffb0c0');
+  ell(C + 12, GY - 13, 1.5, 0.75, '#c86a80');
+  const bp = C - 15;
+  R(bp, GY - 6, 4, 5, '#c8b8a0');
+  fh(bp, bp + 4, GY - 6, '#e8dcc8');
+  for (const [bx, h] of [[bp + 1, 12], [bp + 2.5, 15], [bp + 2, 9]] as [number, number][]) {
     fv(bx, GY - 6 - h, GY - 6, '#7ab060');
     for (let y = GY - 6 - h + 2; y < GY - 6; y += 3) fh(bx - 0.5, bx + 0.5, y, '#5a8a4a');
     P1(bx + 0.5, GY - 6 - h + 1, '#9ad070');
   }
+  // a shoe rack by the step
+  R(C + 18, GY - 7, 12, 1, '#a8704a');
+  R(C + 18, GY - 3, 12, 1, '#a8704a');
+  for (let k = 0; k < 4; k++) RR(C + 18.5 + k * 3, GY - 9, 2.5, 2, 1, ['#e88aa0', '#7a9ad0', '#f6f2e6', '#7aa890'][k]);
   grime(0, GY - 9, W, 7, 0.16);
   footing(0, GY - 3, W, 3, '#c8c0b0', 86);
 }
 building('b-studio', {
-  w: 64,
+  w: 144,
   h: 88,
   door: 0,
   draw: drawStudio,
   shadowTop: 8,
   label: 'Hurricane Physio & Yoga',
-  solid: { x: -32, y: -62, w: 64, h: 62 },
+  solid: { x: -72, y: -62, w: 144, h: 62 },
   lights: [
-    [12, 61, 14, WARM],
-    [51, 61, 14, WARM],
-    [32, 63, 12, WARM],
+    [17, 61, 14, WARM],
+    [42, 61, 14, WARM],
+    [101, 61, 14, WARM],
+    [126, 61, 14, WARM],
+    [72, 66, 12, WARM],
   ],
 });
 
@@ -2863,60 +3282,69 @@ function vhs(x: number, y: number, c: Color): void {
   VL(x + 1, y + 1, y + 3, c);
 }
 const PN_Y = 46;
+const PN_X = 94;
 function pawnNeon(on: boolean): void {
-  RR(43, PN_Y, 18, 7, 1, '#2f2440');
-  fh(44, 60, PN_Y, '#4a3a5a');
-  neon('OPEN', 44, PN_Y + 1, '#ffe6f2', '#ff5fa0', FT, {}, on);
+  RR(PN_X, PN_Y, 18, 7, 1, '#2f2440');
+  fh(PN_X + 1, PN_X + 17, PN_Y, '#4a3a5a');
+  neon('OPEN', PN_X + 1, PN_Y + 1, '#ffe6f2', '#ff5fa0', FT, {}, on);
 }
 function drawPawn(): void {
-  const W = 64;
+  const W = 144;
   const GY = 88;
+  const C = W / 2;
   flatRoof(0, 4, W, 12, 91, '#857590');
-  ventF(50, 6, 5);
+  ventF(W - 14, 6, 5);
+  ventF(20, 7, 4);
   // tired mustard brick
   brickF(0, 15, W, GY - 15, '#c89a5a', '#b4884e', '#8a6a58', 92);
   R(0, 15, W, 3, '#6a5a6a');
   fh(0, W, 15, '#9a8a9a');
   fh(0, W, 17.5, '#3a2a40');
   aoTop(0, 18, W, 3, 0.25);
-  shadeRight(W - 6, 18, 6, GY - 18, 0.2);
+  shadeRight(W - 7, 18, 7, GY - 18, 0.2);
   // a faded ghost ad painted on the brick, mostly gone
-  FR(4, 38, 40, 6, (fx, fy, o) => {
+  FR(6, 38, 50, 6, (fx, fy, o) => {
     const ix = Math.floor(fx / 3);
     return hash2(ix, fy >> 2, 93) < 0.35 && hash2(fx, fy, 94) < 0.7 ? mixc(o, '#fff4dc', 0.28) : o;
   });
+  FR(W - 50, 20, 44, 14, (fx, fy, o) => {
+    const ix = Math.floor(fx / 4);
+    return hash2(ix, fy >> 2, 193) < 0.3 && hash2(fx, fy, 194) < 0.6 ? mixc(o, '#fff4dc', 0.22) : o;
+  });
+  micro('COLA  5 CENTS', W - 46, 25, '#e0c08a');
   // the three gold pawn balls on a scrolled bracket
-  fh(52, 64, 19, '#4a3550');
-  L(54, 19, 60, 23, '#4a3550');
-  fv(58, 19, 23, '#4a3550');
-  for (const [bx, by] of [[55, 25], [61, 25], [58, 29.5]] as [number, number][]) {
+  const pb = W - 12;
+  fh(pb - 6, W, 19, '#4a3550');
+  L(pb - 4, 19, pb + 2, 23, '#4a3550');
+  fv(pb, 19, 23, '#4a3550');
+  for (const [bx, by] of [[pb - 3, 25], [pb + 3, 25], [pb, 29.5]] as [number, number][]) {
     circ(bx, by, 2.4, '#f4b63f');
     ell(bx + 0.5, by + 0.75, 1.75, 1.5, '#d89a2a');
     P1(bx - 1, by - 1, '#fff0a0');
     P1(bx - 0.5, by - 1.5, '#fffbe0');
   }
   // sign
-  signBoardF(3, 20, 48, 17, '#7a2a3a', '#fbefd4');
-  TC("FENWICK'S", 27.5, 22.5, '#e8b090', FM, {});
-  TC("FENWICK'S", 27, 22, enamel('#b8303e'), FM, {});
-  TC('PAWN & TAPES', 27, 31, worn('#2f6a74', 95, 0.08), FT, {});
+  signBoardF(C - 34, 20, 68, 17, '#7a2a3a', '#fbefd4');
+  TC("FENWICK'S", C + 0.5, 22.5, '#e8b090', FM, {});
+  TC("FENWICK'S", C, 22, enamel('#b8303e'), FM, {});
+  TC('PAWN & TAPES', C, 31, worn('#2f6a74', 95, 0.08), FT, {});
   // cluttered windows behind security bars
   const wy = 54;
   const wh = 24;
-  for (const wx of [3, 41]) {
+  const pane = (wx: number, kind: number) => {
     R(wx - 1, wy - 1, 22, wh + 2, '#4a3a4a');
     fh(wx - 1, wx + 21, wy - 1, '#6a5a6a');
     glassF(wx, wy, 20, wh, () => {
       R(wx, wy, 20, wh, '#5a4a5e');
       R(wx, wy + 18, 20, 6, '#7a5a4a');
       fh(wx, wx + 20, wy + 18, '#9a7a6a');
-      if (wx < 30) {
+      if (kind === 0) {
         for (let i = 0; i < 9; i++) vhs(wx + 1 + i * 2, wy + 12, ['#e8505a', '#3f9a92', '#f4b63f', '#9a6ad0', '#fff4dc'][i % 5]);
         for (let i = 0; i < 7; i++) vhs(wx + 2 + i * 2, wy + 6, ['#5a8ad0', '#ff94b4', '#f4b63f'][i % 3]);
         for (let i = 0; i < 4; i++) vhs(wx + 4 + i * 2, wy + 18, ['#fff4dc', '#3f9a92'][i % 2]);
         R(wx + 2, wy + 1, 12, 3, '#ffe070');
         micro('2 FOR $1', wx + 2.5, wy + 1.5, '#b8303e');
-      } else {
+      } else if (kind === 1) {
         for (const [tx, ty] of [[wx + 1, wy + 9], [wx + 9, wy + 12]] as [number, number][]) {
           RR(tx, ty, 10, 8, 1, '#8a7a6a');
           fh(tx + 0.5, tx + 9.5, ty, '#b8a898');
@@ -2932,6 +3360,32 @@ function drawPawn(): void {
         fv(wx + 17.5, wy + 1, wy + 9, '#e8e4d8');
         R(wx + 1, wy + 1, 6, 4, '#f4b63f');
         micro('GOLD', wx + 1.5, wy + 1.5, '#7a2a3a');
+      } else if (kind === 2) {
+        // a trumpet, a bowling ball, somebody's championship belt (replica, very legal)
+        ell(wx + 5, wy + 8, 3, 3, '#e8b84a');
+        ell(wx + 5, wy + 8, 1.5, 1.5, '#5a4a5e');
+        L(wx + 7, wy + 8, wx + 15, wy + 6, '#e8b84a');
+        L(wx + 7, wy + 9, wx + 15, wy + 7, '#c8902a');
+        circ(wx + 15, wy + 15, 3, '#3a4a8a');
+        P1(wx + 14, wy + 14, '#8a9ae0');
+        R(wx + 2, wy + 16, 12, 3, '#3a3048');
+        RR(wx + 5, wy + 15, 6, 5, 1, '#f4b63f');
+        P1(wx + 7, wy + 16, '#fff0a0');
+        R(wx + 12, wy + 1, 7, 4, '#ffe070');
+        micro('NO', wx + 13, wy + 1.5, '#b8303e');
+        micro('REFUND', wx + 12.5, wy + 3, '#b8303e');
+      } else {
+        // a guitar on the wall and a stack of board games
+        ell(wx + 8, wy + 13, 3.5, 3, '#c8603a');
+        ell(wx + 8, wy + 9, 2.5, 2.2, '#c8603a');
+        circ(wx + 8, wy + 11, 1, '#2b2140');
+        R(wx + 7.5, wy + 1, 1, 8, '#7a4a3a');
+        R(wx + 7, wy + 0.5, 2, 2, '#4a3a3a');
+        for (let k = 0; k < 4; k++) {
+          const c = ['#e8505a', '#5a8ad0', '#f4b63f', '#6fb070'][k];
+          R(wx + 12, wy + 17 - k * 2, 7, 2, c);
+          fh(wx + 12, wx + 19, wy + 17 - k * 2, liA(c, 0.4));
+        }
       }
     });
     // bars
@@ -2943,47 +3397,55 @@ function drawPawn(): void {
     fh(wx, wx + 20, wy + 11.5, '#6a6080');
     R(wx - 2, wy + wh + 1, 24, 1.5, '#a8988a');
     fh(wx - 2, wx + 22, wy + wh + 1, '#c8b8a8');
-  }
+  };
+  pane(8, 0);
+  pane(36, 3);
+  pane(88, 1);
+  pane(116, 2);
   pawnNeon(true);
-  acUnit(4, 43);
-  // door (centre x = 32)
-  doorF(25, 54, 14, 34, '#6a5a7a', { frame: '#d8c8b8', lite: true, liteH: 14, wall: '#5a4a5e', seed: 97, kick: '#9a92a8', step: '#b8a8a0' });
-  for (let x = 27.5; x < 37; x += 2.5) R(x, 56, 0.5, 14, '#3a3048');
-  R(27, 72, 10, 5, '#fff4dc');
-  fh(27, 37, 72, '#ffffff');
-  T('BUY', 27.5, 72, enamel('#b8303e'), FT, {});
-  // milk crate of records and a cracked step
-  R(57, GY - 8, 7, 8, '#3f6ab0');
-  FR(57, GY - 8, 7, 8, (fx, fy) => (fx % 3 === 0 || fy % 4 === 0 ? '#2f4a80' : null));
-  for (let k = 0; k < 4; k++) R(57.5 + k * 1.5, GY - 10, 1, 3, k % 2 ? '#2b2140' : '#e8505a');
-  L(28, GY - 1, 31, GY - 2, '#7a6a72');
+  acUnit(8, 43);
+  // door (centre x = 72, a 16 x 32 opening)
+  doorF(C - 8, GY - 32, 16, 32, '#6a5a7a', { frame: '#d8c8b8', lite: true, liteH: 13, wall: '#5a4a5e', seed: 97, kick: '#9a92a8', step: '#b8a8a0' });
+  for (let x = C - 5.5; x < C + 6; x += 2.5) R(x, GY - 30, 0.5, 13, '#3a3048');
+  R(C - 5, 72, 10, 5, '#fff4dc');
+  fh(C - 5, C + 5, 72, '#ffffff');
+  T('BUY', C - 4.5, 72, enamel('#b8303e'), FT, {});
+  // milk crates of records and a cracked step
+  for (const [cx2, cy2] of [[W - 10, GY - 8], [W - 17, GY - 8], [W - 13.5, GY - 16]] as [number, number][]) {
+    R(cx2, cy2, 7, 8, '#3f6ab0');
+    FR(cx2, cy2, 7, 8, (fx, fy) => (fx % 3 === 0 || fy % 4 === 0 ? '#2f4a80' : null));
+  }
+  for (let k = 0; k < 4; k++) R(W - 13 + k * 1.5, GY - 18, 1, 3, k % 2 ? '#2b2140' : '#e8505a');
+  L(C - 4, GY - 1, C - 1, GY - 2, '#7a6a72');
   grime(0, GY - 10, W, 9, 0.24);
-  footing(0, GY - 3, 24, 3, '#a8908a', 98);
-  footing(40, GY - 3, 24, 3, '#a8908a', 99);
+  footing(0, GY - 3, C - 10, 3, '#a8908a', 98);
+  footing(C + 10, GY - 3, C - 10, 3, '#a8908a', 99);
 }
 building('b-pawn', {
-  w: 64,
+  w: 144,
   h: 88,
   door: 0,
   draw: drawPawn,
   shadowTop: 10,
   label: "Fenwick's Pawn & Tapes",
-  solid: { x: -32, y: -62, w: 64, h: 62 },
+  solid: { x: -72, y: -62, w: 144, h: 62 },
   anims: [
     {
       fps: 0,
       frames: 2,
-      rect: [42, PN_Y - 3, 20, 10],
+      rect: [PN_X - 1, PN_Y - 3, 20, 10],
       pick: neonFlicker(73, [5, 6, 12, 40, 41]),
       skip: (f) => f === 0,
       draw: () => pawnNeon(false),
     },
   ],
   lights: [
-    [13, 64, 14, WARM],
-    [51, 64, 14, WARM],
-    [52, PN_Y + 3, 14, '#ff6aa8'],
-    [32, 63, 10, WARM],
+    [18, 64, 14, WARM],
+    [46, 64, 14, WARM],
+    [98, 64, 14, WARM],
+    [126, 64, 14, WARM],
+    [PN_X + 9, PN_Y + 3, 14, '#ff6aa8'],
+    [72, 66, 10, WARM],
   ],
 });
 
@@ -3002,11 +3464,14 @@ function barberPole(x: number, y: number, h: number, f: number): void {
   VL(x, y + 1, y + h - 2, lighten(0.4));
 }
 const BP_Y = 50;
+const BP_X = 59;
 function drawSalon(): void {
-  const W = 64;
+  const W = 144;
   const GY = 88;
+  const C = W / 2;
   flatRoof(0, 4, W, 10, 101, '#9a84a8');
-  ventF(52, 5, 4);
+  ventF(W - 12, 5, 4);
+  ventF(14, 6, 4);
   // gold scalloped parapet
   for (let x = 0; x < W; x += 6) {
     RR(x, 11, 6, 5, 2, '#f4b63f');
@@ -3020,93 +3485,114 @@ function drawSalon(): void {
   R(0, 16.5, W, GY - 16.5, (x: number) => (x % 8 === 0 ? '#ffd4e0' : '#f6b0c4'));
   FR(0, 16.5, W, GY - 16.5, (fx, fy, o) => (fx % 16 === 1 ? '#e898b0' : hash2(fx, fy, 102) < 0.04 ? liA(o, 0.15) : o));
   aoTop(0, 16.5, W, 4, 0.2);
-  shadeRight(W - 6, 17, 6, GY - 17, 0.15);
+  shadeRight(W - 7, 17, 7, GY - 17, 0.15);
   // the glamorous script sign
-  signBoardF(4, 19, 56, 18, '#c8902a', '#3a2440');
-  FR(5, 20, 54, 16, (fx, fy, o) => (hash2(fx, fy, 103) < 0.02 ? '#ffd34a' : o));
+  signBoardF(C - 34, 19, 68, 18, '#c8902a', '#3a2440');
+  FR(C - 33, 20, 66, 16, (fx, fy, o) => (hash2(fx, fy, 103) < 0.02 ? '#ffd34a' : o));
   const s = 'Gorgeous';
   const tw = TW(s, FM, { bold: true });
-  T(s, 32 - Math.round(tw / 2) + 1, 22, '#c8307a', FM, { bold: true });
-  T(s, 32 - Math.round(tw / 2), 21, enamel('#ffd34a', 0.4), FM, { bold: true });
-  curve(10, 33, 54, 33, -2, '#ff8ab0');
-  for (const [sx, sy] of [[8, 22], [56, 25], [53, 21]] as [number, number][]) {
+  T(s, C - Math.round(tw / 2) + 1, 22, '#c8307a', FM, { bold: true });
+  T(s, C - Math.round(tw / 2), 21, enamel('#ffd34a', 0.4), FM, { bold: true });
+  curve(C - 24, 33, C + 24, 33, -2, '#ff8ab0');
+  for (const [sx, sy] of [[C - 26, 22], [C + 26, 25], [C + 23, 21], [10, 26], [W - 12, 24]] as [number, number][]) {
     P(sx, sy, '#fff8e0');
     P1(sx - 1, sy + 0.25, '#ffd34a');
     P1(sx + 1.5, sy + 0.25, '#ffd34a');
     P1(sx + 0.25, sy - 1, '#ffd34a');
     P1(sx + 0.25, sy + 1.5, '#ffd34a');
   }
-  // pink and gold awning
+  micro('WALK-INS', 16, 28, '#c8307a');
+  micro('& WIGS', W - 30, 28, '#c8307a');
+  // pink and gold awnings
   awning(3, 40, 58, 5, '#ff5d8f', '#ffe8a0', 3);
-  // left window: bonnet hair dryers
-  const wy = 54;
-  const wh = 20;
-  R(1, wy - 2, 21, wh + 4, '#f4b63f');
-  fh(1, 22, wy - 2, '#fff0a0');
-  glassF(3, wy, 17, wh, () => {
-    R(3, wy, 17, wh, '#ffe0e8');
-    FR(3, wy, 17, 14, (fx, fy) => ((fx + fy) % 8 === 0 ? '#ffd0dc' : null));
-    R(3, wy + 14, 17, 6, '#d8a0b8');
-    for (const dx2 of [3, 11]) {
+  awning(W - 61, 40, 58, 5, '#ff5d8f', '#ffe8a0', 3);
+  const wy = 52;
+  const wh = 22;
+  const frame = (wx: number, ww: number) => {
+    R(wx - 2, wy - 2, ww + 4, wh + 4, '#f4b63f');
+    fh(wx - 2, wx + ww + 2, wy - 2, '#fff0a0');
+    fh(wx - 2, wx + ww + 2, wy + wh + 1.5, '#c8902a');
+  };
+  // left window: a row of bonnet hair dryers, one occupied
+  frame(6, 44);
+  glassF(6, wy, 44, wh, () => {
+    R(6, wy, 44, wh, '#ffe0e8');
+    FR(6, wy, 44, 15, (fx, fy) => ((fx + fy) % 8 === 0 ? '#ffd0dc' : null));
+    R(6, wy + 15, 44, 7, '#d8a0b8');
+    for (let i = 0; i < 4; i++) {
+      const dx2 = 7 + i * 10.5;
       ell(dx2 + 4, wy + 5, 3.5, 3.5, '#d8d4e8');
       ell(dx2 + 4, wy + 6, 3, 2, '#b8b0c8');
       ell(dx2 + 3, wy + 4, 1.5, 1.5, '#ffffff');
       R(dx2 + 3, wy + 8, 2, 4, '#a8a0b8');
       RR(dx2 + 1, wy + 11, 6, 4, 1, '#ff5d8f');
       fh(dx2 + 1, dx2 + 7, wy + 11, '#ff9ab8');
-      fv(dx2 + 4, wy + 15, wy + 20, '#a8a0b8');
+      fv(dx2 + 4, wy + 15, wy + 21, '#a8a0b8');
     }
-    circ(8, wy + 9.5, 1.5, '#e8b090');
-    ell(8, wy + 8, 2, 1.25, '#d8d4e8');
+    // Miss Opal under the second dryer, reading a magazine
+    circ(22, wy + 9.5, 1.5, '#e8b090');
+    ell(22, wy + 8, 2, 1.25, '#d8d4e8');
+    R(19.5, wy + 11.5, 5, 3, '#fff4dc');
+    micro('GLAM', 19.8, wy + 12, '#c8307a');
   });
-  // right window: a gold mirror and a styling chair
-  R(42, wy - 2, 21, wh + 4, '#f4b63f');
-  fh(42, 63, wy - 2, '#fff0a0');
-  glassF(44, wy, 17, wh, () => {
-    R(44, wy, 17, wh, '#ffe0e8');
-    R(44, wy + 14, 17, 6, '#d8a0b8');
-    RR(47, wy + 1, 9, 10, 3, '#f4b63f');
-    RR(48, wy + 2, 7, 8, 2, '#c8e0f0');
-    L(49, wy + 7, 52, wy + 3, '#ffffff');
-    RR(48, wy + 10, 7, 5, 1, '#3a2440');
-    fh(48, 55, wy + 10, '#6a4a70');
-    fv(51.5, wy + 15, wy + 18, '#a8a0b8');
-    fh(49, 54, wy + 18.5, '#a8a0b8');
-    for (let k = 0; k < 3; k++) R(45 + k * 1.5, wy + 12 - k * 0.5, 1, 3 + k * 0.5, ['#ff5d8f', '#9a6ad0', '#3f9a92'][k]);
+  R(27.5, wy, 1, wh, '#f4b63f');
+  // right window: gold mirrors and styling chairs, a wig on a stand
+  frame(94, 44);
+  glassF(94, wy, 44, wh, () => {
+    R(94, wy, 44, wh, '#ffe0e8');
+    R(94, wy + 15, 44, 7, '#d8a0b8');
+    for (const mx of [97, 115]) {
+      RR(mx, wy + 1, 9, 10, 3, '#f4b63f');
+      RR(mx + 1, wy + 2, 7, 8, 2, '#c8e0f0');
+      L(mx + 2, wy + 7, mx + 5, wy + 3, '#ffffff');
+      RR(mx + 1, wy + 10, 7, 5, 1, '#3a2440');
+      fh(mx + 1, mx + 8, wy + 10, '#6a4a70');
+      fv(mx + 4.5, wy + 15, wy + 19, '#a8a0b8');
+      fh(mx + 2, mx + 7, wy + 19.5, '#a8a0b8');
+    }
+    for (let k = 0; k < 3; k++) R(108 + k * 1.5, wy + 12 - k * 0.5, 1, 3 + k * 0.5, ['#ff5d8f', '#9a6ad0', '#3f9a92'][k]);
+    // the wig: a towering platinum beehive
+    fv(132, wy + 12, wy + 19, '#8a7a6a');
+    RR(129.5, wy + 8, 5, 5, 2, '#e8d8c8');
+    ell(132, wy + 5, 3.5, 4.5, '#fff4dc');
+    FR(128, wy, 8, 10, (fx, fy, o) => (o === col('#fff4dc') && (fx + fy) % 3 === 0 ? '#e8dcc0' : o));
   });
-  barberPole(21, BP_Y, 22, 0);
-  // door (centre x = 32)
-  doorF(25, 54, 14, 34, '#3a2440', { frame: '#f4b63f', lite: true, liteH: 14, wall: '#ffe0e8', seed: 104, kick: '#f4b63f', step: '#d8b8c8' });
-  RR(26, 71, 12, 5, 1, '#ffd34a');
-  T('IN', 29.5, 71, enamel('#3a2440'), FT, {});
-  // star decals on the glass, a potted palm
-  for (const [sx, sy] of [[29, 58], [35, 61]] as [number, number][]) {
+  R(115.5, wy, 1, wh, '#f4b63f');
+  barberPole(BP_X, BP_Y, 22, 0);
+  // door (centre x = 72, a 16 x 32 opening)
+  doorF(C - 8, GY - 32, 16, 32, '#3a2440', { frame: '#f4b63f', lite: true, liteH: 13, wall: '#ffe0e8', seed: 104, kick: '#f4b63f', step: '#d8b8c8' });
+  RR(C - 6, 73, 12, 5, 1, '#ffd34a');
+  T('IN', C - 2.5, 73, enamel('#3a2440'), FT, {});
+  // star decals on the glass, potted palms either side
+  for (const [sx, sy] of [[C - 3, 60], [C + 3, 63]] as [number, number][]) {
     P1(sx, sy, '#ffd34a');
     P1(sx - 0.5, sy + 0.5, '#ffd34a');
     P1(sx + 0.5, sy + 0.5, '#ffd34a');
     P1(sx, sy + 1, '#ffd34a');
   }
-  R(55, GY - 7, 6, 6, '#3a2440');
-  fh(55, 61, GY - 7, '#6a4a70');
-  for (let k = -2; k <= 2; k++) L(58, GY - 8, 58 + k * 2.5, GY - 13 + Math.abs(k), k % 2 ? '#4f8a5a' : '#6fb070');
-  fv(58, GY - 12, GY - 7, '#8a6a4a');
+  for (const px of [C + 14, 86 - 6]) {
+    R(px, GY - 7, 6, 6, '#3a2440');
+    fh(px, px + 6, GY - 7, '#6a4a70');
+    for (let k = -2; k <= 2; k++) L(px + 3, GY - 8, px + 3 + k * 2.5, GY - 13 + Math.abs(k), k % 2 ? '#4f8a5a' : '#6fb070');
+    fv(px + 3, GY - 12, GY - 7, '#8a6a4a');
+  }
   grime(0, GY - 9, W, 7, 0.16);
   footing(0, GY - 3, W, 3, '#d8b8c8', 105);
 }
 building('b-salon', {
-  w: 64,
+  w: 144,
   h: 88,
   door: 0,
   draw: drawSalon,
   shadowTop: 11,
   label: 'Gorgeous',
-  solid: { x: -32, y: -62, w: 64, h: 62 },
-  anims: [{ fps: 6, frames: 6, rect: [19, BP_Y - 3, 7, 28], draw: (f) => barberPole(21, BP_Y, 22, f) }],
+  solid: { x: -72, y: -62, w: 144, h: 62 },
+  anims: [{ fps: 6, frames: 6, rect: [BP_X - 2, BP_Y - 3, 7, 28], draw: (f) => barberPole(BP_X, BP_Y, 22, f) }],
   lights: [
-    [11, 64, 14, WARM],
-    [52, 64, 14, WARM],
-    [32, 63, 10, WARM],
-    [32, 28, 18, '#ffd34a'],
+    [28, 63, 22, WARM],
+    [116, 63, 22, WARM],
+    [72, 66, 10, WARM],
+    [72, 28, 20, '#ffd34a'],
   ],
 });
 
@@ -3138,12 +3624,14 @@ function column(x: number, y0: number, y1: number): void {
   HL(x - 1, x + 5, y1 - 2, '#f4eee8');
 }
 function drawLibrary(): void {
-  const W = 96;
+  const W = 176;
   const GY = 96;
+  const O = W / 2 - 48; // the portico is drawn in its old 96-wide frame, shifted to the centre
   // slate roof behind the pediment
   shingleF(0, 4, W, 20, '#6a6488', 111, 3, 4, 0.15);
   fh(0, W, 4, '#a8a2c8');
-  ventF(84, 3, 4);
+  ventF(W - 12, 3, 4);
+  chimney(14, 0, 6, '#a898b0');
   // wings: cut stone with tall arched windows
   stoneWall(0, 24, W, GY - 24, '#c8bccc', 112);
   FR(0, 24, W, GY - 24, (fx, fy, o) => (hash2(fx, fy, 113) < 0.05 ? shA(o, 0.1) : hash2(fx, fy, 114) > 0.985 ? liA(o, 0.2) : o));
@@ -3151,8 +3639,8 @@ function drawLibrary(): void {
   fh(0, W, 24, '#fffaf4');
   fh(0, W, 25.5, '#a898b0');
   aoTop(0, 26, W, 4, 0.2);
-  shadeRight(W - 8, 26, 8, GY - 26, 0.18);
-  for (const wx of [5, 81]) {
+  shadeRight(W - 9, 26, 9, GY - 26, 0.18);
+  for (const wx of [8, 28, W - 38, W - 18]) {
     RR(wx - 1.5, 39, 13, 34, 5, '#f4eee8');
     fh(wx + 1, wx + 9, 39, '#fffaf4');
     glassF(wx, 41, 10, 31, () => {
@@ -3161,10 +3649,16 @@ function drawLibrary(): void {
         const sy = 46 + k * 5;
         R(wx, sy + 3, 10, 1, '#7a4a3a');
         for (let b = 0; b < 9; b++) {
-          const c = ['#c9424f', '#4c6ab2', '#e2b244', '#518c5c', '#9a6ad0', '#e8e0d0'][(b + k * 2) % 6];
+          const c = ['#c9424f', '#4c6ab2', '#e2b244', '#518c5c', '#9a6ad0', '#e8e0d0'][(b + k * 2 + wx) % 6];
           R(wx + 0.5 + b, sy + (b % 3 === 0 ? 0.5 : 0), 1, 3 - (b % 3 === 0 ? 0.5 : 0), c);
           fv(wx + 0.5 + b, sy + 0.5, sy + 3, liA(c, 0.25));
         }
+      }
+      if (wx === 28) {
+        // a reader at the reading-room window
+        RR(wx + 3, 58, 5, 6, 2, '#c8906a');
+        R(wx + 2, 63, 7, 4, '#5a8ab0');
+        R(wx + 2.5, 61.5, 4, 2.5, '#fff8ee');
       }
     });
     RR(wx, 40, 10, 3, 1, '#e8a868');
@@ -3177,56 +3671,58 @@ function drawLibrary(): void {
     fh(wx - 2.5, wx + 12.5, 73, '#fffaf4');
     fh(wx - 2.5, wx + 12.5, 74.5, tint('#2b2140', 0.3));
   }
-  // ivy climbing the left corner
-  for (let y = 40; y < GY - 4; y += 1) {
+  // carved names along the wing friezes
+  micro('DICKINSON  TWAIN', 6, 29, '#8a7a9a');
+  micro('ANGELOU  STEINBECK', W - 44, 29, '#8a7a9a');
+  // ivy climbing the left corner and over the first window
+  for (let y = 34; y < GY - 4; y += 1) {
     const x = 1 + Math.sin(y * 0.35) * 1.2;
     P1(x, y, '#4f7a4a');
-    if (y % 3 === 0) {
-      ell(x + 1, y, 1, 0.8, hash2(y, 0, 115) < 0.5 ? '#5f9a5a' : '#3f6a4a');
-    }
+    if (y % 3 === 0) ell(x + 1, y, 1, 0.8, hash2(y, 0, 115) < 0.5 ? '#5f9a5a' : '#3f6a4a');
   }
+  for (let x = 2; x < 22; x += 1) if (hash2(x, 1, 116) < 0.6) ell(x, 35 + Math.sin(x * 0.5), 1, 0.8, hash2(x, 0, 117) < 0.5 ? '#5f9a5a' : '#3f6a4a');
   // portico: pediment, frieze, four columns
-  poly([[16, 31], [48, 9], [80, 31]], '#efe6e4');
-  poly([[23, 29], [48, 13], [73, 29]], '#ddd2d4');
-  FR(23, 13, 50, 16, (fx, fy, o) => (o === col('#ddd2d4') && hash2(fx, fy, 116) < 0.06 ? shA(o, 0.06) : o));
-  L(16, 31, 48, 9, '#fffaf4');
-  L(48, 9, 80, 31, '#b8a8b4');
-  for (let i = 0; i < 20; i++) P1(18 + i * 1.5, 30 - i * 1.03, '#d8ccd0');
+  poly([[O + 16, 31], [O + 48, 9], [O + 80, 31]], '#efe6e4');
+  poly([[O + 23, 29], [O + 48, 13], [O + 73, 29]], '#ddd2d4');
+  FR(O + 23, 13, 50, 16, (fx, fy, o) => (o === col('#ddd2d4') && hash2(fx, fy, 116) < 0.06 ? shA(o, 0.06) : o));
+  L(O + 16, 31, O + 48, 9, '#fffaf4');
+  L(O + 48, 9, O + 80, 31, '#b8a8b4');
+  for (let i = 0; i < 20; i++) P1(O + 18 + i * 1.5, 30 - i * 1.03, '#d8ccd0');
   // an open book in the pediment
-  R(42, 19, 12, 7, '#fff8ee');
-  fv(48, 19, 26, '#c8b8c0');
-  fh(42, 54, 26, '#c8b8c0');
+  R(O + 42, 19, 12, 7, '#fff8ee');
+  fv(O + 48, 19, 26, '#c8b8c0');
+  fh(O + 42, O + 54, 26, '#c8b8c0');
   for (let k = 0; k < 4; k++) {
-    fh(43, 47, 20.5 + k * 1.3, '#a898b0');
-    fh(49, 53, 20.5 + k * 1.3, '#a898b0');
+    fh(O + 43, O + 47, 20.5 + k * 1.3, '#a898b0');
+    fh(O + 49, O + 53, 20.5 + k * 1.3, '#a898b0');
   }
-  R(14, 31, 68, 10, '#efe6e4');
-  fh(14, 82, 31, '#fffaf4');
-  fh(14, 82, 40.5, '#b8a8b4');
-  for (let x = 15; x < 82; x += 3) R(x, 31.5, 1, 1, '#ddd2d4');
-  TC('PUBLIC LIBRARY', 48.5, 34.5, '#c8b8c8', FT, {});
-  TC('PUBLIC LIBRARY', 48, 34, '#5a4a7a', FT, {});
+  R(O + 14, 31, 68, 10, '#efe6e4');
+  fh(O + 14, O + 82, 31, '#fffaf4');
+  fh(O + 14, O + 82, 40.5, '#b8a8b4');
+  for (let x = O + 15; x < O + 82; x += 3) R(x, 31.5, 1, 1, '#ddd2d4');
+  TC('PUBLIC LIBRARY', O + 48.5, 34.5, '#c8b8c8', FT, {});
+  TC('PUBLIC LIBRARY', O + 48, 34, '#5a4a7a', FT, {});
   // shadowy portico interior with the door
-  R(18, 41, 60, 44, '#a89cb4');
-  stoneWall(18, 41, 60, 44, '#a89cb4', 117);
-  aoTop(18, 41, 60, 10, 0.32);
-  doorF(41, 51, 14, 34, '#7a4a3a', { frame: '#e8e0dc', lite: true, liteH: 12, seed: 118, step: null, transom: true });
-  RR(40, 45, 16, 5, 2, '#e8e0dc');
-  fh(41, 55, 45, '#fffaf4');
-  glassF(42, 46, 12, 3, () => R(42, 46, 12, 3, '#ffcf7a'));
+  R(O + 18, 41, 60, 44, '#a89cb4');
+  stoneWall(O + 18, 41, 60, 44, '#a89cb4', 117);
+  aoTop(O + 18, 41, 60, 10, 0.32);
+  doorF(O + 40, 53, 16, 32, '#7a4a3a', { frame: '#e8e0dc', lite: true, liteH: 11, seed: 118, step: null, transom: true });
+  RR(O + 40, 46, 16, 5, 2, '#e8e0dc');
+  fh(O + 41, O + 55, 46, '#fffaf4');
+  glassF(O + 42, 47, 12, 3, () => R(O + 42, 47, 12, 3, '#ffcf7a'));
   // hanging lantern
-  fv(48, 41, 43, '#4a3550');
+  fv(O + 48, 41, 43, '#4a3550');
   // a banner between the columns
-  R(57, 46, 7, 14, '#4c6ab2');
-  poly([[57, 60], [60.5, 57], [64, 60], [64, 61], [57, 61]], '#4c6ab2');
-  fv(57, 46, 61, '#6a8ad0');
-  micro('READ', 57.5, 48, '#fff4dc');
-  ell(60.5, 53.5, 2, 1.5, '#fff4dc');
-  fv(60.5, 52, 55, '#4c6ab2');
-  for (const cx of [21, 31, 60, 70]) column(cx, 41, 85);
+  R(O + 59, 46, 7, 14, '#4c6ab2');
+  poly([[O + 59, 60], [O + 62.5, 57], [O + 66, 60], [O + 66, 61], [O + 59, 61]], '#4c6ab2');
+  fv(O + 59, 46, 61, '#6a8ad0');
+  micro('READ', O + 59.5, 48, '#fff4dc');
+  ell(O + 62.5, 53.5, 2, 1.5, '#fff4dc');
+  fv(O + 62.5, 52, 55, '#4c6ab2');
+  for (const cx of [21, 31, 60, 70]) column(O + cx, 41, 85);
   // the stone steps
   for (let k = 0; k < 3; k++) {
-    const sx = 28 - k * 4;
+    const sx = O + 28 - k * 4;
     const sw = 40 + k * 8;
     R(sx, 85 + k * 3.5, sw, 3.5, ['#e8e0dc', '#d8d0d0', '#c8c0c4'][k]);
     fh(sx, sx + sw, 85 + k * 3.5, '#fffaf4');
@@ -3234,41 +3730,52 @@ function drawLibrary(): void {
     FR(sx, 85 + k * 3.5, sw, 3.5, (fx, fy, o) => (hash2(fx, fy, 119 + k) < 0.05 ? shA(o, 0.08) : o));
   }
   // Story Time sandwich board
-  L(3, GY - 1, 5, GY - 20, '#8a5a4a');
-  L(21, GY - 1, 19, GY - 20, '#6e3a48');
-  RR(1, GY - 23, 22, 20, 1, '#a8704f');
-  fh(2, 22, GY - 23, '#d09a6a');
-  R(2, GY - 22, 20, 18, '#3a4a4c');
-  FR(2, GY - 22, 20, 18, (fx, fy, o) => (hash2(fx, fy, 120) < 0.05 ? mixc(o, '#ffffff', 0.15) : o));
-  TC('STORY', 12, GY - 21, '#fff4dc', FT, {});
-  TC('TIME', 12, GY - 15, '#ffd977', FT, {});
-  TC('4PM', 12, GY - 9, '#ff9ab0', FT, {});
+  const sb = 48;
+  L(sb + 2, GY - 1, sb + 4, GY - 20, '#8a5a4a');
+  L(sb + 20, GY - 1, sb + 18, GY - 20, '#6e3a48');
+  RR(sb, GY - 23, 22, 20, 1, '#a8704f');
+  fh(sb + 1, sb + 21, GY - 23, '#d09a6a');
+  R(sb + 1, GY - 22, 20, 18, '#3a4a4c');
+  FR(sb + 1, GY - 22, 20, 18, (fx, fy, o) => (hash2(fx, fy, 120) < 0.05 ? mixc(o, '#ffffff', 0.15) : o));
+  TC('STORY', sb + 11, GY - 21, '#fff4dc', FT, {});
+  TC('TIME', sb + 11, GY - 15, '#ffd977', FT, {});
+  TC('4PM', sb + 11, GY - 9, '#ff9ab0', FT, {});
   // the blue book-return box
-  RR(81, GY - 17, 11, 17, 2, '#4a68b8');
-  fh(82, 91, GY - 17, '#8aa8f0');
-  R(83, GY - 14, 7, 2, '#2b2140');
-  fh(83, 90, GY - 12, '#7aa0e0');
-  fv(81.5, GY - 15, GY - 2, '#7aa0e0');
-  fv(91.5, GY - 15, GY - 2, '#30407c');
-  T('B', 85, GY - 9, '#fff4dc', FT, {});
-  R(82, GY - 1, 2, 1, '#30407c');
-  R(89, GY - 1, 2, 1, '#30407c');
-  grime(0, GY - 8, 18, 7, 0.18);
-  grime(78, GY - 8, 18, 7, 0.18);
+  const bb = W - 52;
+  RR(bb, GY - 17, 11, 17, 2, '#4a68b8');
+  fh(bb + 1, bb + 10, GY - 17, '#8aa8f0');
+  R(bb + 2, GY - 14, 7, 2, '#2b2140');
+  fh(bb + 2, bb + 9, GY - 12, '#7aa0e0');
+  fv(bb + 0.5, GY - 15, GY - 2, '#7aa0e0');
+  fv(bb + 10.5, GY - 15, GY - 2, '#30407c');
+  T('B', bb + 4, GY - 9, '#fff4dc', FT, {});
+  R(bb + 1, GY - 1, 2, 1, '#30407c');
+  R(bb + 8, GY - 1, 2, 1, '#30407c');
+  // a bike rack with one loyal bicycle
+  for (let k = 0; k < 4; k++) {
+    const rx = 8 + k * 6;
+    R(rx, GY - 8, 1, 8, '#9a94b0');
+    R(rx + 4, GY - 8, 1, 8, '#9a94b0');
+    R(rx, GY - 8.5, 5, 1, '#c8c4d8');
+  }
+  grime(0, GY - 8, O + 18, 7, 0.18);
+  grime(O + 78, GY - 8, W - O - 78, 7, 0.18);
 }
 building('b-library', {
-  w: 96,
+  w: 176,
   h: 96,
   door: 0,
   draw: drawLibrary,
   shadowTop: 8,
   label: 'Public Library',
-  solid: { x: -48, y: -66, w: 96, h: 66 },
+  solid: { x: -88, y: -66, w: 176, h: 66 },
   lights: [
-    [10, 56, 14, WARM],
-    [86, 56, 14, WARM],
-    [48, 66, 16, WARM],
-    [48, 47, 10, WARM],
+    [13, 56, 14, WARM],
+    [33, 56, 14, WARM],
+    [143, 56, 14, WARM],
+    [163, 56, 14, WARM],
+    [88, 68, 16, WARM],
+    [88, 48, 10, WARM],
   ],
 });
 
@@ -3290,13 +3797,15 @@ function vfwFlag(f: number): void {
   flagFrame(7, 3, f);
 }
 function drawVFW(): void {
-  const W = 112;
+  const W = 176;
   const GY = 96;
+  const O = 32; // the central bay keeps its old 112-wide coordinates, shifted
   flatRoof(0, 12, W, 12, 121);
   FR(0, 12, W, 12, (fx, fy, o) => (hash2(fx, fy, 122) < 0.12 ? shA(o, 0.1) : o));
-  ventF(90, 14, 5);
+  ventF(150, 14, 5);
   ventF(30, 15, 4);
-  acUnit(60, 15);
+  acUnit(92, 15);
+  acUnit(120, 15);
   brickF(0, 24, W, GY - 24, '#a8504a', '#924442', '#7a4a52', 122);
   R(0, 22, W, 3, '#f2ece4');
   fh(0, W, 22, '#ffffff');
@@ -3304,26 +3813,28 @@ function drawVFW(): void {
   aoTop(0, 25, W, 4, 0.22);
   shadeRight(W - 8, 25, 8, GY - 25, 0.2);
   // name band
-  R(20, 27, 72, 11, '#2f3a6a');
-  fh(20, 92, 27, '#6a7ab8');
-  fh(20, 92, 37.5, '#1a2048');
-  TC('VFW POST 316', 56.5, 30, '#1a2048', FM, {});
-  TC('VFW POST 316', 56, 29.5, enamel('#fbf0e4'), FM, {});
-  for (const sx of [23, 88]) {
+  R(O + 20, 27, 72, 11, '#2f3a6a');
+  fh(O + 20, O + 92, 27, '#6a7ab8');
+  fh(O + 20, O + 92, 37.5, '#1a2048');
+  TC('VFW POST 316', O + 56.5, 30, '#1a2048', FM, {});
+  TC('VFW POST 316', O + 56, 29.5, enamel('#fbf0e4'), FM, {});
+  micro('VETERANS OF FOREIGN WARS', 10, 30, '#fbf0e4');
+  micro('ALL WELCOME', W - 34, 30, '#fbf0e4');
+  for (const sx of [O + 23, O + 88]) {
     const st = ['..#..', '.###.', '#####', '.###.', '.#.#.'];
     st.forEach((row, yy) => [...row].forEach((ch, xx) => ch === '#' && P1(sx - 1 + xx * 0.5, 30.5 + yy * 0.5, '#f4b63f')));
   }
   // the changeable-letter marquee on its frame
-  R(10, 40, 92, 20, '#f2ece4');
-  box(10, 40, 92, 20, '#5a5a7a');
-  fh(11, 101, 41, '#ffffff');
+  R(O + 10, 40, 92, 20, '#f2ece4');
+  box(O + 10, 40, 92, 20, '#5a5a7a');
+  fh(O + 11, O + 101, 41, '#ffffff');
   for (const yy of [48.5, 56.5]) {
-    fh(12, 100, yy, '#d8d0d8');
-    fh(12, 100, yy + HF, '#ffffff');
+    fh(O + 12, O + 100, yy, '#d8d0d8');
+    fh(O + 12, O + 100, yy + HF, '#ffffff');
   }
   const letters = (str: string, y: number, c: string) => {
     const w = TW(str, FT, {});
-    let x = 56 - w / 2;
+    let x = O + 56 - w / 2;
     for (const ch of str) {
       if (ch !== ' ') {
         R(x - 0.5, y - 0.5, 4, 6, '#ffffff');
@@ -3335,26 +3846,26 @@ function drawVFW(): void {
   letters('WED NIGHT WRESTLING', 42.5, '#2b2140');
   letters('BINGO AFTER', 50.5, '#c9404c');
   // legs of the marquee frame
-  for (const lx of [12, 99]) {
+  for (const lx of [O + 12, O + 99]) {
     R(lx, 60, 1.5, 4, '#5a5a7a');
     fv(lx, 60, 64, '#8a8aa0');
   }
-  // windows
-  for (const wx of [9, 85]) win(wx, 66, 18, 14, { frame: '#f2ece4', curtains: '#fff4e6', seed: wx, lintel: '#e0d8d0', cols: 3, rows: 2 });
+  // windows: two pairs, the hall's lights on behind lace
+  for (const wx of [5, 23, W - 37, W - 19]) win(wx, 50, 14, 26, { frame: '#f2ece4', curtains: '#fff4e6', seed: wx, lintel: '#e0d8d0', cols: 2, rows: 3, box: wx, boxC: '#5a5a7a' });
   // memorial plaque
-  RR(31, 70, 7, 9, 1, '#a8803a');
-  R(32, 71, 5, 7, '#c8a04a');
-  fh(32, 37, 71, '#f0d080');
-  for (let k = 0; k < 4; k++) fh(32.5, 36.5, 73 + k * 1.2, '#8a6a2a');
-  // double doors with canopy (centre x = 56)
-  R(41, 56, 30, 3.5, '#2f3a6a');
-  fh(41, 71, 56, '#6a7ab8');
-  fh(41, 71, 59, '#1a2048');
-  aoTop(42, 59.5, 28, 2.5, 0.3);
-  doorF(45, 62, 11, 34, '#5a6a9a', { frame: '#f2ece4', lite: true, liteH: 12, step: null, seed: 123, kick: '#c8c4d8' });
-  doorF(56, 62, 11, 34, '#5a6a9a', { frame: '#f2ece4', lite: true, liteH: 12, step: null, seed: 124, knobRight: false, kick: '#c8c4d8' });
-  R(43, GY - 2, 26, 2, '#c8c0c4');
-  fh(43, 69, GY - 2, '#e6dee0');
+  RR(O + 31, 70, 7, 9, 1, '#a8803a');
+  R(O + 32, 71, 5, 7, '#c8a04a');
+  fh(O + 32, O + 37, 71, '#f0d080');
+  for (let k = 0; k < 4; k++) fh(O + 32.5, O + 36.5, 73 + k * 1.2, '#8a6a2a');
+  // double doors with canopy (centre x = 88, two 8-wide leaves: a 16 x 32 opening)
+  R(O + 41, 58, 30, 3.5, '#2f3a6a');
+  fh(O + 41, O + 71, 58, '#6a7ab8');
+  fh(O + 41, O + 71, 61, '#1a2048');
+  aoTop(O + 42, 61.5, 28, 2.5, 0.3);
+  doorF(O + 48, GY - 32, 8, 32, '#5a6a9a', { frame: '#f2ece4', lite: true, liteH: 11, step: null, seed: 123, kick: '#c8c4d8' });
+  doorF(O + 56, GY - 32, 8, 32, '#5a6a9a', { frame: '#f2ece4', lite: true, liteH: 11, step: null, seed: 124, knobRight: false, kick: '#c8c4d8' });
+  R(O + 44, GY - 2, 24, 2, '#c8c0c4');
+  fh(O + 44, O + 68, GY - 2, '#e6dee0');
   // flagpole in front of the left corner
   R(5, 2, 1.5, GY - 2, '#c8c4d8');
   fv(5, 2, GY, '#eeeaf6');
@@ -3365,35 +3876,42 @@ function drawVFW(): void {
   fh(3, 9, GY - 3, '#c8c0d0');
   vfwFlag(0);
   // a bench and an ashtray urn by the door
-  R(74, GY - 8, 10, 2, '#a8704f');
-  fh(74, 84, GY - 8, '#d09a6a');
-  R(74, GY - 11, 10, 1.5, '#a8704f');
-  fh(74, 84, GY - 11, '#d09a6a');
-  R(75, GY - 6, 1, 6, '#6e4a3a');
-  R(82, GY - 6, 1, 6, '#6e4a3a');
-  RR(87, GY - 8, 4, 8, 1, '#6a6a80');
-  fh(87, 91, GY - 8, '#9a9ab0');
-  ell(89, GY - 8, 1.5, 0.5, '#e8e0d0');
+  R(O + 74, GY - 8, 10, 2, '#a8704f');
+  fh(O + 74, O + 84, GY - 8, '#d09a6a');
+  R(O + 74, GY - 11, 10, 1.5, '#a8704f');
+  fh(O + 74, O + 84, GY - 11, '#d09a6a');
+  R(O + 75, GY - 6, 1, 6, '#6e4a3a');
+  R(O + 82, GY - 6, 1, 6, '#6e4a3a');
+  RR(O + 87, GY - 8, 4, 8, 1, '#6a6a80');
+  fh(O + 87, O + 91, GY - 8, '#9a9ab0');
+  ell(O + 89, GY - 8, 1.5, 0.5, '#e8e0d0');
+  // a long planter of red and white geraniums under the left windows
+  RR(4, GY - 8, 36, 6, 2, '#6a7a5a');
+  fh(5, 39, GY - 8, '#9aaa8a');
+  for (let k = 0; k < 15; k++) ell(6 + k * 2.2, GY - 9, 1.3, 1.5, k % 2 ? '#d8434b' : '#fbf0e4');
   grime(0, GY - 9, W, 8, 0.22);
-  footing(0, GY - 3, 43, 3, '#b8a8b0', 125);
-  footing(69, GY - 3, 43, 3, '#b8a8b0', 126);
+  footing(0, GY - 3, O + 44, 3, '#b8a8b0', 125);
+  footing(O + 68, GY - 3, W - O - 68, 3, '#b8a8b0', 126);
 }
 building('b-vfw', {
-  w: 112,
+  w: 176,
   h: 96,
   door: 0,
   draw: drawVFW,
   shadowTop: 22,
   label: 'VFW Post 316',
-  solid: { x: -56, y: -66, w: 112, h: 66 },
+  solid: { x: -88, y: -66, w: 176, h: 66 },
   anims: [{ fps: 5, frames: 4, rect: [6, 0, 18, 16], draw: (f) => vfwFlag(f) }],
   lights: [
-    [18, 73, 14, WARM],
-    [94, 73, 14, WARM],
-    [56, 74, 18, WARM],
-    [56, 50, 30, '#fff0d0'],
+    [12, 63, 14, WARM],
+    [30, 63, 14, WARM],
+    [146, 63, 14, WARM],
+    [164, 63, 14, WARM],
+    [88, 74, 18, WARM],
+    [88, 50, 30, '#fff0d0'],
   ],
 });
+
 
 // ---------------------------------------------------------------- Turnbuckle Alley High gym
 function tigerFace(cx: number, cy: number): void {
@@ -3413,7 +3931,8 @@ function tigerFace(cx: number, cy: number): void {
   R(cx - 1, cy + 1, 3, 1, '#d8434b');
   P(cx, cy + 3, '#3a2440');
 }
-function drawSchool(): void {
+/** The arched entrance block (the old school front), drawn into its own 112-wide frame. */
+function schoolCore(): void {
   const W = 112;
   const GY = 104;
   // arched brick front
@@ -3474,11 +3993,11 @@ function drawSchool(): void {
   fh(40, 72, 67.5, '#6a7ab8');
   fh(40, 72, 70, '#1a2048');
   aoTop(42, 70.5, 28, 2, 0.3);
-  for (const [dx, kr] of [[44, true], [56, false]] as [number, boolean][]) {
-    doorF(dx, 71, 12, 33, '#3f9a92', { frame: '#f2ece4', lite: true, liteH: 10, wall: '#f2c890', step: null, seed: dx, knobRight: kr, kick: '#c8c4d8' });
-    R(dx + 1, 87, 10, 2, '#d8d4e8');
-    fh(dx + 1, dx + 11, 87, '#ffffff');
-    fh(dx + 1, dx + 11, 88.5, '#8a84a0');
+  for (const [dx, kr] of [[48, true], [56, false]] as [number, boolean][]) {
+    doorF(dx, GY - 32, 8, 32, '#3f9a92', { frame: '#f2ece4', lite: true, liteH: 10, wall: '#f2c890', step: null, seed: dx, knobRight: kr, kick: '#c8c4d8' });
+    R(dx + 1, 88, 6, 2, '#d8d4e8');
+    fh(dx + 1, dx + 7, 88, '#ffffff');
+    fh(dx + 1, dx + 7, 89.5, '#8a84a0');
   }
   R(40, GY - 2, 32, 2, '#c8c0c4');
   fh(40, 72, GY - 2, '#e6dee0');
@@ -3506,22 +4025,88 @@ function drawSchool(): void {
   footing(0, GY - 3, 40, 3, '#b8a8b0', 132);
   footing(72, GY - 3, 40, 3, '#b8a8b0', 133);
 }
+/** Two-storey classroom wings either side of the arched entrance (13 tiles in all). */
+function drawSchool(): void {
+  const W = 208;
+  const GY = 104;
+  const O = 48;
+  for (const x0 of [0, W - O]) {
+    const left = x0 === 0;
+    // flat roof and parapet
+    flatRoof(x0, 26, O, 8, 134 + x0);
+    ventF(x0 + (left ? 10 : 30), 27, 4);
+    brickF(x0, 34, O, GY - 34, '#b45a4c', '#a85048', '#8a5a5a', 135 + x0);
+    R(x0, 32, O, 3, '#f2ece4');
+    fh(x0, x0 + O, 32, '#ffffff');
+    fh(x0, x0 + O, 34.5, '#c8b0b0');
+    aoTop(x0, 35, O, 4, 0.22);
+    // stone band between the storeys
+    R(x0, 64, O, 2, '#e8e0dc');
+    fh(x0, x0 + O, 64, '#fffaf4');
+    fh(x0, x0 + O, 66, tint('#2b2140', 0.25));
+    // three classroom windows on each floor
+    for (let i = 0; i < 3; i++) {
+      const wx = x0 + 4 + i * 14;
+      win(wx, 40, 11, 18, { frame: '#f2ece4', wall: '#f2c890', seed: wx * 3, cols: 2, rows: 2, blinds: (i + (left ? 0 : 1)) % 2 ? '#e8e0d0' : undefined });
+      win(wx, 72, 11, 20, {
+        frame: '#f2ece4',
+        wall: '#f2c890',
+        seed: wx * 5,
+        cols: 2,
+        rows: 2,
+        plant: i === 1,
+        cat: !left && i === 2,
+        interior:
+          left && i === 0
+            ? () => {
+                // the chalkboard: a diagram of a hip toss, labelled
+                R(wx, 72, 11, 20, '#f2c890');
+                R(wx + 1, 74, 9, 6, '#3a5a4c');
+                L(wx + 2, 78, wx + 5, 75, '#fff4dc');
+                L(wx + 5, 75, wx + 8, 78, '#fff4dc');
+                circ(wx + 5, 76, 0.75, '#fff4dc');
+                R(wx, 85, 11, 7, '#c8904a');
+              }
+            : undefined,
+      });
+    }
+    shadeRight(x0 + O - 8, 34, 8, GY - 34, left ? 0.08 : 0.2);
+    grime(x0, GY - 10, O, 9, 0.2);
+    footing(x0, GY - 3, O, 3, '#b8a8b0', 136 + x0);
+  }
+  // the school bell on the left wing, the flag on the right
+  R(16, 18, 10, 8, '#e8e0dc');
+  poly([[14, 19], [21, 13], [28, 19]], '#8a5a5a');
+  ell(21, 22.5, 2.5, 2.5, '#d8a040');
+  P1(20, 21.5, '#fff0a0');
+  R(W - 12, 6, 1.5, 28, '#c8c4d8');
+  fv(W - 12, 6, 34, '#eeeaf6');
+  flagFrame(W - 26, 7, 0, 14, 9);
+  at(O, 0, 112, GY, schoolCore);
+}
 building('b-school', {
-  w: 112,
+  w: 208,
   h: 104,
   door: 0,
   draw: drawSchool,
   shadowTop: 24,
   label: 'Turnbuckle Alley High',
-  solid: { x: -56, y: -72, w: 112, h: 72 },
+  solid: { x: -104, y: -72, w: 208, h: 72 },
   lights: [
-    [56, 86, 18, WARM],
-    [11, 57, 10, WARM],
-    [101, 57, 10, WARM],
-    [17, 81, 12, WARM],
-    [95, 81, 12, WARM],
+    [104, 86, 18, WARM],
+    [59, 57, 10, WARM],
+    [149, 57, 10, WARM],
+    [65, 81, 12, WARM],
+    [143, 81, 12, WARM],
+    [10, 82, 12, WARM],
+    [24, 82, 12, WARM],
+    [38, 82, 12, WARM],
+    [170, 82, 12, WARM],
+    [184, 82, 12, WARM],
+    [198, 82, 12, WARM],
   ],
 });
+
 
 // ---------------------------------------------------------------- The Evening Bell Residence (b-sunnypines)
 function bellIcon(cx: number, y: number, c: Color, c2: Color): void {
@@ -3540,10 +4125,13 @@ function rocker(x: number, y: number, c: Color): void {
   VL(x + 5, y + 7, y + 8, shA(c, 0.3));
 }
 function drawSunnyPines(): void {
-  const W = 128;
+  const W = 208;
   const GY = 100;
-  // hip roof with three dormers and a chimney
-  chimney(104, 0, 10, '#b4644e');
+  const C = W / 2;
+  const O = C - 64; // the centre bay keeps its old coordinates, shifted
+  // hip roof with five dormers and two chimneys
+  chimney(168, 0, 10, '#b4644e');
+  chimney(36, 1, 9, '#b4644e');
   shingleF(4, 4, W - 8, 21, '#8a6a8a', 141, 3, 5, 0.15);
   poly([[4, 4], [14, 4], [4, 16]], 0);
   poly([[W - 4, 4], [W - 14, 4], [W - 4, 16]], 0);
@@ -3552,7 +4140,7 @@ function drawSunnyPines(): void {
     P1(W - 4 - i * 0.42, 15.5 - i * 0.5, '#5a4a6a');
   }
   fh(14, W - 14, 4, '#c8aac8');
-  for (const dx of [26, 60, 94]) {
+  for (const dx of [24, 62, C - 4, W - 70, W - 32]) {
     poly([[dx - 2, 12], [dx + 4, 5], [dx + 10, 12]], '#9a7a9a');
     L(dx - 2, 12, dx + 4, 5, '#c8aac8');
     fh(dx - 2, dx + 10, 12, '#fff6e0');
@@ -3569,23 +4157,23 @@ function drawSunnyPines(): void {
   siding(2, 26, W - 4, 30, '#f6e0a8', 142, 4, 0.015);
   aoTop(2, 26, W - 4, 4, 0.22);
   shadeRight(W - 10, 26, 8, 30, 0.14);
-  for (const wx of [8, 22, 98, 112]) win(wx, 31, 9, 15, { frame: '#ffffff', shutters: '#7aa890', seed: wx + 3, curtains: '#fff4e6', cols: 2, rows: 2, cat: wx === 112 });
+  for (const wx of [9, 25, 41, 57, W - 66, W - 50, W - 34, W - 18]) win(wx, 31, 9, 15, { frame: '#ffffff', shutters: '#7aa890', seed: wx + 3, curtains: '#fff4e6', cols: 2, rows: 2, cat: wx === W - 34 });
   // the name, with a little bell either side
-  RRB(34, 28, 60, 19, 3, '#5a8a7a', '#fffaf0');
-  fh(36, 92, 29, '#ffffff');
-  FR(35, 29, 58, 17, (fx, fy, o) => (o === col('#fffaf0') && hash2(fx, fy, 143) < 0.04 ? '#f0e8d8' : o));
-  TC('EVENING BELL', 64, 30.5, enamel('#4a5a8a'), FT, {});
-  bellIcon(64, 37, '#f4b63f', '#a8702a');
-  bellIcon(40, 36, '#f4b63f', '#a8702a');
-  bellIcon(88, 36, '#f4b63f', '#a8702a');
-  for (const sx of [50, 78]) {
+  RRB(O + 34, 28, 60, 19, 3, '#5a8a7a', '#fffaf0');
+  fh(O + 36, O + 92, 29, '#ffffff');
+  FR(O + 35, 29, 58, 17, (fx, fy, o) => (o === col('#fffaf0') && hash2(fx, fy, 143) < 0.04 ? '#f0e8d8' : o));
+  TC('EVENING BELL', C, 30.5, enamel('#4a5a8a'), FT, {});
+  bellIcon(C, 37, '#f4b63f', '#a8702a');
+  bellIcon(O + 40, 36, '#f4b63f', '#a8702a');
+  bellIcon(O + 88, 36, '#f4b63f', '#a8702a');
+  for (const sx of [O + 50, O + 78]) {
     P1(sx, 40, '#7aa890');
     P1(sx + 0.5, 39.5, '#7aa890');
     P1(sx + 1, 39, '#7aa890');
     P1(sx + 1.5, 39.5, '#7aa890');
     P1(sx + 2, 40, '#7aa890');
   }
-  micro('RESIDENCE', 55, 43.5, '#5a8a7a');
+  micro('RESIDENCE', O + 55, 43.5, '#5a8a7a');
   // porch roof
   R(0, 55, W, 5, '#9a7a9a');
   metalF(0, 55, W, 5, '#9a7a9a', 144, 3, 0.1);
@@ -3598,12 +4186,12 @@ function drawSunnyPines(): void {
   // ground floor behind the porch
   siding(2, 60, W - 4, GY - 60, '#f6e0a8', 145, 4, 0.015);
   aoTop(2, 60, W - 4, 8, 0.3);
-  for (const wx of [10, 30, 86, 106]) win(wx, 68, 12, 14, { frame: '#ffffff', seed: wx, curtains: '#fff4e6', cols: 2, rows: 2, plant: wx === 30 });
-  doorF(56, 64, 16, 34, '#7aa890', { frame: '#ffffff', lite: true, liteH: 12, step: null, wreath: false, seed: 146, mail: true });
-  RR(58, 59.5, 12, 3, 1, '#5a8a7a');
-  micro('WELCOME', 59, 60, '#fffaf0');
+  for (const wx of [10, 34, 58, W - 70, W - 46, W - 22]) win(wx, 68, 12, 14, { frame: '#ffffff', seed: wx, curtains: '#fff4e6', cols: 2, rows: 2, plant: wx === 34 });
+  doorF(C - 8, GY - 34, 16, 32, '#7aa890', { frame: '#ffffff', lite: true, liteH: 11, step: null, wreath: false, seed: 146, mail: true });
+  RR(C - 6, 61, 12, 3, 1, '#5a8a7a');
+  micro('WELCOME', C - 5, 61.5, '#fffaf0');
   // porch posts and railing
-  for (const px of [2, 22, 46, 80, 104, 124]) {
+  for (const px of [2, 26, 50, C - 18, C + 15, W - 53, W - 29, W - 5]) {
     R(px, 60, 3, GY - 62, '#ffffff');
     fv(px, 60, GY - 2, '#ffffff');
     fv(px + 2.5, 60, GY - 2, '#c8c0b8');
@@ -3611,11 +4199,11 @@ function drawSunnyPines(): void {
     R(px - 0.5, GY - 4, 4, 2, '#e8e0d8');
   }
   for (let x = 2; x < W - 2; x += 1.5) {
-    if (x >= 52 && x < 76) continue;
+    if (x >= C - 12 && x < C + 12) continue;
     fv(x, GY - 10, GY - 3, '#f4eee8');
     fv(x + 0.5, GY - 10, GY - 3, '#c8c0b8');
   }
-  for (const [a, b] of [[2, 52], [76, W - 2]] as [number, number][]) {
+  for (const [a, b] of [[2, C - 12], [C + 12, W - 2]] as [number, number][]) {
     R(a, GY - 11, b - a, 1.5, '#ffffff');
     fh(a, b, GY - 9.5, tint('#3a2848', 0.3));
   }
@@ -3624,18 +4212,24 @@ function drawSunnyPines(): void {
   FR(0, GY - 2.5, W, 2.5, (fx, _fy, o) => (fx % 12 === 0 ? shA(o, 0.2) : o));
   // rocking chairs, a knitting basket and hanging ferns
   rocker(33, GY - 16, '#a8704f');
-  rocker(89, GY - 16, '#7aa890');
+  rocker(68, GY - 16, '#e8a868');
+  rocker(W - 76, GY - 16, '#7aa890');
+  rocker(W - 41, GY - 16, '#a8704f');
   ell(44, GY - 4, 2.5, 1.5, '#c8a070');
   P1(43.5, GY - 6, '#d8434b');
   P1(44.5, GY - 6, '#5a7ad0');
-  for (const fx of [12, 116]) {
+  // a checkers table mid-game
+  R(W - 60, GY - 9, 10, 1.5, '#a8704f');
+  FR(W - 60, GY - 9, 10, 1.5, (fx) => (fx % 2 ? '#d8434b' : '#2b2140'));
+  fv(W - 55, GY - 7.5, GY - 3, '#6e4a3a');
+  for (const fx of [14, 90, W - 92, W - 14]) {
     fv(fx, 60, 63, '#6a5a4a');
     R(fx - 2, 63, 4, 2, '#c8704f');
     ell(fx, 65, 4.5, 2.5, '#5f9a5a');
     for (let k = -4; k <= 4; k += 1) fv(fx + k * 0.9, 66, 68 + Math.abs((k * 7) % 3), k % 2 ? '#4f8a5a' : '#6fb070');
   }
   // planters on the steps
-  for (const px of [48, 76]) {
+  for (const px of [C - 16, C + 10]) {
     R(px, GY - 7, 6, 6, '#c8704f');
     fh(px, px + 6, GY - 7, '#e8906a');
     fh(px, px + 6, GY - 1.5, '#9a4a3a');
@@ -3647,27 +4241,36 @@ function drawSunnyPines(): void {
   }
 }
 building('b-sunnypines', {
-  w: 128,
+  w: 208,
   h: 100,
   door: 0,
   draw: drawSunnyPines,
   shadowTop: 8,
   label: 'The Evening Bell Residence',
-  solid: { x: -64, y: -68, w: 128, h: 68 },
+  solid: { x: -104, y: -68, w: 208, h: 68 },
   lights: [
-    [12, 38, 10, WARM],
-    [26, 38, 10, WARM],
-    [102, 38, 10, WARM],
-    [116, 38, 10, WARM],
+    [13, 38, 10, WARM],
+    [29, 38, 10, WARM],
+    [45, 38, 10, WARM],
+    [61, 38, 10, WARM],
+    [146, 38, 10, WARM],
+    [162, 38, 10, WARM],
+    [178, 38, 10, WARM],
+    [194, 38, 10, WARM],
     [16, 75, 12, WARM],
-    [36, 75, 12, WARM],
-    [92, 75, 12, WARM],
-    [112, 75, 12, WARM],
-    [64, 76, 16, WARM],
-    [30, 17, 8, WARM],
-    [64, 17, 8, WARM],
-    [98, 17, 8, WARM],
+    [40, 75, 12, WARM],
+    [64, 75, 12, WARM],
+    [144, 75, 12, WARM],
+    [168, 75, 12, WARM],
+    [192, 75, 12, WARM],
+    [104, 78, 16, WARM],
+    [28, 17, 8, WARM],
+    [66, 17, 8, WARM],
+    [104, 17, 8, WARM],
+    [142, 17, 8, WARM],
+    [180, 17, 8, WARM],
   ],
+
 });
 
 // =====================================================================
@@ -3682,24 +4285,26 @@ const HOUSE_PALS = [
 function drawHouse(p: Props): void {
   const v = Math.abs(Math.floor(Number(p.variant ?? 0))) % 4;
   const pal = HOUSE_PALS[v];
-  const W = 64;
+  const W = 112;
   const GY = 80;
   const eave = 32;
   // chimney behind the roof
-  chimney(44, 0, 16, v === 1 ? '#a85a4a' : '#b4644e');
+  chimney(78, 0, 16, v === 1 ? '#a85a4a' : '#b4644e');
   // side-gabled roof
   shingleF(0, 8, W, eave - 8, pal.roof, 151 + v, 3, 5, 0.18);
   fh(1, W - 1, 8, liA(pal.roof, 0.45));
   fh(0, W, eave - 0.5, shA(pal.roof, 0.55));
   if (v % 2 === 0) {
     // gabled dormer
-    poly([[25, 20], [33, 11], [41, 20]], shA(pal.roof, 0.1));
-    L(25, 20, 33, 11, liA(pal.roof, 0.35));
-    R(27, 20, 12, 10, pal.trim);
-    fv(38.5, 20, 30, shA(pal.trim, 0.2));
-    glassF(28.5, 21.5, 9, 7, () => room(28.5, 21.5, 9, 7, '#f2c890', v));
-    R(32.75, 21.5, 0.5, 7, pal.trim);
-    curtainsF(28.5, 21.5, 9, 7, '#fff4e6');
+    for (const D of [0, 40]) {
+      poly([[D + 25, 20], [D + 33, 11], [D + 41, 20]], shA(pal.roof, 0.1));
+      L(D + 25, 20, D + 33, 11, liA(pal.roof, 0.35));
+      R(D + 27, 20, 12, 10, pal.trim);
+      fv(D + 38.5, 20, 30, shA(pal.trim, 0.2));
+      glassF(D + 28.5, 21.5, 9, 7, () => room(D + 28.5, 21.5, 9, 7, '#f2c890', v + D));
+      R(D + 32.75, 21.5, 0.5, 7, pal.trim);
+      curtainsF(D + 28.5, 21.5, 9, 7, '#fff4e6');
+    }
   } else {
     // round attic window
     circ(16, 20, 4.5, pal.trim);
@@ -3720,99 +4325,113 @@ function drawHouse(p: Props): void {
   fv(1, eave + 1.5, GY, liA(pal.trim, 0.3));
   R(W - 2.5, eave + 1.5, 1.5, GY - eave - 1.5, shA(pal.trim, 0.15));
   downspout(W - 4, eave + 1, GY - 1, '#e8e4ec');
-  // door with a little gabled porch hood (centre x = 20)
-  poly([[10, 43], [20, 36], [30, 43]], pal.roof);
-  L(10, 43, 20, 36, liA(pal.roof, 0.4));
-  FR(10, 36, 20, 7, (_fx, fy, o) => (o === col(pal.roof) && fy % 3 === 0 ? shA(o, 0.15) : o));
-  R(10, 43, 20, 1.5, pal.trim);
-  fh(10, 30, 43, liA(pal.trim, 0.4));
-  for (const bx of [11, 28]) {
+  // door with a little gabled porch hood (centre x = 40, a 16 x 32 opening)
+  poly([[27, 43], [40, 35], [53, 43]], pal.roof);
+  L(27, 43, 40, 35, liA(pal.roof, 0.4));
+  FR(27, 35, 26, 8, (_fx, fy, o) => (o === col(pal.roof) && fy % 3 === 0 ? shA(o, 0.15) : o));
+  R(27, 43, 26, 1.5, pal.trim);
+  fh(27, 53, 43, liA(pal.trim, 0.4));
+  for (const bx of [28, 51]) {
     poly([[bx, 44.5], [bx + 1, 44.5], [bx + 1, 47]], pal.trim);
   }
-  aoTop(12, 44.5, 16, 2, 0.3);
-  doorF(14, 46, 12, 34, pal.door, { frame: pal.trim, lite: v === 3, liteH: 10, wreath: v === 2, seed: 153 + v, mail: v !== 3, step: '#c8b0a8' });
+  aoTop(29, 44.5, 22, 2, 0.3);
+  doorF(32, GY - 32, 16, 32, pal.door, { frame: pal.trim, lite: v === 3, liteH: 10, wreath: v === 2, seed: 153 + v, mail: v !== 3, step: '#c8b0a8' });
   // porch light and house number
-  R(28, 47, 2, 1, '#4a3550');
-  RR(27.5, 48, 3, 4, 1, '#4a3550');
-  R(28, 48.5, 2, 2.5, '#ffe08a');
-  P1(28.5, 49, '#fffbe8');
-  micro(String(10 + v * 4), 6, 49, shA(pal.trim, 0.5));
-  // window with shutters + flower box
-  win(39, 47, 14, 14, { frame: pal.trim, shutters: pal.shut, box: 160 + v, seed: v * 5 + 1, curtains: '#fff4e6', cols: 2, rows: 2, cat: v === 3 });
+  R(51, 49, 2, 1, '#4a3550');
+  RR(50.5, 50, 3, 4, 1, '#4a3550');
+  R(51, 50.5, 2, 2.5, '#ffe08a');
+  P1(51.5, 51, '#fffbe8');
+  micro(String(10 + v * 4), 26, 51, shA(pal.trim, 0.5));
+  // windows with shutters + flower boxes
+  win(9, 47, 12, 14, { frame: pal.trim, shutters: pal.shut, box: 170 + v, seed: v * 5 + 2, curtains: '#fff4e6', cols: 2, rows: 2 });
+  win(64, 47, 14, 14, { frame: pal.trim, shutters: pal.shut, box: 160 + v, seed: v * 5 + 1, curtains: '#fff4e6', cols: 2, rows: 2, cat: v === 3 });
+  win(90, 47, 14, 14, { frame: pal.trim, shutters: pal.shut, box: 165 + v, seed: v * 5 + 3, curtains: '#fff4e6', cols: 2, rows: 2, plant: v === 1 });
   // little details per variant
   if (v === 0) {
     // a garden gnome
-    R(7, GY - 6, 3, 5, '#3f6ab0');
-    fv(7, GY - 6, GY - 1, '#6a8ad0');
-    poly([[6.5, GY - 6], [8.5, GY - 11], [10.5, GY - 6]], '#d8434b');
-    P1(8, GY - 10, '#ff8a80');
-    R(7.5, GY - 6, 2, 1.5, '#f2c8a0');
-    R(7.5, GY - 4.5, 2, 1.5, '#fff8f0');
-  } else if (v === 1) pot(4, GY - 9, '#c8704f', '#5f9a5a', '#ffe070');
+    R(57, GY - 6, 3, 5, '#3f6ab0');
+    fv(57, GY - 6, GY - 1, '#6a8ad0');
+    poly([[56.5, GY - 6], [58.5, GY - 11], [60.5, GY - 6]], '#d8434b');
+    P1(58, GY - 10, '#ff8a80');
+    R(57.5, GY - 6, 2, 1.5, '#f2c8a0');
+    R(57.5, GY - 4.5, 2, 1.5, '#fff8f0');
+  } else if (v === 1) {
+    pot(54, GY - 9, '#c8704f', '#5f9a5a', '#ffe070');
+    // a garden hose coiled on its reel
+    ell(84, GY - 6, 3.5, 3.5, '#5f9a5a');
+    ell(84, GY - 6, 1.5, 1.5, '#3a6a4a');
+    R(83.5, GY - 3, 1, 3, '#8a84a0');
+  }
   else if (v === 2) {
     // bicycle leaning on the wall
-    for (const wx of [55, 61]) {
+    for (const wx of [95, 101]) {
       FR(wx - 3, GY - 6, 6, 6, (fx, fy, o) => {
         const d = Math.hypot((fx + 0.5) / 2 - wx, (fy + 0.5) / 2 - (GY - 3));
         return d > 2.1 && d <= 2.8 ? '#5a5a7a' : d < 0.6 ? '#c8c4d8' : o;
       });
     }
-    L(55, GY - 3, 58, GY - 7, '#d8434b');
-    L(58, GY - 7, 61, GY - 3, '#d8434b');
-    L(58, GY - 7, 57, GY - 3, '#d8434b');
-    fh(56.5, 59, GY - 8, '#3a3048');
-    fh(60, 62, GY - 8.5, '#c8c4d8');
+    L(95, GY - 3, 98, GY - 7, '#d8434b');
+    L(98, GY - 7, 101, GY - 3, '#d8434b');
+    L(98, GY - 7, 97, GY - 3, '#d8434b');
+    fh(96.5, 99, GY - 8, '#3a3048');
+    fh(100, 102, GY - 8.5, '#c8c4d8');
   } else {
     // wind chime
-    fv(33, 44.5, 47, '#a8a4bc');
-    for (let k = 0; k < 4; k++) fv(31.5 + k, 48, 50 + k * 0.6, '#d8d4e8');
+    fv(53, 44.5, 47, '#a8a4bc');
+    for (let k = 0; k < 4; k++) fv(51.5 + k, 48, 50 + k * 0.6, '#d8d4e8');
   }
   grime(1, GY - 8, W - 2, 7, 0.18);
-  footing(1, GY - 3, 12, 3, '#b8a0b0', 154 + v);
-  footing(27, GY - 3, W - 28, 3, '#b8a0b0', 155 + v);
+  footing(1, GY - 3, 29, 3, '#b8a0b0', 154 + v);
+  footing(50, GY - 3, W - 51, 3, '#b8a0b0', 155 + v);
 }
 building('b-house', {
-  w: 64,
+  w: 112,
   h: 80,
-  door: -12,
+  door: -16,
   draw: drawHouse,
   vkey: (p) => String(Math.abs(Math.floor(Number(p.variant ?? 0))) % 4),
   shadowTop: 8,
-  solid: { x: -32, y: -54, w: 64, h: 54 },
+  solid: { x: -56, y: -54, w: 112, h: 54 },
   lights: [
-    [46, 54, 14, WARM],
-    [29, 50, 8, LAMP],
-    [33, 25, 8, WARM],
+    [15, 54, 12, WARM],
+    [71, 54, 14, WARM],
+    [97, 54, 14, WARM],
+    [52, 52, 8, LAMP],
+    [53, 25, 8, WARM],
   ],
-  anims: [{ fps: 4, frames: 4, rect: [42, -12, 14, 14], rel: true, draw: (f, _p, ox, oy) => puff(47 + ox, -1 + oy, f) }],
+  anims: [{ fps: 4, frames: 4, rect: [76, -12, 14, 14], rel: true, draw: (f, _p, ox, oy) => puff(81 + ox, -1 + oy, f) }],
+
   pad: [0, 12, 10, 4],
 });
 
 // ---------------------------------------------------------------- Birdie's house
 function drawBirdie(): void {
-  const W = 80;
+  const W = 128;
   const GY = 88;
   const gB = 38; // gable base
-  // front-gabled cottage with gingerbread trim, roof running back
+  const gc = 40; // gable centre
+  const gh = 32; // gable half-width
+  // front-gabled cottage with gingerbread trim, roof running back over the porch wing
   shingleF(0, 10, W, 22, '#6a4a6a', 171, 3, 5, 0.15);
   fh(0, W, 10, '#a888a8');
-  poly([[5, gB], [28, 6], [51, gB]], '#ffe2ea');
-  FR(5, 6, 46, gB - 6, (fx, fy, o) => {
+  chimney(96, 0, 12, '#b4644e');
+  poly([[gc - gh, gB], [gc, 6], [gc + gh, gB]], '#ffe2ea');
+  FR(gc - gh, 6, gh * 2, gB - 6, (fx, fy, o) => {
     if (o !== col('#ffe2ea')) return o;
     const k = fy % 8;
     if (k === 7) return '#e8b4c4';
     if (k === 0) return '#fff4f8';
     return (fx + (Math.floor(fy / 8) % 2) * 6) % 12 === 0 ? '#f4c4d0' : o;
   });
-  L(4, gB, 28, 5, '#ff7aa0');
-  L(28, 5, 52, gB, '#ff7aa0');
-  L(5, gB + 1, 28, 7, '#d0507a');
-  L(28, 7, 51, gB + 1, '#d0507a');
+  L(gc - gh - 1, gB, gc, 5, '#ff7aa0');
+  L(gc, 5, gc + gh + 1, gB, '#ff7aa0');
+  L(gc - gh, gB + 1, gc, 7, '#d0507a');
+  L(gc, 7, gc + gh, gB + 1, '#d0507a');
   // gingerbread drops along the bargeboard
-  for (let i = 1; i < 12; i++) {
-    const t = i / 12;
-    const lx = 5 + t * 23;
-    const rx = 51 - t * 23;
+  for (let i = 1; i < 16; i++) {
+    const t = i / 16;
+    const lx = gc - gh + t * gh;
+    const rx = gc + gh - t * gh;
     const y = gB - t * 32 + 1.5;
     for (const x of [lx, rx]) {
       P1(x, y, '#ff9ab8');
@@ -3820,83 +4439,94 @@ function drawBirdie(): void {
       P1(x, y + 1, '#ffd0de');
     }
   }
-  ell(28, 7, 1.5, 1.5, '#ff7aa0');
+  ell(gc, 7, 1.5, 1.5, '#ff7aa0');
   // attic window with the faded Velvet Hammers banner
-  RR(20, 17, 16, 13, 2, '#ff7aa0');
-  fh(21, 35, 17, '#ffb0c8');
-  glassF(21.5, 18.5, 13, 10, () => {
-    room(21.5, 18.5, 13, 10, '#e8b088', 3);
-    R(22.5, 19.5, 11, 7, '#c8a0c0');
-    FR(22.5, 19.5, 11, 7, (fx, fy, o) => (hash2(fx, fy, 172) < 0.12 ? '#d8b8d0' : o));
-    T('VH', 24, 20.5, '#f6e6f0', FT, { ls: 1 });
-    fh(22.5, 33.5, 25.5, '#a880a8');
+  RR(gc - 8, 17, 16, 13, 2, '#ff7aa0');
+  fh(gc - 7, gc + 7, 17, '#ffb0c8');
+  glassF(gc - 6.5, 18.5, 13, 10, () => {
+    room(gc - 6.5, 18.5, 13, 10, '#e8b088', 3);
+    R(gc - 5.5, 19.5, 11, 7, '#c8a0c0');
+    FR(gc - 5.5, 19.5, 11, 7, (fx, fy, o) => (hash2(fx, fy, 172) < 0.12 ? '#d8b8d0' : o));
+    T('VH', gc - 4, 20.5, '#f6e6f0', FT, { ls: 1 });
+    fh(gc - 5.5, gc + 5.5, 25.5, '#a880a8');
   });
-  R(27.75, 18.5, 0.5, 10, '#ff7aa0');
+  R(gc - 0.25, 18.5, 0.5, 10, '#ff7aa0');
   // walls: cream clapboard with pink trim
   siding(0, gB, W, GY - gB, '#f4ece0', 172, 4, 0.015);
-  shadeRight(W - 6, gB, 6, GY - gB, 0.15);
+  siding(gc + gh, 32, W - gc - gh, gB - 32, '#f4ece0', 174, 4, 0.015);
+  aoTop(gc + gh, 32, W - gc - gh, 3, 0.25);
+  shadeRight(W - 7, gB, 7, GY - gB, 0.15);
   // porch on the right with a swing
-  R(52, 41, 28, 3, '#ff7aa0');
-  fh(52, 80, 41, '#ffb0c8');
-  fh(52, 80, 43.5, '#c8406a');
-  for (let x = 52; x < 80; x += 3) {
+  const P0 = 78;
+  R(P0, 41, W - P0, 3, '#ff7aa0');
+  fh(P0, W, 41, '#ffb0c8');
+  fh(P0, W, 43.5, '#c8406a');
+  for (let x = P0; x < W; x += 3) {
     P1(x + 1, 44, '#ff7aa0');
     P1(x + 1.5, 44, '#ff7aa0');
     P1(x + 1.25, 44.5, '#ff7aa0');
   }
-  FR(52, 44, 28, GY - 47, (fx, fy, o) => (o && dth(fx, fy, 6) ? shA(o, 0.18) : o));
-  aoTop(52, 44, 28, 6, 0.3);
-  for (const px of [53, 77]) {
+  FR(P0, 44, W - P0, GY - 47, (fx, fy, o) => (o && dth(fx, fy, 6) ? shA(o, 0.18) : o));
+  aoTop(P0, 44, W - P0, 6, 0.3);
+  for (const px of [P0 + 1, P0 + 25, W - 3]) {
     R(px, 44, 2, GY - 47, '#fffaf0');
     fv(px + 1.5, 44, GY - 3, '#d8ccc0');
   }
   // porch swing on chains
-  for (const cx of [58, 75]) for (let y = 44; y < 63; y += 1) P1(cx + (y % 2) * 0.5, y, '#8a7a8a');
-  R(57, 62, 19, 3, '#ff9ab8');
-  fh(57, 76, 62, '#ffd0de');
-  fh(57, 76, 64.5, '#c8507a');
-  R(57, 57, 19, 5, '#ffb6cc');
-  FR(57, 57, 19, 5, (fx) => (fx % 4 === 0 ? '#ff9ab8' : null));
-  fh(57, 76, 57, '#ffd0de');
-  RR(61, 58, 5, 4, 1, '#7aa890');
-  fh(61.5, 65.5, 58, '#a8d0b8');
-  FR(56, 66, 21, 2, (fx, fy, o) => (o && dth(fx, fy, 8) ? shA(o, 0.2) : o));
-  // window under the porch
-  win(64, 46, 10, 6, { frame: '#ff7aa0', curtains: '#fff4f8', seed: 9, cols: 2, rows: 1 });
-  // front door (centre x = 24)
-  doorF(17, 54, 14, 34, '#ff7aa0', { frame: '#fffaf0', lite: true, liteH: 11, seed: 173, wreath: false, step: '#c8b0b8' });
-  RR(19, 48, 10, 5, 1, '#d0507a');
-  fh(20, 28, 48, '#ff7aa0');
-  T('B', 22, 48.5, enamel('#fff4f8'), FT, {});
-  // window left with flower box
-  win(4, 52, 9, 14, { frame: '#ff7aa0', shutters: '#d0507a', box: 173, boxC: '#ff9ab8', seed: 11, curtains: '#fff4f8', cols: 2, rows: 2 });
+  for (const cx of [P0 + 6, P0 + 23]) for (let y = 44; y < 63; y += 1) P1(cx + (y % 2) * 0.5, y, '#8a7a8a');
+  R(P0 + 5, 62, 19, 3, '#ff9ab8');
+  fh(P0 + 5, P0 + 24, 62, '#ffd0de');
+  fh(P0 + 5, P0 + 24, 64.5, '#c8507a');
+  R(P0 + 5, 57, 19, 5, '#ffb6cc');
+  FR(P0 + 5, 57, 19, 5, (fx) => (fx % 4 === 0 ? '#ff9ab8' : null));
+  fh(P0 + 5, P0 + 24, 57, '#ffd0de');
+  RR(P0 + 9, 58, 5, 4, 1, '#7aa890');
+  fh(P0 + 9.5, P0 + 13.5, 58, '#a8d0b8');
+  FR(P0 + 4, 66, 21, 2, (fx, fy, o) => (o && dth(fx, fy, 8) ? shA(o, 0.2) : o));
+  // windows under the porch, a rocker and a stack of old programmes
+  win(P0 + 31, 48, 14, 14, { frame: '#ff7aa0', curtains: '#fff4f8', seed: 9, cols: 2, rows: 2, cat: true });
+  rocker(P0 + 33, GY - 16, '#ff9ab8');
+  for (let k = 0; k < 4; k++) {
+    R(P0 + 15, GY - 6 - k * 1.5, 7, 1.5, ['#fff4dc', '#ffe070', '#ff94b4', '#c8e0f0'][k]);
+    fh(P0 + 15, P0 + 22, GY - 6 - k * 1.5, '#ffffff');
+  }
+  // front door (centre x = 40, a 16 x 32 opening)
+  doorF(gc - 8, GY - 32, 16, 32, '#ff7aa0', { frame: '#fffaf0', lite: true, liteH: 10, seed: 173, wreath: false, step: '#c8b0b8' });
+  RR(gc - 5, 49.5, 10, 5, 1, '#d0507a');
+  fh(gc - 4, gc + 4, 49.5, '#ff7aa0');
+  T('B', gc - 2, 50, enamel('#fff4f8'), FT, {});
+  // windows either side of the door with flower boxes
+  win(10, 52, 12, 14, { frame: '#ff7aa0', shutters: '#d0507a', box: 173, boxC: '#ff9ab8', seed: 11, curtains: '#fff4f8', cols: 2, rows: 2 });
+  win(57, 52, 12, 14, { frame: '#ff7aa0', shutters: '#d0507a', box: 176, boxC: '#ff9ab8', seed: 13, curtains: '#fff4f8', cols: 2, rows: 2, plant: true });
   // the pink flamingo
-  fv(39, GY - 8, GY - 1, '#d0507a');
-  fv(39.5, GY - 8, GY - 3, '#d0507a');
-  ell(39, GY - 10, 3, 2, '#ff7aa0');
-  ell(38, GY - 10.5, 1.5, 0.75, '#ffb0c8');
-  L(41, GY - 11, 42, GY - 17, '#ff7aa0');
-  ell(42.5, GY - 17.5, 1, 1, '#ff7aa0');
-  P1(43.5, GY - 17.5, '#3a2440');
-  P1(43.5, GY - 17, '#3a2440');
+  const fl = 72;
+  fv(fl, GY - 8, GY - 1, '#d0507a');
+  fv(fl + 0.5, GY - 8, GY - 3, '#d0507a');
+  ell(fl, GY - 10, 3, 2, '#ff7aa0');
+  ell(fl - 1, GY - 10.5, 1.5, 0.75, '#ffb0c8');
+  L(fl + 2, GY - 11, fl + 3, GY - 17, '#ff7aa0');
+  ell(fl + 3.5, GY - 17.5, 1, 1, '#ff7aa0');
+  P1(fl + 4.5, GY - 17.5, '#3a2440');
+  P1(fl + 4.5, GY - 17, '#3a2440');
   grime(0, GY - 8, W, 6, 0.16);
   R(0, GY - 3, W, 3, '#c8b0b8');
   fh(0, W, GY - 3, '#e6d0d8');
   FR(0, GY - 2.5, W, 2.5, (fx, _fy, o) => (fx % 10 === 0 ? shA(o, 0.15) : o));
 }
 building('b-birdie', {
-  w: 80,
+  w: 128,
   h: 88,
-  door: -16,
+  door: -24,
   draw: drawBirdie,
   shadowTop: 8,
   label: "Birdie's house",
-  solid: { x: -40, y: -60, w: 80, h: 60 },
+  solid: { x: -64, y: -60, w: 128, h: 60 },
   lights: [
-    [28, 23, 12, WARM],
-    [9, 59, 12, WARM],
-    [69, 49, 10, WARM],
-    [24, 62, 10, WARM],
+    [40, 23, 12, WARM],
+    [16, 59, 12, WARM],
+    [63, 59, 12, WARM],
+    [116, 55, 12, WARM],
+    [40, 64, 10, WARM],
   ],
 });
 
@@ -4105,86 +4735,116 @@ function gasPump(x: number, y: number, body: Color, trim: Color): void {
   curve(x + 12, y + 16, x + 9, y + 25, 3, '#2b2140');
 }
 function drawGasStation(): void {
-  const W = 112;
+  const W = 176;
   const GY = 84;
-  // --- the shop on the right (x 62..112)
-  flatRoof(62, 10, 50, 12, 201);
-  ventF(100, 12, 5);
-  acUnit(66, 13);
-  stucco(62, 22, 50, GY - 22, '#f4ead8', 202);
-  R(62, 22, 50, 4, '#3f9a92');
-  fh(62, 112, 22, '#7ad0c0');
-  fh(62, 112, 25.5, '#24605c');
-  aoTop(62, 26, 50, 3, 0.2);
-  shadeRight(W - 6, 26, 6, GY - 26, 0.16);
-  // BAIT sign with a fish, over the coolers
-  signBoardF(89, 28, 21, 11, '#2f6a74', '#fff4dc');
-  T('BAIT', 90.5, 30.5, enamel('#2f6a74'), FT, {});
-  ell(105.5, 33.5, 2.75, 1.5, '#5ab0e0');
-  fh(103.5, 107.5, 33, '#9ad8f0');
-  poly([[102, 32], [103.5, 33.5], [102, 35]], '#5ab0e0');
-  P1(107, 33, AK);
+  const S = 80; // the shop runs S..W, the canopy 0..S
+  // --- the shop on the right
+  flatRoof(S, 10, W - S, 12, 201);
+  ventF(W - 12, 12, 5);
+  acUnit(S + 4, 13);
+  acUnit(S + 52, 13);
+  stucco(S, 22, W - S, GY - 22, '#f4ead8', 202);
+  R(S, 22, W - S, 4, '#3f9a92');
+  fh(S, W, 22, '#7ad0c0');
+  fh(S, W, 25.5, '#24605c');
+  aoTop(S, 26, W - S, 3, 0.2);
+  shadeRight(W - 7, 26, 7, GY - 26, 0.16);
+  // the shop sign across the parapet
+  signBoardF(S + 30, 13, 48, 9, '#2f6a74', '#fff4dc');
+  TC('ROUTE 9', S + 54, 14.5, enamel('#d8434b'), FT, { ls: 1 });
+  // SNACKS neon over the window
+  RR(S + 3, 29, 24, 8, 1, '#2f2440');
+  fh(S + 4, S + 26, 29, '#4a3a5a');
+  neon('SNACKS', S + 4, 30, '#fff4e6', '#ff8a4a', FT, {});
   // window full of snacks
-  R(65, 44, 16, 21, '#3f9a92');
-  fh(65, 81, 44, '#7ad0c0');
-  glassF(66, 45, 14, 19, () => {
-    R(66, 45, 14, 19, '#f6e6c8');
+  const sw = S + 4;
+  R(sw - 1, 43, 26, 22, '#3f9a92');
+  fh(sw - 1, sw + 25, 43, '#7ad0c0');
+  glassF(sw, 44, 24, 20, () => {
+    R(sw, 44, 24, 20, '#f6e6c8');
     for (let r = 0; r < 3; r++) {
-      R(66, 50.5 + r * 6, 14, 0.5, '#c8a888');
-      for (let k = 0; k < 5; k++) {
+      R(sw, 49.5 + r * 6, 24, 0.5, '#c8a888');
+      for (let k = 0; k < 9; k++) {
         const c = ['#d8434b', '#f4b63f', '#3f9a92', '#9a6ad0', '#ff94b4'][(k + r) % 5];
-        R(67 + k * 2.6, 47 + r * 6, 2, 3.5, c);
-        fh(67 + k * 2.6, 69 + k * 2.6, 47 + r * 6, liA(c, 0.45));
-        P1(67.5 + k * 2.6, 48.5 + r * 6, '#fff4e0');
+        R(sw + 1 + k * 2.6, 46 + r * 6, 2, 3.5, c);
+        fh(sw + 1 + k * 2.6, sw + 3 + k * 2.6, 46 + r * 6, liA(c, 0.45));
+        P1(sw + 1.5 + k * 2.6, 47.5 + r * 6, '#fff4e0');
       }
     }
   });
-  R(65, 65, 16, 1.5, '#3f9a92');
-  RR(64, 29, 24, 8, 1, '#2f2440');
-  fh(65, 87, 29, '#4a3a5a');
-  neon('SNACKS', 65, 30, '#fff4e6', '#ff8a4a', FT, {});
-  // door (centre x = 88)
-  doorF(81, 50, 14, 34, '#3f9a92', { frame: '#fff4dc', lite: true, liteH: 14, wall: '#f6e6c8', seed: 203, kick: '#c8c4d8', step: '#c8c0c4' });
-  RR(82.5, 67, 11, 6, 1, '#fff4dc');
-  T('HI', 85.5, 67.5, enamel('#d8434b'), FT, {});
-  // ice chest + soda cooler
-  R(97, GY - 15, 12, 15, '#e8f0f8');
-  box(97, GY - 15, 12, 15, '#5a8ac8');
-  fh(97.5, 108.5, GY - 14.5, '#ffffff');
-  T('ICE', 98, GY - 12, enamel('#3a6ab0'), FT, {});
-  FR(97.5, GY - 6, 11, 5, (_fx, fy, o) => (fy % 3 === 0 ? '#c8d8e8' : o));
-  R(96, 44, 14, 11, '#d8434b');
-  fh(96, 110, 44, '#ff8a80');
-  R(97, 45, 12, 7, '#ff9a90');
-  glassF(97, 45, 12, 7, () => {
-    R(97, 45, 12, 7, '#a8d8e0');
-    for (let k = 0; k < 6; k++) R(97.5 + k * 2, 46, 1.5, 5, ['#d8434b', '#3f9a92', '#f4b63f'][k % 3]);
+  R(sw + 11.75, 44, 0.5, 20, '#3f9a92');
+  R(sw - 1, 64, 26, 1.5, '#3f9a92');
+  // door (centre x = 120, a 16 x 32 opening)
+  doorF(112, GY - 32, 16, 32, '#3f9a92', { frame: '#fff4dc', lite: true, liteH: 13, wall: '#f6e6c8', seed: 203, kick: '#c8c4d8', step: '#c8c0c4' });
+  RR(114.5, 68, 11, 6, 1, '#fff4dc');
+  T('HI', 117.5, 68.5, enamel('#d8434b'), FT, {});
+  // BAIT sign with a fish, over the minnow tank window
+  signBoardF(140, 28, 30, 11, '#2f6a74', '#fff4dc');
+  T('BAIT', 142.5, 30.5, enamel('#2f6a74'), FT, {});
+  ell(161.5, 33.5, 2.75, 1.5, '#5ab0e0');
+  fh(159.5, 163.5, 33, '#9ad8f0');
+  poly([[158, 32], [159.5, 33.5], [158, 35]], '#5ab0e0');
+  P1(163, 33, AK);
+  win(142, 44, 26, 12, {
+    frame: '#3f9a92',
+    cols: 2,
+    rows: 1,
+    interior: () => {
+      R(142, 44, 26, 12, '#d8e8e0');
+      R(143, 48, 24, 7, '#4a8ab0');
+      fh(143, 167, 48, '#9ad8f0');
+      for (let k = 0; k < 7; k++) {
+        const fx0 = 144 + ((k * 7.3) % 21);
+        const fy0 = 50 + (k % 3) * 1.5;
+        R(fx0, fy0, 2, 0.5, '#c8d8e8');
+        P1(fx0 + 2, fy0, '#a8c0d0');
+      }
+      for (let k = 0; k < 6; k++) P1(146 + k * 3.5, 49 + (k % 2), over('#ffffff', 0.6));
+    },
   });
-  T('POP', 98, 52.5, '#fff4e6', FT, {});
-  grime(62, GY - 8, 50, 7, 0.2);
-  // --- canopy over the pumps (x 0..62)
-  R(0, 10, 64, 4, '#6a6488');
-  metalF(0, 10, 64, 4, '#6a6488', 204, 3, 0.2);
-  fh(0, 64, 10, '#9a94b8');
-  R(0, 14, 64, 12, (x: number) => (Math.floor(x / 4) % 2 ? '#fbf0e4' : '#d8434b'));
-  fh(0, 64, 14, '#ffffff');
-  R(2, 15.5, 60, 9, '#fbf0e4');
-  FR(2, 15.5, 60, 9, (fx, fy, o) => (hash2(fx, fy, 205) < 0.04 ? '#e8dcd0' : o));
-  fh(2, 62, 24.5, '#b8a8b0');
-  fh(0, 64, 25.5, '#8a2c44');
-  T('GAS', 4, 18, enamel('#d8434b'), FT, {});
-  P1(17.5, 20, '#3f9a92');
-  T('BAIT', 21, 18, enamel('#2f6a74'), FT, {});
-  P1(38.5, 20, '#3f9a92');
-  T('SNACKS', 41, 18, enamel('#d8434b'), FT, {});
+  // ice chest + soda cooler
+  R(132, GY - 15, 12, 15, '#e8f0f8');
+  box(132, GY - 15, 12, 15, '#5a8ac8');
+  fh(132.5, 143.5, GY - 14.5, '#ffffff');
+  T('ICE', 133, GY - 12, enamel('#3a6ab0'), FT, {});
+  FR(132.5, GY - 6, 11, 5, (_fx, fy, o) => (fy % 3 === 0 ? '#c8d8e8' : o));
+  R(150, 62, 18, GY - 62, '#d8434b');
+  fh(150, 168, 62, '#ff8a80');
+  glassF(151, 63, 16, 10, () => {
+    R(151, 63, 16, 10, '#a8d8e0');
+    for (let k = 0; k < 7; k++) R(151.5 + k * 2.2, 64, 1.5, 7, ['#d8434b', '#3f9a92', '#f4b63f'][k % 3]);
+  });
+  T('POP', 153, 75, '#fff4e6', FT, {});
+  fh(150, 168, GY - 0.5, tint('#2b2140', 0.4));
+  // a newspaper box and a payphone sticker by the door
+  RR(98, GY - 12, 8, 12, 1, '#3f74d8');
+  glassF(99, GY - 11, 6, 4, () => R(99, GY - 11, 6, 4, '#f4eee0'));
+  micro('TATTLER', 99, GY - 6, '#fff4dc');
+  grime(S, GY - 8, W - S, 7, 0.2);
+  // --- canopy over the pumps
+  const C = S + 2;
+  R(0, 10, C, 4, '#6a6488');
+  metalF(0, 10, C, 4, '#6a6488', 204, 3, 0.2);
+  fh(0, C, 10, '#9a94b8');
+  R(0, 14, C, 12, (x: number) => (Math.floor(x / 4) % 2 ? '#fbf0e4' : '#d8434b'));
+  fh(0, C, 14, '#ffffff');
+  R(2, 15.5, C - 4, 9, '#fbf0e4');
+  FR(2, 15.5, C - 4, 9, (fx, fy, o) => (hash2(fx, fy, 205) < 0.04 ? '#e8dcd0' : o));
+  fh(2, C - 2, 24.5, '#b8a8b0');
+  fh(0, C, 25.5, '#8a2c44');
+  T('GAS', 8, 18, enamel('#d8434b'), FT, {});
+  P1(23.5, 20, '#3f9a92');
+  T('BAIT', 28, 18, enamel('#2f6a74'), FT, {});
+  P1(46.5, 20, '#3f9a92');
+  T('SNACKS', 51, 18, enamel('#d8434b'), FT, {});
   // under-canopy lights
-  for (const lx of [12, 32, 52]) {
+  for (const lx of [14, 40, 66]) {
     R(lx - 2.5, 26, 5, 1, '#fff8d8');
     fh(lx - 2.5, lx + 2.5, 26.5, '#e8dca8');
     for (let k = 1; k < 5; k++) FR(lx - k - 1, 26 + k, k * 2 + 2, 1, (a, b, o) => (o && dth(a, b, 6 - k) ? mixc(o, '#fff4c8', 0.3) : o));
   }
   // posts
-  for (const px of [3, 57]) {
+  for (const px of [3, C - 7]) {
     R(px, 26, 4, GY - 26, '#e8e4f0');
     fv(px, 26, GY, '#ffffff');
     fv(px + 3.5, 26, GY, '#a8a0c0');
@@ -4194,46 +4854,47 @@ function drawGasStation(): void {
     FR(px - 1, GY - 3, 6, 3, (fx, fy) => ((fx + fy) % 4 < 2 ? '#f4b63f' : '#3a3048'));
   }
   // pump island and two vintage pumps
-  RR(10, GY - 6, 44, 6, 2, '#d8d0d4');
-  fh(11, 53, GY - 6, '#f4eef0');
-  fh(10, 54, GY - 1, '#a8a0a8');
-  FR(10, GY - 5, 44, 4, (fx, fy, o) => (o && hash2(fx, fy, 206) < 0.08 ? shA(o, 0.12) : o));
-  gasPump(14, GY - 33, '#d8434b', '#8a2c44');
-  gasPump(36, GY - 33, '#3f9a92', '#2f6a74');
+  RR(12, GY - 6, 56, 6, 2, '#d8d0d4');
+  fh(13, 67, GY - 6, '#f4eef0');
+  fh(12, 68, GY - 1, '#a8a0a8');
+  FR(12, GY - 5, 56, 4, (fx, fy, o) => (o && hash2(fx, fy, 206) < 0.08 ? shA(o, 0.12) : o));
+  gasPump(17, GY - 33, '#d8434b', '#8a2c44');
+  gasPump(48, GY - 33, '#3f9a92', '#2f6a74');
   // squeegee bucket and an oil-can pyramid
-  R(26, GY - 9, 4, 3, '#4a6ab0');
-  fh(26, 30, GY - 9, '#7a9ae0');
-  fv(28, GY - 13, GY - 9, '#c8a070');
-  for (let k = 0; k < 3; k++) R(48 + k * 2, GY - 9, 1.75, 3, '#3a3048');
-  for (let k = 0; k < 2; k++) R(49 + k * 2, GY - 12, 1.75, 3, '#3a3048');
+  R(33, GY - 9, 4, 3, '#4a6ab0');
+  fh(33, 37, GY - 9, '#7a9ae0');
+  fv(35, GY - 13, GY - 9, '#c8a070');
+  for (let k = 0; k < 3; k++) R(39 + k * 2, GY - 9, 1.75, 3, '#3a3048');
+  for (let k = 0; k < 2; k++) R(40 + k * 2, GY - 12, 1.75, 3, '#3a3048');
   // price board on the post
-  R(58, 40, 10, 13, '#3a3048');
-  fh(58, 68, 40, '#5a5070');
-  T('$1', 59, 41, '#ffd34a', FT, {});
-  T('09', 59, 47, '#ffd34a', FT, {});
-  micro('9/10', 63.5, 50, '#ffd34a');
+  R(C - 4, 40, 10, 13, '#3a3048');
+  fh(C - 4, C + 6, 40, '#5a5070');
+  T('$1', C - 3, 41, '#ffd34a', FT, {});
+  T('09', C - 3, 47, '#ffd34a', FT, {});
+  micro('9/10', C + 1.5, 50, '#ffd34a');
 }
 building('b-gasstation', {
-  w: 112,
+  w: 176,
   h: 84,
   door: 32,
   draw: drawGasStation,
   label: 'Gas Station',
-  solid: { x: 6, y: -60, w: 50, h: 60 },
+  solid: { x: -8, y: -60, w: 96, h: 60 },
   shadow: (ox, oy) => {
     // soft shade under the canopy, and the shop's cast shadow
-    for (let y = oy + 26; y < oy + 84; y++) for (let x = ox; x < ox + 62; x++) if (dth(x, y, 6)) P(x, y, SH2);
-    bShadow(ox + 62, oy, 50, 84, 10);
+    for (let y = oy + 26; y < oy + 84; y++) for (let x = ox; x < ox + 82; x++) if (dth(x, y, 6)) P(x, y, SH2);
+    bShadow(ox + 80, oy, 96, 84, 10);
   },
   lights: [
-    [12, 32, 22, '#fff4d0'],
-    [32, 32, 22, '#fff4d0'],
-    [52, 32, 22, '#fff4d0'],
-    [73, 54, 14, WARM],
-    [88, 58, 12, WARM],
-    [76, 33, 12, '#ff8a4a'],
-    [19, 53, 6, '#ffffff'],
-    [41, 53, 6, '#ffffff'],
+    [14, 32, 22, '#fff4d0'],
+    [40, 32, 22, '#fff4d0'],
+    [66, 32, 22, '#fff4d0'],
+    [96, 54, 16, WARM],
+    [120, 60, 12, WARM],
+    [95, 33, 12, '#ff8a4a'],
+    [155, 50, 12, '#9ad8f0'],
+    [22, 53, 6, '#ffffff'],
+    [53, 53, 6, '#ffffff'],
   ],
 });
 

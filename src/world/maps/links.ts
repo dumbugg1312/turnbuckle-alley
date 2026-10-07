@@ -1,7 +1,7 @@
 import { FARM } from './farm';
 import { MAPS } from './index';
 import { INTERIORS } from './interiors';
-import { TOWN, TOWN_DOORS } from './town';
+import { AIRSTREAM_DOOR, TOWN, TOWN_DOORS } from './town';
 import './fair';
 
 /**
@@ -21,7 +21,7 @@ export function linkMaps(): void {
   for (const d of TOWN_DOORS) {
     const info = INTERIORS.find((i) => i.id === d.id);
     if (!info) continue;
-    TOWN.warps.push({ x: d.zoneX, y: d.zoneY, w: 1, h: 1, to: d.id, tx: info.doorX, ty: info.doorY - 1, facing: 'up', door: true, label: d.label });
+    TOWN.warps.push({ x: d.zoneX, y: d.zoneY, w: d.w ?? 1, h: 1, to: d.id, tx: info.doorX, ty: info.doorY - 1, facing: 'up', door: true, label: d.label });
     MAPS.get(d.id)!.warps.push({ x: info.doorX, y: info.doorY, w: 1, h: 1, to: 'town', tx: d.zoneX, ty: d.zoneY, facing: 'down', label: 'Outside' });
   }
   // Grandma's house on the farm.
@@ -30,8 +30,8 @@ export function linkMaps(): void {
   MAPS.get('grandma-house')!.warps.push({ x: gh.doorX, y: gh.doorY, w: 1, h: 1, to: 'farm', tx: 10, ty: 10, facing: 'down', label: 'Outside' });
   // Lou's Airstream on the creek.
   const air = INTERIORS.find((i) => i.id === 'airstream')!;
-  TOWN.warps.push({ x: 46, y: 47, w: 1, h: 1, to: 'airstream', tx: air.doorX, ty: air.doorY - 1, facing: 'up', door: true, label: "Lou's Airstream" });
-  MAPS.get('airstream')!.warps.push({ x: air.doorX, y: air.doorY, w: 1, h: 1, to: 'town', tx: 46, ty: 47, facing: 'down', label: 'Outside' });
+  TOWN.warps.push({ x: AIRSTREAM_DOOR.x, y: AIRSTREAM_DOOR.y, w: 1, h: 1, to: 'airstream', tx: air.doorX, ty: air.doorY - 1, facing: 'up', door: true, label: "Lou's Airstream" });
+  MAPS.get('airstream')!.warps.push({ x: air.doorX, y: air.doorY, w: 1, h: 1, to: 'town', tx: AIRSTREAM_DOOR.x, ty: AIRSTREAM_DOOR.y, facing: 'down', label: 'Outside' });
   // Rooms inside rooms.
   for (const [id, c] of Object.entries(CHILD_ROOMS)) {
     const info = INTERIORS.find((i) => i.id === id)!;

@@ -13,8 +13,8 @@ export function startRoute(route: string, g: typeof Game): void {
       fresh.player.name = 'Sam';
       const map = params.get('map') ?? (route.startsWith('farm') ? 'farm' : 'town');
       fresh.player.map = map;
-      fresh.player.x = Number(params.get('x') ?? (map === 'town' ? 58 : 20)) * 16 + 8;
-      fresh.player.y = Number(params.get('y') ?? (map === 'town' ? 26 : 13)) * 16 + 13;
+      fresh.player.x = Number(params.get('x') ?? (map === 'town' ? 94 : 20)) * 16 + 8;
+      fresh.player.y = Number(params.get('y') ?? (map === 'town' ? 31 : 13)) * 16 + 13;
       fresh.time.minutes = Number(params.get('t') ?? 9) * 60;
       if (params.get('day')) fresh.time.day = Number(params.get('day'));
       st.setState(fresh);

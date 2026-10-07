@@ -21,7 +21,7 @@ export class TitleScene implements Scene {
     s.time.minutes = 18 * 60;
     s.weather.today = 'sun';
     setState(s);
-    this.world = new WorldScene({ attract: { map: 'town', x0: 4, y0: 24, x1: 44, y1: 22, seconds: 38 } });
+    this.world = new WorldScene({ attract: { map: 'town', x0: 6, y0: 27, x1: 76, y1: 26, seconds: 64 } });
     this.ui = el('div', 'title-ui');
   }
 

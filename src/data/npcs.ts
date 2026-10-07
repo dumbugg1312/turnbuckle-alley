@@ -71,16 +71,16 @@ function showNight(c: DayCtx, spot: Spot): ScheduleEntry[] {
 
 // Common town spots (tile coordinates).
 export const SPOTS: Record<string, Spot> = {
-  dinerDoor: { map: 'town', x: 7, y: 24 },
-  square: { map: 'town', x: 22, y: 44 },
-  gazeboBench: { map: 'town', x: 17, y: 44 },
-  creekBank: { map: 'town', x: 40, y: 47, facing: 'down' },
-  busStop: { map: 'town', x: 60, y: 24 },
-  mainStW: { map: 'town', x: 12, y: 24 },
-  mainStE: { map: 'town', x: 44, y: 24 },
-  alley: { map: 'town', x: 16, y: 20 },
+  dinerDoor: { map: 'town', x: 10, y: 29 },
+  square: { map: 'town', x: 34, y: 52 },
+  gazeboBench: { map: 'town', x: 29, y: 50 },
+  creekBank: { map: 'town', x: 61, y: 57, facing: 'down' },
+  busStop: { map: 'town', x: 96, y: 29 },
+  mainStW: { map: 'town', x: 16, y: 29 },
+  mainStE: { map: 'town', x: 74, y: 29 },
+  alley: { map: 'town', x: 26, y: 23 },
   backBooth: { map: 'diner', x: 16, y: 6, facing: 'left' },
-  fleaMarket: { map: 'town', x: 52, y: 36 },
+  fleaMarket: { map: 'town', x: 94, y: 37 },
 };
 
 export const NPCS: NpcDef[] = [
@@ -288,10 +288,10 @@ export const NPCS: NpcDef[] = [
     voice: 'lou',
     wrestler: { ringName: 'Sweet Lou', style: 'brawler', role: 'face', finisher: 'Sugar Drop', signature: 'Atomic Elbow', level: 5 },
     schedule: (c) => [
-      { at: H(6), map: 'town', x: 41, y: 47, facing: 'down', idle: 'fish' },
+      { at: H(6), map: 'town', x: 62, y: 57, facing: 'down', idle: 'fish' },
       ...(rainy(c) ? [{ at: H(9), map: 'airstream', x: 3, y: 3, facing: 'down', idle: 'sit' as const }] : []),
       { at: H(12), map: 'diner', x: 10, y: 7, facing: 'up', idle: 'sit' },
-      { at: H(13, 30), map: 'town', x: 41, y: 47, facing: 'down', idle: 'fish' },
+      { at: H(13, 30), map: 'town', x: 62, y: 57, facing: 'down', idle: 'fish' },
       ...(c.show === 'sat' ? [{ at: H(18), map: 'sportatorium', x: 28, y: 16, facing: 'left' as Dir, idle: 'sit' as const }] : []),
       { at: H(21), map: 'airstream', x: 3, y: 3, facing: 'down', idle: 'sit' },
     ],
@@ -305,7 +305,7 @@ export const NPCS: NpcDef[] = [
     role: 'A cryptid who only appears at night',
     voice: 'mothman',
     wrestler: { ringName: 'The Mothman', style: 'luchador', role: 'face', finisher: 'Moonlight Moth', signature: 'Wing Clutch', level: 4 },
-    schedule: () => [{ at: H(22), map: 'town', x: 25, y: 54, facing: 'down', idle: 'still' }],
+    schedule: () => [{ at: H(22), map: 'town', x: 38, y: 64, facing: 'down', idle: 'still' }],
     appearsWhen: () => true,
   },
   {
@@ -318,10 +318,10 @@ export const NPCS: NpcDef[] = [
     romanceable: true,
     voice: 'mo',
     schedule: (c) => [
-      { at: H(7), map: 'town', x: 6, y: 12, idle: 'wander' },
-      { at: H(9), map: 'town', x: 30, y: 12, idle: 'wander' },
+      { at: H(7), map: 'town', x: 8, y: 13, idle: 'wander' },
+      { at: H(9), map: 'town', x: 36, y: 13, idle: 'wander' },
       { at: H(11), ...SPOTS.mainStW, idle: 'wander' },
-      { at: H(13), map: 'town', x: 30, y: 28, idle: 'wander' },
+      { at: H(13), map: 'town', x: 40, y: 34, idle: 'wander' },
       { at: H(15), map: 'farm', x: 15, y: 12, idle: 'still' },
       { at: H(16), map: 'diner', x: 13, y: 9, facing: 'up', idle: 'sit' },
       ...showNight(c, { map: '', x: 18, y: 14, facing: 'down', idle: 'still' }),
@@ -460,13 +460,13 @@ export const NPCS: NpcDef[] = [
     role: 'Sheriff',
     voice: 'bev',
     schedule: (c) => [
-      { at: H(8), map: 'town', x: 20, y: 24, idle: 'wander' },
-      { at: H(10), map: 'town', x: 40, y: 28, idle: 'wander' },
+      { at: H(8), map: 'town', x: 30, y: 29, idle: 'wander' },
+      { at: H(10), map: 'town', x: 60, y: 34, idle: 'wander' },
       { at: H(12), map: 'diner', x: 3, y: 7, facing: 'up', idle: 'sit' },
-      { at: H(13), map: 'town', x: 28, y: 40, idle: 'wander' },
-      { at: H(16), map: 'town', x: 50, y: 24, idle: 'wander' },
+      { at: H(13), map: 'town', x: 28, y: 48, idle: 'wander' },
+      { at: H(16), map: 'town', x: 82, y: 29, idle: 'wander' },
       ...(c.show ? [{ at: H(18), map: c.show === 'wed' ? 'vfw' : 'sportatorium', x: c.show === 'wed' ? 21 : 28, y: c.show === 'wed' ? 13 : 13, facing: 'left' as Dir, idle: 'still' as const }] : []),
-      { at: H(21), map: 'town', x: 24, y: 28, idle: 'wander' },
+      { at: H(21), map: 'town', x: 36, y: 34, idle: 'wander' },
     ],
   },
   {
@@ -479,7 +479,7 @@ export const NPCS: NpcDef[] = [
     voice: 'patty',
     schedule: (c) => [
       { at: H(7), map: 'school', x: 9, y: 7, facing: 'down', idle: 'work' },
-      ...(c.weekday >= 5 ? [{ at: H(10), map: 'town', x: 36, y: 28, idle: 'wander' as const }] : []),
+      ...(c.weekday >= 5 ? [{ at: H(10), map: 'town', x: 52, y: 34, idle: 'wander' as const }] : []),
       ...(c.show ? [{ at: H(18, 30), map: c.show === 'wed' ? 'vfw' : 'sportatorium', x: c.show === 'wed' ? 18 : 23, y: c.show === 'wed' ? 14 : 18, facing: 'up' as Dir, idle: 'still' as const }] : []),
       { at: H(21), map: 'school', x: 9, y: 7, facing: 'down', idle: 'work' },
     ],
@@ -494,7 +494,7 @@ export const NPCS: NpcDef[] = [
     romanceable: true,
     voice: 'clementine',
     schedule: (c) => [
-      { at: H(7), map: 'town', x: 10, y: 24, facing: 'down', idle: 'read' },
+      { at: H(7), map: 'town', x: 13, y: 29, facing: 'down', idle: 'read' },
       { at: H(9), map: 'diner', x: 14, y: 9, facing: 'up', idle: 'work' },
       { at: H(14), map: 'library', x: 11, y: 9, facing: 'up', idle: 'read' },
       ...(c.show ? [{ at: H(18, 30), map: c.show === 'wed' ? 'vfw' : 'sportatorium', x: c.show === 'wed' ? 3 : 4, y: c.show === 'wed' ? 13 : 17, facing: 'right' as Dir, idle: 'work' as const }] : []),
@@ -510,9 +510,9 @@ export const NPCS: NpcDef[] = [
     role: 'Flea market tape dealer; Mothman researcher',
     voice: 'fenwick',
     schedule: (c) => [
-      ...(c.weekday >= 5 ? [{ at: H(8), map: 'town', x: 54, y: 36, facing: 'down' as Dir, idle: 'work' as const }] : [{ at: H(9), map: 'pawn', x: 5, y: 5, facing: 'down' as Dir, idle: 'work' as const }]),
+      ...(c.weekday >= 5 ? [{ at: H(8), map: 'town', x: 98, y: 42, facing: 'down' as Dir, idle: 'work' as const }] : [{ at: H(9), map: 'pawn', x: 5, y: 5, facing: 'down' as Dir, idle: 'work' as const }]),
       { at: H(17), map: 'pawn', x: 5, y: 5, facing: 'down', idle: 'work' },
-      { at: H(21, 30), map: 'town', x: 23, y: 53, facing: 'down', idle: 'still' },
+      { at: H(21, 30), map: 'town', x: 37, y: 63, facing: 'down', idle: 'still' },
       { at: H(23, 30), map: 'pawn', x: 5, y: 5, facing: 'down', idle: 'work' },
     ],
   },
@@ -525,11 +525,11 @@ export const NPCS: NpcDef[] = [
     role: 'Mayor',
     voice: 'oakes',
     schedule: (c) => [
-      { at: H(8), map: 'town', x: 24, y: 41, idle: 'wander' },
-      { at: H(11), map: 'town', x: 30, y: 24, idle: 'wander' },
+      { at: H(8), map: 'town', x: 30, y: 48, idle: 'wander' },
+      { at: H(11), map: 'town', x: 44, y: 29, idle: 'wander' },
       { at: H(14), ...SPOTS.square, idle: 'wander' },
       ...(c.show === 'sat' ? [{ at: H(18), map: 'sportatorium', x: 3, y: 15, facing: 'right' as Dir, idle: 'still' as const }] : []),
-      { at: H(20), map: 'town', x: 34, y: 12, idle: 'still' },
+      { at: H(20), map: 'town', x: 56, y: 13, idle: 'still' },
     ],
   },
   {
@@ -547,7 +547,7 @@ export const NPCS: NpcDef[] = [
       { at: H(15), ...SPOTS.creekBank, idle: 'wander' },
       ...(c.show === 'sat' ? [{ at: H(18, 30), map: 'sportatorium', x: 21, y: 18, facing: 'up' as Dir, idle: 'still' as const }] : []),
       { at: H(19), map: 'diner', x: 5, y: 9, facing: 'up', idle: 'sit' },
-      { at: H(21), map: 'town', x: 21, y: 12, idle: 'still' },
+      { at: H(21), map: 'town', x: 34, y: 13, idle: 'still' },
     ],
   },
   {
@@ -563,7 +563,7 @@ export const NPCS: NpcDef[] = [
       { at: H(7), map: 'sunnypines', x: 10, y: 6, idle: 'work' },
       { at: H(12, 30), map: 'bakery', x: 9, y: 6, facing: 'up', idle: 'sit' },
       { at: H(13, 30), map: 'sunnypines', x: 10, y: 6, idle: 'work' },
-      { at: H(19), map: 'town', x: 34, y: 12, idle: 'still' },
+      { at: H(19), map: 'town', x: 56, y: 13, idle: 'still' },
     ],
   },
   {

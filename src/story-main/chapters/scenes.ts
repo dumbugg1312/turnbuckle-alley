@@ -24,7 +24,7 @@ const showWorked = () => !!(G.ext['shows'] as { worked?: boolean } | undefined)?
 
 async function spMural(): Promise<void> {
   await N('Halfway down Main Street, the smell of fresh paint drifts out of the alley.');
-  await stage('town', 16, 21, 'up', [['birdie', 17, 19, 'up']]);
+  await stage('town', 26, 24, 'up', [['birdie', 27, 22, 'up']]);
   await N('Birdie Malone is on a stepladder at the Velvet Hammers mural, touching up a sequin with a brush the size of a pencil.');
   await M('birdie', 'happy', "Hold the ladder, sugar. Gus held it last year and sneezed. The Duchess had a mustache till April.");
   await N('Up close, the two painted women stand back to back, one belt between them. One face is fresh gold. The other, she paints slower.');
@@ -49,7 +49,7 @@ async function spMural(): Promise<void> {
   await S('birdie', 'There. Good as 1982. Now scram. I have to go yell at a bank.');
   heart('birdie', 20);
   G.flags['saw_mural'] = true;
-  await WORLD?.walkTo('birdie', 17, 24);
+  await WORLD?.walkTo('birdie', 27, 29);
   exit('birdie');
 }
 
@@ -282,7 +282,7 @@ async function room7(): Promise<void> {
 
 async function suCorner(): Promise<void> {
   await N('On your way down Ropewood Lane, you see her.');
-  await stage('town', 23, 15, 'left', [['grandma', 20, 15, 'down']]);
+  await stage('town', 36, 16, 'left', [['grandma', 33, 16, 'down']]);
   await N('A small, straight-backed woman in a lavender cardigan stands on the corner, very still.');
   await N("From here, between two roofs, you can see the Sportatorium's back door. The one the wrestlers use.");
   const c = await pick(null, [
@@ -656,7 +656,7 @@ async function faHavoc(): Promise<void> {
   }
   await N(tonight ? "Harvest Havoc is over. In the back booth, Birdie's spot is empty. June keeps looking at it." : "Birdie didn't come to the back booth after Harvest Havoc. June mentions it twice before you've finished your coffee.");
   await S('june', 'First Saturday in forty years she didn\'t come in. Go find her, baby. I know where. So do you.');
-  await stage('town', 34, 15, 'left', [['birdie', 33, 15, 'up']]);
+  await stage('town', 56, 16, 'left', [['birdie', 55, 16, 'up']]);
   await N("Under the Evening Bell's window, in the dark, a short woman in a crimson blazer stands with her hands in her pockets.");
   await N('One light is on upstairs. Room 7. Behind you, the Sportatorium marquee is lit, every single bulb.');
   await S('birdie', 'Got as far as the steps. Three times.');
