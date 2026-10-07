@@ -1,10 +1,16 @@
-import { registerMap, room } from './index';
+import { type MapBuilder, registerMap, room } from './index';
 import type { ObjectPlacement, TerrainId, Warp } from '../types';
 
 /**
  * Every indoor room. Rooms are built with room(): side columns are void,
  * the top rows are wall, and the doorway sits in the bottom edge at doorX+1.
+ * A room can then be reshaped (alcoves, stepped walls, floor zones) with
+ * opts.shape, which paints straight onto the MapBuilder in map tiles.
  * Interiors list their own furniture; doors to town are linked in links.ts.
+ *
+ * Coordinates: older rooms list furniture in room coordinates (x is shifted
+ * one tile right for the void column). Rooms built with opts.abs use plain
+ * map tiles, the same numbers NPC schedules and story scenes use.
  */
 export interface InteriorInfo {
   id: string;
@@ -16,9 +22,41 @@ export const INTERIORS: InteriorInfo[] = [];
 
 type P = [kind: string, x: number, y: number, props?: Record<string, unknown>, id?: string];
 
-function interior(id: string, name: string, w: number, h: number, wall: TerrainId, floor: TerrainId, doorX: number, items: P[], opts: { music?: string; light?: number; extraWarps?: Warp[]; wallRows?: number } = {}) {
+/**
+ * Collision for furniture whose width comes from props.w (in tiles). The
+ * pathfinding grid is built before anything is drawn, so solids have to be
+ * known here rather than set lazily by the art.
+ */
+const WIDE: Record<string, (w: number) => { x: number; y: number; w: number; h: number } | null> = {
+  counter: (w) => ({ x: -w * 8, y: -15, w: w * 16, h: 14 }),
+  'booth-seat': (w) => ({ x: -w * 8 + 1, y: -12, w: w * 16 - 2, h: 10 }),
+  'booth-table': (w) => ({ x: -w * 8 + 2, y: -15, w: w * 16 - 4, h: 11 }),
+};
+
+interface InteriorOpts {
+  music?: string;
+  light?: number;
+  extraWarps?: Warp[];
+  wallRows?: number;
+  /** Reshape the room after the basic box is laid (map tile coordinates). */
+  shape?: (b: MapBuilder) => void;
+  /** Furniture is listed in map tiles (no void-column shift). */
+  abs?: boolean;
+}
+
+function interior(id: string, name: string, w: number, h: number, wall: TerrainId, floor: TerrainId, doorX: number, items: P[], opts: InteriorOpts = {}) {
   const rb = room({ w, h, wall, floor, doorX, wallRows: opts.wallRows ?? 3 });
-  const objects: ObjectPlacement[] = items.map(([kind, x, y, props, oid]) => ({ kind, x: x + 1, y, props, id: oid }));
+  opts.shape?.(rb);
+  const dx = opts.abs ? 0 : 1;
+  const objects: ObjectPlacement[] = items.map(([kind, x, y, props, oid]) => {
+    const pr = props ? { ...props } : undefined;
+    const wide = WIDE[kind];
+    if (wide && pr && pr.solid == null) {
+      const sol = wide(Number(pr.w ?? 3));
+      if (sol) pr.solid = sol;
+    }
+    return { kind, x: x + dx, y, props: pr, id: oid };
+  });
   objects.push({ kind: 'door-mat', x: doorX + 1.5, y: h - 0.0, id: `${id}-mat` });
   registerMap({
     id,
@@ -79,13 +117,55 @@ interior('lockers', 'Locker Room', 14, 9, 'wall-panel', 'rubber', 6, [
 ], { music: 'sportatorium', light: 0.75 });
 
 // ---------------------------------------------------------------- Hot Tag Diner
+// June Oyelaran's place since '87. The counter splits the room: June's side
+// (kitchen door, order window, the back bar under the menu) and the regulars'
+// side (eight stools, booths along the front windows). The right-hand corner
+// steps forward into its own pink-papered nook: the back booth, where every
+// storyline in town gets pitched, under forty years of signed photos.
 interior('diner', 'Hot Tag Diner', 18, 11, 'wall-wood', 'checker', 8, [
-  ['counter', 6, 5.4, { w: 8 }, 'diner-counter'], ['cash-register', 9.5, 4.6], ['stool', 3.5, 6.6], ['stool', 5.5, 6.6], ['stool', 7.5, 6.6], ['stool', 9.5, 6.6],
-  ['booth', 1.8, 9, { variant: 'red' }], ['booth', 4.8, 9.8, { variant: 'teal' }], ['booth', 13.5, 9.8, { variant: 'red' }],
-  ['booth', 16, 5.2, { variant: 'teal' }, 'back-booth'],
-  ['jukebox', 12, 4.6, {}, 'jukebox'], ['window', 4, 2.6], ['window', 10, 2.6], ['poster', 14.5, 2.2, { variant: 5 }], ['photo', 1.5, 2.2, { variant: 2 }],
-  ['fridge', 0.6, 4.4], ['plant', 17.4, 10.4],
-], { music: 'diner' });
+  // June's side of the counter
+  ['door-wall', 2, 3, { swing: true, plate: 'KITCHEN', variant: 1 }],
+  ['pass-window', 4.6, 2.75],
+  ['back-bar', 9.5, 3.1, { w: 6, items: '013254', shelf: false }],
+  ['menu-board', 9.5, 1.3],
+  ['wall-clock', 12.3, 1.25, { neon: true }],
+  ['floor-mat', 7.5, 4.9, { w: 9, h: 0.8, variant: 0 }],
+  ['counter', 7, 6.95, { w: 10, style: 'diner' }, 'diner-counter'],
+  ['cash-register', 10.5, 6.15],
+  ['stool', 3.5, 7.8], ['stool', 4.5, 7.8], ['stool', 5.5, 7.8], ['stool', 6.5, 7.8],
+  ['stool', 7.5, 7.8], ['stool', 8.5, 7.8], ['stool', 9.5, 7.8], ['stool', 10.5, 7.8],
+  ['pendant', 4, 6.3, { variant: 0 }], ['pendant', 7.5, 6.3, { variant: 1 }], ['pendant', 11, 6.3, { variant: 0 }],
+  // the back-booth nook
+  ['neon', 14.6, 2.3, { sign: 'PIE', color: '#ff5d8f' }],
+  ['jukebox', 13.6, 4.9, {}, 'jukebox'],
+  ['photo-wall', 16.1, 3.5, { variant: 0 }],
+  ['fan-case', 17.6, 1.95],
+  ['payphone', 18.35, 3.95, { text: 'The diner payphone. "JUNE 555-0187" is scrawled on the wall beside it, which is funny, because this is June\'s phone.' }],
+  ['back-booth', 15.75, 6.6, {}, 'back-booth'],
+  ['pendant', 15.4, 6.2, { variant: 2, color: '#ffc880' }],
+  // booths along the front windows: regulars sit on row 9 with their backs to you, facing the table
+  ['booth-table', 2, 9.25, { w: 2 }], ['booth-seat', 2, 10.95, { w: 2, variant: 'red', worn: true }],
+  ['booth-table', 5, 9.25, { w: 2 }], ['booth-seat', 5, 10.95, { w: 2, variant: 'teal' }],
+  ['booth-table', 14.5, 9.25, { w: 3 }], ['booth-seat', 14.5, 10.95, { w: 3, variant: 'red' }],
+  ['booth-table', 17, 9.25, { w: 2 }], ['booth-seat', 17, 10.95, { w: 2, variant: 'teal', worn: true }],
+  ['pendant', 2, 9.1, { variant: 1 }], ['pendant', 5, 9.1, { variant: 0 }], ['pendant', 14.5, 9.1, { variant: 1 }], ['pendant', 17, 9.1, { variant: 0 }],
+  // by the door
+  ['coat-rack', 6.6, 10.7],
+  ['gumball', 11.5, 10.6],
+  ['plant', 12.4, 10.7, { variant: 1 }],
+], {
+  music: 'diner',
+  light: 0.88,
+  abs: true,
+  shape: (b) => {
+    // the back-booth nook steps forward one tile and wears its own wallpaper
+    b.rect(13, 0, 6, 1, 'void');
+    b.rect(13, 1, 6, 3, 'wall-pink');
+    b.rect(13, 4, 6, 4, 'wood');
+    // kitchen tile on June's side of the counter, rubber mats where she stands all day
+    b.rect(1, 3, 12, 3, 'tile');
+  },
+});
 
 // ---------------------------------------------------------------- VFW Hall (Wednesday shows)
 interior('vfw', 'VFW Post 316', 24, 15, 'wall-wood', 'wood-dark', 11, [
