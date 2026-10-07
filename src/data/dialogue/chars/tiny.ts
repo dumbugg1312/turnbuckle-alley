@@ -51,22 +51,24 @@ export default {
     { text: "Storm. The oven's the warmest room in town. Come sit. I'll bring you a tiny cake and a blanket the size of a sheet.", when: { weather: ['storm'], place: ['public'] } },
     { text: "Snow. I bake at four and make footprints on the walk. They're *very* big footprints. Kids follow them. It's a game.", when: { weather: ['snow'], place: ['public'] } },
     { text: "Wind. Everything's blowing. My hat. My braids. A tray of macarons. ...Okay, that was *forty* macarons.", when: { weather: ['wind'], place: ['public'] } },
-    { text: "Spring! Strawberries, rhubarb, violets. Sugared violets take three days. I'm *so* good at patience.", when: { season: [0], place: ['public'] }, weight: 2 },
+    { text: "Sugared violets take three days. You paint every petal with egg white and a brush the size of an eyelash. I'm *so* good at patience. Sorry. I'm bragging.", when: { season: [0], place: ['public'] }, weight: 2 },
     { text: "County fair week. I'm entering a cherry pie *and* a lemon. Agnes enters a lattice. I enter hope. Sorry. And a little rage.", when: { season: [1], place: ['public'] } },
-    { text: "Pumpkin season. Everything's pumpkin. Pumpkin tiny cake. Pumpkin *large* cake. Pumpkin bread. It's all very pumpkin.", when: { season: [2], place: ['public'] } },
+    { text: "Somebody ordered a pumpkin tiny cake and a pumpkin *large* cake under the same name. I think it's Earl. I think it's Earl twice.", when: { season: [2], place: ['public'] } },
     { text: "Winter. Homecoming cakes. Four hundred tiny cakes, each with a tiny pennant. I count them twice. Sorry! Habit.", when: { season: [3], place: ['public'] } },
 
     // ---------------------------------------------------------------- Insider: Tiny, a little sharper
     { text: "Between you and me? I'm sharper than people expect. 'Tiny' sounds like sprinkles. I'm not. I'm a spreadsheet in a pink apron.", when: { place: ['insider'] }, weight: 2 },
     { text: "Tuck-In isn't a finisher. It's a lullaby. I tuck them in, I sit on them, I pat their head. Birdie says it's the most disrespectful finish in the business. The crowd *loves* it.", when: { place: ['insider'] } },
-    { text: "I bonk the curtain rod every Saturday. Every single show. Hank raised it twice. I *grew.* She says I'm 'a structural problem.'", when: { place: ['insider'] }, mood: 'happy' },
+    { text: "I bonk the curtain rod every Saturday. Every single show. Hank raised it twice. Now she's tied a pom-pom on it so I see it coming. It's pink. She says it's red. It's pink.", when: { place: ['insider'] }, mood: 'happy' },
     { text: "Every chair in town creaks when I sit down. It's a conversation. Most of them say 'sorry.' I say it back.", when: { place: ['insider'] } },
     { text: "Do you know what it's like to go through a doorway sideways for thirty-nine years? I'm not complaining. I'm *describing.* It's a very good doorway skill.", when: { place: ['insider'], hearts: [3, 10] } },
     { text: "I make them small because nothing else in my life is. Something in this world that fits in my hand and doesn't break. You get that?", when: { place: ['insider'], hearts: [6, 10] }, mood: 'sad', weight: 2 },
     { text: "My family's dairy farm in Wisconsin. Everyone's under six feet. They bring it up at Christmas. 'Where did we get you?' 'The mailman, Aunt Joan.' It's tradition.", when: { place: ['insider'], hearts: [3, 10] } },
     { text: "You're new, so: the apology is the move. 'Sorry! Sorry!' before the hit is half the sell. Make the crowd feel bad for *wanting* it.", when: { place: ['insider'], rank: ['rookie', 'opener'] } },
-    { text: "Main event. When it goes right, they remember the ending. When it goes wrong, they remember you. Sorry. Be remembered for the right one.", when: { place: ['insider'], rank: ['main', 'assistant', 'pencil', 'owner'] } },
-    { text: "Show day. I bake at four, nap at eight, wrestle at eight-thirty. Best schedule I've ever had. Don't tell the bakery.", when: { place: ['insider'], showDay: true }, mood: 'happy' },
+    { text: "Main event. When it goes right, they remember the ending. When it goes wrong, they remember you. I keep a list of my wrong ones on the fridge, under a croissant magnet.", when: { place: ['insider'], rank: ['main', 'assistant', 'pencil', 'owner'] } },
+    { text: ["You and {opponent}! I watched from behind the curtain with a tray of cakes. I ate one at the {finisher}. Out of nerves.", "Then I ate one out of joy. Sorry. Two cakes. The tray's lopsided now."], when: { place: ['insider'], lastMatch: { won: true, maxDaysAgo: 3 } }, mood: 'happy' },
+    { text: "{opponent} beat you. Sorry! Sorry. Here. (She produces a cake the size of a button from her apron pocket.) It's for losing. I keep losing cakes on me.", when: { lastMatch: { won: false, maxDaysAgo: 3 } } },
+    { text: "Show day. I bake at four, nap at eight, wrestle at eight-thirty. Best schedule I've ever had. The bakery thinks I'm napping till nine. The bakery is very trusting.", when: { place: ['insider'], showDay: true }, mood: 'happy' },
     { text: "Four a.m. is the best hour. The ovens are warm, the street's empty, everything I bake is the first of its kind. ...Sorry. Poetry. It's the butter.", when: { time: [240, 420], place: ['public', 'insider'] }, weight: 2 },
 
     // ---------------------------------------------------------------- After the events
@@ -106,10 +108,34 @@ export default {
       "(She holds it between two enormous fingers.) Is this a joke? I get a lot of jokes. I'd like it to not be one.",
     ],
     birthday: [
-      "A birthday gift? For *me?* I usually bake my own cake. Then nobody sings, because it's four in the morning. ...Thank you.",
-      "Summer, the seventeenth! County fair week. I'm always too busy to celebrate. And you didn't forget. Sorry! I'm crying into the frosting.",
+      "A birthday {item}? For *me?* I usually bake my own cake. Then nobody sings, because it's four in the morning. ...Thank you.",
+      "Summer, the seventeenth! County fair week. I'm always too busy to celebrate. And now a {item}. Sorry! There's frosting on it now. That's my fault.",
+    ],
+    byItem: {
+      'toy-wrestler': ["(She holds the figure in her palm like a baby bird.) He's going in the dollhouse. On the porch. In the rocking chair.", "Sorry. He's very small. He's the right size. Do you know how rare the right size is?"],
+      wildflowers: "Violets? There are violets in here! I'm going to sugar them. Three days. You'll have to come back for the reveal.",
+      sequins: "Sequins! They look exactly like rare sprinkles. Sorry! I'm not going to put them on a cake. ...I'm going to put ONE on a cake. Nobody eat that one.",
+      rhinestone: "A rhinestone. I'll set it on top of the Homecoming cake like a tiny chandelier. Four hundred cakes, one jewel. The rest will be jealous. Cakes get jealous.",
+      honey: "Honey. Wildflower honey. I'll glaze something tiny with it. Something you'd need a magnifying glass to admire properly.",
+      teacup: "A teacup! I'll bake a cake *inside* it. A teacup cake. Sorry, it's the only thing in this shop that's ever been too big for me to bake in.",
+      concha: "Rosa's concha. She's a good baker. Better than me at bread. Sorry. It's true. I'm going to eat it in the walk-in where nobody can see me admitting it.",
+      coffee: "Coffee at four a.m. is the best coffee. Coffee at four p.m. is the second best. You've just made my four p.m.",
+      comic: "Wrestle-Bot vs. The Moon! I'm going to make a Wrestle-Bot cake. In fondant. He'll be two inches tall. The moon will be a cookie.",
+    },
+    later: [
+      "The {lastGift} is in the shop window now. People keep asking if it's for sale. I say no. Sorry! Some things in a bakery are for the baker.",
+      "I made a tiny {lastGift} out of fondant and put it on a cake. Nobody knew what it was. Earl knew. Earl ate it in two bites.",
     ],
   },
+  again: [
+    "Sorry! Sorry. I'm in the middle of a frosting. You can watch. Watching's allowed.",
+    "(Tiny waves with a piping bag. A small rose of frosting lands on the counter. She apologizes to it.)",
+    "We talked! I have nine trays in the oven. Nine. I counted them out loud so they'd know.",
+  ],
+  idle: [
+    "(Tiny is frosting a cake the size of a coin with a pair of tweezers, breathing very carefully.)",
+    "Mind the doorframe! ...Oh. You did. Good. Better than me.",
+  ],
   birthday: { season: 1, day: 17 },
   events: [
     // ---------------------------------------------------------------- 2: A cake smaller than a coin
@@ -120,7 +146,7 @@ export default {
         await api.say('tiny', "Sorry! Sorry. Welcome! Sit. Don't move. Don't blink. I'm going to try something.");
         await api.narrate("She takes a cake from the cooling rack. It is smaller than a coin. She holds it between two fingers like a jeweler, lowers her half-moon glasses, and picks up a piping bag with a tip the size of a pin.");
         await api.say('tiny', "I do a face on every new friend. This is your nose. Noses are the hardest. Don't ask me about ears.");
-        await api.narrate("It takes her eleven minutes. Her huge hands don't shake once. When she finishes, she sets the cake on your palm.");
+        await api.narrate("It takes her twelve minutes. Her huge hands don't shake once. When she finishes, she sets the cake on your palm.");
         await api.say('tiny', "That's you. Don't eat it in one bite.");
         const c = await api.choose('A cake smaller than a coin, with your face on it, sits on your palm.', [
           { label: 'Eat it in four careful bites', value: 'four' },
@@ -134,7 +160,7 @@ export default {
         } else if (c === 'one') {
           api.hearts('tiny', 15);
           await api.narrate("You eat it in one bite. Tiny watches, hands clasped, and her face does a long, slow fall.");
-          await api.say('tiny', "...You ate it in one bite. Eleven minutes of work, gone in one. Everybody does. It's the dream, honestly. Sorry! I'm fine. I'm *fine.*");
+          await api.say('tiny', "...You ate it in one bite. Twelve minutes of work, gone in one. Everybody does. It's the dream, honestly. Sorry! I'm fine. I'm *fine.*");
         } else {
           api.hearts('tiny', -10);
           await api.narrate("Tiny looks from you to the cake to the sign over her head: TINY CAKES, BIG LOVE. The silence has a texture.");
@@ -238,7 +264,7 @@ export default {
         } else {
           api.hearts('tiny', 15);
           await api.narrate("You say nothing. She studies your face and, for a moment, you can tell she's reading the whole thing in what you don't say.");
-          await api.say('tiny', "...You know something. Don't tell me. I don't want to *know* yet. I want to *find out.* There's a difference.");
+          await api.say('tiny', "...You know something. Wait. Not yet. I don't want to *know* yet. I want to *find out.* There's a difference.");
         }
         api.flag('tiny_fenwick', true);
         await api.narrate("She picks up the bag of sprinkles and holds it against her chest. It rattles faintly.");
@@ -268,7 +294,7 @@ export default {
         ]);
         api.hearts('tiny', 30);
         if (c === 'small') {
-          await api.sayMood('tiny', 'happy', "A pie. A *tiny* one. The size of a quarter. With a lattice, a real lattice, eleven strips, woven with tweezers.");
+          await api.sayMood('tiny', 'happy', "A pie. A *tiny* one. The size of a quarter. With a lattice, a real lattice, nine strips, woven with tweezers.");
           await api.narrate("She asks what kind. You think about Agnes's famous pie.");
           const k = await api.choose('Which filling?', [
             { label: "Cherry, Agnes's own recipe", value: 'cherry' },

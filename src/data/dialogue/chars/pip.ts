@@ -30,7 +30,7 @@ export default {
     { text: "Lacey babysits me sometimes. Some people say she lets me win at arm-wrestling. Those people are wrong and also Lacey." },
     { text: "I want to wrestle Wanda. Dad says no. Papa says no. But Wanda bowed at me, so I think SHE said yes." },
     { text: "Luz is my best friend and my number one contender. She's Dex's sister. She thinks Dex can fly. He CAN, a little.", mood: 'happy' },
-    { text: ["Dex is my hero. He lost the Pip-weight title to me eleven times.", "He cries every time. Real tears. That's how you know I'm strong."] },
+    { text: ["Dex is my hero. He lost the Pip-weight title to me forty times.", "He says six. He's bad at counting when he's crying. He cries every time. Real tears."] },
     { text: "When I was little I thought the water tower was a giant turnbuckle for a giant wrestler. ...I still think that. A little." },
     { text: ["Luz and I built a fort with a ring inside. The ropes are jump ropes. The turnbuckles are pillows.", "Dad says it's a fire hazard. Papa says it's art."] },
     { text: ["Dad lets me sit right behind him on the bus. I announce every stop.", "NOW ARRIVING... ELM STREET! The big kids hate it. Dad loves it."], mood: 'happy' },
@@ -39,12 +39,12 @@ export default {
     { text: "When something good happens, you hold your belt over your head. That's the rule. I did it at lunch today. It was pizza." },
 
     // ---------------------------------------------------------------- strangers
-    { text: "You're the new one! Everybody's talking about you. Agnes says you have nice manners. That's the biggest thing Agnes says.", when: { hearts: [0, 2] } },
+    { text: "You're the new one! Everybody's talking about you. Agnes says you have nice manners. Agnes said that about a bishop once. Only once.", when: { hearts: [0, 2] } },
     { text: "I'm not supposed to talk to strangers. But you're not a stranger. You're a wrestler. That's different. I checked.", when: { hearts: [0, 2] } },
     { text: "When's your first match? I'll make a sign. I just need to know how to spell your name. And if you like glitter.", when: { notFlag: 'debuted' }, mood: 'happy' },
 
     // ---------------------------------------------------------------- friends
-    { text: "You're my second favorite wrestler. Dex is first. ...Okay, you're tied. Don't tell Dex.", when: { hearts: [3, 5] }, mood: 'happy' },
+    { text: "You're my second favorite wrestler. Dex is first. ...Okay, you're tied. I'll tell Dex myself. Gently. With a snack.", when: { hearts: [3, 5] }, mood: 'happy' },
     { text: ["I write letters to every wrestler in town. Every week. I keep them in a shoebox.", "...I don't mail them. Don't tell anybody."], when: { hearts: [3, 5], notFlag: 'pip_letter_mailed' } },
     { text: "I'm still undisputed. You tried. Rematch anytime. I've been doing extra push-ups. Thirteen now.", when: { flag: 'pip_title_match' }, mood: 'smug' },
     { text: ["Mo carried my letter to Dex herself. She called me SIR.", "And Dex wrote back! 'Keep flying, champ.' It's in a sleeve. And another sleeve."], when: { flag: 'pip_letter_mailed' }, mood: 'love' },
@@ -64,11 +64,11 @@ export default {
     { text: "You're a hero, right? You have to be. You held the door for Agnes.", when: { alignment: ['face'] }, mood: 'happy' },
     { text: "When you win, I hold my belt up too. So it's like we both win. That's allowed. I checked the rules. I wrote the rules.", when: { alignment: ['face'], flag: 'debuted' }, mood: 'happy' },
     { text: "BOOOO! ...Hi. BOOOO!", when: { alignment: ['heel'] }, mood: 'angry' },
-    { text: "My dads say I'm not supposed to wave at villains. But you waved first. So I can wave back. That's the rule.", when: { alignment: ['heel'], hearts: [0, 4] } },
+    { text: "My dads say I'm not supposed to wave at villains. But you waved first. So technically you started it.", when: { alignment: ['heel'], hearts: [0, 4] } },
     { text: ["Why'd you go villain? Was somebody mean to you first?", "Papa says people are usually mean because somebody was mean to them first."], when: { alignment: ['heel'], hearts: [3, 14] }, mood: 'sad' },
     { text: ["I can't believe you'd do that to him! He was your FRIEND! He was nice to EVERYBODY!", "...Do you still wanna arm-wrestle, though? Just regular?"], when: { alignment: ['heel'], hearts: [0, 6], flag: 'debuted' }, mood: 'angry' },
     { text: ["I still boo you. I have to. It's the rules. But I boo you the nicest.", "Listen. ...booooo. See? That one had love in it."], when: { alignment: ['heel'], hearts: [6, 14] }, mood: 'love' },
-    { text: "Dad says you're a tweener. That means in between. Like the cream in a cookie. That's the best part.", when: { alignment: ['tweener'] }, mood: 'happy' },
+    { text: "Dad says you're a tweener. That means in between. Like the cream in a cookie. Luz says the cream is the villain of the cookie. We had a fight about it.", when: { alignment: ['tweener'] }, mood: 'happy' },
 
     // ---------------------------------------------------------------- rank
     { text: "You're in the first match! The first match is the most important. Because it's FIRST. Everybody's still awake.", when: { rank: ['rookie', 'opener'], flag: 'debuted' } },
@@ -76,14 +76,15 @@ export default {
     { text: "You're the MAIN EVENT now! The last match! That's the most important, because it's LAST. Everybody stays up.", when: { rank: ['main', 'assistant', 'pencil', 'owner'] }, mood: 'surprised' },
 
     // ---------------------------------------------------------------- matches and worry
-    { text: "You got hit SO hard. Papa says ice, twenty minutes on, twenty off. He's a pharmacist. You can trust him.", when: { flag: 'debuted', weekday: [3, 6], hearts: [2, 14] }, mood: 'sad' },
-    { text: ["I saw your match! When you did the thing? And then the OTHER thing?", "I fell off my chair. On purpose. Mostly on purpose."], when: { flag: 'debuted', weekday: [3, 6] }, mood: 'happy' },
-    { text: "When you lost I booed the other guy so hard Papa had to give me a cough drop. Are you okay? Is your arm okay?", when: { flag: 'debuted', weekday: [3, 6], alignment: ['face', 'tweener'] }, mood: 'sad' },
+    { text: "{opponent} hit you SO hard. Papa says ice, twenty minutes on, twenty off. He's a pharmacist. You can trust him.", when: { lastMatch: { won: false, maxDaysAgo: 3 }, hearts: [2, 14] }, mood: 'sad' },
+    { text: ["I saw you beat {opponent}! When you did the {finisher}?", "I fell off my chair. On purpose. Mostly on purpose. I did it again at home on the couch."], when: { lastMatch: { won: true, maxDaysAgo: 4 } }, mood: 'happy' },
+    { text: "When {opponent} beat you I booed so hard Papa had to give me a cough drop. Are you okay? Is your arm okay?", when: { lastMatch: { won: false, maxDaysAgo: 4 }, alignment: ['face', 'tweener'] }, mood: 'sad' },
+    { text: ["You beat {opponent}. I booed. I had to. You're the villain.", "...I booed quieter at the end. Don't look at me like that."], when: { lastMatch: { won: true, maxDaysAgo: 4 }, alignment: ['heel'] } },
 
     // ---------------------------------------------------------------- show days
     { text: "It's a SHOW DAY! I made a sign. It has your name on it. I spelled it right. I checked three times.", when: { showDay: true, hearts: [3, 14], flag: 'debuted' }, mood: 'happy' },
     { text: ["VFW tonight! I win one bingo card every single week.", "Papa says it's luck. It's not luck. It's skill. The VFW lady says shh."], when: { weekday: [2] }, mood: 'smug' },
-    { text: "Saturday is the Sportatorium! Row C, two seats from Agnes. I'll be the one standing on my chair. Don't tell Dad.", when: { weekday: [5] }, mood: 'happy' },
+    { text: "Saturday is the Sportatorium! Row C, two seats from Agnes. I'll be the one standing on my chair. I sit down when Dad looks.", when: { weekday: [5] }, mood: 'happy' },
     { text: "Are you nervous? I'd be nervous. I'm nervous FOR you. Here. Hold the belt for a second. It helps.", when: { showDay: true, place: ['show'], hearts: [3, 14] } },
     { text: "Dad says I can stay up till nine on show nights. I'm gonna stay up till nine-oh-ONE.", when: { showDay: true, time: [1020, 1259] }, mood: 'smug' },
 
@@ -93,7 +94,7 @@ export default {
     { text: ["We learned fractions today. I already knew halves.", "Because of that belt that got broken in half a long time ago. Everybody knows that one."], when: { weekday: [0, 1, 2, 3, 4], time: [900, 1080] } },
     { text: "Shh. We're in the library. The Mountain lives here. ...He's the librarian. But ALSO I think he lives in the walls.", when: { map: ['library'] }, mood: 'surprised' },
     { text: "It's spring! Thaw Brawl is coming! I'm making a sign so big it needs two sticks. Dad says one stick. We're negotiating.", when: { season: [0] }, mood: 'happy' },
-    { text: "Spring rain makes the puddles big enough for a splash off the top rope. Bruiser and I tested it. Don't tell Papa.", when: { season: [0], weather: ['rain'] } },
+    { text: "Spring rain makes the puddles big enough for a splash off the top rope. Bruiser and I tested it. Papa thinks the mud is from recess.", when: { season: [0], weather: ['rain'] } },
     { text: "Wanda's awake! She slept all winter and woke up for Thaw Brawl. Papa says that's lucky. I say she wanted good seats.", when: { season: [0] } },
     { text: "Fairgrounds Fury is in summer! Wanda defends her title! I'm sitting right by the fence so I can bow back.", when: { season: [1] }, mood: 'happy' },
     { text: "Harvest Havoc is coming. Last year somebody got thrown into a hay bale. It was the best thing I ever saw in my life.", when: { season: [2] } },
@@ -103,14 +104,14 @@ export default {
     { text: "Sunny! Perfect day for a title defense. Want to go? No? Okay. Just know I'm ready. I'm always ready.", when: { weather: ['sun'] } },
 
     // ---------------------------------------------------------------- the main story, as a kid hears it
-    { text: "You met Birdie? She's the COMMISSIONER. She once fined the Bruiser Twins a whole VFW paint job. That's the most money there is.", when: { flag: 'met_birdie', notFlag: 'grandma_in_town' } },
+    { text: "You met Birdie? She's the COMMISSIONER. She once fined the Bruiser Twins a whole VFW paint job. I've seen the wall. It's still only half painted.", when: { flag: 'met_birdie', notFlag: 'grandma_in_town' } },
     { text: ["There's a new old lady at the Evening Bell. Agnes says she's the Duchess.", "THE Duchess. From the belt story! Is she scary? She waved at me backwards."], when: { flag: 'grandma_in_town', notFlag: 'truth_revealed' }, mood: 'surprised' },
     { text: ["Agnes says the Duchess was crying the whole time, back then. Villains don't cry.", "So maybe she wasn't a villain. Maybe she was just really, really sad."], when: { flag: 'truth_revealed', notFlag: 'reunion_done' } },
     { text: ["The Velvet Hammers WON! Agnes cried! Papa cried! Dad cried twice!", "I didn't cry. I just had a lot of feelings come out of my eyes."], when: { flag: 'reunion_done' }, mood: 'happy' },
-    { text: "The Duchess sits next to Agnes now. When your music plays she stands up. So I stand up. So everybody stands up. That's how it works.", when: { flag: 'reunion_done' }, mood: 'love' },
+    { text: "The Duchess sits next to Agnes now. When your music plays she stands up. So I stand up. So everybody stands up. Agnes stands up last because of her knee. She says it's for drama.", when: { flag: 'reunion_done' }, mood: 'love' },
 
     // ---------------------------------------------------------------- life events
-    { text: "Dad says when you get married you get a tag partner forever. That's the best rule in all of wrestling.", when: { married: true }, mood: 'love' },
+    { text: "Dad says when you get married you get a tag partner forever. I asked if I could be the ring bearer. Dad said there's no ring. I said there's a WHOLE ring.", when: { married: true }, mood: 'love' },
   ],
   gifts: {
     loves: ['trading-card', 'foam-finger', 'signed-photo', 'tiny-cake', 'merch-sign'],
@@ -138,10 +139,38 @@ export default {
       "It's touching my other stuff. I don't like when stuff touches.",
     ],
     birthday: [
-      "You remembered my BIRTHDAY? I'm eleven! That's double digits AND a palindrome!",
-      "Best birthday ever! Papa's making belt pancakes tonight. You can come. Dad says you can. I already asked.",
+      "My BIRTHDAY! A {item}! I'm eleven now! That's double digits AND a palindrome!",
+      "Best birthday ever! Papa's making belt pancakes tonight. You can come. Dad says you can. I already asked. Bring the {item}. It can sit by the syrup.",
+    ],
+    byItem: {
+      'trading-card': ["A PACK! (He opens it with his teeth.) Bruiser... Bruiser... THE MOUNTAIN! ...and gum.", "The gum is from the olden days. I'm going to chew it anyway. For history."],
+      'foam-finger': "A FOAM FINGER! Number one! It's right! (He wears it immediately. He will wear it to school. He will wear it to bed.)",
+      'signed-photo': "SIGNED? In SILVER? I'm putting it in a sleeve. And another sleeve. And then a third sleeve. Papa has sleeves at the pharmacy.",
+      'tiny-cake': "A tiny cake! I'm going to eat it in one bite. Tiny says don't. ...I ate it in one bite. Sorry, Tiny.",
+      'merch-sign': "A SIGN! With GLITTER! It's your name! I'm holding it up at the next show the whole time. Even during the bathroom break.",
+      comic: "Wrestle-Bot vs. The Moon! I have number two but not number one! Now I have the whole story! The moon gets pinned!",
+      'toy-wrestler': "He's got a bite on his boot. That means he's been in a real fight. He's going in the fort. He's the champion of the fort.",
+      'funnel-cake': "Funnel cake! I'm going to get sugar EVERYWHERE. Papa's going to find it in my ears.",
+      'corn-dog': "Corn dog! I eat the corn part first and save the dog. That's the rule. I made the rule.",
+      lemonade: "Fair lemonade! It's so sour my face does a move. Look. ...That's the move.",
+      'sheet-cake': "A WHOLE CAKE? A whole cake?? I'm sharing it with Luz. And Jobber. Not Bruiser. Hermit crabs can't have cake. I asked.",
+      'merch-tee': "Your SHIRT! It's way too big! It's a dress! I'm wearing it as a dress! Papa says it's a nightgown now.",
+      polaroid: "A picture of a crowd! Is that... is that the BACK of my head? It's somebody's head. I'm saying it's mine.",
+    },
+    later: [
+      "I still have the {lastGift}! It's in the fort. Luz isn't allowed to touch it. Luz touched it. We're working it out.",
+      "I showed the {lastGift} to my whole class. Mrs. Denny said 'that's nice, Pip.' That means it's VERY nice. She doesn't say nice.",
     ],
   },
+  again: [
+    "You came back! Do you want a rematch? Title's on the line. It's ALWAYS on the line.",
+    "I already told you everything. ...Okay, one more thing. Bruiser moved. A little.",
+    "(Pip holds the cardboard belt over his head at you, silently, and then goes back to what he was doing.)",
+  ],
+  idle: [
+    "(Pip is doing push-ups. He's on number four. He's been on number four for a while.)",
+    "Can't talk! Training! (He does one jumping jack.) Done.",
+  ],
   birthday: { season: 0, day: 9 },
   events: [
     {

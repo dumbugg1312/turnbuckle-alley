@@ -118,7 +118,7 @@ export default {
       'merch-tee': "YOUR SHIRT! I'm wearing it to the station under the Hawaiian. Nobody will see it. *I'll* know. Jobber will know.",
       honey: "Honey! For the throat! A voice like mine is a public utility, kid. You've just maintained the infrastructure.",
       concha: "A concha! Rosa's! The pink kind! I'll eat it on air. The listeners love chewing sounds. They don't. I do.",
-      'old-program': "1979! Look who's on the card! ...Look who announced it. That's not me. That's Hal Buckner. He had a voice like a bathtub. I was so jealous I could spit.",
+      'old-program': "1979! Look who's on the card! ...Look who announced it. Hal Buckner. Not me. Hal Buckner. He had a voice like a bathtub. I was so jealous I could spit.",
       'signed-photo': "Signed! In silver! It's going on the booth wall, right above Jobber's bed, where he can resent it.",
       coffee: "Coffee! For the six a.m.! You know what's on the radio at six a.m.? ME. Because of COFFEE.",
       polaroid: "A crowd shot! The front row on its feet! I can hear it from here. You can hear a photo, if you were there. I was there. I'm always there.",

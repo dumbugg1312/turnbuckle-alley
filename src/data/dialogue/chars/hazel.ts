@@ -116,7 +116,7 @@ export default {
     ],
     dislike: [
       "Get-well flowers? I'm *well.* I'll give them to the front desk. The front desk is always a little unwell.",
-      "Thank you. I'll put it somewhere I don't have to look at it. That's not a statement. It's logistics.",
+      "Thank you. I'll put the {item} somewhere I don't have to look at it. Logistics. Purely.",
       "(She holds it between thumb and forefinger.) Is this a *get-well* gift? Because I'm *well.*",
     ],
     birthday: [
@@ -240,7 +240,7 @@ export default {
           api.hearts('hazel', 30);
           await api.narrate("She rests her hand on the bag, flat, the way you'd put a hand on a sleeping dog.");
           await api.say('hazel', "Every one of those days, I earned. Every title defense was somebody I had to be better than. And every day since the knee, I've been afraid I'd have to earn it all again.");
-          await api.say('hazel', "That's not what the belt means. It's what I'm *afraid* it means. I'm working on the difference.");
+          await api.say('hazel', "The belt doesn't mean that. I'm *afraid* it means that. Some mornings I can tell the two apart before coffee.");
         } else {
           api.hearts('hazel', -10);
           await api.narrate("You reach for the zipper. Her hand lands on yours so fast you barely see it move. Her grip is iron.");

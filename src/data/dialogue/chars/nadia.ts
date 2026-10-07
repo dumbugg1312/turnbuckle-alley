@@ -27,7 +27,7 @@ export default {
   ],
   lines: [
     // ---------------------------------------------------------------- Strangers
-    { text: "That man hit you with a CHAIR. A CHAIR! Why is everyone CLAPPING?", when: { flag: 'debuted', weekday: [3, 6] }, weight: 2 },
+    { text: "{opponent} slammed you into the MAT. Flat on your BACK. And everyone CLAPPED. Why is everyone CLAPPING?", when: { lastMatch: { won: false, maxDaysAgo: 2 } }, weight: 2 },
     { text: "I carry a first-aid kit everywhere now. For you. Don't make that face. It's a good kit. It has a lollipop.", when: { hearts: [0, 5] } },
     { text: "I researched concussions last night. Four hours. A concussion is basically the brain bouncing in a jar. Don't bounce. Please.", when: { hearts: [0, 5] } },
     { text: ["The Mountain reached the high shelf for me at the grocery store. Then he nodded. Gently. I don't understand that man.", "He's a menace with excellent manners."], when: { hearts: [0, 6] } },
@@ -50,18 +50,18 @@ export default {
     { text: ["I used to think I'd move back when this was over. Now I'm not sure what 'over' is. I bought a second cello stand.", "That's practically a mortgage."], when: { hearts: [6, 10] }, mood: 'happy' },
 
     // ---------------------------------------------------------------- Show days and worry
-    { text: ["I'm bringing the kit, two ice packs and a juice box. For everyone. Even the villains. Especially the villains.", "They're the ones who fall the furthest."], when: { showDay: true, weekday: [5] } },
+    { text: ["I'm bringing the kit, two ice packs and a juice box. For everyone. Even the villains. Especially the villains.", "I asked Hank if the ring could have pillows. She looked at me for a very long time."], when: { showDay: true, weekday: [5] } },
     { text: "VFW tonight. First-aid kit in my lap. Birdie says I'm the best-prepared audience she's ever had. I'm choosing to take it as praise.", when: { weekday: [2] } },
-    { text: "You won! Good. I mean, you won, so he lost, so that's a man hurt? But he deserved it. I think. Is it okay to cheer? I'll cheer quietly.", when: { alignment: ['face'], flag: 'debuted', weekday: [3, 6] } },
-    { text: "You hit someone from behind. I have notes. I'm going to organize them by body part.", when: { alignment: ['heel'], flag: 'debuted', place: ['public'] }, weight: 2 },
+    { text: "You beat {opponent}! Good. I mean, you won, so somebody lost, so somebody's hurt? But it was fair. I think. Is it okay to cheer? I cheered quietly. Into my scarf.", when: { alignment: ['face', 'tweener'], lastMatch: { won: true, maxDaysAgo: 3 } } },
+    { text: "You hit {opponent} from behind. I have notes. I'm going to organize them by body part.", when: { alignment: ['heel'], lastMatch: { maxDaysAgo: 4 }, place: ['public'] }, weight: 2 },
     { text: "I'm not telling you to quit. I'm telling you to ice. Twenty on, twenty off. Please.", when: { hearts: [3, 10], flag: 'debuted' } },
     { text: ["Main event? That's longer matches, bigger bumps. I'm not thrilled. I made you a care package. It has a heating pad and a note.", "The note says 'be careful' forty times."], when: { rank: ['main', 'assistant', 'pencil', 'owner'], hearts: [3, 10] } },
 
     // ---------------------------------------------------------------- Weather and seasons
     { text: "Rain's hard on old hips and nervous cats. I keep the clinic warm. It's a vet rule: pets feel your weather.", when: { weather: ['rain'] } },
-    { text: "Spring. Every newborn arrives at once: calves, lambs, kittens. I haven't slept since March. I've never been happier.", when: { season: [0] }, weight: 2 },
+    { text: "A heifer on the Purcell place had twins at three a.m. I named them. The Purcells renamed them. Mine were better. Mine were Biscuit Two and Biscuit Three.", when: { season: [0] }, weight: 2 },
     { text: "Fairgrounds Fury. Wanda's annual title defense. My medical team's on standby. It's me. And Clint. And a honey spoon.", when: { season: [1] } },
-    { text: "Fall. Every pet wants to eat leaves. I don't know why. They all look so guilty afterward.", when: { season: [2] } },
+    { text: "Every dog in the county ate leaves this week and then looked at me like I'd done it. Deputy Doug ate a whole acorn and filed no report.", when: { season: [2] } },
     { text: "Winter. Wanda dens. I check on her once a week with a stethoscope and an apology. She sleeps through both.", when: { season: [3] } },
 
     // ---------------------------------------------------------------- After the story beats
@@ -72,8 +72,8 @@ export default {
     { text: "Married to a wrestler. I check the lineup like a weather report. 'Today: forty percent chance of chairs.'", when: { married: true } },
   ],
   gifts: {
-    loves: ['honey', 'yarn', 'polaroid'],
-    likes: ['teacup', 'concha', 'wildflowers', 'bouquet', 'tape'],
+    loves: ['honey', 'yarn'],
+    likes: ['teacup', 'concha', 'wildflowers', 'bouquet', 'tape', 'polaroid'],
     dislikes: ['gas-hotdog', 'bait', 'toy-wrestler'],
   },
   giftReplies: {
@@ -96,10 +96,33 @@ export default {
       "I appreciate the thought. I'm also going to wash my hands for four minutes. Nothing personal.",
     ],
     birthday: [
-      "You remembered my birthday?! I only told my mother, who told my aunt, who... oh. It was a very public secret. Thank you.",
-      "A birthday present! I'm going to cry in the supply closet, and then I'm going to bring cardamom cookies to the whole waiting room.",
+      "I only told my mother, who told my aunt, who told... oh. It was a very public secret. A {item}! Thank you!",
+      "A {item}! I'm going to cry in the supply closet, and then I'm going to bring cardamom cookies to the whole waiting room. Including Doug.",
+    ],
+    byItem: {
+      honey: "Fairgrounds honey! I'm going to put a spoon in my tea and give a spoon to Wanda and one spoon to me again, for medical consistency.",
+      yarn: "Yarn! I'm going to knit a scarf. I'm a terrible knitter. It'll be twelve feet long and slightly diagonal. You'll wear it. You'll have to.",
+      teacup: "A teacup with a chip. I'll keep cotton swabs in it at the clinic. It'll be the most elegant thing in the exam room. Biscuit will try to sit in it.",
+      concha: "A concha! It tastes almost like the cardamom bread my mother makes, if you close your eyes and are homesick. I'm closing my eyes.",
+      wildflowers: "Wildflowers! I'll check them for ticks and then put them in a beaker. That's how vets do romance. I mean decoration.",
+      bouquet: "Flowers from the bakery window. For me. (She checks them for ticks, out of habit.) ...Clean. Beautiful. Thank you.",
+      tape: "Athletic tape! For your wrists. Not for me. I mean, thank you. But I'm putting it in the kit. For you.",
+      polaroid: "A crowd shot. Look how close the front row is. Look how close Agnes is to the RING. That's a liability.",
+    },
+    later: [
+      "The {lastGift} is on the clinic counter. Patients' owners ask about it. I say it's from a friend. Biscuit sits next to it like a guard.",
+      "I played cello for the {lastGift} last night. Is that strange? I played for it. It was a good audience. Better than Biscuit.",
     ],
   },
+  again: [
+    "Hi again! Are you dizzy? You came back. People who come back are sometimes dizzy.",
+    "(Nadia gives a small wave with a stethoscope, mid-appointment with a very offended cat.)",
+    "I'm with a patient! A goat. She's fine. You're fine? Good. Later!",
+  ],
+  idle: [
+    "(Nadia is reading a veterinary journal while walking, which is how she met the lamppost.)",
+    "Hi! Can't stop. A dog swallowed a sock. Not a whole sock. Most of a sock.",
+  ],
   birthday: { season: 2, day: 21 },
   events: [
     // ---------------------------------------------------------------- 2: Follow my finger

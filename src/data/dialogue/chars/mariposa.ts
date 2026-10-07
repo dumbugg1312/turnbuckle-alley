@@ -64,9 +64,12 @@ export default {
     { text: "Before I go out, I bow to all four corners. For Abuela. She bowed to four corners in Mexico City. Different building. Same corners.", when: { place: ['insider'] } },
     { text: "Two hundred stitches around the eyes of my mask. I did them all. Abuela redid forty. She says thirty-nine of mine were 'enthusiastic.'", when: { place: ['insider'] } },
     { text: "Sometimes I want to invent something. A new move. A new... anything. Then I hear Abuela: 'Respeta la tradición.' And I want it more.", when: { place: ['insider'], hearts: [3, 10] } },
-    { text: "The mask isn't hiding me. Okay. It hides me a little. But mostly it's a promise. I make it again every time I lace it up.", when: { place: ['insider'], hearts: [6, 10] } },
+    { text: "The mask isn't hiding me. Okay. A little. Mostly it itches behind the left ear. Abuela's itched there too. Three generations of one itchy ear.", when: { place: ['insider'], hearts: [6, 10] } },
     { text: "Rain means nobody drives to the taqueria. Rain means I eat my own carnitas. Rain is a financial and spiritual event.", when: { place: ['insider'], weather: ['rain', 'storm'] } },
-    { text: "An armdrag isn't a throw. It's a dance where you lead and they trust you. If they don't trust you, it's just falling.", when: { place: ['insider'] } },
+    { text: "An armdrag is a dance where you lead. Dex leads like he's late for a bus. I told him. He said 'I AM late for a bus.' He was.", when: { place: ['insider'] } },
+    { text: ["You and {opponent}! I watched from the taco table. I dropped a whole tray of al pastor at the {finisher}.", "Abuela picked up every piece and charged the VFW for it. Worth it."], when: { place: ['insider'], lastMatch: { won: true, maxDaysAgo: 3 } }, mood: 'happy' },
+    { text: "{opponent} beat you and Abuela said a word in Spanish I'm not allowed to repeat. Then she wrapped you a tamal. That's her version of a hug.", when: { place: ['insider'], lastMatch: { won: false, maxDaysAgo: 3 } } },
+    { text: ["(La Mariposa mimes a big fall, then claps, slowly, three times.)", "Abuela: \"She saw you and {opponent}. She says that was a real fall. She says it with her hands because she's a show-off.\""], when: { place: ['public'], lastMatch: { maxDaysAgo: 3 } } },
     { text: "Your armdrags are stiff. You're throwing a person, not a sofa. Come early tomorrow. I'll fix your hips. It'll hurt. Lovingly.", when: { place: ['insider'], rank: ['rookie', 'opener'] } },
     { text: "You're on top of the card now. Careful. The top rope's where you fly from. It's also where you fall from. Same rope.", when: { place: ['insider'], rank: ['main', 'assistant', 'pencil', 'owner'] } },
     { text: "People ask what's under the mask. A face. Two eyebrows. Strong opinions. It's not that deep. ...Okay. It's a little deep.", when: { place: ['insider'], hearts: [3, 9] } },
@@ -82,7 +85,7 @@ export default {
     // ---------------------------------------------------------------- Seasons
     { text: "Monarchs come through in spring. Abuela says each one's a luchadora who never lost her mask. I don't argue. Not about that.", when: { place: ['insider'], season: [0] }, weight: 2 },
     { text: "Fairgrounds Fury. I'm doing a springboard off a hay bale this year. Hank says no. Hank will say yes. Hank always says yes eventually.", when: { place: ['insider'], season: [1] } },
-    { text: "Monarchs leave in fall. Thousands of miles on paper wings. Abuela cries every year. Then she makes pozole and blames the onions.", when: { place: ['insider'], season: [2] } },
+    { text: "Monarchs leave in fall. Thousands of miles on paper wings. Abuela cries every year. Then she makes the pozole so hot that the whole table cries, so nobody can tell whose is whose.", when: { place: ['insider'], season: [2] } },
     { text: "Winter crowds want a warm ending. So I give them wings. Wings always feel warm. Don't ask me why. I don't know why.", when: { place: ['insider'], season: [3] } },
 
     // ---------------------------------------------------------------- After closing (her own taqueria, nobody else here)
@@ -98,8 +101,8 @@ export default {
     { text: "Nobody knows. Abuela knows. My mother suspects. Gideon definitely knows and is being *insufferable* about knowing.", when: { dating: true, flag: 'rosa_romance_secret', place: ['insider'] }, weight: 2 },
   ],
   gifts: {
-    loves: ['yarn', 'gold-leaf', 'old-program', 'wildflowers'],
-    likes: ['polaroid', 'comic', 'rhinestone', 'sequins', 'horchata', 'teacup', 'cassette'],
+    loves: ['yarn', 'gold-leaf', 'wildflowers'],
+    likes: ['old-program', 'polaroid', 'comic', 'rhinestone', 'sequins', 'horchata', 'teacup', 'cassette'],
     dislikes: ['feather', 'mothman-figure', 'gas-hotdog'],
   },
   giftReplies: {
@@ -124,10 +127,36 @@ export default {
       "(She hands it back between two fingers, like a wet sock.)",
     ],
     birthday: [
-      "(La Mariposa throws her arms wide and her sleeve-wings unfurl.) Abuela: \"Best birthday, she says. Then she cried in the walk-in.\"",
-      "(She presses the gift to her heart and doesn't move for a long moment.) Abuela: \"She's happy. Give her a minute.\"",
+      "(La Mariposa holds up the {item} and throws her arms wide. Her sleeve-wings unfurl.) Abuela: \"Best birthday, she says. Then she'll go cry in the walk-in. Let her.\"",
+      "(She presses the {item} to her heart and doesn't move for a long moment.) Abuela: \"She's happy. Give her a minute. Give me the {item} after. I want to see.\"",
+    ],
+    byItem: {
+      yarn: ["(She holds the yarn against her mask, measuring the color against the gold. Then she nods, fast, twice.)", "Abuela: \"She's going to restitch the eyes. Again. I'm going to redo forty. Again.\""],
+      'gold-leaf': "(La Mariposa looks at the gold leaf, then at her mask, then at you. She bows so low her braid touches the counter.) Abuela: \"That's for the wings. She's going to cry on the wings.\"",
+      wildflowers: "(She tucks one flower behind the strap of her mask, over her ear. Abuela opens her mouth. La Mariposa holds up one finger. Abuela closes her mouth.)",
+      'old-program': "(She finds Abuela's name on the 1979 card and taps it hard, three times.) Abuela, squinting: \"I was robbed that night. The Duchess pulled my hair. Write that in the margin.\"",
+      polaroid: "(La Mariposa studies the crowd in the photo, finds a tiny blur of gold at the edge, and points at it, delighted.) Abuela: \"She thinks that's her. It's a lamp.\"",
+      comic: "(She flips through Wrestle-Bot vs. The Moon, stops at the moon's face, and makes the crushing butterfly gesture.) Abuela: \"She says the moon is a moth.\"",
+      rhinestone: "(She holds it up to the comal light. It throws a spark on the ceiling. Abuela gasps, then pretends she was coughing.)",
+      sequins: "(La Mariposa pours the sequins into the tip jar. Abuela takes them out. La Mariposa puts them back. This may go on for some time.)",
+      horchata: "(She raises the horchata in a toast, lifts her mask an inch, and drinks it in one go.) Abuela: \"She says it's not as good as hers. She means it's good.\"",
+      teacup: "(She sets the teacup by the register and puts one marigold petal in it.) Abuela: \"Now it's an altar. Don't touch it.\"",
+      cassette: "(La Mariposa reads the label, PUMP UP JAMS 4 SAT, and does a small, perfect shimmy.) Abuela: \"She's going to play it in the kitchen. Loud. I'm going to the Bell.\"",
+    },
+    later: [
+      "(La Mariposa points at the shelf behind the register. The {lastGift} is up there, next to a photo of Abuela in 1979.) Abuela: \"Place of honor. Don't let it go to your head.\"",
+      "Abuela, from the register: \"She still has the {lastGift}. She touches it before every show. Same as the corners. Don't tell her I said.\"",
     ],
   },
+  again: [
+    "(La Mariposa points at you, then at a stool, then at a plate. Sit. Eat. Talking is over.)",
+    "Abuela: \"Back again? She says you're welcome. I say you're hungry. We're both right.\"",
+    "(La Mariposa bows, slightly less deep than last time. It means 'still here.')",
+  ],
+  idle: [
+    "(La Mariposa is folding tortillas into perfect quarters, very fast, without looking.)",
+    "(She lifts one golden hand in greeting and goes back to the comal.)",
+  ],
   birthday: { season: 0, day: 5 },
   events: [
     // ---------------------------------------------------------------- 2: Initials in salsa verde
@@ -289,7 +318,7 @@ export default {
         api.flag('rosa_face_seen', true);
         api.flag('rosa_mask_design', w);
         if (w === 'open') await api.sayMood('mariposa', 'happy', "Open. Like Abuela's, but wider. Showing everything I've got. ...Ha. Look at me. Literally.");
-        else if (w === 'folded') await api.sayMood('mariposa', 'happy', "Folded around something. Protecting it. Like a promise. Oh, I like that. Don't tell Abuela I like something new.");
+        else if (w === 'folded') await api.sayMood('mariposa', 'happy', "Folded around something. Protecting it. Like a promise. Oh, I like that. Abuela can never know I like something new.");
         else await api.sayMood('mariposa', 'happy', "Mid-beat. Not landed, not gone. Going. That's... that's exactly what I am right now.");
         await api.narrate("She sketches fast, tongue between her teeth, and holds it up. It's the best one on the floor. She knows it.");
         await api.narrate("Then she laces the old mask back on, carefully, and becomes La Mariposa again. Except now you know. You'll always know.");

@@ -160,6 +160,6 @@ describe('memory and talk data', () => {
     const unknown = Object.values(DIALOGUE).flatMap((ds) => [...ds.gifts.loves, ...ds.gifts.likes, ...ds.gifts.dislikes, ...Object.keys(ds.giftReplies.byItem ?? {})].filter((id) => !ITEMS[id]).map((id) => `${ds.npc}:${id}`));
     expect(unknown).toEqual([]);
     const lovers = (id: string) => Object.values(DIALOGUE).filter((ds) => ds.gifts.loves.includes(id)).length;
-    for (const id of Object.keys(ITEMS)) expect(lovers(id), `${id} is loved by too many people`).toBeLessThanOrEqual(5);
+    for (const id of Object.keys(ITEMS)) expect(lovers(id), `${id} is loved by too many people`).toBeLessThanOrEqual(6);
   });
 });

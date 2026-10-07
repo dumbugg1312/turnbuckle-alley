@@ -90,10 +90,34 @@ export default {
       "(Wanda pushes it back toward you with a single claw. Politely. Firmly.)",
     ],
     birthday: [
-      "(Wanda hears the word 'birthday' and bows so deeply she nearly tips into the pond.) Clint: \"She knows. She's been practicing.\"",
-      "(Wanda holds the gift to her chest and rocks side to side, humming.) Clint: \"Birthday dance. Don't mention it. She's shy.\"",
+      "(Wanda hears the word 'birthday' and bows so deeply she nearly tips into the pond. Then she bows to the {item}.) Clint: \"She knows. She's been practicing.\"",
+      "(Wanda holds the {item} to her chest and rocks side to side, humming.) Clint: \"Birthday dance. Don't mention it. She's shy.\"",
+    ],
+    byItem: {
+      honey: ["(Wanda takes the jar in both paws, bows to it, and does not open it. She waits.)", "Clint: \"She's waiting for the spoon. She has *manners.*\" (He hands over the spoon. She bows to the spoon.)"],
+      pie: "(Wanda eats the pie in very small, very careful bites, holding the plate level with one paw, like a lady at a garden party.)",
+      fish: "(Wanda takes the bluegill, carries it to the pond, rinses it once, bows to you, and eats it facing politely away.)",
+      'corn-dog': "(Wanda eats the corn and gives the stick back to you. Clean. Clint: \"She returns the stick. Every time. I don't know who taught her.\")",
+      'funnel-cake': "(Wanda gets powdered sugar on her nose and doesn't notice. Nobody tells her. It's the best afternoon of everyone's week.)",
+      concha: "(Wanda holds the concha up to the sun like she's checking a coin, then eats the sugar top first, exactly like Pip does.)",
+      lemonade: "(Wanda drinks the lemonade from the cup, very carefully, and makes a face at the sour. Then she bows, out of fairness.)",
+      wildflowers: "(Wanda sniffs the flowers for a long time, sneezes once, bows, and places them on the stump beside her crown.)",
+      'river-stone': "(Wanda rolls the stone between her paws, then sets it on the fence post next to Pip's cardboard belt. A collection.)",
+    },
+    later: [
+      "(Wanda has the {lastGift} on her stump, beside the crown. Every so often she checks that it's still there.) Clint: \"She shows it to the ponies.\"",
+      "Clint: \"She's been sleeping with the {lastGift} under her chin. Don't make it a thing. She's shy.\"",
     ],
   },
+  again: [
+    "(Wanda bows again. You bow again. Clint, from the fence: \"You two could do this till sundown.\")",
+    "(Wanda turns around on her stump so her back is to you. Not rude. Just finished.)",
+    "(Wanda lifts one paw a few inches. It's a wave, by bear standards.)",
+  ],
+  idle: [
+    "(Wanda is asleep on her stump. Her crown has slipped over one ear.)",
+    "(Wanda is watching a butterfly. She is not available for further comment.)",
+  ],
   birthday: { season: 2, day: 14 },
   events: [
     // ---------------------------------------------------------------- 2: The honey spoon
@@ -222,7 +246,7 @@ export default {
           api.hearts('wanda', 15);
           await api.narrate("You hold up the spoon. She looks at it, then at you, then she takes it so gently you don't feel a thing.", "She bows, again, this time to the honey.");
         }
-        await api.say('clint', "She came out and looked for you before she looked for breakfast. Eleven years I've known her. First time.");
+        await api.say('clint', "She came out and looked for you before she looked for breakfast. Fourteen years I've known her. First time.");
         await api.narrate("Behind you, small boots crunch up the path. Pip, belt on, sign aloft: 'WANDA! WANDA, YOU'RE UP!", "I MADE A SIGN!' Wanda turns toward the sound, ears forward. She bows to Pip too.");
         api.flag('wanda_ten');
       },

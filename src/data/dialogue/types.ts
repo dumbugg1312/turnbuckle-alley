@@ -43,7 +43,7 @@ export interface Cond {
     won?: boolean;
     maxDaysAgo?: number;
     minDaysAgo?: number;
-    /** Opponent NPC ids. */
+    /** Opponent NPC ids. Leave it out and the line never fires for the person you wrestled. */
     opponent?: string[];
     venue?: ('vfw' | 'sportatorium')[];
     minStars?: number;

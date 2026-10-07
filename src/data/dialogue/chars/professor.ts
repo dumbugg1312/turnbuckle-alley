@@ -4,7 +4,7 @@ import type { DialogueSet } from '../types';
  * Odessa Pruitt, "Professor" Pinfall. High school math teacher, the finest
  * technical wrestler in the territory, and a villain in public (CAST.md),
  * even in the classroom. In private: gentle, punny, the one everybody asks to
- * explain it twice. In love with Coach Patty for eleven years. At eighteen she
+ * explain it twice. In love with Coach Patty for twelve years. At eighteen she
  * sat in the ninth row in 1983 and noticed the geometry was wrong.
  * Her 10-heart event sets 'odessa_patty' (for Patty's 10-heart line).
  */
@@ -37,13 +37,13 @@ export default {
     // ---- Friends, public
     { text: "Your boot is untied. In a ring, that's a liability. In a hallway, merely a tragedy.", when: { hearts: [3, 5], place: ['public'] } },
     { text: "I told my class a joke about infinity. They're still waiting for the punchline. ...That was the punchline.", when: { hearts: [3, 10] } },
-    { text: "Dex Delgado failed my class twice. Third time, he got a B. Don't tell him I keep that report card in my desk.", when: { hearts: [3, 10] } },
+    { text: "Dex Delgado failed my class twice. Third time, he got a B. He doesn't know I keep that report card in my desk. In a folder. Labeled DEX.", when: { hearts: [3, 10] } },
     { text: "Lacey Ransom booed me in the hallway today. Then she turned in a perfect proof. I let her boo. She earned it.", when: { hearts: [3, 10] } },
     { text: "I have a foster cat named Hypotenuse. He leaves for a good home Sunday. I am not going to cry. I am going to cry.", when: { hearts: [3, 10] } },
     { text: "Spring. Pi Day approaches. Tiny bakes me a pie with exactly three-point-one-four inches of crust. She measures. I watch her measure.", when: { season: [0] }, weight: 2 },
     { text: "Summer. No school. I spend it grading the universe. Mostly the universe gets a B-plus.", when: { season: [1] } },
     { text: "First week of school. Thirty new students who already hate me. Best week of the year. Fresh hate is very motivating.", when: { season: [2] } },
-    { text: "Winter. My left ear aches in the cold. Forty years on the mat. It's cauliflower. I named it Gerald.", when: { season: [3] } },
+    { text: "Winter. My left ear aches in the cold. Forty years on the mat. It's cauliflower. I named it Euclid. It has the same number of friends.", when: { season: [3] } },
 
     // ---- Friends, insider
     { text: "In here I can say it plainly: a match has the structure of a sonnet. Fourteen spots. The turn at the ninth. Every time.", when: { hearts: [3, 10], place: ['insider'] } },
@@ -52,10 +52,13 @@ export default {
     { text: "Extra credit? I give the most in the county. Don't you dare tell a soul. A villain's reputation is mostly maintenance.", when: { hearts: [3, 10], place: ['insider'] } },
     { text: "Tonight's finish is a cradle. Bridge high, count slow, let them believe the kickout. Then write Q.E.D. like you mean it.", when: { showDay: true, place: ['insider'] } },
     { text: "Rookies rush. Rushing is panic in sneakers. Count to three before every transition. Out loud, if you must.", when: { rank: ['rookie', 'opener'], place: ['insider'] } },
-    { text: "Main event. Now teach the young ones. That's the only exam that matters: whether you can explain it twice.", when: { rank: ['main', 'assistant', 'pencil', 'owner'], place: ['insider'] } },
+    { text: "Main event. Now teach the young ones. Explain it twice. If they still don't have it, explain it a third time, slower, and pretend it's the first.", when: { rank: ['main', 'assistant', 'pencil', 'owner'], place: ['insider'] } },
+    { text: ["You and {opponent}. I charted it. Fourteen spots, the turn at the ninth, exactly where it belonged.", "Your transitions were a B. Your finish was an A-minus. The minus is for the hair."], when: { place: ['insider'], lastMatch: { minStars: 3, maxDaysAgo: 4 } } },
+    { text: "You and {opponent} rushed the middle. Count to three before every transition. Out loud. I'll be in the second row mouthing it.", when: { place: ['insider'], lastMatch: { maxStars: 2.5, maxDaysAgo: 4 } } },
+    { text: "Hm. I watched your little contest with {opponent}. Your geometry was adequate. Don't let it go to your head. Your head is already a C-plus.", when: { place: ['public'], lastMatch: { maxDaysAgo: 3 } }, mood: 'smug' },
 
     // ---- Close
-    { text: "Coach Kowalski and I have been disagreeing for eleven years. She's wrong about nearly everything. I find I look forward to Thursdays.", when: { hearts: [6, 8], place: ['public'], notFlag: 'odessa_patty' } },
+    { text: "Coach Kowalski and I have been disagreeing for twelve years. She's wrong about nearly everything. I find I look forward to Thursdays.", when: { hearts: [6, 8], place: ['public'], notFlag: 'odessa_patty' } },
     { text: "I plan to retire from the ring at sixty. That's next year. I've done the math. I keep checking it. It keeps being next year.", when: { hearts: [6, 10] } },
     { text: "I keep a wall of photos at school labeled GRADUATES. Some are cats. Some are wrestlers. All of them passed.", when: { hearts: [6, 10] } },
     { text: "I was eighteen, ninth row, the night the belt broke. Something in that ring didn't add up. I've been doing the math for forty years.", when: { hearts: [6, 10], place: ['insider'] } },
@@ -64,12 +67,12 @@ export default {
 
     // ---- Family
     { text: "You've passed, you know. Don't let it go to your head. Your head is already a C-plus in terms of size.", when: { hearts: [9, 10], place: ['public'] } },
-    { text: "If I could write one proof before I retire, it'd be this: a small place can make something perfect. You're my evidence.", when: { hearts: [9, 10], place: ['insider'] } },
+    { text: "If I could write one proof before I retire, it'd be about you. I've started. Four pages. The conclusion's still blank. I'm in no hurry.", when: { hearts: [9, 10], place: ['insider'] } },
     { text: "Patty held my hand at the faculty meeting. In front of the vice principal. I lost my place in the agenda. I never lose my place.", when: { flag: 'odessa_patty' }, mood: 'love', weight: 2 },
     { text: "Thursday on the mats is different now. She still loses. She just laughs more. I let her think it's because she's winning.", when: { flag: 'odessa_patty', place: ['insider'] } },
 
     // ---- Main story
-    { text: "She pulled the swing. I knew it. Forty years of math, and the answer was love. Nobody ever grades that one fairly.", when: { flag: 'truth_revealed', place: ['insider'] }, mood: 'sad' },
+    { text: "She pulled the swing. I knew it. Forty years I had the angle and not the reason. Now I have both and nowhere to hand it in.", when: { flag: 'truth_revealed', place: ['insider'] }, mood: 'sad' },
     { text: "The Velvet Hammers, back in the ring. I'm going to watch from the ninth row. Old habits. Better math.", when: { flag: 'reunion_done' }, mood: 'happy', weight: 3 },
   ],
   gifts: {
@@ -79,7 +82,7 @@ export default {
   },
   giftReplies: {
     love: [
-      "Oh. This is correct. This is entirely correct. A-plus. Don't tell anyone I gave an A-plus. I have a reputation.",
+      "Oh. This is correct. This is entirely correct. A-plus. If that gets out, I'll deny it in front of the whole faculty.",
       "You did your homework. I can tell. ...Don't you dare tell Patty this made my week.",
       "Q.E.D. This is a perfect gift and I can prove it. I won't. But I could.",
     ],
@@ -98,10 +101,33 @@ export default {
       "A D. Only because I don't give F's for effort. I give them for everything else.",
     ],
     birthday: [
-      "Spring the fourteenth. I count spring as the third month, so it's Pi Day. Don't argue. You remembered. A-plus. Infinite plus.",
-      "You remembered my birthday. I'm writing your name in my grade book, under 'People Who Pay Attention.' It's a short list.",
+      "Spring the fourteenth. I count spring as the third month, so it's Pi Day. Don't argue. A {item}. A-plus. Infinite plus.",
+      "A {item} on my birthday. I'm writing your name in my grade book under 'People Who Pay Attention.' It's a short list. Patty's on it, in pencil.",
+    ],
+    byItem: {
+      chalk: ["Real chalk. The dense kind, not the dusty classroom sticks. (She draws a perfect circle on the nearest surface, freehand.)", "...The custodian will find that. He'll know it was me. Nobody else in this building can do a circle."],
+      pie: "Pie. If it's Tiny's, the crust is exactly three-point-one-four inches. (She measures with her thumb.) It is. Of course it is.",
+      paperback: "A mystery with the last page torn out. You've given me an unsolved problem. That's the kindest thing anybody's done for me all semester.",
+      teacup: "A teacup. Floral. The handle's at a seventy-degree angle. I'll be thinking about that all week. In a good way.",
+      yarn: "Yarn. For the cats at adoption day. Hypotenuse will unravel it into a perfect parabola. He always does.",
+      coffee: "Coffee. Third period is in nine minutes. You've just saved a sophomore's life.",
+      'old-program': "A 1979 program. Look at the card order. Somebody booked this with a sense of proportion. I approve of whoever held that pencil.",
+      'tiny-cake': "One of Tiny's. I'll eat it in exactly three bites. Not two. Three is a better number for a cake.",
+    },
+    later: [
+      "The {lastGift} is on my desk. A student asked if it was a bribe. I gave him extra homework. It isn't a bribe. It's a gift. There's a difference, and it's on the test.",
+      "Patty saw the {lastGift} and asked who gave it to me. I said a former student. Then I realized you've never been in my class. I've decided you were.",
     ],
   },
+  again: [
+    "Back already? Show your work. ...Fine. Hello again.",
+    "(Professor Pinfall raises one eyebrow by a precise number of degrees. You've been noted.)",
+    "We've covered this material. There won't be a quiz. There might be a quiz.",
+  ],
+  idle: [
+    "(She is grading with a red pen and the expression of someone who enjoys it.)",
+    "Not now. I'm checking a proof. It's wrong. I'm enjoying how wrong.",
+  ],
   birthday: { season: 0, day: 14 },
   events: [
     {
@@ -183,7 +209,7 @@ export default {
       script: async (api) => {
         await api.narrate("Thursday night. Odessa is alone in the back booth with a logic puzzle she hasn't touched and a cup of tea she hasn't either.");
         await api.say('professor', 'Coach Kowalski pinned me today. For one second. Then I reversed it and won, as I do every Thursday.');
-        await api.say('professor', "For that one second she was laughing. She laughs like a whistle at the end of a race. I've loved it for eleven years.");
+        await api.say('professor', "For that one second she was laughing. She laughs like a whistle at the end of a race. I've loved it for twelve years.");
         await api.narrate("She says it the way she'd say *seven times eight is fifty-six*. A fact she has checked too many times.");
         await api.say('professor', "But she's a mark. Every Thursday I hold her on those mats, and I can't tell her a single true thing about my life.");
         await api.sayMood('professor', 'sad', 'How do you love somebody you can\'t tell the truth to?');
@@ -197,7 +223,7 @@ export default {
           await api.say('professor', "...Who I am. Not what I do. Those are two different proofs. I've only ever been working on one of them.");
         } else {
           api.hearts('professor', 15);
-          await api.say('professor', "Maybe. It's been enough for eleven years. Mostly. On Thursdays.");
+          await api.say('professor', "Maybe. It's been enough for twelve years. Mostly. On Thursdays.");
           await api.narrate('She picks up the logic puzzle and finishes it in pen without looking down.');
         }
         await api.say('professor', "Don't tell anyone I asked for advice. I'm a teacher. We give advice. We do not receive it. It's a closed system.");
@@ -215,7 +241,7 @@ export default {
         ]);
         if (c === 'win') {
           api.hearts('professor', 30);
-          await api.say('professor', "Let her have the pin. Yes. For the first time in eleven years. She'll know something's different before I open my mouth.");
+          await api.say('professor', "Let her have the pin. Yes. For the first time in twelve years. She'll know something's different before I open my mouth.");
         } else {
           api.hearts('professor', 15);
           await api.say('professor', "No plan? I'm a math teacher. ...Fine. I'll let her have the pin, and then I'll improvise. God help me. I'll improvise.");
@@ -225,7 +251,7 @@ export default {
         await api.say('patty', "Same time, same place, Pruitt. This time I'm watching your hips.");
         await api.narrate('They lock up. Thirty seconds of real, beautiful grappling. Then Odessa, for the first time ever, lets her hips go a quarter-second late.');
         await api.narrate('Patty takes her down and holds her. The gym is silent. Patty looks confused. Then she looks at Odessa\'s face, and loosens her grip.');
-        await api.say('professor', "Patty. I'm going to say something true, and I need you to let me finish, because I have been rehearsing it for eleven years.");
+        await api.say('professor', "Patty. I'm going to say something true, and I need you to let me finish, because I have been rehearsing it for twelve years.");
         await api.sayMood('professor', 'love', "I love you. That's all. That's the whole proof.");
         await api.narrate('Coach Patty Kowalski, who has argued with every referee in the county, says nothing at all for a long, long time.');
         await api.say('patty', '...You let me win.');

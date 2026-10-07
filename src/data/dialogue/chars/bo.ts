@@ -33,7 +33,7 @@ export default {
     { text: "Aisle four, bottom shelf. And if that chair's for the Mountain, it's rated for three hundred pounds. Not his feelings.", when: { hearts: [0, 2], place: ['public'], map: ['hardware'] }, weight: 2 },
     { text: "Buck is wrong. Whatever he said. I'm older by four minutes. I was right *first.*", when: { place: ['public'] } },
     { text: "(Bo is labeling the labels.) Don't touch the labels. The labels are a system. The system is *load-bearing.*", when: { place: ['public'], map: ['hardware'] } },
-    { text: "Hero. Fine. Rope is two dollars a foot. Heroes pay more. It's not a policy. It's gravity.", when: { place: ['public'], alignment: ['face'] }, mood: 'smug' },
+    { text: "Hero. Fine. Rope is two dollars a foot. Heroes pay more. There's no sign. The sign is in my heart.", when: { place: ['public'], alignment: ['face'] }, mood: 'smug' },
     { text: "A villain. We have a discount: ten percent. We also have a *rival* discount. It's zero. It's for you.", when: { place: ['public'], alignment: ['heel'], flag: 'debuted' }, mood: 'smug' },
     { text: "We do not patronize Tallbridge Bakery. A villain surcharge is an *insult.* We've never once been inside. There is a back door. I've never seen it.", when: { place: ['public'] } },
     { text: "Thursday dinner at my aunt's. Pot roast. She asks if the Bruiser thing is 'fake.' I say it's the realest thing I've ever done. She says that's not an answer.", when: { place: ['public'], hearts: [3, 10], weekday: [3] }, weight: 2 },

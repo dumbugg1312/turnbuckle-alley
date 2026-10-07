@@ -61,7 +61,7 @@ export default {
 
     // ---------------------------------------------------------------- seasons and weather
     { text: "The Thaw Brawl issue is my biggest of the year. I'll sell out. Then the Tattler will lose money anyway, but proudly.", when: { season: [0] } },
-    { text: "Spring. The zoning board wakes up, the feuds wake up, the bear wakes up. I have never had so much to write about at once.", when: { season: [0] }, mood: 'happy' },
+    { text: "The zoning board woke up the same week as the bear. Both are angry about the creek. I have never had so much to write about at once.", when: { season: [0] }, mood: 'happy' },
     { text: "Spring rain gets into the press room. Everything prints with a slight lean, like the paper's tired of standing up.", when: { season: [0], weather: ['rain'] } },
     { text: "Fairgrounds Fury. I cover it from the grandstand with funnel cake on my notebook. Every summer review smells like powdered sugar.", when: { season: [1] } },
     { text: "Harvest Havoc is where feuds come to finish. I've already written three headlines. I'll use one. The others go in a drawer.", when: { season: [2] } },
@@ -297,7 +297,7 @@ export default {
           api.hearts('clementine', 30);
         } else {
           await api.narrate('You take her pencil and write one word in the margin of her notebook. She reads it. She goes the color of her scarf.');
-          await api.sayMood('clementine', 'surprised', "That's not a review. That's not even a sentence. ...I'm keeping it.");
+          await api.sayMood('clementine', 'surprised', "Four words and a comma splice. ...I'm keeping it.");
           api.hearts('clementine', 15);
         }
       },

@@ -26,7 +26,7 @@ export default {
   lines: [
     // ---------------------------------------------------------------- Strangers and the building
     { text: "Visiting hours are nine to five, but I'm flexible about the rules and strict about the pudding.", when: { hearts: [0, 2], map: ['sunnypines'] } },
-    { text: "Don't correct. Connect. It's the whole job in three words. Everything else is paperwork.", when: { hearts: [0, 5] }, weight: 2 },
+    { text: "Don't correct. Connect. I had it embroidered on a pillow. Mrs. Velma said the stitching was 'enthusiastic.'", when: { hearts: [0, 5] }, weight: 2 },
     { text: "Take two. I won't tell the dentist. Hard candy is my entire personality.", when: { hearts: [0, 5] } },
     { text: "Morning rounds. Everybody gets a good morning and a song. The song is optional. The good morning is not.", when: { time: [420, 660], map: ['sunnypines'] } },
     { text: "Tiny saves me a cardamom bun every day. I tell her it's for the residents. It is, in the sense that I'm one of the residents.", when: { map: ['bakery'] } },
@@ -40,16 +40,17 @@ export default {
     { text: ["Hurricane Huang taught chair yoga here. I carried a tray of pudding in and dropped it.", "She said, 'Good form.' I've been floating since March."], when: { hearts: [0, 10] } },
     { text: ["Did you see the Dust Devil pull her hair on the radio? I yelled at the transistor. Forty residents shushed me.", "One of them was my grandfather."], when: { place: ['public'], hearts: [0, 10] } },
     { text: "My grandfather's been booing the Duchess since 1975. Now he waltzes with her on Fridays. He's never been happier to be wrong.", when: { hearts: [0, 10], notFlag: 'sami_curtain' } },
-    { text: "Heard you hit the Mountain with a leg drop. Sheriff Bev ought to give you a medal. Or a casserole.", when: { alignment: ['face'], flag: 'debuted', place: ['public'] } },
+    { text: "We heard you beat {opponent} on the radio. The whole sunroom cheered. Mr. Haddad stood up without his cane. Sheriff Bev ought to give you a medal. Or a casserole.", when: { alignment: ['face', 'tweener'], lastMatch: { won: true, maxDaysAgo: 4 }, place: ['public'] } },
+    { text: "{opponent} beat you, the radio said. The west wing booed the radio. Mrs. Olander threw a dinner roll at it. Underhand. She has a good arm.", when: { lastMatch: { won: false, maxDaysAgo: 4 }, place: ['public'] } },
     { text: "I know you're the villain on Saturdays. But you're kind to Mrs. Olander in 6A. So: mixed feelings. I'm going to boo you softly.", when: { alignment: ['heel'], hearts: [3, 10], place: ['public'] } },
 
     // ---------------------------------------------------------------- Friends: the work, the honesty
-    { text: "Memory loss isn't forgetting what you love. It's losing the filing system. The love's still in the building. We just can't find the drawer.", when: { hearts: [3, 10] } },
+    { text: "Mrs. Olander can't find the word for spoon some days. She can sing all four verses of a hymn from 1951. I hand her the spoon during the third verse.", when: { hearts: [3, 10] } },
     { text: ["A resident asked me why nobody had set the table for the Fourth of July. It was February. I told her. Flat. Factual.", "She looked at me like I'd turned the lights off. Now I ask, 'Who's coming? What are we cooking?' She was happy for an hour. So was I."], when: { hearts: [3, 10] } },
     { text: ["Someday I want to open a memory café. Music, coffee, an afternoon where nobody has to remember anything right.", "You just have to be in the room."], when: { hearts: [3, 10] } },
     { text: "I'm trying my teta's kibbeh. It's a work in progress. Last time it came out shaped like a cardigan.", when: { hearts: [3, 10] } },
     { text: "My parents moved to Florida. They call every Sunday to ask when I'll settle down. I say I'm settled. I have forty roommates and a ukulele.", when: { hearts: [3, 10] } },
-    { text: "The hard part isn't the forgetting. It's when the fog thins in the middle of a sentence and they know. That's the part I sit with.", when: { hearts: [6, 10] }, mood: 'sad' },
+    { text: "The hard part isn't the forgetting. It's when the fog thins in the middle of a sentence and they know. I stop what I'm doing. I sit on the edge of the bed.", when: { hearts: [6, 10] }, mood: 'sad' },
     { text: "People say she's not all there anymore. She's all there. She's just in more rooms than we are.", when: { hearts: [6, 10], flag: 'grandma_in_town' } },
     { text: ["Some days she knows me. Some days she knows a nice nurse. Some days she knows Birdie, and I'm the fellow who brought Birdie her pudding.", "I answer to all of them."], when: { flag: 'grandma_in_town', hearts: [3, 10] } },
     { text: ["Her Grace relabeled her drawers again. 'CARDIGANS. NOT FOR BORROWING, LAVINIA.' Lavinia says it was a clerical error.", "Lavinia has borrowed three."], when: { flag: 'grandma_in_town', map: ['sunnypines'] }, mood: 'happy' },
@@ -58,16 +59,16 @@ export default {
     { text: "You're not 'just' a nurse. Say it to anybody else and I'll be polite. Say it to my face and I'll bring you pudding and a lecture.", when: { hearts: [6, 10] }, mood: 'smug' },
 
     // ---------------------------------------------------------------- Weather and seasons
-    { text: "Rainy days everyone's a little foggier. I bring the good blankets. Warm helps. It isn't medicine. It's better.", when: { weather: ['rain'] } },
+    { text: "Rainy days everyone's a little foggier. I bring out the good blankets, the ones from the closet the director doesn't know about.", when: { weather: ['rain'] } },
     { text: "Thunder's loud for everybody here. I keep the radio low and hum along. A little tune takes the edge off a boom.", when: { weather: ['storm'] } },
-    { text: "Spring. Windows open, the whole building smells like lilac and rubbing alcohol. Apparently that's what hope smells like.", when: { season: [0] } },
+    { text: "Windows open. The whole building smells like lilac and rubbing alcohol. Mr. Haddad says it smells like a wedding he went to in 1964.", when: { season: [0] } },
     { text: "Summer. Fairgrounds Fury on the radio, and the whole west wing cheers for Wanda. Mrs. Olander has a flag. A tiny bear flag.", when: { season: [1] } },
-    { text: "Fall. Leaves, cider, and thirty people asking whether it's Thursday. It's Thursday. It's always Thursday for somebody.", when: { season: [2] } },
-    { text: "Winter. Homecoming on the radio, everybody in sweaters. Her Grace says she's 'dressed for the crowd.' Same cardigan. She's right.", when: { season: [3] } },
+    { text: "Thirty people a day ask me whether it's Thursday. It's Thursday. It's always Thursday for somebody.", when: { season: [2] } },
+    { text: "Homecoming on the radio. Her Grace says she's 'dressed for the crowd.' Same cardigan as Tuesday. She's right.", when: { season: [3] } },
     { text: "Late shift. The halls are quiet, the night-lights are on, and somewhere a waltz is being hummed. I never find out who.", when: { time: [1260, 1439], map: ['sunnypines'] } },
 
     // ---------------------------------------------------------------- Dating, marriage, and after the curtain
-    { text: "Every resident of the Evening Bell has an opinion about us. Velma's is eleven pages. I've read it. I'm mostly grateful.", when: { dating: true, notFlag: 'sami_curtain' }, mood: 'happy' },
+    { text: "Every resident of the Evening Bell has an opinion about us. Velma's is fourteen pages. I've read it. I'm mostly grateful.", when: { dating: true, notFlag: 'sami_curtain' }, mood: 'happy' },
     { text: "You can come to dance night anytime. Don't wear anything beige. Her Grace has views.", when: { dating: true }, mood: 'love' },
     { text: ["I carry the kit now. Doc says I'm a natural.", "I told him I've been training my whole life: carrying a bag of stuff toward somebody who's down."], when: { place: ['insider'], flag: 'sami_curtain' }, mood: 'happy' },
     { text: "Jiddo can't know. He's believed for fifty years. Telling him would be like asking him to hand back the best Fridays of his life.", when: { place: ['insider'], flag: 'sami_curtain' }, mood: 'sad' },
@@ -99,10 +100,34 @@ export default {
       "Thank you. ...I'm a nurse. I'm going to have thoughts about this later. Out loud. At you. Lovingly.",
     ],
     birthday: [
-      "You remembered. The whole building's going to know in four minutes. Her Grace is going to demand cake and a speech. Thank you.",
-      "A birthday present. I'll tell you a secret: I get nervous on mine. All those people who know my song. ...Thank you.",
+      "A {item}. The whole building's going to know in four minutes. Her Grace is going to demand cake and a speech. Thank you.",
+      "A birthday {item}. I'll tell you a secret: I get nervous on mine. Forty people singing at different speeds. ...Thank you.",
+    ],
+    byItem: {
+      cassette: "A mixtape. Saturday jams. I'm playing this on the sunroom radio during chair yoga. Hurricane Huang is going to look at me. I'm prepared.",
+      'trading-card': ["A pack! If there's a Hurricane Huang rookie card in here... (He opens it.) ...A Bruiser.", "It's fine. It's a Bruiser. I love the Bruisers. I'm putting him on the med cart."],
+      polaroid: "A crowd shot from the Sportatorium. Her Grace is going to look at this for an hour and name every person she thinks is in it. She'll be right about four.",
+      coffee: "Coffee. Night shift coffee. You've just been promoted to my favorite person on the third floor.",
+      concha: "A concha. I'm sharing it with Mr. Haddad. He'll take the top. He always takes the top.",
+      honey: "Honey. For Her Grace's tea. She'll say it's not chicory. She'll drink it anyway and hum.",
+      vinyl: "An old record. We have a turntable in the sunroom nobody's used since 2006. I'm about to use it. Dance night has a new song.",
+      wildflowers: "Wildflowers! They're going in the hallway vase. The residents will ask who brought them. I'll say 'a friend of the building.'",
+      pie: "Pie. I'll cut it in forty pieces. It'll be the smallest slices in history and everybody will say it's the best pie they've ever had.",
+    },
+    later: [
+      "The {lastGift} is at the nurses' station. Her Grace has decided it's hers. I've decided to let her.",
+      "Mr. Haddad asked about the {lastGift}. I told him where it came from. He said 'good people.' He says that about very few people. He said it about a dog once.",
     ],
   },
+  again: [
+    "Still here? Good. Hold this tray. We're walking and talking.",
+    "(Sami waves from down the hall, a butterscotch in his hand, mid-round.)",
+    "We talked! I'm on meds rounds. Find me at three. Three's the pudding.",
+  ],
+  idle: [
+    "(Sami is humming something and writing in a chart at the same time.)",
+    "Butterscotch? Take one for later. Later always needs one.",
+  ],
   birthday: { season: 1, day: 22 },
   events: [
     // ---------------------------------------------------------------- 2: Don't correct. Connect.

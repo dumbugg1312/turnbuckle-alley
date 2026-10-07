@@ -119,7 +119,7 @@ export default {
     ],
     birthday: [
       "My birthday! Mo brought a card with a moth on it this morning. Funny coincidence. And now a {item}! Two gifts! Static, we're POPULAR.",
-      "Fifty-nine! And still no clear photo. A {item}, though. This is the year, friend. I can feel it in the tracking.",
+      "Fifty-nine! Static learned a new word for it. The word is \"happy.\" He follows it with \"oh no.\" A {item}! Thank you, friend!",
     ],
     byItem: {
       'mothman-figure': ["The eyes glow. THE EYES GLOW.", "(He turns off the stall lamp and holds it up in the dark, and doesn't say anything for a long time.)"],

@@ -22,7 +22,7 @@ export default {
   lines: [
     // ---- Strangers
     { text: "Coffee. Sit. You'll order when you know what you want. I already know what you want, but I like watching people figure it out.", when: { hearts: [0, 2], place: ['public'] } },
-    { text: "That booth in the back? Reserved since 1987. No name on it. That's how you know it's serious.", when: { hearts: [0, 2], place: ['public'] } },
+    { text: "That booth in the back? Reserved since 1987. No name on it. Gus sat in it once by mistake and apologized to it.", when: { hearts: [0, 2], place: ['public'] } },
     { text: "Chipped mug till I know what you are, baby. Nothing personal. Everything's personal.", when: { hearts: [0, 3], place: ['public'] } },
     { text: "Chipped mug. You know why.", when: { place: ['public'], alignment: ['heel'], flag: 'debuted' }, weight: 2 },
     { text: ["(She glares at you over the coffee pot.)", "That's for sport, baby. Heroes get glared at. Your eggs are coming. Extra crispy, the way heroes deserve."], when: { place: ['public'], alignment: ['face'], flag: 'debuted' } },
@@ -31,7 +31,7 @@ export default {
     { text: "You put ketchup on those eggs and you and I are going to have a conversation.", when: { hearts: [0, 5], time: [330, 660] } },
     { text: "Jollof Friday. Sold out by one. It's getting close. You want some, or you want to stand there looking pretty?", when: { weekday: [4], time: [600, 780] }, weight: 2 },
     { text: "Jollof's gone. Told you. Sold out by one every Friday since 1987. Come early next week and bring your appetite.", when: { weekday: [4], time: [781, 1260] } },
-    { text: "Closed Monday afternoons. It's my one rest. I spend it reorganizing the pantry. That's how you know I'm resting.", when: { weekday: [0] } },
+    { text: "Closed Monday afternoons. It's my one rest. I spend it reorganizing the pantry. The cumin moves one shelf left. Nobody notices. I notice.", when: { weekday: [0] } },
     { text: "Rain brings 'em in. Wet folks want pie. Dry folks want pie too, but wet folks admit it.", when: { weather: ['rain'] } },
     { text: "Storm's knocking the power out somewhere. Diner's got a gas stove and a generator. If the world ends, it ends with breakfast.", when: { weather: ['storm'] } },
     { text: "Snow day. Half the town's at my counter and the other half's on the phone asking if I deliver. I don't. I'm thinking about it.", when: { weather: ['snow'] } },
@@ -61,7 +61,10 @@ export default {
     { text: "In 1982 I slapped a referee with this fan so hard he called me ma'am for a year. He's a chiropractor now. Still calls me ma'am.", when: { hearts: [3, 10], place: ['insider'] } },
     { text: "A heel manager's whole job is being the reason they boo. I was very good at being the reason.", when: { hearts: [3, 10], place: ['insider'] } },
     { text: "Pitches happen in this booth because nobody can lie with a mouth full of my pie. It's science.", when: { hearts: [3, 10], place: ['insider'] } },
-    { text: "Sit. Eat. Talk. In that order. Then you can tell me who blew the finish. I heard it on the radio. Gus covered beautifully.", when: { showDay: true, place: ['insider'] } },
+    { text: "Sit. Eat. Talk. In that order. Then you can tell me who blew the finish. I had the radio on. Gus covered beautifully. Gus always covers beautifully.", when: { showDay: true, place: ['insider'] } },
+    { text: ["You and {opponent}. I had Gus on the kitchen radio.", "I burned a grilled cheese at the {finisher}. That's your fault. You're eating it."], when: { place: ['insider'], lastMatch: { maxDaysAgo: 3 } } },
+    { text: "Heard you beat {opponent}. Real mug today. Today only. Don't you dare look pleased.", when: { place: ['public'], lastMatch: { won: true, maxDaysAgo: 2 }, alignment: ['face', 'tweener'] }, mood: 'happy' },
+    { text: "{opponent} beat you? Sit down. Pie first. Then you can sulk. I've got a sulking stool. It's that one. It wobbles on purpose.", when: { place: ['public'], lastMatch: { won: false, maxDaysAgo: 2 } } },
     { text: "I fed half the roster through the bad years. Birdie paid them first and herself never. Somebody had to make sure she ate.", when: { hearts: [3, 10], place: ['insider'] } },
     { text: "Openers eat first in this booth. Old rule. You warm up the crowd, I warm up the plate.", when: { rank: ['rookie', 'opener'], place: ['insider'] } },
     { text: "You've got the pencil? Then you sit on the inside of this booth. Birdie's old spot. She'll pretend to mind.", when: { rank: ['assistant', 'pencil', 'owner'], place: ['insider'] } },
@@ -97,7 +100,7 @@ export default {
     love: [
       "For me? You went out of your way for this? Sit down. You're eating free until Thursday.",
       "Oh, baby. Now that's taste. I'm putting this right by the register where I can look at it all day.",
-      "Somebody's been paying attention. I don't get surprised often. Don't tell anybody you did it.",
+      "Somebody's been paying attention. I don't get surprised often. I'm going to need a minute in the walk-in.",
     ],
     like: [
       "That's sweet of you. Sweet's not on the menu, so I'll take it.",
@@ -114,10 +117,34 @@ export default {
       "Baby. I run a kitchen. Look at me. Look at what you've done.",
     ],
     birthday: [
-      "My birthday? Who told you? It was Gus. It's always Gus. ...Thank you. Sit. I'm making you something.",
-      "Sixty-some years and folks still bring me presents. I'm not surprised, baby. I'm touched. Different thing.",
+      "Gus said it on the radio at six a.m. Twice. With a drumroll he did with his mouth. ...A {item}. Thank you, baby. Sit. I'm making you something.",
+      "Sixty-seven. I've stopped counting the bangles and started counting the people who come in on this day. You're on the list. With a {item}. Underlined.",
+    ],
+    byItem: {
+      'grandmas-chili': ["(She tastes it off the spoon. She closes her eyes.)", "Dottie's chili. From the back of the poster. You made this? ...More cumin next time. Don't change anything else. Ever."],
+      sequins: "Sequins. Madame Midnight had a cape with two thousand of these on it. I sewed every one with a migraine. Look at me smiling about it.",
+      teacup: "A teacup. Chipped on the lip. I'll keep it behind the counter for the regulars who are having a day. You'll know if you get it.",
+      coffee: "You brought coffee. To a diner. To ME. ...It's not bad. Where'd you get it. Never mind. It's Full Nelson's. I'd know that burn anywhere.",
+      bouquet: "Flowers for the counter. Bakery window? Tiny's arrangement. She puts the tall ones in back, like a team photo.",
+      wildflowers: "Creek flowers. I'll put them in the ketchup bottle by the register. Nobody uses ketchup here anyway. Not if they know what's good for them.",
+      honey: "Honey. For the pepper soup. Nobody knows there's honey in the pepper soup. Now you do. Look what you did.",
+      vinyl: "Somebody's entrance music. I managed people who walked out to records like this. I can still hear the needle drop.",
+      tamales: "Rosa's tamales. In my diner. We don't speak, Rosa and I. (She's already eating one.) We don't speak.",
+    },
+    later: [
+      "That {lastGift} is by the register. Gus asked if it was for sale. I said everything's for sale except that.",
+      "Birdie saw the {lastGift} and asked where I got it. I said 'a customer.' She said 'which one.' I poured her coffee.",
     ],
   },
+  again: [
+    "Refill? That's the only reason anybody comes back to the counter twice, baby.",
+    "(June slides the coffee pot an inch toward you without a word. Conversation over. Coffee continues.)",
+    "We talked. I've got a grill full of eggs and a Gus at table four. Later.",
+  ],
+  idle: [
+    "(June is wiping a counter that is already clean, watching the door.)",
+    "Coffee's on. Sit or don't. Either way, you're blocking the pie case.",
+  ],
   birthday: { season: 1, day: 13 },
   events: [
     {

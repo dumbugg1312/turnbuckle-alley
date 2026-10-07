@@ -85,7 +85,7 @@ export default {
     { text: "Lacey's got a dartboard with the Dust Devil's face on it. I sleep better knowing it. A man ought to be somebody's target.", when: { flag: 'clint_dartboard', place: ['insider'] }, mood: 'happy' },
     { text: "Last match is coming. I told Wanda. She bowed. She bows at everything. ...It was a *good* bow.", when: { flag: 'clint_unmask_choice', notFlag: 'clint_last_match', place: ['insider'] }, weight: 3 },
     { text: "Mask's on the nail. Hat's next to it. I look at 'em every time I walk into that room. Waiting on my girl. She'll know when she's ready. So will I.", when: { flag: 'clint_last_match', place: ['insider'] }, mood: 'sad', weight: 2 },
-    { text: "I saw the Velvet Hammers in a ring, forty years late and right on time. Eight-year-old me about fell off the couch.", when: { flag: 'reunion_done', place: ['insider'] }, mood: 'happy', weight: 2 },
+    { text: "I saw the Velvet Hammers in a ring again. Eight-year-old me about fell off the couch. Fifty-two-year-old me about fell off the bleachers.", when: { flag: 'reunion_done', place: ['insider'] }, mood: 'happy', weight: 2 },
 
     // ---------------------------------------------------------------- Family
     { text: "You're the only person in town who knows both fellas. You've never once asked which one's the real one. ...Thank you. They both are.", when: { hearts: [9, 10], place: ['insider'] }, mood: 'love' },

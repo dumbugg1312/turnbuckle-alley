@@ -40,11 +40,13 @@ export default {
     { text: "Show tonight. Stripes are pressed. Shoes are laced. I'm impartial. I'm also hoping nobody bumps me into the timekeeper again.", when: { showDay: true, place: ['public'] } },
     { text: "VFW tonight. Bingo after. I referee both. Nobody believes me about the bingo. It gets physical.", when: { weekday: [2], showDay: true } },
     { text: "Saturday. Two thousand people and one count. I'll get it right. I always get it right.", when: { weekday: [5], showDay: true, place: ['public', 'show'] } },
-    { text: "Saw you choke somebody on the ropes Saturday. I counted to four. You broke at four. I'll be watching for five.", when: { place: ['public'], alignment: ['heel'], flag: 'debuted' } },
+    { text: "Saw you choke {opponent} on the ropes. I counted to four. You broke at four. I'll be watching for five.", when: { place: ['public'], alignment: ['heel'], lastMatch: { maxDaysAgo: 5 } } },
+    { text: ["I counted your three on {opponent}. Same speed as always. One. Two. Three.", "...The three was a little louder. Nobody noticed. I noticed."], when: { place: ['insider'], lastMatch: { won: true, maxDaysAgo: 3 } }, mood: 'happy' },
+    { text: "{opponent} got you. I was down there with you for the count. Your eyes were open the whole time. Mine too. People think refs blink on the count. I don't.", when: { place: ['insider'], lastMatch: { won: false, maxDaysAgo: 3 } } },
     { text: "Folks keep telling me to count faster for you. I count the same for everybody. One. Two. Three. Same speed nine years.", when: { place: ['public'], alignment: ['face'], flag: 'debuted' } },
 
     // ---- Friends, public
-    { text: "Your fan mail's picking up. I'm not supposed to notice. I notice. There's a crayon one. Don't tell the sender I could tell.", when: { hearts: [3, 8], flag: 'debuted' } },
+    { text: "Your fan mail's picking up. I'm not supposed to notice. I notice. There's a crayon one. I won't say who. It's Pip. I didn't say that.", when: { hearts: [3, 8], flag: 'debuted' } },
     { text: "Everybody in this town gets a seed catalog in March. Every single person. I don't know who's growing all these tomatoes.", when: { hearts: [3, 10] } },
     { text: "I know what's in an envelope by the weight and the shape. I'll never tell a soul. Except birthday cards. Those jingle.", when: { hearts: [3, 10] } },
     { text: "Agnes yelled at me about a missed call for twenty minutes today. Then she gave me a butterscotch. That's love in this town.", when: { hearts: [3, 8], place: ['public'] } },
@@ -62,7 +64,7 @@ export default {
     { text: "The Sack of Mail. Through the ropes, to the floor, roll under the apron. Under there it's dark and quiet. Best seat in the house.", when: { hearts: [3, 10], place: ['insider'] } },
     { text: "Doc says I take bumps like a sack of mail. I've decided it's a compliment. Nobody can stop me.", when: { hearts: [3, 10], place: ['insider'] } },
     { text: "Refs are furniture. Good furniture. Nobody thanks the chair, but try sitting down without one.", when: { hearts: [3, 8], place: ['insider'] } },
-    { text: "Finish tonight's off a ref bump. I go down around eleven minutes. Don't step on my hand. I need it for counting.", when: { showDay: true, place: ['insider'] } },
+    { text: "Finish tonight's off a ref bump. I go down around twelve minutes. Don't step on my hand. I need it for counting.", when: { showDay: true, place: ['insider'] } },
     { text: "Crooked ref for one week, max. I've got a route to walk. People need to trust the person bringing their mail.", when: { hearts: [3, 10], place: ['insider'] } },
     { text: "Openers rush. Breathe between spots. I'll be right there counting your breaths. Kidding. Mostly.", when: { rank: ['rookie', 'opener'], place: ['insider'] } },
     { text: "Main event. You know what that means for me? I'm in there for your whole story. Best seat. I don't take it for granted.", when: { rank: ['main'], place: ['insider'] } },
@@ -71,7 +73,7 @@ export default {
     // ---- Close
     { text: "You're on my route every day now. Not literally. I mean I look for you. ...That came out formal. I'm keeping it.", when: { hearts: [6, 8], place: ['public'] } },
     { text: "Somebody's been leaving honey on the stump by the water tower. Fenwick's beside himself. I just deliver the mail.", when: { hearts: [6, 10] } },
-    { text: "Best referee in the territory. You know what that means? Nobody remembers I was there. That's the job. I'm good at the job.", when: { hearts: [6, 8], place: ['insider'] }, mood: 'sad' },
+    { text: "Best referee in the territory, Birdie says. Last week a man at the post office asked if I'd ever been to a match. I said a few.", when: { hearts: [6, 8], place: ['insider'] }, mood: 'sad' },
     { text: "Two hundred and twelve species behind the water tower. Everybody thinks a moth at a light is dumb. I think it's brave.", when: { hearts: [6, 14], place: ['insider'] } },
     { text: "Middle of five kids. In my family the middle one brings the paper towels. Thirty-three years old. Still bringing the paper towels.", when: { hearts: [6, 14], place: ['insider'] } },
     { text: "Under the ring is a whole other building. Crawlspace, wiring, ladders. Hank keeps one side. Nobody keeps the other. Supposedly.", when: { hearts: [6, 10], place: ['insider'] } },
@@ -97,7 +99,7 @@ export default {
     { text: "Married to the ref. Contractually I count your pins at the same speed as everybody's. I'll count them proudly, though.", when: { married: true, place: ['insider'] } },
 
     // ---- Main story
-    { text: "I carried her half of it every Monday for nine years and never knew. That's the job, I guess. You carry it anyway.", when: { flag: 'truth_revealed', place: ['insider'] } },
+    { text: "I carried her half of it every Monday for nine years and never knew. Padded envelopes. I always held them with both hands. I didn't know why.", when: { flag: 'truth_revealed', place: ['insider'] } },
     { text: "Two old ladies at the Hot Tag counter, and the whole town walking past the window slow. Nine years on this route. Best mail day ever.", when: { flag: 'reunion_done' }, mood: 'happy', weight: 3 },
   ],
   gifts: {
@@ -126,10 +128,33 @@ export default {
       "I'm not going to say anything. I'm going to say thank you. Thank you. That was hard.",
     ],
     birthday: [
-      "You remembered my birthday. I deliver everybody else's cards. Nobody remembers the mail carrier's. I'm going to cry on the route.",
-      "A birthday present. Hand-delivered. To me. That's three of my favorite things at once.",
+      "I deliver everybody's birthday cards. Mine I usually deliver to myself. And now a {item}, hand-delivered. I'm going to cry on the route.",
+      "A birthday {item}. Hand-delivered. To the carrier. That's three of my favorite things at once. Threes are good.",
+    ],
+    byItem: {
+      honey: "Fairgrounds honey. The dark kind. (She holds it up to the light like she's checking a postmark.) ...This is going somewhere very specific. Thank you.",
+      coffee: "June's dawn coffee. In a thermos? You got up before five for this. Nobody gets up before five. Except me. And now you.",
+      feather: ["A moth wing. Polyphemus, by the size. Where'd you... no. The creek road, near the stump. I know.", "(She puts it in her satchel, in the inside pocket, very carefully.) I'll log it. For the survey."],
+      wildflowers: "Creek flowers. I'll put them in the truck, in the cupholder. The route smells like a field for a day.",
+      'river-stone': "A smooth one. I'll keep it on the dash. Every route needs something to hold at a red light. We have one red light.",
+      concha: "A concha. I eat these on the porch at the end of Elm, where nobody's lived for nine years. Well. Somebody lives there now.",
+      pie: "Pie for lunch in the truck. Agnes is going to see the box and ask whose crust it is. Agnes will be correct.",
+      lemonade: "Fair lemonade on a route day. You're a lifesaver. That's not a phrase. I've passed out on Elm in August. Twice.",
+    },
+    later: [
+      "The {lastGift} rode the whole route with me Tuesday. Twelve miles. It's been to every house in town now.",
+      "Somebody on the route asked about the {lastGift}. I said it came in the mail. That's true, kind of. You're the mail now.",
     ],
   },
+  again: [
+    "Still on the route. I can walk and listen. I can't walk and stop.",
+    "(Mo holds up three fingers as she passes. Third time today? Second. She rounds up.)",
+    "We talked. I logged it. There's a column.",
+  ],
+  idle: [
+    "(Mo is sorting mail on the go, without looking, in perfect order.)",
+    "Morning. Route's on time. Got to keep it that way.",
+  ],
   birthday: { season: 1, day: 6 },
   events: [
     {
@@ -198,7 +223,7 @@ export default {
           await api.say('mo', "Want? I don't know. Maybe for forty seconds. Just forty seconds, once, where two thousand people can't look away.");
           await api.narrate("She says it lightly, eats another fry, and doesn't look at you.");
         }
-        await api.say('mo', "Don't tell June I got sentimental in her booth. Rule three's about Birdie, but I think it covers me.");
+        await api.say('mo', "June can never know I got sentimental in her booth. Rule three's about Birdie, but I think it covers me.");
       },
     },
     {
@@ -208,7 +233,7 @@ export default {
         await api.say('mo', 'Monday nights I hang a white sheet in the woods behind the water tower and shine a UV lamp on it. Then I count who shows up.');
         await api.say('mo', "Two hundred and twelve species. I send the numbers to a university. Nobody there's ever met me. I like that.");
         await api.narrate('Every moth is sketched in pencil. One fills a whole page: big, dusty brown, with two pale eye-spots on its wings.');
-        await api.say('mo', "Polyphemus moth. My favorite. The eye-spots scare off birds. It's not scary, though. It's just dressed up for the occasion.");
+        await api.say('mo', "Polyphemus moth. My favorite. The eye-spots scare off birds. Up close they just look surprised. Dressed up for something.");
         await api.sayMood('mo', 'love', "People think a moth flying at a light is dumb. I think it's brave. Going toward the one bright thing, even when you look silly doing it.");
         const c = await api.choose(null, [
           { label: 'Show me the survey sometime?', value: 'show' },

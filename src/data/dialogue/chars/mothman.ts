@@ -88,7 +88,29 @@ export default {
       'Still there in the morning. Beside it, a note in block capitals: NO THANK YOU. (POLITELY.)',
       'It is still on the stump at dawn, with a neat strip of tape over anything that looks like it might be watching.',
     ],
+    byItem: {
+      honey: 'At dawn the honey is gone. The lid is on the stump, washed, dried, and set upside down so the rain will not get in. Beside it: three pebbles.',
+      coffee: 'Gone by morning, cup and all. Around five-thirty a red light moves along the creek road a little faster than usual.',
+      wildflowers: 'In the morning the flowers are still there, but rearranged into a perfect circle around the stump, heads pointing out, like a small crowd.',
+      feather: 'The wing is gone at dawn. A note in block capitals: WHERE. (THANK YOU.) (BUT WHERE.)',
+      sequins: 'Gone by morning. For a week after, the water tower ladder glitters in the safety light, one rung at a time.',
+      rhinestone: 'At dawn the rhinestone is gone. That Saturday, high in the rafters, something red glints exactly once.',
+      'river-stone': 'The stone is still there in the morning, but moved to the very center of the stump, with two smaller stones beside it. A family.',
+    },
+    later: [
+      'On the stump this morning: a pinecone, a bottle cap, and a scrap of paper. The paper says, in block capitals, STILL GOOD. It means the {lastGift}.',
+      'A red light on the creek road at five a.m. slows down as it passes you. Just slightly. Then it is gone into the fog.',
+    ],
   },
+  again: [
+    'It tilts its head at you again, a little further, as if to say: still here?',
+    'It is looking the other way now, very deliberately. You have been noticed. That is enough for one night.',
+    'You blink. The stump is empty. On it, a single moth, which flies off as you look.',
+  ],
+  idle: [
+    'Nothing on the stump tonight but dew and one patient moth.',
+    'The safety light hums. Something in the dark beyond it does not.',
+  ],
   events: [
     {
       id: 'mothman-2', hearts: 2, title: 'A Scale of Felt',

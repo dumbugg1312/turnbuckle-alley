@@ -10,7 +10,7 @@ import type { DialogueSet } from '../types';
  *
  * Secretly sentimental and lonely. Divorced (amicably), daughter Maddie, 9. His dad
  * took him to territory shows in Pell's Crossing; there's a foam finger in his
- * desk drawer. His watch buzzes every eleven seconds and gets no signal in town;
+ * desk drawer. His watch buzzes every seven seconds and gets no signal in town;
  * he keeps checking anyway. Late-game lines key off 'reunion_done'.
  */
 export default {
@@ -18,7 +18,7 @@ export default {
   intro: [
     "(A lean man in a MaxxMedia quarter-zip glances at his watch, then at you, then at his watch.) Royce Penn.",
     "Senior Manager, Short-Form Engagement. We've met. Several times. Probably in a metrics review.",
-    "Great cut last night. Retention's up eleven percent. Can we get it to eight seconds? Seven?",
+    "Great cut last night. Retention's up nine percent. Can we get it to eight seconds? Seven?",
     "I'm told I come across as intense. I'm told this by a smartwatch. It buzzes whenever I say something intense.",
   ],
   introPublic: [
@@ -29,10 +29,10 @@ export default {
   ],
   lines: [
     // ---------------------------------------------------------------- The prologue: the clip floor
-    { text: "Great cut. Retention's up eleven percent. Can we get it to eight seconds? Seven? What if there's no match, just the pin?", when: { flag: 'prologue' }, weight: 2 },
+    { text: "What if there's no match, just the pin? What if there's no pin, just a face? Write that down. No. Don't. I'll have Legal write it down.", when: { flag: 'prologue' }, weight: 2 },
     { text: "Your numbers are top decile. Do you know what that means? People watch your cuts and don't leave. That's rarer than you'd think.", when: { flag: 'prologue' } },
     { text: "Clip floor is a team sport. Be a team player. That's not a threat. It's a pamphlet.", when: { flag: 'prologue' } },
-    { text: "(His watch buzzes. He checks it. It buzzes again. He checks it again.) Eleven seconds. Always eleven. I don't know why.", when: { flag: 'prologue' } },
+    { text: "(His watch buzzes. He checks it. It buzzes again. He checks it again.) Seven seconds. Always seven. I don't know why. I've asked IT. IT doesn't know why.", when: { flag: 'prologue' } },
     { text: "Don't take it personally. The algorithm doesn't have a heart. It has a retention cliff.", when: { flag: 'prologue' } },
     { text: "Go home. Sleep. Come back with fresh eyes. Preferably with fewer feelings.", when: { flag: 'prologue' } },
 
@@ -61,7 +61,8 @@ export default {
 
     // ---------------------------------------------------------------- Insider: the man upstairs
     { text: ["Arlo had a spreadsheet of every match he'd ever seen. Nine thousand rows. He believed every one.", "I envied him so much I couldn't look at him."], when: { place: ['insider'], hearts: [6, 10] }, mood: 'sad' },
-    { text: ["Thirty-first floor, they write it down. The stories. Dates, finishes, beats. I used to believe, you know. All of it.", "Then they promoted me to the floor where they write it down."], when: { place: ['insider'], hearts: [6, 10] }, mood: 'sad' },
+    { text: ["Thirty-first floor, they write it down. The stories. Dates, finishes, beats. I used to believe, you know. All of it.", "I still have the badge from my first week. It says VISITOR. I keep meaning to throw it out."], when: { place: ['insider'], hearts: [6, 10] }, mood: 'sad' },
+    { text: "I watched you and {opponent} from the back wall. In a hat. Birdie spotted me in nine seconds. She sold me a program anyway.", when: { notFlag: 'prologue', lastMatch: { maxDaysAgo: 4 } } },
     { text: "I keep a foam finger in my desk drawer. Number one. I was nine. My dad took me to Pell's Crossing. Don't tell anyone.", when: { place: ['insider'], hearts: [6, 10] } },
     { text: "Birdie Malone can smell a corporate lanyard from the county line. I don't know why I find that so comforting.", when: { place: ['insider'], hearts: [3, 10] } },
     { text: "Maddie told her mother she wants to live here. Her mother said 'we'll see.' Maddie said, 'Mom, that's what you say when it's already yes.'", when: { place: ['insider'], hearts: [8, 10] }, mood: 'happy' },
@@ -69,7 +70,7 @@ export default {
     // ---------------------------------------------------------------- Late game: Heartland and after
     { text: "Per my last email, your title shot has been... reprioritized.", when: { flag: 'reunion_done', place: ['public'], notFlag: 'royce_box' } },
     { text: "(He fixes his lanyard like a lasso.) The Quarterly Review is concluded. You'll receive notes. Many notes. In triplicate.", when: { flag: 'reunion_done', place: ['public'], notFlag: 'royce_box' } },
-    { text: "Wasn't me. I mean, it was. It's a character. The Executive. He's a monster. I like him. Don't tell Birdie.", when: { flag: 'reunion_done', place: ['insider'], notFlag: 'royce_box' }, mood: 'smug' },
+    { text: "Wasn't me. I mean, it was. It's a character. The Executive. He's a monster. I like him. Birdie can never know that I like him.", when: { flag: 'reunion_done', place: ['insider'], notFlag: 'royce_box' }, mood: 'smug' },
     { text: "The foam finger's on my desk now. Not in the drawer. On the desk. In the open. Where people can see it.", when: { flag: 'royce_box' }, mood: 'happy', weight: 3 },
   ],
   gifts: {
@@ -80,7 +81,7 @@ export default {
   giftReplies: {
     love: [
       "(He holds it very still. His watch buzzes. He doesn't check it.) I had one of these. Almost exactly this. I was nine.",
-      "This is... (His voice catches.) Where did you find this? No. Don't tell me. I'm going to keep it in a drawer and look at it.",
+      "This is... (His voice catches.) Where did you find this? No. Say nothing. I'm going to keep it in a drawer and look at it.",
       "(He turns it over once, reverently.) I haven't thought about that in thirty years. Thank you. That's... thank you.",
     ],
     like: [
@@ -97,10 +98,33 @@ export default {
       "(He holds it at arm's length.) Per my last email, I don't want this. ...I didn't send an email. I'm just. Thank you.",
     ],
     birthday: [
-      "You remembered my birthday? I didn't even... okay. Okay. I'm putting a pin in this. A very positive pin.",
-      "Maddie says you should come to cake. I said you're busy. She said, 'Dad, ask.' So. I'm asking.",
+      "A {item}. For my birthday. My calendar didn't even... okay. Okay. I'm putting a pin in this. A very positive pin.",
+      "Maddie says you should come to cake. I said you're busy. She said, 'Dad, ask.' So. I'm asking. Bring the {item}. She'll want to see it.",
+    ],
+    byItem: {
+      'foam-finger': ["(He holds it very still. His watch buzzes. He doesn't check it.)", "Number one. Yellow. The foam's gone soft at the tip, like somebody held it up for two hours. ...I'm going to put this on the desk. Not in the drawer."],
+      polaroid: "A crowd shot. Blurry. Somebody's purse in the air. (He looks at it a long time.) Nobody in it is looking at a phone.",
+      cassette: "A mixtape. 'PUMP UP JAMS 4 SAT.' I had a tape like this. Mine said FRIDAY. My dad played it in the truck all the way to Pell's Crossing.",
+      'tiny-cake': "This is the cake. From the bakery. The alarming bun place. I'm eating it in one bite before I can optimize it.",
+      'funnel-cake': "A funnel cake. I'm not eating it. (He's eating it.) I'm conducting market research.",
+      coffee: "Coffee. Real coffee. Not a pod. Who taught this town to make coffee like this. I want to hire them. I can't. I've tried.",
+      'corn-dog': "A corn dog. On a stick. Handheld protein delivery. I'm going to eat it walking. Like a local.",
+      'chili-dog': "A chili dog. This is going to get on the quarter-zip. I've made my peace with the quarter-zip.",
+    },
+    later: [
+      "The {lastGift} is on my desk at the office. People ask. I say 'a client.' It's not a client. I like that it's not a client.",
+      "Maddie saw the {lastGift} on a video call and asked where I got it. I said a friend. She said 'you have a friend?' She's nine. She's not wrong to ask.",
     ],
   },
+  again: [
+    "Circling back? Sure. Sure. (His watch buzzes. He covers it with his hand.)",
+    "We've synced. I'm told I'm supposed to say we've 'touched base.' We've touched base.",
+    "Still here. No signal. I've accepted it. I haven't accepted it.",
+  ],
+  idle: [
+    "(Royce is holding his phone up at different angles, looking for one bar.)",
+    "Can't talk. I'm on hold with nobody. It's a long story.",
+  ],
   birthday: { season: 2, day: 11 },
   events: [
     // ---------------------------------------------------------------- 2 (prologue): Close the door
@@ -163,7 +187,7 @@ export default {
       id: 'royce-6', hearts: 6, map: 'fair', title: 'Pell\'s Crossing',
       script: async (api) => {
         await api.narrate('The fairgrounds, long after the crowd has thinned.', 'You find Royce on the top row of the grandstand with a funnel cake in his lap, powdered sugar all over his quarter-zip,', 'looking at the empty ring.');
-        await api.say('royce', "Don't tell anyone about the funnel cake. I'll deny it. I'll deny it on the stand.");
+        await api.say('royce', "Nobody hears about the funnel cake. I'll deny it. I'll deny it on the stand.");
         await api.narrate('He tears off a piece and hands it to you without looking, an act of tiny surrender.');
         await api.say('royce', "I grew up in Pell's Crossing. Two counties over. My dad drove a truck.", "On Fridays, he took me to the VFW and we watched people in capes hit each other with folding chairs.");
         await api.say('royce', "I had a foam finger. Number one. I held it up for two hours and my arm fell asleep and I wouldn't put it down.");

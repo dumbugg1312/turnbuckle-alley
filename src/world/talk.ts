@@ -83,6 +83,8 @@ export function condOk(c: Cond | undefined, npc: string, place: Place): boolean 
     if (ago > (lm.maxDaysAgo ?? 7) || ago < (lm.minDaysAgo ?? 0)) return false;
     if (lm.won !== undefined && lm.won !== m.won) return false;
     if (lm.opponent && !lm.opponent.includes(m.opponent)) return false;
+    // A line that doesn't name opponents is about watching: not for the person you wrestled.
+    if (!lm.opponent && m.opponent === npc) return false;
     if (lm.venue && !lm.venue.includes(m.venue)) return false;
     if (lm.minStars !== undefined && m.stars < lm.minStars) return false;
     if (lm.maxStars !== undefined && m.stars > lm.maxStars) return false;

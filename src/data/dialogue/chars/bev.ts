@@ -115,7 +115,7 @@ export default {
     ],
     birthday: [
       "A {item}, on my birthday. Lorraine's making a cake. Doug already ate part of it. He's under investigation.",
-      "Fifty-seven. Still no arrest at a show. This is the year. The {item} goes in the good drawer. Thanks, kid.",
+      "Fifty-seven. Lorraine put all fifty-seven candles on the cake and Doug barked at it till the fire went out. The {item} goes in the good drawer.",
     ],
     byItem: {
       paperback: "A mystery. Missing the last page. Good. I'll solve it myself. It was the brother-in-law. It's always the brother-in-law.",
@@ -226,7 +226,7 @@ export default {
         await api.narrate('Sheriff Bev is there before the second call is finished.');
         await api.say('bev', "Marcus. Theo. Look at me. He's ten, he's got light-up shoes, and this fairground's got one gate. We'll have him in ten minutes.");
         await api.say('bev', "{name}, take the barns. I've got the midway. Doug's got everything else.");
-        await api.narrate("It's not ten minutes. It's twenty. Twenty long minutes of calling and looking under things.");
+        await api.narrate("It takes twenty. Twenty long minutes of calling and looking under things.");
         await api.narrate("Then, by her fence, you notice Wanda. She is standing very still, staring hard at the funnel-cake stand. Pointing with her whole nose.");
         await api.narrate("Behind the stand, curled on a pile of flattened boxes, cardboard belt for a pillow, Pip is fast asleep.");
         await api.narrate("Bev kneels and wakes him like it's the most ordinary thing in the world. \"Hey, champ. Your dads want to know about your title defense.\"");

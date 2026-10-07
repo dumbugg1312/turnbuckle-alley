@@ -136,7 +136,7 @@ export default {
         await api.narrate('Something slides over the top of the wall: a paper bowl, half full of instant noodles, with a plastic fork.');
         await api.say('arlo', "Half. I only ate half. It's a gift. Take it.");
         await api.narrate('He leans around the partition, headphones askew, glasses crooked.');
-        await api.say('arlo', "They made me cut the Thaw Brawl comeback down to nine seconds. I cut out the comeback. There is no comeback in nine seconds.", "There's a guy getting hit and a guy getting up. It's not a story. It's a hiccup.");
+        await api.say('arlo', "They made me cut the Thaw Brawl comeback down to nine seconds. I cut out the comeback. There is no comeback in nine seconds.", "There's a guy getting hit and a guy getting up. That's a hiccup with a ref.");
         await api.narrate("He looks like he might cry. (He often does. He does it freely, without apology.)");
         const c = await api.choose(null, [
           { label: "Tell him he's right. The comeback is the story.", value: 'right' },
@@ -204,7 +204,7 @@ export default {
     },
     // ---------------------------------------------------------------- 6: Nine thousand rows
     {
-      id: 'arlo-6', hearts: 6, map: 'pawn', title: 'Eleven Thousand Rows',
+      id: 'arlo-6', hearts: 6, map: 'pawn', title: 'Nine Thousand Rows',
       script: async (api) => {
         await api.narrate('Rewind, after closing. The CRT hums. Arlo has dragged two folding chairs together and put a laptop on a milk crate between them.');
         await api.say('arlo', 'I have never shown anybody this. Okay. Okay. Here.');
