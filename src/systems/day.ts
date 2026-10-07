@@ -3,10 +3,14 @@ import { game } from '../core/game';
 import { saveGame } from '../core/save';
 import { G, type Weather } from '../core/state';
 import { Rng } from '../core/rng';
-import { DAY_START, DAYS_PER_SEASON, isShowDay, SEASONS, WEEKDAY_NAMES, weekday } from '../core/time';
+import { absDay, DAY_START, DAYS_PER_SEASON, isShowDay, isSupershow, SEASONS, SUPERSHOWS, WEEKDAY_NAMES, weekday } from '../core/time';
 import { narrate } from '../ui/dialog';
 import { DAY_HOOKS } from '../world/hooks';
 import { WORLD } from '../world/scene';
+import { dayLog, resetDayLog, summarizeToday } from './daylog';
+import { pickNightLine } from './goodnight-lines';
+import { beginMorning, endMorning, morningBundle } from './morning';
+import './surprises';
 
 /** Advance the calendar by one day and run the morning routine. */
 function rollWeather(rng: Rng): Weather {
@@ -43,9 +47,48 @@ export function advanceCalendar(): void {
 
 let sleeping = false;
 
+/** The goodnight page: today in Grandma's notebook, before the lights go out. */
+async function goodnight(passedOut: boolean, late: boolean): Promise<void> {
+  const summary = summarizeToday();
+  const log = dayLog();
+  const line = pickNightLine({ summary, abs: absDay(), weekday: weekday(), season: G.time.season, weather: G.weather.today, passedOut, late }, log.lastLine);
+  log.lastLine = line.text;
+  const t = G.time;
+  const { showGoodnight } = await import('../ui/notebook');
+  await showGoodnight({ dateLine: `${WEEKDAY_NAMES[weekday()]},`, subLine: `${SEASONS[t.season]} ${t.day} · Year ${t.year}`, summary, line, passedOut });
+}
+
+/** Breakfast: the date, the sky, the paper and the mail, all on one table. */
+async function breakfast(passedOut: boolean): Promise<void> {
+  const t = G.time;
+  const b = morningBundle();
+  const lines: string[] = [];
+  if (passedOut) lines.push('You fell asleep somewhere you should not have. Birdie found you and drove you home, muttering *"kids these days"* the whole way.');
+  lines.push(...b.overnight);
+  let showLine: string | null = null;
+  if (isShowDay()) {
+    if (isSupershow()) showLine = `${SUPERSHOWS[t.season]} tonight · The Sportatorium · Doors 6, bell 7`;
+    else showLine = weekday() === 2 ? 'Show night · VFW Hall · Doors 6, bell 7' : 'Show night · The Sportatorium · Doors 6, bell 7';
+  }
+  const [{ showBreakfast }, mail, { showPaper }] = await Promise.all([import('../ui/notebook'), import('./mail'), import('./paper')]);
+  await showBreakfast({
+    weekday: WEEKDAY_NAMES[weekday()],
+    date: `${SEASONS[t.season]} ${t.day} · Year ${t.year}`,
+    today: G.weather.today,
+    tomorrow: G.weather.tomorrow,
+    showLine,
+    lines,
+    paper: b.paper,
+    letters: [...mail.mailState().inbox],
+    openPaper: (p) => showPaper(p),
+    openLetter: (l) => mail.openLetter(l),
+  });
+}
+
 /**
- * Go to bed: fade out, advance the day, restore energy, save, morning
- * hooks (newspaper, letters, story beats), then wake up at home.
+ * Go to bed: the goodnight page, a fade, the calendar turns, energy comes
+ * back, the game saves, the morning hooks run (paper, letters, story beats,
+ * surprises), and breakfast is on the table when you wake.
  */
 export async function sleep(passedOut = false): Promise<void> {
   if (sleeping) return;
@@ -54,26 +97,40 @@ export async function sleep(passedOut = false): Promise<void> {
   try {
     audio.sfx('sleep');
     audio.music(null);
+    const late = G.time.minutes >= 24 * 60;
+    try {
+      await goodnight(passedOut, late);
+    } catch (e) {
+      // A page that fails to draw must never keep anyone awake.
+      console.error('[day] goodnight page failed', e);
+    }
     await new Promise<void>((r) => {
       // If another fade already owns the screen, don't wait on one that will never run.
       if (!game.scenes.transition(() => r(), '#0b0712')) r();
     });
-    const late = G.time.minutes >= 24 * 60;
     advanceCalendar();
+    resetDayLog();
     const restore = passedOut ? 0.6 : late ? 0.85 : 1;
     G.player.energy = Math.round(G.player.maxEnergy * restore);
     if (w) {
       // Wake up next to the bed.
       await w.warpTo('grandma-house', 13, 7, 'down', true);
     }
-    for (const h of DAY_HOOKS) await h();
+    beginMorning();
+    try {
+      for (const h of DAY_HOOKS) await h();
+    } finally {
+      endMorning();
+    }
     saveGame();
     audio.sfx('rooster', { volume: 0.4 });
-    const t = G.time;
-    const lines = [`${WEEKDAY_NAMES[weekday()]}, ${SEASONS[t.season]} ${t.day}.`];
-    if (passedOut) lines.unshift('You fell asleep somewhere you should not have. Birdie found you and drove you home, muttering "kids these days" the whole way.');
-    if (isShowDay()) lines.push(weekday() === 2 ? "It's *Wednesday*: show night at the VFW. Doors at 6, bell at 7." : "It's *Saturday*: show night at the Sportatorium! Doors at 6, bell at 7.");
-    await narrate(...lines);
+    try {
+      await breakfast(passedOut);
+    } catch (e) {
+      console.error('[day] breakfast failed', e);
+      const t = G.time;
+      await narrate(`${WEEKDAY_NAMES[weekday()]}, ${SEASONS[t.season]} ${t.day}.`);
+    }
   } finally {
     sleeping = false;
   }
