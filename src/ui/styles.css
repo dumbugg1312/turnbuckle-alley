@@ -510,7 +510,9 @@ button { font-family: inherit; color: inherit; font-variant-ligatures: none; }
   pointer-events: none !important;
 }
 .title-logo small {
-  display: inline-block;
+  display: table;
+  margin-left: auto;
+  margin-right: auto;
   font-family: var(--font-label);
   font-size: calc(var(--u) * 6);
   line-height: 1;

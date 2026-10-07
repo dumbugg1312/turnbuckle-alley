@@ -264,13 +264,14 @@ export function toast(text: string, icon?: HTMLCanvasElement): void {
 
 /** Big centered banner text (e.g. "WEDNESDAY NIGHT!"). */
 export async function banner(text: string, ms = 1600, size = 34): Promise<void> {
-  const b = el('div', { class: 'big-banner', style: `font-size: calc(var(--u) * ${size})` }, text);
+  // A ribbon that unrolls across the screen: measured, not a cartoon slam.
+  const b = el('div', { class: 'big-banner', style: `font-size: calc(var(--u) * ${(size * 0.6).toFixed(1)})` }, text);
   b.animate(
     [
-      { transform: 'translate(-50%,-50%) scale(2.2) rotate(-6deg)', opacity: 0 },
-      { transform: 'translate(-50%,-50%) scale(0.92) rotate(-3deg)', opacity: 1, offset: 0.18 },
-      { transform: 'translate(-50%,-50%) scale(1) rotate(-3deg)', opacity: 1, offset: 0.8 },
-      { transform: 'translate(-50%,-50%) scale(1.1) rotate(-3deg)', opacity: 0 },
+      { transform: 'translate(-50%,-50%) scaleX(0.6)', opacity: 0 },
+      { transform: 'translate(-50%,-50%) scaleX(1)', opacity: 1, offset: 0.14 },
+      { transform: 'translate(-50%,-50%) scaleX(1)', opacity: 1, offset: 0.82 },
+      { transform: 'translate(-50%,-50%) translateY(-6px)', opacity: 0 },
     ],
     { duration: ms, easing: 'ease-out' },
   );
