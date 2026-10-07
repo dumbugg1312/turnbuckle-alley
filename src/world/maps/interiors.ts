@@ -1,4 +1,5 @@
 import { type MapBuilder, registerMap, room } from './index';
+import { objectKind } from '../registry';
 import type { ObjectPlacement, TerrainId, Warp } from '../types';
 
 /**
@@ -34,6 +35,48 @@ const WIDE: Record<string, (w: number) => { x: number; y: number; w: number; h: 
   'folding-chairs': (w) => ({ x: -w * 8, y: -6, w: w * 16, h: 5 }),
 };
 
+type Box = { x: number; y: number; w: number; h: number };
+/** A solid that never collides: for seats NPCs sit on (their sit spot is the seat's own tile). */
+const NOSOLID: Box = { x: 0, y: -99999, w: 0, h: 0 };
+
+/**
+ * Snap a piece of furniture's collision box to whole tiles. The pathfinding
+ * grid only blocks tiles a box mostly covers, while the player's feet collide
+ * with every pixel; a box that pokes a few pixels into the next tile turns that
+ * tile into a trap the pathfinder walks into and gets stuck on. Snapping keeps
+ * the tiles a piece really stands on (5+ px of overlap) and frees the rest.
+ * Evaluated lazily (when the map is built at runtime) so the art's own solids,
+ * registered by the art modules, are known by then.
+ */
+function snapSolid(kind: string, ax: number, ay: number, given: Box | undefined): Box | undefined {
+  const s = given ?? objectKind(kind).solid;
+  if (!s) return undefined;
+  if (s.y <= -9999 || s.w <= 0 || s.h <= 0) return NOSOLID;
+  const span = (a: number, b: number): [number, number] | null => {
+    let lo: number | null = null;
+    let hi = 0;
+    let best = 0;
+    let bo = 0;
+    for (let t = Math.floor(a / 16); t * 16 < b; t++) {
+      const ov = Math.min(b, (t + 1) * 16) - Math.max(a, t * 16);
+      if (ov > bo) {
+        bo = ov;
+        best = t;
+      }
+      if (ov >= 5) {
+        if (lo === null) lo = t;
+        hi = t;
+      }
+    }
+    if (lo !== null) return [lo, hi];
+    return bo >= 2 ? [best, best] : null;
+  };
+  const sx = span(ax + s.x, ax + s.x + s.w);
+  const sy = span(ay + s.y, ay + s.y + s.h);
+  if (!sx || !sy) return NOSOLID;
+  return { x: sx[0] * 16 - ax, y: sy[0] * 16 - ay, w: (sx[1] - sx[0] + 1) * 16, h: (sy[1] - sy[0] + 1) * 16 };
+}
+
 interface InteriorOpts {
   music?: string;
   light?: number;
@@ -50,12 +93,17 @@ function interior(id: string, name: string, w: number, h: number, wall: TerrainI
   opts.shape?.(rb);
   const dx = opts.abs ? 0 : 1;
   const objects: ObjectPlacement[] = items.map(([kind, x, y, props, oid]) => {
-    const pr = props ? { ...props } : undefined;
+    const pr: Record<string, unknown> = props ? { ...props } : {};
     const wide = WIDE[kind];
-    if (wide && pr && pr.solid == null) {
-      const sol = wide(Number(pr.w ?? 3));
-      if (sol) pr.solid = sol;
-    }
+    let given = pr.solid as Box | undefined;
+    if (wide && given == null) given = wide(Number(pr.w ?? 3)) ?? undefined;
+    if (opts.abs) {
+      // grid-snapped collision, resolved when the map is built (see snapSolid)
+      const ax = Math.round((x + dx) * 16);
+      const ay = Math.round(y * 16);
+      delete pr.solid;
+      Object.defineProperty(pr, 'solid', { enumerable: true, configurable: true, get: () => snapSolid(kind, ax, ay, given) });
+    } else if (given) pr.solid = given;
     return { kind, x: x + dx, y, props: pr, id: oid };
   });
   objects.push({ kind: 'door-mat', x: doorX + 1.5, y: h - 0.0, id: `${id}-mat` });
@@ -149,12 +197,12 @@ interior('sportatorium', 'The Sportatorium', 30, 20, 'wall-brick', 'concrete', 1
   ['folding-chair', 10.5, 16.8], ['folding-chair', 11.5, 16.8], ['folding-chair', 12.5, 16.8], ['folding-chair', 13.5, 16.8],
   ['folding-chair', 14.5, 16.8, { reserved: true }],
   ['folding-chair', 18.5, 16.8], ['folding-chair', 19.5, 16.8], ['folding-chair', 20.5, 16.8], ['folding-chair', 21.5, 16.8],
-  ['announce-table', 16.5, 15.6, {}, 'announce-table'], ['mic-stand', 18.6, 15.4],
+  ['announce-table', 16.5, 15.6, { solid: { x: -12, y: -11, w: 24, h: 10 } }, 'announce-table'], ['mic-stand', 18.6, 15.4],
   ['folding-chairs', 10, 17.8, { w: 4 }], ['folding-chairs', 19.5, 17.8, { w: 5 }],
   ['folding-chairs', 10.5, 18.8, { w: 5 }], ['folding-chairs', 25.5, 18.8, { w: 3 }],
   // Sweet Lou's camera, rolling since 1979
   ['camera-rig', 27.5, 15.4], ['stool', 28.5, 16.8],
-  ['chair', 29.5, 18.2, {}, 'chair-arena'],
+  ['chair', 30.5, 18.9, {}, 'chair-arena'],
 ], {
   music: 'sportatorium',
   light: 0.78,
@@ -176,7 +224,7 @@ interior('birdie-office', "Birdie's Office", 10, 8, 'wall-wood', 'carpet', 4, [
   ['window-blinds', 8.4, 2.7],
   ['rug', 5.5, 7.4, { w: 5, h: 2, variant: 1 }],
   ['promoter-desk', 6, 4.95, { solid: { x: -20, y: -12, w: 40, h: 11 } }, 'birdie-desk'],
-  ['office-chair', 6.6, 3.7, { solid: { x: 0, y: 0, w: 0, h: 0 } }],
+  ['office-chair', 6.6, 3.7, { solid: NOSOLID }],
   ['filing-cabinet', 1.5, 4.4], ['filing-cabinet', 2.4, 4.4],
   ['trophy-case', 9.6, 4.6, {}, 'trophies'],
   ['safe', 1.6, 6.6],
@@ -319,7 +367,7 @@ interior('library', 'Public Library', 16, 11, 'wall', 'carpet', 7, [
   ['globe', 1.6, 6.7],
   ['table', 12, 8.95, { variant: 0 }],
   ['rug', 3, 9.8, { w: 4, h: 2, variant: 3 }, 'storytime-rug'],
-  ['armchair', 4.5, 7.8, { variant: 2, solid: { x: 0, y: 0, w: 0, h: 0 } }, 'storytime-chair'],
+  ['armchair', 4.5, 7.8, { variant: 2, solid: NOSOLID }, 'storytime-chair'],
   ['lamp-floor', 6.1, 9.6],
   ['plant', 16.4, 10.4, { variant: 0 }],
 ], { music: 'home', light: 0.92, abs: true });
@@ -367,7 +415,7 @@ interior('radio', 'WRSL 1340 AM', 10, 8, 'wall-panel', 'carpet', 4, [
   ['poster', 3, 2.3, { variant: 5 }],
   ['record-shelf', 2.2, 4.7],
   ['radio-console', 6, 4.95, {}, 'radio-console'],
-  ['mic-stand', 6.5, 5.7],
+  ['mic-stand', 6.5, 5.7, { solid: NOSOLID }],
   ['reel-to-reel', 9.6, 4.9],
   ['couch', 8.5, 7.4, { variant: 2 }],
   ['lamp-floor', 1.5, 7.4],
@@ -397,12 +445,12 @@ interior('pawn', "Fenwick's Pawn & Tapes", 12, 9, 'wall-brick', 'wood-dark', 5, 
   ['crt-stack', 7.4, 4.8],
   ['counter', 6, 6.95, { w: 4, style: 'glass' }, 'pawn-counter'],
   ['cash-register', 7.4, 6.15],
-  ['shelf-goods', 3.5, 8.4, { w: 3 }, 'card-shelf'],
+  ['shelf-goods', 3.5, 7.9, { w: 3 }, 'card-shelf'],
   // the back room
   ['sighting-map', 11.1, 2.6],
   ['tv-repair', 11.2, 4.9],
   ['birdcage', 12.4, 7.2],
-  ['tapebin', 10.8, 8.4, { bin: 'fenwick' }, 'bin-fenwick'],
+  ['tapebin', 10.8, 7.9, { bin: 'fenwick' }, 'bin-fenwick'],
 ], {
   music: 'tapes',
   light: 0.8,
@@ -457,7 +505,7 @@ interior('studio', 'Hurricane Physio & Yoga', 10, 8, 'wall-blue', 'wood', 4, [
 interior('sunnypines', 'The Evening Bell Residence', 18, 10, 'wall', 'carpet', 8, [
   ['birdcage', 1.7, 4.8],
   ['window', 4.2, 2.6, { variant: 2 }], ['window', 6.8, 2.6, { variant: 2 }],
-  ['rocking-chair', 4.5, 6.8, { solid: { x: 0, y: 0, w: 0, h: 0 } }], ['rocking-chair', 6.5, 6.8, { solid: { x: 0, y: 0, w: 0, h: 0 } }],
+  ['rocking-chair', 4.5, 6.8, { solid: NOSOLID }], ['rocking-chair', 6.5, 6.8, { solid: NOSOLID }],
   ['side-table', 5.5, 6.6],
   ['notice', 9, 1.6, { lines: 'TODAY|BINGO 2PM|CHAIR YOGA|MOVIE 7PM', variant: 1 }],
   ['tv-lounge', 11.6, 4.8, {}, 'pines-tv'],
@@ -494,7 +542,7 @@ interior('grandma-room', 'Room 7', 8, 7, 'wall-blue', 'carpet', 3, [
   ['bed', 7.6, 5.2, { variant: 2 }, 'grandma-bed'],
   ['quilt-rack', 8.4, 6.85],
   ['rug', 4.5, 6.8, { w: 3, h: 2, variant: 0 }],
-  ['armchair', 3.5, 5.8, { variant: 3, solid: { x: 0, y: 0, w: 0, h: 0 } }, 'grandma-chair'],
+  ['armchair', 3.5, 5.8, { variant: 3, solid: NOSOLID }, 'grandma-chair'],
   ['side-table', 1.9, 5.9],
   ['sneakers', 6.4, 6.85],
 ], {
@@ -528,7 +576,7 @@ interior('birdie-house', "Birdie's House", 12, 8, 'wall-pink', 'wood', 4, [
   ['photo-wall', 9.6, 2.6, { variant: 1 }],
   ['mounted-bass', 11.9, 1.4],
   ['tv-vcr', 2.2, 4.4],
-  ['armchair', 3.5, 5.8, { variant: 0, solid: { x: 0, y: 0, w: 0, h: 0 } }],
+  ['armchair', 3.5, 5.8, { variant: 0, solid: NOSOLID }],
   ['side-table', 4.65, 5.9],
   ['armchair', 5.8, 5.8, { variant: 1 }],
   ['lamp-floor', 7.4, 4.8],
@@ -565,7 +613,7 @@ interior('airstream', "Sweet Lou's Airstream", 9, 5, 'wall-wood', 'wood', 3, [
   ['tape-wall', 6.6, 1.65, { w: 3, rows: 2 }],
   ['round-window', 9.2, 1.3],
   ['dinette', 3, 3.55],
-  ['booth-table', 3, 4.6, { w: 2 }],
+  ['booth-table', 3, 4.6, { w: 2, solid: { x: -14, y: -9, w: 28, h: 8 } }],
   ['dub-station', 6.3, 3.6, {}, 'lou-tv'],
   ['record-player', 5, 4.85],
   ['bed', 8.6, 4.2, { variant: 1 }, 'lou-bed'],
