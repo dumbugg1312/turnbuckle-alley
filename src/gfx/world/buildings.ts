@@ -4373,32 +4373,54 @@ building('airstream', {
 function drawBusStop(): void {
   // roof
   R(2, 2, 40, 4, '#3f9a92');
-  HL(2, 41, 2, '#6ac0b0');
-  HL(2, 41, 5, '#2f6a74');
-  // back panel (glass with a show poster)
-  R(4, 6, 36, 22, '#a8d0d8');
-  R(4, 6, 36, 22, (x: number, y: number, o: number) => ((x + y) % 11 === 0 ? '#d8f0f4' : o));
-  R(6, 8, 12, 17, '#fbefd8');
-  R(6, 8, 12, 5, '#3f8a86');
-  T('ACW', 7, 9, '#fff4dc', FT, { ls: -1 });
-  circ(12, 17, 2, '#5e2f58');
-  R(10, 19, 5, 5, '#5e2f58');
+  metalF(2, 2, 40, 4, '#3f9a92', 231, 2, 0.1);
+  fh(2, 42, 2, '#8ad8c8');
+  fh(2, 42, 5.5, '#1f5a5e');
+  // back panel: glass with a show poster and the timetable
+  glassF(4, 6, 36, 22, () => {
+    R(4, 6, 36, 22, '#a8c8d0');
+    FR(4, 6, 36, 22, (fx, fy) => (fy > 36 + (fx % 7) ? '#94b4c0' : null));
+    R(6, 8, 12, 17, '#fbefd8');
+    R(6, 8, 12, 5, '#3f8a86');
+    fh(6, 18, 8, '#6ab8a8');
+    T('ACW', 7, 9, enamel('#fff4dc'), FT, { ls: -1 });
+    circ(12, 17, 2, '#5e2f58');
+    R(10, 19, 5, 5, '#5e2f58');
+    P1(11, 16.5, '#ff5a50');
+    P1(13, 16.5, '#ff5a50');
+    micro('WED SAT', 6.5, 24, '#3f8a86');
+    R(28, 9, 9, 11, '#fff8ee');
+    fh(28, 37, 9, '#d8434b');
+    for (let k = 0; k < 7; k++) micro('7 10 14', 28.5, 10.5 + k * 1.3, '#5a5a7a');
+  });
   // frame posts
   for (const px of [3, 40]) {
     R(px, 6, 2, 30, '#2f6a74');
-    VL(px, 6, 35, '#5aa39a');
+    fv(px, 6, 36, '#7ac0b0');
+    fv(px + 1.5, 6, 36, '#1f4a5e');
   }
-  // bench
-  R(8, 26, 30, 3, '#c88a5a');
-  HL(8, 37, 26, '#e8b078');
-  R(10, 29, 2, 6, '#6e4a3a');
-  R(34, 29, 2, 6, '#6e4a3a');
+  // bench, slatted
+  for (const y of [25.5, 27]) {
+    R(8, y, 30, 1.25, '#c88a5a');
+    fh(8, 38, y, '#e8b078');
+  }
+  FR(8, 25.5, 30, 3, (fx, fy, o) => (o && hash2(fx >> 2, fy, 232) < 0.12 ? shA(o, 0.1) : o));
+  R(10, 28.5, 2, 6.5, '#6e4a3a');
+  R(34, 28.5, 2, 6.5, '#6e4a3a');
+  fv(10, 28.5, 35, '#8e6a5a');
+  fv(34, 28.5, 35, '#8e6a5a');
+  // gum and a dropped ticket underneath
+  P1(20, 34.5, '#ff94b4');
+  R(26, 34.5, 2, 1, '#fbf0e4');
   // route sign pole
-  VL(45, 4, 39, '#8a84a0');
-  VL(46, 4, 39, '#5e5878');
+  fv(45, 4, 40, '#c8c4d8');
+  R(45.5, 4, 1, 36, '#8a84a0');
+  fv(46, 4, 40, '#5e5878');
   RR(42, 0, 6, 9, 2, '#d8434b');
-  T('B', 44, 2, '#fff4e6', FT, {});
+  fh(43, 47, 0, '#ff8a80');
+  T('B', 44, 2, enamel('#fff4e6'), FT, {});
   R(41, 10, 7, 5, '#fbf0e4');
+  fh(41, 48, 10, '#ffffff');
   T('7', 43, 10, '#2f6a74', FT, {});
 }
 building('bus-stop', {
@@ -4664,7 +4686,7 @@ function drawMural(): void {
   const W = 64;
   const H = 48;
   // brick wall with a coping
-  brick(0, 2, W, H - 2, '#a85048', '#924442', '#6a3444', 241);
+  brickF(0, 2, W, H - 2, '#a85048', '#924442', '#7a4a52', 241);
   R(0, 0, W, 3, '#c8b8b8');
   HL(0, W - 1, 0, '#e8dcdc');
   // painted panel: dithered golden-hour sky
@@ -4688,6 +4710,9 @@ function drawMural(): void {
   P(29, 7, '#fff8d0');
   // title painted along the top
   TC('VELVET HAMMERS', 32, 6, '#fff4dc', FT, { shadow: '#5a2448' });
+  // the paint has flaked here and there, showing the brick beneath
+  FR(3, 5, 58, 38, (fx, fy, o) => (hash2(fx >> 1, fy >> 1, 242) < 0.035 ? mixc(o, '#a85048', 0.75) : o));
+  grime(0, H - 7, W, 6, 0.22);
   // paint flecks and a little graffiti heart
   P(5, 44, '#ff5d8f');
   P(58, 45, '#ffd34a');
