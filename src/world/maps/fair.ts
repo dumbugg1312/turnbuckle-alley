@@ -31,6 +31,12 @@ o('lamp', 38, 15);
 o('trashcan', 24, 22.2);
 o('chair', 37.5, 26.4, {}, 'chair-fair');
 o('sign', 9, 16.4, { text: 'TURNBUCKLE ALLEY FAIRGROUNDS. Home of the Fairgrounds Fury, every summer.' });
+// Festival-day dressing (supershow Saturdays). These draw nothing on other days; see systems/festival.ts.
+o('festival-sign', 5.5, 16.6, {}, 'fest-sign');
+o('festival-bunting', 19, 18.6, { w: 6 }, 'fest-bunting-1');
+o('festival-bunting', 31, 19.6, { w: 6 }, 'fest-bunting-2');
+o('festival-lanterns', 26, 21.4, { w: 5 }, 'fest-lanterns-1');
+o('festival-lanterns', 35.5, 16.8, { w: 4 }, 'fest-lanterns-2');
 for (const x of [2, 7, 13, 19, 25, 31, 37, 42]) o('tree-pine', x, 2.6, { variant: x % 3 });
 for (const x of [3, 9, 33, 41]) o('tree', x, 30.5, { variant: x % 3 });
 

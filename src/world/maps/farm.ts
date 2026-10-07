@@ -26,6 +26,8 @@ o('b-shed', 21, 8.5, {}, 'farm-shed');
 o('mailbox-home', 15.2, 11.4, {}, 'home-mailbox');
 o('clothesline', 28, 9, {}, 'clothesline');
 o('garden-bed', 6.5, 14.4, {}, 'garden-1');
+// Grandma's garden: five plots along the bottom of the tilled patch (systems/garden.ts).
+for (let i = 0; i < 5; i++) o('crop-plot', 4.5 + i, 15.95, {}, `plot-${i}`);
 o('backyard-ring', 20, 20.5, { state: 'overgrown' }, 'backyard-ring');
 // Debris to clear (ids so cleared state persists).
 const debris: [string, number, number, number?][] = [
