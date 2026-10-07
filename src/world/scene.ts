@@ -48,6 +48,34 @@ export function worldState(): WorldState {
 
 export let WORLD: WorldScene | null = null;
 
+/** Emote icons, two characters per world pixel (# ink, o fill, + highlight). */
+const EMOTE_ICONS: Record<string, { px: string[]; ink: string; fill: string; hi: string }> = {
+  '♥': {
+    ink: '#8a2238', fill: '#e2445a', hi: '#ffb4bc',
+    px: [
+      '..####..####..',
+      '.#oooo##oooo#.',
+      '#o++ooooooooo#',
+      '#o+oooooooooo#',
+      '#oooooooooooo#',
+      '.#oooooooooo#.',
+      '..#oooooooo#..',
+      '...#oooooo#...',
+      '....#oooo#....',
+      '.....#oo#.....',
+      '......##......',
+    ],
+  },
+  '!': {
+    ink: '#8a2238', fill: '#d8434b', hi: '#ff9aa0',
+    px: ['.##.', '#+o#', '#oo#', '#oo#', '#oo#', '.##.', '....', '.##.', '#oo#', '.##.'],
+  },
+  '♪': {
+    ink: '#2b2140', fill: '#5a4a8a', hi: '#9a8ad0',
+    px: ['....####', '....#oo#', '....#.##', '....#...', '....#...', '....#...', '.####...', '#oo+#...', '#ooo#...', '.###....'],
+  },
+};
+
 /** Main characters' idle habits (gfx/charart/body.ts idlePose). */
 const IDLE_QUIRK: Record<string, Quirk> = {
   birdie: 'tap',
@@ -935,7 +963,27 @@ export class WorldScene implements Scene {
     ctx.fillStyle = '#fbf0d9';
     ctx.fillRect(Math.round(x0) + 1, y0 + 1, w - 2, h - 2);
     ctx.fillRect(x, by, 1, 1);
-    if (sx > 0.7 && sy > 0.7 && sy < 1.3) pixelTextOutlined(ctx, e.icon, x - 1, y0 + Math.round((h - 5) / 2) - 1 + 1, '#d8434b', '#fbf0d9');
+    if (sx > 0.7 && sy > 0.7 && sy < 1.3) {
+      const ic = EMOTE_ICONS[e.icon];
+      if (!ic) pixelTextOutlined(ctx, e.icon, x - 1, y0 + Math.round((h - 5) / 2), '#d8434b', '#fbf0d9');
+      else {
+        // Hand-placed icons on the half-pixel grid: ink, fill and a highlight.
+        const rows = ic.px;
+        const iw = rows[0].length / 2;
+        const ih = rows.length / 2;
+        const ix = x + 0.5 - iw / 2;
+        // A heart gives a little beat.
+        const beat = e.icon === '♥' && age > 0.27 && (age - 0.27) % 0.9 < 0.12 ? 0.5 : 0;
+        const iy = y0 + Math.round((h - ih) / 2) - beat;
+        for (let r = 0; r < rows.length; r++)
+          for (let c = 0; c < rows[r].length; c++) {
+            const ch = rows[r][c];
+            if (ch === '.') continue;
+            ctx.fillStyle = ch === '#' ? ic.ink : ch === 'o' ? ic.fill : ic.hi;
+            ctx.fillRect(ix + c / 2, iy + r / 2, 0.5, 0.5);
+          }
+      }
+    }
   }
 
   private renderLighting(ctx: CanvasRenderingContext2D, cx: number, cy: number, w: number, h: number): void {

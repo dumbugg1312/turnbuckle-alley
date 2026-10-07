@@ -24,15 +24,16 @@ interface Bit {
   g: number;
 }
 
+// [body, lit top]: a touch lighter than the ground they rise from, so they read.
 const DUST: Partial<Record<TerrainId, [string, string]>> = {
-  dirt: ['#c4a27a', '#e2c9a0'],
-  'dirt-dark': ['#9c7d5c', '#c4a684'],
-  path: ['#d2bc94', '#eedcb8'],
-  sand: ['#ead2a0', '#fbecc8'],
-  gravel: ['#b4a896', '#d6ccbc'],
-  tilled: ['#8e6c4c', '#b8946e'],
-  snow: ['#e8eaf6', '#ffffff'],
-  parking: ['#b0a898', '#d0c8ba'],
+  dirt: ['#dcc29a', '#f2e2c2'],
+  'dirt-dark': ['#b8996f', '#d8c09a'],
+  path: ['#e6d4ae', '#f8ecd2'],
+  sand: ['#f6e6c0', '#fffaea'],
+  gravel: ['#d2c8b8', '#ece6da'],
+  tilled: ['#a8845e', '#c8a680'],
+  snow: ['#eef0fa', '#ffffff'],
+  parking: ['#cec6b8', '#e8e2d6'],
 };
 const WET: Partial<Record<TerrainId, [string, string]>> = {
   shallow: ['#a8d0ec', '#e8f6ff'],
@@ -65,9 +66,9 @@ export class StepFx {
     for (let i = 0; i < n; i++) {
       const s = (i / Math.max(1, n - 1)) * 2 - 1;
       this.push({
-        x: x + s * 1.5, y: y - 0.5, vx: (bx * 9 + s * 7 * strength) * (0.7 + Math.random() * 0.6), vy: -5 - Math.random() * 4 + by * 6,
-        r0: 0.7, r1: 1.8 + Math.random() * 0.6 + (strength - 1) * 0.8, life: 0, max: 0.38 + Math.random() * 0.14,
-        color: dust[0], hi: dust[1], alpha: 0.7, kind: 'puff', g: 6,
+        x: x + s * 1.5, y: y - 0.5, vx: (bx * 9 + s * 7 * strength) * (0.7 + Math.random() * 0.6), vy: -9 - Math.random() * 5 + by * 6,
+        r0: 0.8, r1: 2.1 + Math.random() * 0.7 + (strength - 1) * 0.9, life: 0, max: 0.4 + Math.random() * 0.15,
+        color: dust[0], hi: dust[1], alpha: 0.8, kind: 'puff', g: 6,
       });
     }
   }
@@ -77,8 +78,8 @@ export class StepFx {
     const n = 3 + (strength > 1 ? 3 : 0);
     for (let i = 0; i < n; i++) {
       const a = Math.PI * (0.15 + (0.7 * i) / Math.max(1, n - 1));
-      const s = 18 + Math.random() * 14;
-      this.push({ x, y: y - 0.5, vx: -Math.cos(a) * s * 0.8, vy: -Math.sin(a) * s, r0: 0.25, r1: 0.25, life: 0, max: 0.3 + Math.random() * 0.1, color: c[0], hi: c[1], alpha: 0.9, kind: 'drop', g: 140 });
+      const s = 22 + Math.random() * 14;
+      this.push({ x, y: y - 0.5, vx: -Math.cos(a) * s * 0.8, vy: -Math.sin(a) * s, r0: 0.25, r1: 0.25, life: 0, max: 0.32 + Math.random() * 0.1, color: c[0], hi: c[1], alpha: 1, kind: 'drop', g: 150 });
     }
   }
 
@@ -111,6 +112,8 @@ export class StepFx {
       if (b.kind === 'drop') {
         ctx.fillStyle = b.color;
         ctx.fillRect(cx, cy, 0.5, b.vy < 0 ? 1 : 0.5);
+        ctx.fillStyle = b.hi;
+        ctx.fillRect(cx, cy, 0.5, 0.5);
         continue;
       }
       if (b.kind === 'ring') {
@@ -118,19 +121,22 @@ export class StepFx {
         ctx.fillStyle = b.color;
         const rx = q(r);
         const ry = Math.max(0.5, q(r * 0.4));
-        for (let i = 0; i < 16; i++) {
-          const t = (i / 16) * Math.PI * 2;
+        const pts = Math.ceil(Math.PI * 2 * rx * 2.2);
+        for (let i = 0; i < pts; i++) {
+          const t = (i / pts) * Math.PI * 2;
           ctx.fillRect(q(cx + Math.cos(t) * rx), q(cy + Math.sin(t) * ry), 0.5, 0.5);
         }
         continue;
       }
-      // A round pixel blob, lit from the top-left.
-      const rr = q(r);
-      for (let dy = -rr; dy <= rr; dy += 0.5) {
-        const w = q(Math.sqrt(Math.max(0, rr * rr - dy * dy)));
+      // A round pixel blob, lit from above.
+      const rx = q(r);
+      const ry = Math.max(0.5, q(r * 0.8));
+      for (let yy = -ry; yy < ry; yy += 0.5) {
+        const t = (yy + 0.25) / ry;
+        const w = q(rx * Math.sqrt(Math.max(0, 1 - t * t)));
         if (w <= 0) continue;
-        ctx.fillStyle = dy < -rr * 0.3 ? b.hi : b.color;
-        ctx.fillRect(cx - w, cy + dy * 0.8, w * 2, 0.5);
+        ctx.fillStyle = yy < -ry * 0.2 ? b.hi : b.color;
+        ctx.fillRect(cx - w, cy + yy, w * 2, 0.5);
       }
     }
     ctx.globalAlpha = 1;

@@ -34,6 +34,8 @@ export class Actor {
   settling = false;
   private wasMoving = false;
   private lastMoveAt = 0;
+  /** Frame time from animate(); scenes that don't call it fall back to the wall clock. */
+  private dtHint = 0;
   /** Seconds into a happy hop, or -1. */
   hopT = -1;
   /** Start-up ease for the player's walk (0..1). */
@@ -76,7 +78,7 @@ export class Actor {
   advance(dist: number): void {
     if (dist <= 0) return;
     const now = performance.now();
-    const dt = Math.min(0.05, Math.max(0.004, (now - this.lastMoveAt) / 1000));
+    const dt = this.dtHint > 0 ? Math.min(0.05, this.dtHint) : Math.min(0.05, Math.max(0.004, (now - this.lastMoveAt) / 1000));
     this.lastMoveAt = now;
     // Planted feet need cadence = speed / stride. Past a brisk cap the
     // stride stretches instead (a little skate beats frantic legs).
@@ -92,6 +94,7 @@ export class Actor {
 
   /** Per-frame animation upkeep: turn frames, stop settling, hops, emotes. */
   animate(dt: number): void {
+    this.dtHint = dt;
     // Turning round: show the in-between facing for a beat.
     if (this.facing !== this.lastFacing) {
       const opp = (this.facing === 'left' && this.lastFacing === 'right') || (this.facing === 'right' && this.lastFacing === 'left') || (this.facing === 'up' && this.lastFacing === 'down') || (this.facing === 'down' && this.lastFacing === 'up');
@@ -109,14 +112,17 @@ export class Actor {
       if (this.turnT <= 0) this.shownFacing = this.facing;
     } else this.shownFacing = this.facing;
     // Stopping: finish the step into the passing pose rather than snapping to a stand.
+    let target = 0;
     if (this.wasMoving && !this.moving) {
+      // Mid-step: finish into the next passing pose. Just past passing: close enough to stand.
       const q = this.phase % 0.5;
-      this.settling = q > 0.02 && q < 0.25 - 0.02;
+      this.settling = (q > 0.02 && q < 0.23) || q > 0.4;
     }
     if (!this.moving) this.ramp = 0;
     this.wasMoving = this.moving;
     if (this.settling) {
-      const target = Math.floor(this.phase / 0.5) * 0.5 + 0.25;
+      const q = this.phase % 0.5;
+      target = Math.floor(this.phase / 0.5) * 0.5 + (q <= 0.25 ? 0.25 : 0.75);
       this.phase = Math.min(target, this.phase + dt * 3.5);
       if (this.phase >= target - 1e-4) this.settling = false;
     }
