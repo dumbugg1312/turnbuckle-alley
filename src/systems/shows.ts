@@ -300,7 +300,8 @@ function playMatch(seg: Segment, venue: Venue): Promise<MatchResult> {
           intro: { title: seg.match!.title ? 'TITLE MATCH!' : 'BELL TIME!' },
           rewardChoices: picks,
           coachId: 'birdie',
-          coach: G.flags['debuted']
+          // Birdie's lines script the debut: face vs. Earl, Earl goes over.
+          coach: G.flags['debuted'] || seg.match!.opponent !== 'earl' || seg.match!.winner !== 'opponent' || seg.match!.playerRole !== 'face'
             ? undefined
             : {
                 lockup: 'Start slow, sugar. Lock up. Grapples and holds. Let the people settle in their seats.',

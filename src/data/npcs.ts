@@ -135,7 +135,8 @@ export const NPCS: NpcDef[] = [
       { at: H(8), map: 'library', x: 9, y: 3, facing: 'down', idle: 'read' },
       ...(c.weekday < 5 ? [{ at: H(15, 50), map: 'library', x: 4, y: 7, facing: 'down', idle: 'read' as const }] : []),
       { at: H(17), map: 'library', x: 9, y: 3, facing: 'down', idle: 'read' },
-      { at: H(18, 30), ...SPOTS.gazeboBench, idle: 'read' },
+      // Show nights he heads straight to the venue (a later entry would pull him out before the bell).
+      ...(c.show ? [] : [{ at: H(18, 30), ...SPOTS.gazeboBench, idle: 'read' as const }]),
       ...showNight(c, { map: '', x: 26, y: 14, facing: 'left', idle: 'still' }),
       { at: H(22), map: 'library', x: 13, y: 8, idle: 'read' },
     ],
@@ -173,7 +174,7 @@ export const NPCS: NpcDef[] = [
       { at: H(8), map: 'studio', x: 3, y: 6, facing: 'down', idle: 'stretch' },
       { at: H(9, 30), map: 'salon', x: 4, y: 5, facing: 'down', idle: 'work' },
       { at: H(16), ...SPOTS.mainStE, idle: 'wander' },
-      { at: H(18), map: 'salon', x: 4, y: 5, facing: 'down', idle: 'work' },
+      ...(c.show ? [] : [{ at: H(18), map: 'salon', x: 4, y: 5, facing: 'down' as Dir, idle: 'work' as const }]),
       ...showNight(c, { map: '', x: 24, y: 14, facing: 'left', idle: 'still' }),
       { at: H(23), map: 'salon', x: 7, y: 5, idle: 'work' },
     ],
@@ -367,7 +368,8 @@ export const NPCS: NpcDef[] = [
       { at: H(12), map: 'hardware', x: 4, y: 6, idle: 'wander' },
       { at: H(13), map: 'sportatorium', x: 22, y: 9, facing: 'left', idle: 'work' },
       ...showNight(c, { map: '', x: 28, y: 18, facing: 'left', idle: 'still' }),
-      { at: H(20), map: 'diner', x: 15, y: 9, facing: 'up', idle: 'sit' },
+      // Show nights he stays for the whole card before supper.
+      { at: c.show ? H(22) : H(20), map: 'diner', x: 15, y: 9, facing: 'up', idle: 'sit' },
     ],
   },
   {
@@ -546,7 +548,8 @@ export const NPCS: NpcDef[] = [
       { at: H(11), map: 'clinic', x: 7, y: 6, idle: 'work' },
       { at: H(15), ...SPOTS.creekBank, idle: 'wander' },
       ...(c.show === 'sat' ? [{ at: H(18, 30), map: 'sportatorium', x: 21, y: 18, facing: 'up' as Dir, idle: 'still' as const }] : []),
-      { at: H(19), map: 'diner', x: 5, y: 9, facing: 'up', idle: 'sit' },
+      // Saturday she watches the whole show instead of leaving at the bell.
+      ...(c.show === 'sat' ? [] : [{ at: H(19), map: 'diner', x: 5, y: 9, facing: 'up' as Dir, idle: 'sit' as const }]),
       { at: H(21), map: 'town', x: 34, y: 13, idle: 'still' },
     ],
   },

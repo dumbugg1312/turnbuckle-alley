@@ -976,14 +976,16 @@ export class DungeonScene implements Scene {
           return scene?.m.result && scene.m.result.stars >= 3 ? picks : undefined;
         },
         onDone: (r: MatchResult, reward: string | null) => {
-          game.scenes.transition(() => {
+          const back = () => {
             game.scenes.pop();
             resolve({ r, reward });
-          });
+          };
+          // If another fade owns the screen, switch without one rather than hang with `busy` on.
+          if (!game.scenes.transition(back)) back();
         },
       };
       scene = new MatchScene(opts);
-      game.scenes.transition(() => game.scenes.push(scene!));
+      if (!game.scenes.transition(() => game.scenes.push(scene!))) game.scenes.push(scene);
     });
     while (game.scenes.transitioning) await this.wait(0.05);
     const { r, reward } = result;

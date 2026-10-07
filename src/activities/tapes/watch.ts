@@ -4,7 +4,7 @@ import { game } from '../../core/game';
 import type { Scene } from '../../core/scene';
 import { G, skillLevel } from '../../core/state';
 import { sting } from '../../core/sting';
-import { absDay, daylight } from '../../core/time';
+import { absDay, DAY_END, daylight } from '../../core/time';
 import { pixelText } from '../../gfx/draw';
 import { CARDS } from '../../match/cards';
 import { narrate, toast } from '../../ui/dialog';
@@ -201,6 +201,11 @@ class WatchScene implements Scene {
         const lib = libraryTapes().filter((t) => !watchedToday(t.id));
         tape = lib.sort((a, b) => (st.library[b.id].got ?? 0) - (st.library[a.id].got ?? 0))[0] ?? null;
       } else {
+        // Another tape would run past 2 AM and the player would pass out at the TV.
+        if (G.time.minutes > DAY_END - 60) {
+          await narrate("Your eyelids are heavier than a steel chair. That's enough tape for tonight.");
+          break;
+        }
         if (last && !st.tutorial.library) {
           st.tutorial.library = true;
           await narrate('This is your *TAPE LIBRARY*: every tape you own, with a star rating for the moments you\'ve caught.', 'Lost a moment to static? Rewatch the tape another day. Be kind, rewind.');
@@ -363,7 +368,8 @@ class WatchScene implements Scene {
     st.stats.watched++;
     const mins = Math.max(15, Math.round(60 * Math.max(progress, 0.25)));
     const passed = G.time.minutes - startMinutes;
-    if (mins > passed) game.clock.advance(mins - passed);
+    // Never tick into 2 AM from here: that runs the pass-out sleep under the TV.
+    if (mins > passed) game.clock.advance(Math.max(0, Math.min(mins - passed, DAY_END - 1 - G.time.minutes)));
     const c = completion(tape);
     if (gotOnTape.length && c.caught === c.total) {
       sting('level-up');

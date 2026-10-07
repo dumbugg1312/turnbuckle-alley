@@ -620,6 +620,8 @@ export function reportNpcSegment(segId: string): void {
 export function reportShowSkipped(show: ShowRecord): void {
   if (show.closed) return;
   show.attended = show.attended ?? false;
+  // A skipped debut has to be offered again, or the rookie never gets one.
+  if (!G.flags['debuted'] && S().flags.debutBooked === show.day) delete S().flags.debutBooked;
   for (const rec of show.segs) {
     if (rec.resolved) continue;
     if (rec.seg.playerInvolved) {

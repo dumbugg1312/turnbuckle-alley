@@ -38,6 +38,14 @@ Status of the overnight build (night of 2026-10-06).
 - Stardew scale (D-022): buildings 7–18 tiles wide and low with 16×32 doors; the town grew to 104×70 and every coordinate moved; the camera aims for 270 px. Not rescaled yet: Grandma's house and the shed on the farm map; #gallery cells are too small for the wider buildings.
 - Bus ride rebuilt (D-023). All 25 interiors redone (D-024). Interior follow-ups: bake rugs into the (now 2×) ground canvas again; redraw the bed, couch, piano, bleachers, folding chairs and fireplace; wire actions for new display pieces in systems/actions.ts. Weaker spots helpers flagged: fair set pieces (water tower, Ferris wheel, tents), winter trees, the show poster and entrance CSS, the Dungeon and tapes screens' CSS, and town ground load time (~1.8 s first build).
 
+## Bug sweep (2026-10-07 evening, D-025)
+- Fixed: Continue after sleeping spawned the player off the map. The world never wrote the actor's position back into `G.player`, so the morning save held Grandma's house with town coordinates. Old broken saves now recover to the nearest open tile.
+- Save/load: missing fields from older saves are filled in (top level and `ext` slices); the ☰ button can't save mid-cutscene or during the sleep routine; New Game keeps the old save until the new one saves; saved volumes apply on Continue.
+- Match: Reversal on an "X + Cover" no longer pins you; a crowd goal reached on the opponent's move counts; Ring General doubles sympathy progress; Side Headlock gives its promised Sympathy when winded.
+- World: tapes can't run the clock into 2 AM under the TV; Earl, Gideon, Hank and Nadia stay at the venue through show night; a skipped debut is rebooked and Birdie's debut coaching only plays for the debut; the Dungeon spar can't hang on a busy fade.
+- Kayfabe: Birdie's in-ring "Best loss I ever booked" is now "saw".
+- Flagged, not changed: flags set but never read (`agnes_1983_asked`, `calendar_turned`, `hammers_met`, `knows_encore`, `locker_opened`, `marquee_fixed`, `page_six`, `player_knows`, `prologue_heart`, `debutDone`); tape haggling uses `Math.random`, so reload and retry gets a new price.
+
 ## In progress at the end of the night
 - Done since: all 34 characters have dialogue files; the main story runs through the Homecoming finale and credits (src/story-main/chapters/).
 

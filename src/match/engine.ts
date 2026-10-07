@@ -379,6 +379,8 @@ export class Match {
       return true;
     }
 
+    // Side Headlock: "+1 Sympathy if you are in trouble" (winded before the breather).
+    if (c.id === 'headlock' && this.gas <= GAS_WINDED) this.sympathy = Math.min(10, this.sympathy + 1);
     // Gas.
     let gas = c.gas;
     if (this.powers.has('ironlungs') && gas > 0) gas = Math.max(0, gas - 1);
@@ -464,7 +466,8 @@ export class Match {
       case 'crowd':
         return this.crowd;
       case 'sympathy':
-        return this.sympathy;
+        // goalProgress holds Ring General's extra credit for this phase.
+        return this.sympathy + this.goalProgress;
       case 'nearfalls':
         return this.nearfalls;
       case 'combo':
@@ -520,17 +523,21 @@ export class Match {
   /** Count plays toward 'play' goals (called from play via type checks). */
   private countPlay(c: CardDef): void {
     const g = this.phase.goal;
+    const general = this.powers.has('general') && (c.type === 'sell' || c.id === 'hopespot');
+    // Ring General: a sympathy goal gets the card's sympathy a second time.
+    if (g.kind === 'sympathy' && general) this.goalProgress += c.sympathy ?? 0;
     if (g.kind !== 'play') return;
     if (!g.types.includes(c.type)) return;
     this.goalProgress += c.cheat && this.phase.id === 'heat' ? 2 : 1;
-    if (this.powers.has('general') && (c.type === 'sell' || c.id === 'hopespot')) this.goalProgress += 1;
+    if (general) this.goalProgress += 1;
   }
 
   endTurn(): void {
     if (this.over || this.pendingKickout) return;
     const call = this.call;
     // Opponent executes their call.
-    if (call && (call.kind === 'offense' || call.kind === 'cutoff' || call.kind === 'rest')) {
+    // A reversed "X + Cover" never reaches the cover, so it resolves like any reversal.
+    if (call && (call.kind === 'offense' || call.kind === 'cutoff' || call.kind === 'rest' || (call.kind === 'cover' && this.reversalQueued))) {
       if (this.reversalQueued) {
         this.emit({ kind: 'oppmove', text: `${this.cfg.player.name} reverses the ${call.name}!`, actor: 'player', anim: 'grapple' });
       } else {
@@ -565,6 +572,8 @@ export class Match {
       this.finishMatch('opponent');
       return;
     }
+    // The opponent's move can push the crowd over a crowd goal.
+    this.checkGoal();
     this.finishTurn();
   }
 

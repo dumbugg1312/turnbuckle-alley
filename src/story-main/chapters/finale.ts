@@ -145,7 +145,7 @@ export async function runHomecoming(): Promise<void> {
   ]);
   if (c === 'mag') await M('grandma', 'smug', "I know. But it's nice to hear it in your voice.");
   else await M('grandma', 'love', 'Good. Somebody had to. I might forget it by Tuesday. You keep it for me.');
-  await M('birdie', 'happy', 'Up off my canvas, sugar. You lost beautifully. Best loss I ever booked.');
+  await M('birdie', 'happy', 'Up off my canvas, sugar. You lost beautifully. Best loss I ever saw.');
   G.flags['reunion_done'] = true;
   G.showHistory.push({ day: absDay(), venue: 'sportatorium', attendance: 2000, gate: 20000, playerStars: 5, headline: 'Homecoming: The Velvet Hammers', review: '' });
   heart(partner, 60);
