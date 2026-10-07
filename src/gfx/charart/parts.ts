@@ -22,6 +22,19 @@ export function interp(keys: [number, number][], t: number): number {
   return keys[keys.length - 1][1];
 }
 
+/** Like interp, but eased between keys so a profile has no corners. */
+export function interpSmooth(keys: [number, number][], t: number): number {
+  if (t <= keys[0][0]) return keys[0][1];
+  for (let i = 1; i < keys.length; i++)
+    if (t <= keys[i][0]) {
+      const [t0, v0] = keys[i - 1];
+      const [t1, v1] = keys[i];
+      const u = (t - t0) / (t1 - t0);
+      return lerp(v0, v1, u * u * (3 - 2 * u));
+    }
+  return keys[keys.length - 1][1];
+}
+
 export function frontHalfWidth(t: number): number {
   const m = B.m;
   const bump = m.belly * Math.sin(Math.PI * clamp((t - 0.02) / 0.62, 0, 1));
@@ -54,8 +67,16 @@ export function sideEdges(t: number): [number, number] {
   const d = m.depth;
   const bump = m.belly * Math.sin(Math.PI * clamp((t - 0.05) / 0.6, 0, 1));
   const f = interp([[0, d * 0.42], [0.3, d * 0.38], [0.55, d * 0.44], [0.8, d * 0.52], [1, d * 0.3]], t) + bump;
-  const b = interp([[0, -d * 0.55], [0.22, -d * 0.5], [0.55, -d * 0.42], [0.85, -d * 0.5], [1, -d * 0.36]], t);
+  // The back is an S, not a plank: the seat curves out at the hips, the
+  // small of the back curves in at the waist, the upper back rounds out over
+  // the shoulder blades and rolls in to the base of the neck.
+  const b = interpSmooth([[0, -d * 0.6], [0.34, -d * 0.36], [0.78, -d * 0.6], [1, -d * 0.36]], t);
   return [f, b];
+}
+
+/** Side view: how far the seat hangs below the hip joint (art px). */
+function seatDrop(): number {
+  return Math.max(K, B.m.torsoH * 0.12);
 }
 
 const UPV: Pt = { x: 0, y: -1 };
@@ -85,12 +106,22 @@ export function drawTorso(): void {
     return;
   }
   const pts: [number, number][] = [];
-  const N = 8;
+  const N = 14;
   const fw = r.fw;
   const up = r.up;
   const tp = (lf: number, ly: number): [number, number] => [bx + fw.x * lf + up.x * ly, by + fw.y * lf + up.y * ly];
+  // The seat: a rounded bulge below the hip joint, over the top of the thigh,
+  // so the line of the back flows into the legs instead of dropping straight.
+  const seat = seatDrop();
+  const [f0, b0] = sideEdges(0);
+  pts.push(tp(f0 * 0.2, -seat * 0.7));
   for (let i = 0; i <= N; i++) pts.push(tp(sideEdges(i / N)[0], (i / N) * H));
   for (let i = N; i >= 0; i--) pts.push(tp(sideEdges(i / N)[1], (i / N) * H));
+  // A quarter ellipse from the back of the hips round under the seat.
+  for (let i = 1; i <= 5; i++) {
+    const a = (i / 5) * (Math.PI / 2);
+    pts.push(tp(b0 * (0.45 + 0.55 * Math.cos(a)), -seat * Math.sin(a)));
+  }
   shape(pts, (x, y) => {
     const dx = x + 0.5 - bx;
     const dy = y + 0.5 - by;
@@ -243,7 +274,10 @@ export function drawLeg(h0: Pt, kn: Pt, an: Pt, near: boolean, outward: number):
     if (GK === 'leather' && col === dmax - 1 && idx === 0) idx = 1; // boot shine
     return tint(base, idx, GK);
   };
-  cyl(X(h0), Y(h0), X(kn), Y(kn), m.legD + wide, m.calfD + 0.5 * K + wide, B.skinR, { paint: paint(0, m.thigh, m.legD + wide) });
+  // Side view: the thigh is nearly as deep as the hips where it leaves the
+  // seat and tapers to the knee, so the back flows down into the leg.
+  const thighTop = B.view === 'side' ? Math.max(m.legD, m.depth * 0.85) + wide : m.legD + wide;
+  cyl(X(h0), Y(h0), X(kn), Y(kn), thighTop, m.calfD + 0.5 * K + wide, B.skinR, { paint: paint(0, m.thigh, thighTop) });
   cyl(X(kn), Y(kn), X(an), Y(an) + 0.5 * K, m.calfD + wide, Math.max(2 * K, m.calfD - K + wide), B.skinR, { paint: paint(m.thigh, m.shin, m.calfD + wide) });
   // Side stripe on tights / shorts / sweats (one native pixel wide).
   const L = B.look;
@@ -524,7 +558,14 @@ export function drawOverExtras(): void {
         const bottom = long ? floor - by - 3 * K + B.sway * K : 0;
         if (side) {
           const [f0] = sideEdges(1);
-          shape([tp(f0 - K, H), tp(-m.depth / 2, H), tp(-m.depth / 2 - (long ? K : 0), -bottom), tp(fE - 1.5 * K, -bottom)].map(([x, y]) => [x, y] as [number, number]), paint);
+          // The back of the coat follows the curve of the back (D-028), then
+          // hangs from the seat; long coats flare a little toward the hem.
+          const backPts: [number, number][] = [];
+          // Cloth bridges the small of the back, so it takes half the body's curve.
+          for (let i = 12; i >= 0; i--) backPts.push(tp((sideEdges(i / 12)[1] - m.depth * 0.5) * 0.5 - 0.5 * K, (i / 12) * H));
+          const [, bSeat] = sideEdges(0);
+          backPts.push(long ? tp(bSeat - 1.5 * K, -bottom) : tp(bSeat * 0.9 - 0.5 * K, -bottom - seatDrop() * 0.6));
+          shape([tp(f0 - K, H), ...backPts, tp(fE - 1.5 * K, -bottom)], paint);
           if (e.id === 'robe' || e.id === 'blazer' || e.id === 'jacket') line(...tp(f0 - K, H - 0.5 * K), ...tp(fE - K, H * 0.45), tint(a, 0));
         } else {
           const open = r.def.open && long ? 2 * K : 0;
