@@ -1,13 +1,13 @@
 import type { Dir } from '../core/state';
 import { mkSpr, toCanvas } from './kit';
 import { EXTRA_SLOT, type Look } from './look';
-import { metrics, POSES, resolvePose, solve, totalHeight, type Expr, type Pose } from './charart/body';
-import { buildRaccoon } from './charart/critters';
+import { K, metrics, metricsArt, POSES, resolvePose, solve, totalHeight, type Expr, type Pose } from './charart/body';
+import { buildRaccoon, RACCOON_SHEET } from './charart/critters';
 import { B, makeBC } from './charart/garments';
 import { drawBearHead, drawFace, drawFaceExtras, drawFacial, drawHair, drawHairBack, drawHead, drawHeadExtras, drawMask, drawPaint, headBox } from './charart/head';
 import { drawArm, drawBackExtras, drawHandItem, drawLeg, drawNeck, drawOverExtras, drawShoe, drawSkirt, drawTorso, drawWings } from './charart/parts';
 import { buildPortrait } from './charart/portrait';
-import { beginLayers, crop, finish, lightPass, mirrorAll, rotateAll, setLight } from './charart/raster';
+import { beginLayers, crop, finish, lightPass, mirrorAll, OUTLINE_W, rotateAll, setLight, setLineWeights } from './charart/raster';
 
 /**
  * Turnbuckle Alley character renderer: a parametric, cached paper doll with
@@ -145,7 +145,22 @@ function isRingGear(look: Look): boolean {
   return RING_SHOES.has(look.shoes) || (RING_TOPS.has(look.top) && (look.bottom === 'trunks' || look.bottom === 'tights'));
 }
 
+/** Build-time stats (ms per sprite), readable from the console for tuning. */
+export const BUILD_STATS = { n: 0, ms: 0, max: 0 };
+
 function buildSprite(look: Look, pose: Pose, facing: Dir, frame: number, blink: boolean, tw: number): Built {
+  const t0 = performance.now();
+  const b = buildSpriteInner(look, pose, facing, frame, blink, tw);
+  const dt = performance.now() - t0;
+  BUILD_STATS.n++;
+  BUILD_STATS.ms += dt;
+  if (dt > BUILD_STATS.max) BUILD_STATS.max = dt;
+  return b;
+}
+
+function buildSpriteInner(look: Look, pose: Pose, facing: Dir, frame: number, blink: boolean, tw: number): Built {
+  // Silhouette outline one world pixel thick, contact shadows one world pixel deep.
+  setLineWeights(K, K);
   if (look.species === 'raccoon') {
     setLight(facing === 'left');
     const spr = buildRaccoon(look, pose, facing, frame, blink);
@@ -153,22 +168,23 @@ function buildSprite(look: Look, pose: Pose, facing: Dir, frame: number, blink: 
     lightPass(spr);
     const { s: cs, ox, oy, lay, flg } = crop(spr);
     const out = finish(cs, lay, flg);
-    return { c: toCanvas(out), ax: 16 - ox + 1, ay: 26 - oy + 1 };
+    return { c: toCanvas(out), ax: 16 * K - ox + OUTLINE_W, ay: (RACCOON_SHEET - 6) * K - oy + OUTLINE_W };
   }
-  const m = metrics(look);
+  const m = metricsArt(look);
   const stance = isRingGear(look);
   const { def, mirror } = resolvePose(pose, facing, frame, stance);
-  if (pose === 'idle') def.bob = frame & 1;
+  // Breathing: the chest settles by one art pixel on alternate frames.
+  if (pose === 'idle') def.bob = (frame & 1) / K;
   setLight(mirror, def.rot);
   const tall = totalHeight(m);
-  const wings = look.extras?.some((e) => e.id === 'moth-wings' || e.id === 'wings' || e.id === 'robe' || e.id === 'cape') ? 12 : 0;
-  let S = Math.ceil(tall * 1.75 + 14 + wings);
+  const wings = look.extras?.some((e) => e.id === 'moth-wings' || e.id === 'wings' || e.id === 'robe' || e.id === 'cape') ? 12 * K : 0;
+  let S = Math.ceil(tall * 1.75 + 14 * K + wings);
   if (S % 2) S++;
   const AX = S >> 1;
-  const AY = S - 10;
+  const AY = S - 10 * K;
   beginLayers(S, S);
-  const rig = solve(def, m);
-  makeBC(look, m, rig, AX, AY, tw);
+  const rig = solve(def, m, K);
+  makeBC(look, m, rig, AX, AY, tw, metrics(look));
   const spr = mkSpr(S, S, () => drawBody(def.expr, blink));
   if (def.rot) rotateAll(spr, def.rot === 'cw');
   if (mirror) mirrorAll(spr);
@@ -181,8 +197,8 @@ function buildSprite(look: Look, pose: Pose, facing: Dir, frame: number, blink: 
     ax = Math.floor(out.w / 2);
     ay = out.h - 1 + (pose === 'lifted' ? Math.round(tall * 0.4) : 0);
   } else {
-    ax = AX - ox + 1;
-    ay = AY - oy + 1;
+    ax = AX - ox + OUTLINE_W;
+    ay = AY - oy + OUTLINE_W;
   }
   return { c: toCanvas(out), ax, ay };
 }
@@ -192,7 +208,7 @@ function buildSprite(look: Look, pose: Pose, facing: Dir, frame: number, blink: 
  * twice as fine as the world and drawn at half size, so on the doubled screen
  * buffer every art pixel is still a whole buffer pixel (DECISIONS.md D-017).
  */
-export const CHAR_DENSITY: number = 1;
+export const CHAR_DENSITY: number = K;
 
 const cache = new Map<string, Built>();
 const CACHE_MAX = 2500;

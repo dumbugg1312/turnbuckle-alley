@@ -1,8 +1,13 @@
 import { dth, hash2, liA, mixc, shA, type Color } from '../kit';
 import type { Extra, Look } from '../look';
-import type { Met, Rig, View } from './body';
+import { K, type Met, type Rig, type View } from './body';
 import { ramp, tint, type MatKind, type Ramp } from './palette';
 import type { Pt } from './raster';
+
+/** One art pixel in native units: the width of interior detail lines. */
+const F = 1 / K;
+/** Patterns sampled at art resolution (the rest keep native-sized cells). */
+const FINE = new Set(['sequins', 'camo', 'cow']);
 
 /**
  * Garment tables and the body-local clothing shaders. Shaders answer "what is
@@ -86,7 +91,10 @@ export const BOOT_H: Record<string, number> = { 'wrestling-boots': 0.75, kickpad
 /** The current build (module-level; builds are synchronous). */
 export interface BC {
   look: Look;
+  /** Metrics in the painter's units (art pixels for sprites). */
   m: Met;
+  /** Metrics in native units (the garment shaders work in native units). */
+  mn: Met;
   r: Rig;
   view: View;
   AX: number;
@@ -116,7 +124,7 @@ export const Y = (p: Pt) => B.AY + p.y;
 export const dk = (c: Color): Color => (B.dark ? shA(c, 0.22) : c);
 export const ex = (id: string) => B.ex.get(id);
 
-export function makeBC(look: Look, m: Met, r: Rig, AX: number, AY: number, tw = 0): BC {
+export function makeBC(look: Look, m: Met, r: Rig, AX: number, AY: number, tw = 0, mn: Met = m): BC {
   const exm = new Map<string, Extra>();
   for (const e of look.extras ?? []) exm.set(e.id, e);
   const top = TOPS[look.top] ?? TOPS.tee;
@@ -150,7 +158,7 @@ export function makeBC(look: Look, m: Met, r: Rig, AX: number, AY: number, tw = 
   }
   const bear = look.species === 'bear';
   B = {
-    look, m, r, view: r.def.view, AX, AY, skin: look.skin, skinR: ramp(look.skin, bear ? 'fur' : 'skin'), ex: exm, top, bot,
+    look, m, mn, r, view: r.def.view, AX, AY, skin: look.skin, skinR: ramp(look.skin, bear ? 'fur' : 'skin'), ex: exm, top, bot,
     sleeveLen, sleeveCol, sleeveAcc, sleevePat, sleeveWide, sleeveKind, dark: false, bear, tw, sway: r.def.sway ?? 0,
   };
   return B;
@@ -247,54 +255,61 @@ export function topColorAt(px0: number, py0: number, s = 1): Color {
   const L = B.look;
   const pat = L.topPattern ?? B.top.pat;
   if (pat === 'ref') return ((Math.floor(px0 / (2 * s)) % 2) + 2) % 2 === 0 ? L.topColor : L.topAccent;
-  return pattern(pat, px0, py0, L.topColor, L.topAccent, s, B.tw);
+  return pattern(pat, px0, py0, L.topColor, L.topAccent, FINE.has(pat ?? '') ? s / K : s, B.tw);
 }
 export function bottomColorAt(px0: number, py0: number, s = 1): Color {
   const L = B.look;
-  return pattern(L.bottomPattern, px0, py0, L.bottomColor, L.bottomAccent, s, B.tw);
+  return pattern(L.bottomPattern, px0, py0, L.bottomColor, L.bottomAccent, FINE.has(L.bottomPattern ?? '') ? s / K : s, B.tw);
 }
+
+/** Is `v` inside the one-art-pixel band starting at `row` (native units)? */
+const band = (v: number, row: number) => v >= row && v < row + F;
+/** The single art column just left of centre. */
+const centre = (lx: number) => lx >= -F / 2 - 0.01 && lx < F / 2 - 0.01;
 
 /** Torso skin with muscle definition. */
 function torsoSkin(lx: number, ly: number, H: number, wb: number, sideView: boolean): Color {
   const sk = B.skin;
   if (B.bear) {
     setG('fur');
-    const inBelly = sideView ? lx > 0 && ly < H * 0.75 : Math.abs(lx) < B.m.waistW * 0.3 && ly < H * 0.8 && ly > wb;
+    const inBelly = sideView ? lx > 0 && ly < H * 0.75 : Math.abs(lx) < B.mn.waistW * 0.3 && ly < H * 0.8 && ly > wb;
     return inBelly ? mixc(sk, '#d8a878', 0.55) : sk;
   }
-  const rip = B.m.ripped;
+  const rip = B.mn.ripped;
   const pecY = Math.round(H * 0.6);
   setG('skin');
   if (!sideView) {
     const ax = Math.abs(lx);
-    const fy = Math.floor(ly);
-    if (rip > 0.4 && fy === pecY - 1 && ax > 0.5 && ax < B.m.shW * 0.34) setG('skin', -1);
-    else if (rip > 0.6 && lx >= 0 && lx < 1 && ly > wb + 0.5 && ly < pecY - 1 && fy % 2 === 0) setG('skin', -1);
-    else if (rip > 0.4 && lx >= -1 && lx < 0 && fy === pecY + 1) setG('skin', 1);
-    else if (lx >= 0 && lx < 1 && fy === wb + 1 && rip > 0.3) setG('skin', -1);
-  } else if (rip > 0.4 && Math.floor(ly) === pecY - 1 && lx > 0) setG('skin', -1);
+    // Pec underside, sternum, abs: one-art-pixel lines.
+    if (rip > 0.4 && band(ly, pecY - 1) && ax > 0.5 && ax < B.mn.shW * 0.34) setG('skin', -1);
+    else if (rip > 0.6 && centre(lx) && ly > wb + 0.5 && ly < pecY - 1) setG('skin', -1);
+    else if (rip > 0.6 && ax < B.mn.waistW * 0.3 && ax > 0.5 && (band(ly, wb + 2) || band(ly, wb + 4)) && ly < pecY - 1.5) setG('skin', -1);
+    else if (rip > 0.4 && lx >= -1 && lx < 0 && band(ly, pecY + 1)) setG('skin', 1);
+    else if (centre(lx) && band(ly, wb + 1) && rip > 0.3) setG('skin', -1);
+  } else if (rip > 0.4 && band(ly, pecY - 1) && lx > 0) setG('skin', -1);
   return sk;
 }
 
 /** Front/back torso garment shader. lx: lateral from centre, ly: height above hip. */
 export function torsoFront(lx: number, ly: number, hw: number, back: boolean): Color {
   const L = B.look;
-  const m = B.m;
+  const m = B.mn;
   const T = B.top;
   const H = m.torsoH;
   const bi = B.bot;
   const ax = Math.abs(lx);
-  const pxl = Math.floor(lx + 64);
-  const pyl = Math.floor(ly);
+  const pxl = lx + 64;
+  const pyl = ly;
   const dress = L.top === 'dress';
   setG(T.kind ?? 'cloth');
   if (ly < bi.wb && !dress) {
     setG(bi.kind ?? 'cloth');
     if (ly >= bi.wb - 1 && L.bottom !== 'none') {
-      setG(bi.kind ?? 'cloth', 0);
+      // Waistband with a belt-loop / stitch row.
+      setG(bi.kind ?? 'cloth', band(ly, bi.wb - 1) ? -1 : 0);
       return L.bottomAccent;
     }
-    if (bi.seam && lx >= -0.5 && lx < 0.5) setG(bi.kind ?? 'cloth', -1);
+    if (bi.seam && centre(lx)) setG(bi.kind ?? 'cloth', -1);
     return bottomColorAt(pxl, pyl);
   }
   if (L.bottom === 'overalls') {
@@ -341,23 +356,25 @@ export function torsoFront(lx: number, ly: number, hw: number, back: boolean): C
     else if ((T.neck === 'collar' || T.neck === 'hood') && top < 1 && ax < 1.6) covered = false;
   }
   if (!covered) return torsoSkin(lx, ly, H, bi.wb, false);
-  // Folds for loose cloth: a crease under the chest on the shadow side, a lit ridge opposite, a tuck shadow at the waist.
-  const fy = Math.floor(ly);
+  // Folds for loose cloth: a crease under the chest on the shadow side, a lit
+  // ridge opposite, a diagonal pull from each armpit and a tuck at the waist.
   const creaseY = Math.round(H * 0.5);
   if (T.loose) {
-    if (fy === creaseY && lx > hw * 0.15 && lx < hw * 0.8) setG(GK, -1);
-    else if (fy === creaseY + 1 && lx < -hw * 0.2 && lx > -hw * 0.7) setG(GK, 1);
-    else if (fy === bi.wb && L.bottom !== 'none' && !dress) setG(GK, -1);
+    if (band(ly, creaseY) && lx > hw * 0.15 && lx < hw * 0.8) setG(GK, -1);
+    else if (band(ly, creaseY + F) && lx < -hw * 0.2 && lx > -hw * 0.7) setG(GK, 1);
+    else if (band(ly, bi.wb) && L.bottom !== 'none' && !dress) setG(GK, -1);
+    else if (ly > H * 0.55 && ly < H * 0.85 && Math.abs(ax - (hw - 1.2 - (H * 0.85 - ly) * 0.5)) < F / 2 + 0.01) setG(GK, -1);
   } else if (T.cover !== 'none') {
     // Tight cloth shows the chest: a sternum line and the pec underside.
     const rip = m.ripped;
-    if (rip > 0.4 && lx >= 0 && lx < 1 && ly > H * 0.45 && ly < H * 0.66) setG(GK, -1);
-    else if (rip > 0.4 && fy === Math.round(H * 0.58) - 1 && ax > 0.8 && ax < hw * 0.75) setG(GK, -1);
+    if (rip > 0.4 && centre(lx) && ly > H * 0.45 && ly < H * 0.66) setG(GK, -1);
+    else if (rip > 0.4 && band(ly, Math.round(H * 0.58) - 1) && ax > 0.8 && ax < hw * 0.75) setG(GK, -1);
   }
   if (!back) {
     const top = H - ly;
     if (T.neck === 'collar' && top < 1.5 && ax >= 1.6 && ax < 3.2) {
-      setG(GK, 1);
+      // Collar points: lit, with a fold line along the inner edge.
+      setG(GK, ax < 1.6 + F ? 0 : 1);
       return liA(L.topAccent, 0.1);
     }
     if (T.open && ax < 1.6) {
@@ -365,23 +382,31 @@ export function torsoFront(lx: number, ly: number, hw: number, back: boolean): C
       return L.topAccent;
     }
     if (T.open && ax < 2.6 && top < H * 0.5) setG(GK, -1);
-    if (T.zip && lx >= -0.5 && lx < 0.5) {
-      setG('metal');
-      return fy % 2 === 0 ? L.topAccent : shA(L.topAccent, 0.25);
+    if (T.zip && lx >= -F && lx < F) {
+      // Zipper: two columns of alternating teeth with a pull near the top.
+      setG('metal', 0);
+      if (top < 1.2 && ax < F) return liA(L.topAccent, 0.4);
+      return (Math.floor(ly * K) + (lx < 0 ? 0 : 1)) % 2 === 0 ? L.topAccent : shA(L.topAccent, 0.3);
     }
-    if (T.placket && lx >= -0.5 && lx < 0.5) {
-      setG(GK, -1);
-      return fy % 3 === 0 ? L.topAccent : topColorAt(pxl, pyl);
+    if (T.placket && lx >= -F && lx < F) {
+      // Placket with buttons every three native pixels.
+      const btn = ((ly % 3) + 3) % 3 < 2 * F && top > 1.5;
+      if (btn) {
+        setG('metal', lx < 0 && ((ly % 3) + 3) % 3 < F ? 1 : 0);
+        return L.topAccent;
+      }
+      setG(GK, lx < 0 ? -1 : 0);
+      return topColorAt(pxl, pyl);
     }
-    if (T.pockets === 2 && top > 2 && top < 4 && ax > 1.2 && ax < 3.5) setG(GK, -1);
-    if (T.pockets === 1 && L.top === 'hoodie' && ly > bi.wb && ly < bi.wb + 2.5 && ax < hw * 0.55) setG(GK, -1);
-    if (T.pockets === 1 && L.top === 'scrubs' && top > 2.5 && top < 4.5 && lx < -1 && lx > -4) setG(GK, -1);
+    if (T.pockets === 2 && top > 2 && top < 4 && ax > 1.2 && ax < 3.5) setG(GK, band(ly, H - 4) || band(ly, H - 2 - F) || Math.abs(ax - 1.2) < F / 2 || Math.abs(ax - 3.5 + F) < F / 2 ? -1 : 0);
+    if (T.pockets === 1 && L.top === 'hoodie' && ly > bi.wb && ly < bi.wb + 2.5 && ax < hw * 0.55) setG(GK, band(ly, bi.wb + 2.5 - F) || Math.abs(ax - hw * 0.55 + F) < F / 2 ? -1 : 0);
+    if (T.pockets === 1 && L.top === 'scrubs' && top > 2.5 && top < 4.5 && lx < -1 && lx > -4) setG(GK, band(ly, H - 4.5) || Math.abs(lx + 4 - F) < F / 2 ? -1 : 0);
     if (T.neck === 'hood' && top < 1.8 && ax < 2.5) {
       setG(GK, 0);
       return L.topAccent;
     }
     if (L.top === 'apron' && ax < hw * 0.55 && ly < H * 0.78) {
-      setG('cloth', fy === Math.round(H * 0.78) - 1 ? -1 : 0);
+      setG('cloth', band(ly, Math.round(H * 0.78) - 1) ? -1 : 0);
       return L.topAccent;
     }
     if (L.topPattern === 'logo' && top > 2 && top < 5 && ax < 1.6) {
@@ -393,9 +418,10 @@ export function torsoFront(lx: number, ly: number, hw: number, back: boolean): C
       return ly >= bi.wb - 1 ? L.topAccent : L.topColor;
     }
   } else {
-    if (T.neck === 'hood' && H - ly < 3 && ax < hw * 0.6) setG(GK, -1);
-    // Spine.
-    else if (lx >= -0.5 && lx < 0.5 && ly > bi.wb + 1 && ly < H - 1.5) setG(GK, -1);
+    if (T.neck === 'hood' && H - ly < 3 && ax < hw * 0.6) setG(GK, band(ly, H - 3) ? -1 : 0);
+    // Spine and shoulder-blade ridges.
+    else if (centre(lx) && ly > bi.wb + 1 && ly < H - 1.5) setG(GK, -1);
+    else if (band(ly, H - 2.5) && ax > 1 && ax < hw * 0.6) setG(GK, 1);
   }
   return topColorAt(pxl, pyl);
 }
@@ -403,11 +429,11 @@ export function torsoFront(lx: number, ly: number, hw: number, back: boolean): C
 /** Side-view torso shader. lf: forward offset (front +), ly: height above hip. */
 export function torsoSide(lf: number, ly: number, dF: number): Color {
   const L = B.look;
-  const H = B.m.torsoH;
+  const H = B.mn.torsoH;
   const T = B.top;
   const bi = B.bot;
-  const pxl = Math.floor(lf + 64);
-  const pyl = Math.floor(ly);
+  const pxl = lf + 64;
+  const pyl = ly;
   const dress = L.top === 'dress';
   setG(T.kind ?? 'cloth');
   if (ly < bi.wb && !dress) {
@@ -439,10 +465,10 @@ export function torsoSide(lf: number, ly: number, dF: number): Color {
   const top = H - ly;
   if (covered && T.neck !== 'high' && T.neck !== 'none' && top < (T.neck === 'v' || T.neck === 'scoop' ? 2.2 : 1) && lf > 0.5) covered = false;
   if (!covered) return torsoSkin(lf, ly, H, bi.wb, true);
-  const fy = Math.floor(ly);
   if (T.loose) {
-    if (fy === Math.round(H * 0.5) && lf > 0) setG(GK, -1);
-    else if (fy === bi.wb && L.bottom !== 'none' && !dress) setG(GK, -1);
+    if (band(ly, Math.round(H * 0.5)) && lf > 0) setG(GK, -1);
+    else if (band(ly, bi.wb) && L.bottom !== 'none' && !dress) setG(GK, -1);
+    else if (ly > H * 0.5 && ly < H * 0.85 && Math.abs(lf - (dF - 1.5 - (ly - H * 0.5) * 0.3)) < F / 2 + 0.01) setG(GK, -1);
   }
   if (T.open && lf > dF - 1.6) {
     setG(GK, 0);
@@ -478,25 +504,27 @@ export function armColor(s: number, total: number): Color {
   }
   const wt = ex('wrist-tape');
   if (wt && s > total - 1.9 && s <= total - 0.2) {
-    setG('cloth', Math.floor(s) % 2 ? -1 : 0);
+    setG('cloth', Math.floor(s * K) % 2 ? -1 : 0);
     return wt.color;
   }
   const bg = ex('bangles');
   if (bg && s > total - 1.6 && s < total - 0.6) {
-    setG('metal');
+    setG('metal', band(s, total - 1.6) ? 1 : 0);
     return bg.color;
   }
   const ep = ex('elbow-pads');
-  if (ep && Math.abs(s - B.m.upArm) < 1.2) {
-    setG('cloth');
+  if (ep && Math.abs(s - B.mn.upArm) < 1.2) {
+    setG('cloth', Math.abs(s - B.mn.upArm) > 1.2 - F ? -1 : 0);
     return ep.color;
   }
   if (s <= B.sleeveLen * total + 0.01) {
     setG(B.sleeveKind);
     if (L.top === 'track' && !ex('jacket') && Math.abs(s - total * 0.5) < 0.6) return L.topAccent;
-    if (s > B.sleeveLen * total - 1 && B.sleeveLen > 0.9 && (L.top === 'hoodie' || L.top === 'sweater' || L.top === 'track')) setG(B.sleeveKind, -1);
-    else if (B.sleeveLen < 0.9 && s > B.sleeveLen * total - 0.9) setG(B.sleeveKind, -1);
-    return pattern(B.sleevePat, 66, Math.floor(s), B.sleeveCol, B.sleeveAcc, 1, B.tw);
+    const cuff = B.sleeveLen * total;
+    if (s > cuff - 1 && B.sleeveLen > 0.9 && (L.top === 'hoodie' || L.top === 'sweater' || L.top === 'track')) setG(B.sleeveKind, Math.floor(s * K) % 2 ? -1 : 0);
+    else if (B.sleeveLen < 0.9 && s > cuff - F) setG(B.sleeveKind, -1);
+    else if (B.sleeveLen > 0.9 && band(s, B.mn.upArm - F) && s < cuff) setG(B.sleeveKind, -1); // elbow crease
+    return pattern(B.sleevePat, 66, s, B.sleeveCol, B.sleeveAcc, FINE.has(B.sleevePat ?? '') ? 1 / K : 1, B.tw);
   }
   setG('skin');
   return B.skin;
@@ -510,23 +538,24 @@ export function legColor(s: number, total: number, near: boolean): Color {
     return B.skin;
   }
   const bh = BOOT_H[L.shoes];
-  if (bh !== undefined && s > total - B.m.shin * bh) {
-    setG('leather', s > total - B.m.shin * bh + 1 ? 0 : 1);
+  const bootTop = total - B.mn.shin * bh;
+  if (bh !== undefined && s > bootTop) {
+    setG('leather', s < bootTop + F ? 1 : band(s, bootTop + 1) ? -1 : 0);
     return L.shoesColor;
   }
   const kp = ex('kneepads');
-  if (kp && Math.abs(s - B.m.thigh) < 1.2) {
-    setG('cloth');
+  if (kp && Math.abs(s - B.mn.thigh) < 1.2) {
+    setG('cloth', Math.abs(s - B.mn.thigh) > 1.2 - F ? -1 : 0);
     return kp.color;
   }
   const kb = ex('knee-brace');
-  if (kb && near && Math.abs(s - B.m.thigh) < 1.4) {
-    setG('cloth');
+  if (kb && near && Math.abs(s - B.mn.thigh) < 1.4) {
+    setG('cloth', Math.floor(s * K) % 2 ? -1 : 0);
     return kb.color;
   }
   const so = ex('socks');
-  if (so && s > total - B.m.shin * 0.7) {
-    setG('cloth');
+  if (so && s > total - B.mn.shin * 0.7) {
+    setG('cloth', s < total - B.mn.shin * 0.7 + F ? -1 : 0);
     return so.color;
   }
   const cov = B.bot.len * total;
@@ -534,10 +563,11 @@ export function legColor(s: number, total: number, near: boolean): Color {
     setG(B.bot.kind ?? 'cloth');
     if (L.bottom === 'trunks' && s > cov - 0.9) return L.bottomAccent;
     if (L.bottom === 'sweats' && s > total - 0.8) return L.bottomAccent;
-    // Knee crease on long pants.
-    if (B.bot.len > 0.9 && Math.abs(s - B.m.thigh - 0.5) < 0.6) setG(GK, -1);
-    else if (s > cov - 0.9 && B.bot.len < 0.9) setG(GK, -1);
-    return bottomColorAt(70, Math.floor(s));
+    // Knee crease on long pants, hem line on short ones.
+    if (B.bot.len > 0.9 && band(s, B.mn.thigh)) setG(GK, -1);
+    else if (B.bot.len > 0.9 && band(s, B.mn.thigh + 1.5)) setG(GK, 1);
+    else if (s > cov - F && B.bot.len < 0.9) setG(GK, -1);
+    return bottomColorAt(70, s);
   }
   setG('skin');
   return B.skin;
