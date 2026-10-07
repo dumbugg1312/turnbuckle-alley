@@ -7,6 +7,11 @@ import type { Rank, Weather } from '../../core/state';
  * Text supports *red emphasis*, **teal bold**, and placeholders:
  * {name} player's real name, {ring} ring name, {they}/{them}/{their} player
  * pronouns (capitalised variants work too).
+ *
+ * Memory placeholders (world/memory.ts), only safe on lines gated by the
+ * matching condition: {opponent} {opp} {finisher} {myFinisher} {venue}
+ * {stars} need `lastMatch`; {lastGift} needs `giftedRecently`; {subject}
+ * needs `news`. Gift replies can use {item}.
  */
 export type Place = 'public' | 'insider' | 'home' | 'show';
 
@@ -30,6 +35,29 @@ export interface Cond {
   married?: boolean;
   /** Player alignment in the ring. */
   alignment?: ('face' | 'heel' | 'tweener')[];
+  /**
+   * The player's most recent show match. Fails if they haven't had one.
+   * maxDaysAgo defaults to 7 so nobody brings up a match from last season.
+   */
+  lastMatch?: {
+    won?: boolean;
+    maxDaysAgo?: number;
+    minDaysAgo?: number;
+    /** Opponent NPC ids. */
+    opponent?: string[];
+    venue?: ('vfw' | 'sportatorium')[];
+    minStars?: number;
+    maxStars?: number;
+    /** A belt was on the line. */
+    title?: boolean;
+  };
+  /** You gave this person something between minDays (default 1) and maxDays days ago. */
+  giftedRecently?: { maxDays: number; minDays?: number; item?: string[] };
+  /** Days since you last talked (before today), inclusive range. Fails when there is no record. */
+  daysSinceTalk?: [number, number];
+  /** A piece of town news (world/memory.ts) happened in the last `newsDays` days (default 7). */
+  news?: string;
+  newsDays?: number;
 }
 
 export interface Line {
@@ -40,6 +68,8 @@ export interface Line {
   mood?: 'neutral' | 'happy' | 'sad' | 'angry' | 'surprised' | 'smug' | 'love';
   /** Relative pick weight (default 1). */
   weight?: number;
+  /** Say it once, ever. */
+  once?: boolean;
 }
 
 /** API given to scripted heart events and story moments. */
@@ -84,7 +114,24 @@ export interface DialogueSet {
   introPublic?: string[];
   lines: Line[];
   gifts: { loves: string[]; likes: string[]; dislikes: string[] };
-  giftReplies: { love: string[]; like: string[]; neutral: string[]; dislike: string[]; birthday?: string[] };
+  giftReplies: {
+    love: string[];
+    like: string[];
+    neutral: string[];
+    dislike: string[];
+    /** Birthday replies. Each one should be this person's own; {item} names the gift. */
+    birthday?: string[];
+    /** Checked first: a reply for one particular item, by item id. */
+    byItem?: Record<string, string | string[]>;
+    /** For items they feel nothing special about, by item category (food, flea, nature...). */
+    byCat?: Record<string, string | string[]>;
+    /** Brought up a few days later, about the last thing you gave them ({lastGift}). */
+    later?: string[];
+  };
+  /** Talking a second or third time the same day: short brush-offs or continuations. */
+  again?: string[];
+  /** When nothing else fits. Replaces the old town-wide stock lines. */
+  idle?: string[];
   birthday?: { season: number; day: number };
   events: HeartEvent[];
 }

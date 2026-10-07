@@ -10,6 +10,8 @@ export interface ItemDef {
   desc: string;
   cat: ItemCat;
   price: number; // buy price; sells for half
+  /** How people say it in passing, without an article ("Polaroid", "slice of pie"). Defaults to the name in lower case. */
+  said?: string;
   /** Energy restored when eaten. */
   energy?: number;
   /** Match buff when eaten on a show day. */

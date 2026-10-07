@@ -15,6 +15,7 @@ import { el, markup, sleep, uiRoot } from '../ui/dom';
 import { onEnterMap, onNewDay, onTalk, onTick } from '../world/hooks';
 import { lookFor, WORLD } from '../world/scene';
 import { addHearts, speakerFor } from '../world/talk';
+import { recordShowMatch } from '../world/memory';
 import { chairState } from './actions';
 
 /** Per-day show state. */
@@ -154,6 +155,7 @@ export async function runShow(): Promise<void> {
         playerResult = result;
         playerStars = result.stars;
         story.reportMatch(seg.id, result);
+        recordShowMatch(seg.match, result, venue);
         audio.music('show');
         audio.crowd(0.4);
       } else if (seg.playerInvolved) {
