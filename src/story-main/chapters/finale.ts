@@ -171,7 +171,7 @@ async function epilogue(): Promise<void> {
   await M('grandma', 'smug', 'Only if I can cheat.');
   await M('birdie', 'happy', "Wouldn't be gin otherwise.");
   await N('Later. Ropewood Lane. Birdie\'s porch, under the porch light the moths love.');
-  await stage('town', 15, 13, 'up', [['birdie', 14, 12, 'down'], ['grandma', 16, 12, 'down']]);
+  await stage('town', 23, 14, 'up', [['birdie', 22, 13, 'down'], ['grandma', 24, 13, 'down']]);
   music('ending');
   await N('Two rocking chairs. For forty years, only one of them ever rocked.');
   await N('Tonight they both squeak. Loudest porch on the street.');

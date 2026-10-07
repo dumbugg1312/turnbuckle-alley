@@ -39,7 +39,7 @@ export const FAIR = registerMap({
   name: 'Fairgrounds',
   ...b.build(),
   objects,
-  warps: [{ x: 0, y: 17, w: 1, h: 3, to: 'town', tx: 62, ty: 26, facing: 'left', label: 'To town' }],
+  warps: [{ x: 0, y: 17, w: 1, h: 3, to: 'town', tx: 102, ty: 31, facing: 'left', label: 'To town' }],
   music: 'fair',
   outside: '#2f5a3e',
 });

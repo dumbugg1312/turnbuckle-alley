@@ -58,7 +58,7 @@ export const FARM = registerMap({
   name: "Grandma's Place",
   ...b.build(),
   objects,
-  warps: [{ x: W - 1, y: 13, w: 1, h: 4, to: 'town', tx: 1, ty: 26, facing: 'right', label: 'To town' }],
+  warps: [{ x: W - 1, y: 13, w: 1, h: 4, to: 'town', tx: 1, ty: 31, facing: 'right', label: 'To town' }],
   music: 'town',
   outside: '#2f5a3e',
 });
