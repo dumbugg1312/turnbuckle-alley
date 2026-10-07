@@ -69,8 +69,8 @@ function matchCall(m: MatchMemory, st: Stage, calls: number): string[] {
   const big = m.highlights.find((h) => h.includes('2.9'));
   const out = [source(m, st, calls)];
   if (m.won && m.title) out.push(`You won the belt. Off {opponent}. I made the nurse read it twice, then I made her read it to the man in 4B, who is deaf, so she had to read it loud.`);
-  else if (m.won && good) out.push("You beat {opponent} with the {finisher}. Agnes underlined it. Agnes doesn't underline. She says underlining is for people who can't write.");
-  else if (m.won) out.push("You won, she says. She says it with a comma after it. Agnes's commas carry a lot of weight.", 'The man behind her fell asleep in the middle part. She woke him up for the finish. She\'s very fair.');
+  else if (m.won && good) out.push("You beat {opponent} with the {finisher}. I made them say it twice. Then I told the nurse, who hadn't asked.");
+  else if (m.won) out.push("You won. They said it with a little pause after. I know that pause, chère. I've been that pause.", 'The middle went quiet, I hear. Middles do that. I once lost a whole crowd in Shreveport to a man selling boiled peanuts.');
   else if (good) out.push("You lost to {opponent}, and the whole front row stood up for you anyway. Oh, I lost like that for years. Those are the ones they keep.");
   else out.push("It sounds like a hard one. I'm not going to ask about the match.", 'I\'m going to ask if you ate after. ...You did not. I can hear that you did not.');
   if (big) out.push('And a kickout at two and nine-tenths. I yelled. The nurse came running. I told her it was a spider.');

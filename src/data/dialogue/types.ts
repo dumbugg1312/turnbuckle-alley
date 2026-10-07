@@ -121,9 +121,9 @@ export interface DialogueSet {
     dislike: string[];
     /** Birthday replies. Each one should be this person's own; {item} names the gift. */
     birthday?: string[];
-    /** Checked first: a reply for one particular item, by item id. */
+    /** Checked first: the reply to one particular item, by item id. A list is several boxes in a row. */
     byItem?: Record<string, string | string[]>;
-    /** For items they feel nothing special about, by item category (food, flea, nature...). */
+    /** For items they feel nothing special about, by item category (food, flea, nature...). A list is alternatives. */
     byCat?: Record<string, string | string[]>;
     /** Brought up a few days later, about the last thing you gave them ({lastGift}). */
     later?: string[];

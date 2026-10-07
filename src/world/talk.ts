@@ -369,8 +369,11 @@ export function saidName(id: string): string {
   return d.said ?? d.name.toLowerCase();
 }
 
-/** How a gift lands: tier, heart points and what they say. Pure, for tests. */
-export function giftReaction(npcId: string, id: string, birthday = false): { tier: 'love' | 'like' | 'neutral' | 'dislike'; points: number; text: string; named: boolean } {
+/**
+ * How a gift lands: tier, heart points and what they say (one box, or several
+ * when a byItem reply is a list). Pure, for tests.
+ */
+export function giftReaction(npcId: string, id: string, birthday = false): { tier: 'love' | 'like' | 'neutral' | 'dislike'; points: number; boxes: string[]; named: boolean } {
   const ds = DIALOGUE[npcId];
   let tier: 'love' | 'like' | 'neutral' | 'dislike' = 'neutral';
   if (ds?.gifts.loves.includes(id)) tier = 'love';
@@ -379,16 +382,17 @@ export function giftReaction(npcId: string, id: string, birthday = false): { tie
   const points = { love: 80, like: 45, neutral: 20, dislike: -20 }[tier] * (birthday ? 3 : 1);
   const gr = ds?.giftReplies;
   const cat = ITEMS[id]?.cat;
-  const byItem = one(gr?.byItem?.[id]);
-  const text =
+  const byItem = gr?.byItem?.[id];
+  const pick =
     (birthday ? one(gr?.birthday) : null) ??
-    byItem ??
-    (tier === 'neutral' || tier === 'like' ? one(cat ? gr?.byCat?.[cat] : undefined) : null) ??
+    (tier === 'neutral' || tier === 'like' ? one(cat && !byItem ? gr?.byCat?.[cat] : undefined) : null) ??
     one(gr?.[tier]) ??
     'Oh! The {item}. Thank you.';
-  const named = !!byItem || text.includes('{item}') || text.includes('{Item}');
+  // A byItem list is several boxes in a row; everything else is one box picked from a list.
+  const boxes = !birthday && byItem ? (Array.isArray(byItem) ? byItem : [byItem]) : [pick];
+  const named = (!birthday && !!byItem) || boxes.some((t) => /\{item\}/i.test(t));
   const said = saidName(id);
-  return { tier, points, text: text.replace(/\{item\}/g, said).replace(/\{Item\}/g, said[0].toUpperCase() + said.slice(1)), named };
+  return { tier, points, boxes: boxes.map((t) => t.replace(/\{item\}/g, said).replace(/\{Item\}/g, said[0].toUpperCase() + said.slice(1))), named };
 }
 
 async function giveGift(npcId: string, id: string): Promise<void> {
@@ -401,10 +405,10 @@ async function giveGift(npcId: string, id: string): Promise<void> {
   if (!(G.player.inventory[id] > 0)) holdGift(null);
   audio.sfx('gift');
   const bday = !!ds?.birthday && ds.birthday.season === G.time.season && ds.birthday.day === G.time.day;
-  const { tier, points, text, named } = giftReaction(npcId, id, bday);
+  const { tier, points, boxes, named } = giftReaction(npcId, id, bday);
   const mood = tier === 'love' ? 'love' : tier === 'like' ? 'happy' : tier === 'dislike' ? 'sad' : 'neutral';
   if (!named) await narrate(`You hand ${NPC_BY_ID[npcId]?.short ?? npcId} the ${saidName(id)}.`);
-  await say(speakerFor(npcId, mood), fillLine(text, npcId));
+  await say(speakerFor(npcId, mood), ...boxes.map((t) => fillLine(t, npcId)));
   addHearts(npcId, points);
   if (tier === 'love') WORLD?.emote(npcId, '♥');
 }
