@@ -30,6 +30,13 @@ Status of the overnight build (night of 2026-10-06).
 - Juice: a one-frame turn when reversing direction, settling into the passing pose when stopping, an eased start, happy hops on ♥/♪/! emotes (`WORLD.hop(id)`), emote bubbles with squash and stretch and pixel icons (with a heartbeat), dust puffs on dirt, sand and gravel, splashes in rain and shallow water, and footstep sounds synced to footfalls (src/world/stepfx.ts).
 - Not done yet: foot pitch (heel and toe roll) when the foot leaves the ground, and the dungeon scene doesn't call `Actor.animate`, so it has no turn frames, hops or dust there yet.
 
+## World pass (2026-10-07 afternoon, D-018 to D-021)
+- Everything in the world is painted at double density on one pixel grid: the characters, terrain, interior walls, props and the farm, and the building exteriors.
+- Scale fixed: adults are 30 px, doors 33–36 px, cars 68–72 px, lamps 54 px.
+- The UI was redesigned as in-world paper, enamel and brass (D-020).
+- Animation: an 8-frame walk that plants its feet, a run, idle life, per-character quirks, and touches such as hops, dust and splashes (D-021).
+- Still running: interior room layouts and art, and the bus ride rebuild. Weaker spots helpers flagged: fair set pieces (water tower, Ferris wheel, tents), winter trees, the show poster and entrance CSS, the Dungeon and tapes screens' CSS, and town ground load time (~1.8 s first build).
+
 ## In progress at the end of the night
 - Done since: all 34 characters have dialogue files; the main story runs through the Homecoming finale and credits (src/story-main/chapters/).
 
