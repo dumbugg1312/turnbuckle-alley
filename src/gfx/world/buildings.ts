@@ -2545,79 +2545,114 @@ function spool(x: number, y: number): void {
 }
 function drawTailor(): void {
   const W = 64;
-  const GY = 72;
-  // front gable with scalloped shingles
-  poly([[0, 22], [32, 2], [64, 22]], '#c8a0d8');
-  for (let y = 6; y < 22; y += 3)
-    for (let x = 0; x < W; x += 4) {
-      const inside = y > 2 + Math.abs(x + 2 - 32) * 0.62;
-      if (inside) {
-        RR(x + ((y / 3) % 2 ? 2 : 0), y, 4, 3, 1, (y / 3) % 2 ? '#b48ccc' : '#c8a0d8');
-        P(x + ((y / 3) % 2 ? 2 : 0) + 1, y, '#e0c8ec');
-      }
-    }
-  L(0, 22, 32, 2, '#fbefd8');
-  L(32, 2, 64, 22, '#fbefd8');
-  L(1, 23, 32, 4, '#d8b8c8');
-  // a big wooden spool emblem in the gable
-  spool(28, 8);
-  // plum clapboard walls with marigold trim
-  clap(0, 22, W, GY - 22, '#b898d0', '#a084bc', '#7a5e9a', 61);
-  R(0, 22, 2, GY - 22, '#f4b63f');
-  R(W - 2, 22, 2, GY - 22, '#c8902a');
-  // sign
-  signBoard(10, 25, 44, 11, '#7a3a7a', '#fff4dc');
-  TC('SEW WHAT?', 32, 27, '#b8307a', FM, { shadow: '#f4b63f' });
-  // hanging spool sign
-  HL(56, 63, 37, '#4a3550');
-  VL(57, 37, 40, '#4a3550');
-  VL(62, 37, 40, '#4a3550');
-  spool(55, 40);
-  // left window: a mannequin in a sequined robe
-  const wy = 42;
-  windowA(5, wy, 16, 20, { frame: '#f4b63f', curtains: null, mullion: false, wall: '#f2c8d8' });
-  glass(5, wy, 16, 20, () => {
-    R(5, wy, 16, 20, '#f2c8d8');
-    for (let x = 5; x < 21; x += 3) VL(x, wy, wy + 20, '#ecbcd0');
-    // mannequin
-    circ(13, wy + 3, 2, '#e8d8c8');
-    poly([[9, wy + 6], [17, wy + 6], [19, wy + 18], [7, wy + 18]], '#d0307a');
-    for (let k = 0; k < 14; k++) P(8 + ((k * 5) % 11), wy + 7 + ((k * 7) % 10), k % 2 ? '#ffd34a' : '#ffffff');
-    HL(9, 17, wy + 6, '#f4b63f');
-    VL(13, wy + 6, wy + 17, '#a8205a');
-    VL(13, wy + 18, wy + 19, '#8a7a6a');
+  const GY = 88;
+  const gB = 26; // gable base
+  // front gable with scalloped fish-scale shingles
+  poly([[0, gB], [32, 4], [64, gB]], '#c8a0d8');
+  FR(0, 4, W, gB - 4, (fx, fy, o) => {
+    if (!o) return null;
+    const rf = 6;
+    const row = Math.floor(fy / rf);
+    const k = fy % rf;
+    const off = row % 2 ? 4 : 0;
+    const kx = (fx + off) % 8;
+    const base = row % 2 ? '#b48ccc' : '#c8a0d8';
+    const dx = kx - 3.5;
+    const edge = (dx * dx) / 16 + ((k - 1) * (k - 1)) / 25;
+    if (k >= 4 && edge > 0.9) return shA(base, 0.35);
+    if (k === 0) return shA(base, 0.25);
+    return k === 5 ? liA(base, 0.3) : hash2(fx, fy, 61) < 0.05 ? liA(base, 0.15) : base;
   });
-  // right window: bolts of fabric
-  windowA(43, wy, 16, 20, { frame: '#f4b63f', curtains: null, mullion: false });
-  glass(43, wy, 16, 20, () => {
-    R(43, wy, 16, 20, '#f6dcc4');
-    const bolts = ['#3f9a92', '#f4b63f', '#d8434b', '#9a6ad0', '#ff94b4', '#5a8ad0'];
-    for (let i = 0; i < 6; i++) {
-      const bx = 44 + (i % 3) * 5;
-      const by = wy + 2 + Math.floor(i / 3) * 9;
-      R(bx, by, 4, 8, bolts[i]);
-      VL(bx, by, by + 7, liA(bolts[i], 0.4));
-      VL(bx + 3, by, by + 7, shA(bolts[i], 0.3));
-    }
+  L(0, gB, 32, 4, '#fbefd8');
+  L(32, 4, 64, gB, '#fbefd8');
+  L(1, gB + 1, 32, 6, '#d8b8c8');
+  L(32, 5, 63, gB, '#d8b8c8');
+  // a big wooden spool emblem in the gable
+  spool(28, 10);
+  // plum clapboard walls with marigold trim
+  siding(0, gB, W, GY - gB, '#a084bc', 61, 4, 0.02);
+  aoTop(0, gB + 1, W, 4, 0.25);
+  R(0, gB, 2, GY - gB, '#f4b63f');
+  fv(0, gB, GY, '#ffe08a');
+  R(W - 2, gB, 2, GY - gB, '#c8902a');
+  fv(W - 0.5, gB, GY, '#9a6a1a');
+  shadeRight(W - 8, gB, 6, GY - gB, 0.16);
+  // sign
+  signBoardF(4, 29, 56, 12, '#7a3a7a', '#fff4dc');
+  TC('SEW WHAT?', 32.5, 31.5, '#f4b63f', FM, {});
+  TC('SEW WHAT?', 32, 31, enamel('#b8307a'), FM, {});
+  // hanging spool sign on an iron bracket
+  fh(55, 64, 43, '#4a3550');
+  L(56, 43, 62, 40, '#4a3550');
+  fv(57, 43, 46, '#4a3550');
+  fv(62, 43, 46, '#4a3550');
+  spool(55, 46);
+  // left window: a mannequin in a sequined robe
+  const wy = 54;
+  const wh = 22;
+  win(5, wy, 16, wh, {
+    frame: '#f4b63f',
+    cols: 1,
+    rows: 1,
+    interior: () => {
+      R(5, wy, 16, wh, '#f2c8d8');
+      FR(5, wy, 16, wh, (fx) => (fx % 6 === 0 ? '#ecbcd0' : null));
+      R(5, wy + 18, 16, 4, '#c898b0');
+      circ(13, wy + 3, 2, '#e8d8c8');
+      P1(12.5, wy + 2, '#fff8f0');
+      poly([[9, wy + 6], [17, wy + 6], [19, wy + 19], [7, wy + 19]], '#d0307a');
+      FR(7, wy + 6, 12, 13, (fx, fy, o) => (o === col('#d0307a') && hash2(fx, fy, 62) < 0.18 ? (hash2(fx, fy, 63) < 0.5 ? '#ffd34a' : '#ffffff') : o));
+      fh(9, 17, wy + 6, '#f4b63f');
+      fv(13, wy + 6, wy + 19, '#a8205a');
+      fv(13, wy + 19, wy + 21, '#8a7a6a');
+      fh(11, 15, wy + 21.5, '#8a7a6a');
+    },
+  });
+  // right window: bolts of fabric and a tape measure
+  win(43, wy, 16, wh, {
+    frame: '#f4b63f',
+    cols: 1,
+    rows: 1,
+    cat: true,
+    interior: () => {
+      R(43, wy, 16, wh, '#f6dcc4');
+      const bolts = ['#3f9a92', '#f4b63f', '#d8434b', '#9a6ad0', '#ff94b4', '#5a8ad0'];
+      for (let i = 0; i < 6; i++) {
+        const bx = 44 + (i % 3) * 5;
+        const by = wy + 1 + Math.floor(i / 3) * 9;
+        R(bx, by, 4, 8, bolts[i]);
+        fv(bx, by, by + 8, liA(bolts[i], 0.4));
+        fv(bx + 3.5, by, by + 8, shA(bolts[i], 0.3));
+        for (let y = by + 1; y < by + 8; y += 1.5) fh(bx + 0.5, bx + 3.5, y, shA(bolts[i], 0.12));
+      }
+      curve(44, wy + 19, 58, wy + 19, 1.5, '#ffe070');
+    },
   });
   // door (centre x = 32)
-  doorA(26, 46, 12, 26, '#f4b63f', { glass: true, frame: '#fff4dc' });
-  RR(26, 60, 12, 6, 1, '#fff4dc');
-  T('SEW', 27, 60, '#7a3a7a', FT, {});
-  foundation(0, GY - 3, 24, 3);
-  foundation(40, GY - 3, 24, 3);
+  doorF(25, 54, 14, 34, '#f4b63f', { frame: '#fff4dc', lite: true, liteH: 12, wall: '#f2c8d8', seed: 64, step: '#c8b0a8' });
+  RR(26.5, 70, 11, 5, 1, '#fff4dc');
+  T('SEW', 27.5, 70, enamel('#7a3a7a'), FT, {});
+  fv(32, 68, 70, '#8a7a6a');
+  // pincushion tomato pot by the step
+  ell(42, GY - 3, 2, 1.5, '#e8303a');
+  P1(41.5, GY - 4, '#ff8a80');
+  P1(42, GY - 5, '#5a9a4a');
+  grime(0, GY - 9, W, 7, 0.2);
+  footing(0, GY - 3, 24, 3, '#b8a0b0', 65);
+  footing(40, GY - 3, 24, 3, '#b8a0b0', 66);
 }
 building('b-tailor', {
   w: 64,
-  h: 72,
+  h: 88,
   door: 0,
   draw: drawTailor,
-  shadowTop: 10,
+  shadowTop: 12,
   label: 'Sew What?',
+  solid: { x: -32, y: -62, w: 64, h: 62 },
   lights: [
-    [13, 52, 14, WARM],
-    [51, 52, 14, WARM],
-    [32, 54, 10, WARM],
+    [13, 65, 14, WARM],
+    [51, 65, 14, WARM],
+    [32, 63, 10, WARM],
   ],
 });
 
@@ -2630,55 +2665,84 @@ function spineLogo(cx: number, y: number, c: Color, c2: Color): void {
 }
 function drawClinic(): void {
   const W = 64;
-  const GY = 72;
-  flatRoof(0, 4, W, 9, 71, '#9a92ae');
-  vent(8, 5);
-  R(44, 6, 12, 5, '#c8c4d8');
-  HL(44, 55, 6, '#eeeaf6');
+  const GY = 88;
+  flatRoof(0, 4, W, 12, 71, '#9a92ae');
+  ventF(8, 6, 5);
+  R(44, 7, 12, 6, '#c8c4d8');
+  fh(44, 56, 7, '#eeeaf6');
+  FR(45, 8.5, 10, 3.5, (fx) => (fx % 2 ? '#9a94b0' : '#c8c4d8'));
   // crisp white siding with teal trim
-  clap(0, 12, W, GY - 12, '#ffffff', '#f2f0ec', '#d4d0d8', 72, 5);
-  R(0, 12, W, 3, '#3f9a92');
-  HL(0, W - 1, 12, '#6ac0b0');
-  R(0, 15, 2, GY - 15, '#3f9a92');
-  R(W - 2, 15, 2, GY - 15, '#2f7a76');
+  siding(0, 15, W, GY - 15, '#f2f0ec', 72, 5, 0.01);
+  R(0, 15, W, 3, '#3f9a92');
+  fh(0, W, 15, '#7ad0c0');
+  fh(0, W, 17.5, '#2a6a66');
+  aoTop(0, 18, W, 3, 0.2);
+  R(0, 18, 2, GY - 18, '#3f9a92');
+  fv(0, 18, GY, '#7ad0c0');
+  R(W - 2, 18, 2, GY - 18, '#2f7a76');
+  shadeRight(W - 8, 18, 6, GY - 18, 0.14);
   // sign with spine logo
-  signBoard(3, 17, 58, 17, '#2f7a76', '#ffffff');
-  TC('HALLORAN', 32, 19, '#2f6a74', FM, {});
-  TC('CHIROPRACTIC', 32, 27, '#3f9a92', FT, { ls: -0 });
+  signBoardF(3, 20, 58, 18, '#2f7a76', '#ffffff');
+  TC('HALLORAN', 32, 22, enamel('#2f6a74'), FM, {});
+  TC('CHIROPRACTIC', 32, 31, enamel('#3f9a92'), FT, {});
   // projecting blade sign with the spine logo
-  R(57, 38, 6, 12, '#ffffff');
-  box(57, 38, 6, 12, '#2f7a76');
-  spineLogo(60, 39, '#3f9a92', '#7fd0c0');
+  fh(56, 64, 44, '#4a3550');
+  R(57, 45, 6, 13, '#ffffff');
+  box(57, 45, 6, 13, '#2f7a76');
+  fv(57.5, 45.5, 57.5, '#e8f4f0');
+  spineLogo(60, 46, '#3f9a92', '#7fd0c0');
   // teal awning
-  awning(3, 36, 58, 4, '#3f9a92', '#ffffff', 4);
-  // windows with blinds
+  awning(3, 41, 58, 4, '#3f9a92', '#ffffff', 4);
+  // windows with blinds and a skeleton model
+  const wy = 54;
   for (const wx of [5, 45]) {
-    R(wx - 1, 45, 16, 16, '#3f9a92');
-    glass(wx, 46, 14, 14, () => {
-      R(wx, 46, 14, 14, '#dcecec');
-      for (let y = 46; y < 60; y += 2) HL(wx, wx + 13, y, '#b8d0d4');
-      R(wx + 4, 52, 6, 8, '#9ac0b0');
+    win(wx, wy, 14, 18, {
+      frame: '#3f9a92',
+      cols: 1,
+      rows: 1,
+      interior: () => {
+        R(wx, wy, 14, 18, '#dcecec');
+        if (wx < 30) {
+          circ(wx + 7, wy + 9, 1.5, '#f4f0e8');
+          fv(wx + 7, wy + 10, wy + 16, '#f4f0e8');
+          for (let k = 0; k < 3; k++) fh(wx + 5.5, wx + 8.5, wy + 11.5 + k * 1.2, '#f4f0e8');
+          fv(wx + 7, wy + 16, wy + 18, '#8a8aa0');
+        } else {
+          RR(wx + 2, wy + 10, 10, 6, 1, '#9ac0b0');
+          fh(wx + 2, wx + 12, wy + 10, '#c8e8dc');
+          fv(wx + 3, wy + 16, wy + 18, '#6a8a80');
+          fv(wx + 11, wy + 16, wy + 18, '#6a8a80');
+        }
+      },
+      blinds: '#c8dcdc',
     });
-    R(wx - 2, 61, 18, 2, '#ffffff');
   }
-  pot(56, GY - 9, '#3f9a92', '#5f9a5a', null);
+  pot(56, GY - 10, '#3f9a92', '#5f9a5a', null);
+  R(56.5, GY - 15, 0.5, 6, '#4f8a5a');
+  ell(57, GY - 15, 1.5, 2.5, '#6fb070');
   // door (centre x = 32)
-  doorA(26, 46, 12, 26, '#3f9a92', { glass: true, frame: '#ffffff' });
-  RR(27, 39, 10, 5, 1, '#ffffff');
-  spineLogo(32, 39, '#3f9a92', '#7fd0c0');
-  foundation(0, GY - 3, W, 3, '#d8d4e0', '#c8c4d4');
+  doorF(25, 54, 14, 34, '#3f9a92', { frame: '#ffffff', lite: true, liteH: 13, wall: '#dcecec', seed: 73, kick: '#c8c4d8', step: '#d8d0d8' });
+  RR(27, 46, 10, 6, 1, '#ffffff');
+  spineLogo(32, 46.5, '#3f9a92', '#7fd0c0');
+  RR(26.5, 70, 11, 4, 1, '#fff4dc');
+  micro('WALK INS', 27, 70.5, '#2f6a74');
+  micro('WELCOME', 27, 72, '#2f6a74');
+  downspout(1.5, 18, GY - 1, '#c8c4d8');
+  grime(0, GY - 9, W, 7, 0.16);
+  footing(0, GY - 3, W, 3, '#d8d4e0', 74);
 }
 building('b-clinic', {
   w: 64,
-  h: 72,
+  h: 88,
   door: 0,
   draw: drawClinic,
-  shadowTop: 8,
+  shadowTop: 10,
   label: 'Halloran Chiropractic',
+  solid: { x: -32, y: -62, w: 64, h: 62 },
   lights: [
-    [12, 53, 14, WARM],
-    [52, 53, 14, WARM],
-    [32, 54, 10, WARM],
+    [12, 63, 14, WARM],
+    [52, 63, 14, WARM],
+    [32, 63, 10, WARM],
   ],
 });
 
@@ -2695,63 +2759,102 @@ function lotusBolt(cx: number, cy: number): void {
 }
 function drawStudio(): void {
   const W = 64;
-  const GY = 72;
+  const GY = 88;
   // low hip roof in sage-teal shingles
-  shingles(1, 2, W - 2, 12, '#5a8a7a', 81, 3, 4);
-  HL(1, W - 2, 2, '#8ab8a0');
+  shingleF(1, 3, W - 2, 15, '#5a8a7a', 81, 3, 4, 0.2);
+  fh(1, W - 1, 3, '#a8d0b8');
+  poly([[1, 3], [6, 3], [1, 9]], 0);
+  poly([[W - 1, 3], [W - 6, 3], [W - 1, 9]], 0);
+  fh(1, W - 1, 17.5, '#2a4a40');
   // sage plaster
-  R(0, 14, W, GY - 14, (x: number, y: number) => {
-    const n = hash2(x, y, 83);
-    return n < 0.05 ? '#c4dcb8' : n > 0.96 ? '#98b890' : '#b0ccA4'.toLowerCase();
-  });
-  HL(0, W - 1, 14, '#e0ecd4');
-  R(W - 4, 15, 4, GY - 15, (x: number, y: number, o: number) => (dth(x, y, 8) ? shA(o, 0.15) : o));
+  stucco(0, 18, W, GY - 18, '#b0cca4', 83);
+  fh(0, W, 18, '#e0ecd4');
+  aoTop(0, 18, W, 4, 0.22);
+  shadeRight(W - 7, 18, 7, GY - 18, 0.16);
   // sign
-  signBoard(3, 16, 58, 18, '#4a6a5a', '#f6f2e6');
-  TC('HURRICANE', 32, 18, '#3a6a6a', FM, {});
-  TC('PHYSIO & YOGA', 32, 27, '#7a9a6a', FT, {});
+  signBoardF(3, 21, 58, 18, '#4a6a5a', '#f6f2e6');
+  TC('HURRICANE', 32, 23, enamel('#3a6a6a'), FM, {});
+  TC('PHYSIO & YOGA', 32, 32, enamel('#7a9a6a'), FT, {});
+  // a vine of morning glories over the sign
+  for (let x = 4; x < 60; x += 1.5) {
+    const y = 20 + Math.sin(x * 0.4) * 1.2;
+    P1(x, y, '#5f9a5a');
+    if (hash2(x * 2, 0, 84) < 0.25) {
+      P1(x, y - 0.5, '#9ab0f0');
+      P1(x + 0.5, y - 0.5, '#c8d4ff');
+    }
+  }
   // two calm windows: yoga mats and plants on the left, a fern and a ball on the right
-  const wy = 42;
+  const wy = 52;
   for (const [wx, left] of [[4, true], [43, false]] as [number, boolean][]) {
-    R(wx - 1, wy - 1, 19, 20, '#f6f2e6');
-    glass(wx, wy, 17, 18, () => {
-      R(wx, wy, 17, 18, '#f2e2c4');
-      R(wx, wy + 12, 17, 6, '#d8b890');
-      if (left) {
-        for (const [mx, c] of [[wx + 1, '#7a9ad0'], [wx + 9, '#e88aa0']] as [number, string][]) {
-          R(mx, wy + 14, 7, 3, c);
-          HL(mx, mx + 6, wy + 14, liA(c, 0.4));
+    win(wx, wy, 17, 19, {
+      frame: '#f6f2e6',
+      cols: 2,
+      rows: 1,
+      box: wx,
+      boxC: '#7a9a6a',
+      interior: () => {
+        R(wx, wy, 17, 19, '#f2e2c4');
+        R(wx, wy + 13, 17, 6, '#d8b890');
+        FR(wx, wy + 13, 17, 6, (fx) => (fx % 6 === 0 ? '#c8a880' : null));
+        if (left) {
+          for (const [mx, c] of [[wx + 1, '#7a9ad0'], [wx + 9, '#e88aa0']] as [number, string][]) {
+            R(mx, wy + 15, 7, 3, c);
+            fh(mx, mx + 7, wy + 15, liA(c, 0.4));
+            fh(mx, mx + 7, wy + 17.5, shA(c, 0.3));
+          }
+          ell(wx + 4, wy + 6, 2, 3, '#5f9a5a');
+          P1(wx + 3.5, wy + 4, '#8ac070');
+          R(wx + 3, wy + 9, 3, 3, '#a8704a');
+          // a stretcher mid-pose
+          circ(wx + 12, wy + 5, 1.25, '#c88a68');
+          L(wx + 12, wy + 6, wx + 12, wy + 11, '#7a9ad0');
+          L(wx + 12, wy + 7, wx + 9, wy + 4, '#c88a68');
+          L(wx + 12, wy + 7, wx + 15, wy + 4, '#c88a68');
+          L(wx + 12, wy + 11, wx + 10, wy + 14, '#4a5a7a');
+          L(wx + 12, wy + 11, wx + 14, wy + 14, '#4a5a7a');
+        } else {
+          fv(wx + 12, wy, wy + 3, '#6a5a4a');
+          ell(wx + 12, wy + 5, 3, 2, '#5f9a5a');
+          for (let k = 0; k < 5; k++) P1(wx + 10 + k, wy + 7 + (k % 2) * 0.5, '#4f8a5a');
+          circ(wx + 5, wy + 13, 3.5, '#8ac0d0');
+          ell(wx + 4, wy + 11.5, 1.2, 0.8, '#d8f0f4');
+          fh(wx + 2, wx + 8, wy + 13, '#6aa0b4');
         }
-        ell(wx + 4, wy + 6, 2, 3, '#5f9a5a');
-        R(wx + 3, wy + 9, 3, 3, '#a8704a');
-      } else {
-        VL(wx + 12, wy, wy + 3, '#6a5a4a');
-        ell(wx + 12, wy + 5, 3, 2, '#5f9a5a');
-        for (let k = 0; k < 4; k++) P(wx + 10 + k, wy + 7 + (k % 2), '#4f8a5a');
-        circ(wx + 5, wy + 12, 3.5, '#8ac0d0');
-        P(wx + 4, wy + 10, '#d8f0f4');
-      }
+      },
     });
-    VL(wx + 8, wy, wy + 17, '#f6f2e6');
-    flowerBox(wx - 2, wy + 18, 21, wx, '#7a9a6a');
   }
   // door (centre x = 32)
-  doorA(25, 44, 14, 28, '#7aa890', { glass: true, frame: '#f6f2e6' });
-  RR(26, 38, 12, 5, 1, '#4a6a5a');
-  lotusBolt(32, 40);
-  foundation(0, GY - 3, W, 3, '#c8c0b0', '#b8b0a0');
+  doorF(25, 54, 14, 34, '#7aa890', { frame: '#f6f2e6', lite: true, liteH: 14, wall: '#f2e2c4', seed: 85, step: '#c8c0b0' });
+  RR(26, 46, 12, 6, 1, '#4a6a5a');
+  fh(27, 37, 46, '#6a8a7a');
+  lotusBolt(32, 48.5);
+  // a rolled mat leaning by the door and a bamboo pot
+  RR(40.5, GY - 13, 3, 12, 1, '#e88aa0');
+  fv(40.5, GY - 13, GY - 1, '#ffb0c0');
+  ell(42, GY - 13, 1.5, 0.75, '#c86a80');
+  R(18.5, GY - 6, 4, 5, '#c8b8a0');
+  fh(18.5, 22.5, GY - 6, '#e8dcc8');
+  for (const [bx, h] of [[19.5, 12], [21, 15], [20.5, 9]] as [number, number][]) {
+    fv(bx, GY - 6 - h, GY - 6, '#7ab060');
+    for (let y = GY - 6 - h + 2; y < GY - 6; y += 3) fh(bx - 0.5, bx + 0.5, y, '#5a8a4a');
+    P1(bx + 0.5, GY - 6 - h + 1, '#9ad070');
+  }
+  grime(0, GY - 9, W, 7, 0.16);
+  footing(0, GY - 3, W, 3, '#c8c0b0', 86);
 }
 building('b-studio', {
   w: 64,
-  h: 72,
+  h: 88,
   door: 0,
   draw: drawStudio,
-  shadowTop: 6,
+  shadowTop: 8,
   label: 'Hurricane Physio & Yoga',
+  solid: { x: -32, y: -62, w: 64, h: 62 },
   lights: [
-    [12, 50, 14, WARM],
-    [51, 50, 14, WARM],
-    [32, 54, 12, WARM],
+    [12, 61, 14, WARM],
+    [51, 61, 14, WARM],
+    [32, 63, 12, WARM],
   ],
 });
 
@@ -2760,90 +2863,128 @@ function vhs(x: number, y: number, c: Color): void {
   R(x, y, 2, 5, '#2b2140');
   VL(x + 1, y + 1, y + 3, c);
 }
+const PN_Y = 46;
 function pawnNeon(on: boolean): void {
-  RR(43, 39, 18, 7, 1, '#2f2440');
-  neon('OPEN', 44, 40, '#ffe6f2', '#ff5fa0', FT, {}, on);
+  RR(43, PN_Y, 18, 7, 1, '#2f2440');
+  fh(44, 60, PN_Y, '#4a3a5a');
+  neon('OPEN', 44, PN_Y + 1, '#ffe6f2', '#ff5fa0', FT, {}, on);
 }
 function drawPawn(): void {
   const W = 64;
-  const GY = 72;
-  flatRoof(0, 4, W, 9, 91, '#857590');
-  vent(50, 5);
+  const GY = 88;
+  flatRoof(0, 4, W, 12, 91, '#857590');
+  ventF(50, 6, 5);
   // tired mustard brick
-  brick(0, 12, W, GY - 12, '#c89a5a', '#b4884e', '#7a5a48', 92);
-  R(0, 12, W, 3, '#6a5a6a');
-  HL(0, W - 1, 12, '#8a7a8a');
-  // the three gold pawn balls
-  HL(54, 63, 16, '#4a3550');
-  VL(58, 16, 19, '#4a3550');
-  for (const [bx, by] of [[55, 21], [61, 21], [58, 25]] as [number, number][]) {
+  brickF(0, 15, W, GY - 15, '#c89a5a', '#b4884e', '#8a6a58', 92);
+  R(0, 15, W, 3, '#6a5a6a');
+  fh(0, W, 15, '#9a8a9a');
+  fh(0, W, 17.5, '#3a2a40');
+  aoTop(0, 18, W, 3, 0.25);
+  shadeRight(W - 6, 18, 6, GY - 18, 0.2);
+  // a faded ghost ad painted on the brick, mostly gone
+  FR(4, 38, 40, 6, (fx, fy, o) => {
+    const ix = Math.floor(fx / 3);
+    return hash2(ix, fy >> 2, 93) < 0.35 && hash2(fx, fy, 94) < 0.7 ? mixc(o, '#fff4dc', 0.28) : o;
+  });
+  // the three gold pawn balls on a scrolled bracket
+  fh(52, 64, 19, '#4a3550');
+  L(54, 19, 60, 23, '#4a3550');
+  fv(58, 19, 23, '#4a3550');
+  for (const [bx, by] of [[55, 25], [61, 25], [58, 29.5]] as [number, number][]) {
     circ(bx, by, 2.4, '#f4b63f');
-    P(bx - 1, by - 1, '#fff0a0');
+    ell(bx + 0.5, by + 0.75, 1.75, 1.5, '#d89a2a');
+    P1(bx - 1, by - 1, '#fff0a0');
+    P1(bx - 0.5, by - 1.5, '#fffbe0');
   }
   // sign
-  signBoard(3, 16, 48, 17, '#7a2a3a', '#fbefd4');
-  TC("FENWICK'S", 27, 18, '#b8303e', FM, {});
-  TC('PAWN & TAPES', 27, 27, '#2f6a74', FT, {});
-  // cluttered windows: VHS towers on the left, old TVs and a guitar on the right
-  const wy = 40;
-  const wh = 22;
+  signBoardF(3, 20, 48, 17, '#7a2a3a', '#fbefd4');
+  TC("FENWICK'S", 27.5, 22.5, '#e8b090', FM, {});
+  TC("FENWICK'S", 27, 22, enamel('#b8303e'), FM, {});
+  TC('PAWN & TAPES', 27, 31, worn('#2f6a74', 95, 0.08), FT, {});
+  // cluttered windows behind security bars
+  const wy = 54;
+  const wh = 24;
   for (const wx of [3, 41]) {
     R(wx - 1, wy - 1, 22, wh + 2, '#4a3a4a');
-    glass(wx, wy, 20, wh, () => {
+    fh(wx - 1, wx + 21, wy - 1, '#6a5a6a');
+    glassF(wx, wy, 20, wh, () => {
       R(wx, wy, 20, wh, '#5a4a5e');
-      R(wx, wy + 16, 20, 6, '#7a5a4a');
+      R(wx, wy + 18, 20, 6, '#7a5a4a');
+      fh(wx, wx + 20, wy + 18, '#9a7a6a');
       if (wx < 30) {
-        for (let i = 0; i < 9; i++) vhs(wx + 1 + i * 2, wy + 10, ['#e8505a', '#3f9a92', '#f4b63f', '#9a6ad0', '#fff4dc'][i % 5]);
-        for (let i = 0; i < 7; i++) vhs(wx + 2 + i * 2, wy + 4, ['#5a8ad0', '#ff94b4', '#f4b63f'][i % 3]);
-        for (let i = 0; i < 4; i++) vhs(wx + 4 + i * 2, wy + 16, ['#fff4dc', '#3f9a92'][i % 2]);
+        for (let i = 0; i < 9; i++) vhs(wx + 1 + i * 2, wy + 12, ['#e8505a', '#3f9a92', '#f4b63f', '#9a6ad0', '#fff4dc'][i % 5]);
+        for (let i = 0; i < 7; i++) vhs(wx + 2 + i * 2, wy + 6, ['#5a8ad0', '#ff94b4', '#f4b63f'][i % 3]);
+        for (let i = 0; i < 4; i++) vhs(wx + 4 + i * 2, wy + 18, ['#fff4dc', '#3f9a92'][i % 2]);
+        R(wx + 2, wy + 1, 12, 3, '#ffe070');
+        micro('2 FOR $1', wx + 2.5, wy + 1.5, '#b8303e');
       } else {
-        for (const [tx, ty] of [[wx + 1, wy + 8], [wx + 9, wy + 11]] as [number, number][]) {
+        for (const [tx, ty] of [[wx + 1, wy + 9], [wx + 9, wy + 12]] as [number, number][]) {
           RR(tx, ty, 10, 8, 1, '#8a7a6a');
+          fh(tx + 0.5, tx + 9.5, ty, '#b8a898');
           R(tx + 1, ty + 1, 6, 5, '#7ae0d0');
-          HL(tx + 1, tx + 6, ty + 2, '#b8fff0');
-          P(tx + 8, ty + 2, '#d8d4e8');
-          P(tx + 8, ty + 4, '#d8d4e8');
+          FR(tx + 1, ty + 1, 6, 5, (fx, fy) => (fy % 2 ? '#5ac0b0' : hash2(fx, fy, 96) < 0.2 ? '#d8fff8' : null));
+          P1(tx + 8, ty + 2, '#d8d4e8');
+          P1(tx + 8, ty + 4, '#d8d4e8');
         }
-        ell(wx + 17, wy + 7, 2, 3, '#d8843a');
-        VL(wx + 17, wy, wy + 4, '#6a4a3a');
+        ell(wx + 17, wy + 8, 2, 3, '#d8843a');
+        ell(wx + 17, wy + 5, 1.5, 1.5, '#d8843a');
+        P1(wx + 17, wy + 7, AK);
+        fv(wx + 17, wy, wy + 5, '#6a4a3a');
+        fv(wx + 17.5, wy + 1, wy + 9, '#e8e4d8');
+        R(wx + 1, wy + 1, 6, 4, '#f4b63f');
+        micro('GOLD', wx + 1.5, wy + 1.5, '#7a2a3a');
       }
     });
-    for (let x = wx + 3; x < wx + 20; x += 5) VL(x, wy, wy + wh - 1, '#3a3048');
-    HL(wx, wx + 19, wy + 11, '#3a3048');
+    // bars
+    for (let x = wx + 2.5; x < wx + 20; x += 3) {
+      R(x, wy, 1, wh, '#3a3048');
+      fv(x, wy, wy + wh, '#6a6080');
+    }
+    R(wx, wy + 11.5, 20, 1, '#3a3048');
+    fh(wx, wx + 20, wy + 11.5, '#6a6080');
+    R(wx - 2, wy + wh + 1, 24, 1.5, '#a8988a');
+    fh(wx - 2, wx + 22, wy + wh + 1, '#c8b8a8');
   }
   pawnNeon(true);
+  acUnit(4, 43);
   // door (centre x = 32)
-  doorA(26, 42, 12, 30, '#6a5a7a', { glass: true, frame: '#d8c8b8' });
-  R(27, 58, 10, 6, '#fff4dc');
-  T('BUY', 27, 58, '#b8303e', FT, {});
-  // milk crate of records
-  R(58, GY - 7, 6, 7, '#3f6ab0');
-  for (let x = 58; x < 64; x += 2) VL(x, GY - 7, GY - 1, '#2f4a80');
-  foundation(0, GY - 3, 24, 3, '#a8908a', '#988080');
-  foundation(40, GY - 3, 24, 3, '#a8908a', '#988080');
+  doorF(25, 54, 14, 34, '#6a5a7a', { frame: '#d8c8b8', lite: true, liteH: 14, wall: '#5a4a5e', seed: 97, kick: '#9a92a8', step: '#b8a8a0' });
+  for (let x = 27.5; x < 37; x += 2.5) R(x, 56, 0.5, 14, '#3a3048');
+  R(27, 72, 10, 5, '#fff4dc');
+  fh(27, 37, 72, '#ffffff');
+  T('BUY', 27.5, 72, enamel('#b8303e'), FT, {});
+  // milk crate of records and a cracked step
+  R(57, GY - 8, 7, 8, '#3f6ab0');
+  FR(57, GY - 8, 7, 8, (fx, fy) => (fx % 3 === 0 || fy % 4 === 0 ? '#2f4a80' : null));
+  for (let k = 0; k < 4; k++) R(57.5 + k * 1.5, GY - 10, 1, 3, k % 2 ? '#2b2140' : '#e8505a');
+  L(28, GY - 1, 31, GY - 2, '#7a6a72');
+  grime(0, GY - 10, W, 9, 0.24);
+  footing(0, GY - 3, 24, 3, '#a8908a', 98);
+  footing(40, GY - 3, 24, 3, '#a8908a', 99);
 }
 building('b-pawn', {
   w: 64,
-  h: 72,
+  h: 88,
   door: 0,
   draw: drawPawn,
-  shadowTop: 8,
+  shadowTop: 10,
   label: "Fenwick's Pawn & Tapes",
+  solid: { x: -32, y: -62, w: 64, h: 62 },
   anims: [
     {
       fps: 0,
       frames: 2,
-      rect: [42, 37, 20, 10],
+      rect: [42, PN_Y - 3, 20, 10],
       pick: neonFlicker(73, [5, 6, 12, 40, 41]),
       skip: (f) => f === 0,
       draw: () => pawnNeon(false),
     },
   ],
   lights: [
-    [13, 50, 14, WARM],
-    [51, 50, 14, WARM],
-    [52, 42, 14, '#ff6aa8'],
-    [32, 54, 10, WARM],
+    [13, 64, 14, WARM],
+    [51, 64, 14, WARM],
+    [52, PN_Y + 3, 14, '#ff6aa8'],
+    [32, 63, 10, WARM],
   ],
 });
 
@@ -2861,81 +3002,112 @@ function barberPole(x: number, y: number, h: number, f: number): void {
   VL(x + 3, y + 1, y + h - 2, darken(0.2));
   VL(x, y + 1, y + h - 2, lighten(0.4));
 }
+const BP_Y = 50;
 function drawSalon(): void {
   const W = 64;
-  const GY = 72;
-  flatRoof(0, 4, W, 8, 101, '#9a84a8');
+  const GY = 88;
+  flatRoof(0, 4, W, 10, 101, '#9a84a8');
+  ventF(52, 5, 4);
   // gold scalloped parapet
   for (let x = 0; x < W; x += 6) {
-    RR(x, 9, 6, 4, 2, '#f4b63f');
-    P(x + 2, 9, '#fff0a0');
+    RR(x, 11, 6, 5, 2, '#f4b63f');
+    fh(x + 1, x + 5, 11, '#fff0a0');
+    P1(x + 2, 12, '#fffbe0');
+    fh(x + 1, x + 5, 15.5, '#c8902a');
+    ell(x + 3, 13.5, 1, 1, '#ff8ab0');
   }
-  HL(0, W - 1, 13, '#c8902a');
+  fh(0, W, 16, '#9a6a1a');
   // pink walls with cream pinstripes
-  R(0, 14, W, GY - 14, (x: number) => (x % 8 === 0 ? '#ffd4e0' : '#f6b0c4'));
-  R(W - 4, 14, 4, GY - 14, (x: number, y: number, o: number) => (dth(x, y, 8) ? shA(o, 0.15) : o));
+  R(0, 16.5, W, GY - 16.5, (x: number) => (x % 8 === 0 ? '#ffd4e0' : '#f6b0c4'));
+  FR(0, 16.5, W, GY - 16.5, (fx, fy, o) => (fx % 16 === 1 ? '#e898b0' : hash2(fx, fy, 102) < 0.04 ? liA(o, 0.15) : o));
+  aoTop(0, 16.5, W, 4, 0.2);
+  shadeRight(W - 6, 17, 6, GY - 17, 0.15);
   // the glamorous script sign
-  signBoard(4, 16, 56, 17, '#c8902a', '#3a2440');
+  signBoardF(4, 19, 56, 18, '#c8902a', '#3a2440');
+  FR(5, 20, 54, 16, (fx, fy, o) => (hash2(fx, fy, 103) < 0.02 ? '#ffd34a' : o));
   const s = 'Gorgeous';
   const tw = TW(s, FM, { bold: true });
-  T(s, 32 - Math.round(tw / 2), 18, '#ffd34a', FM, { bold: true, shadow: '#c8307a' });
-  // flourish underline + sparkles
-  curve(10, 30, 54, 30, -2, '#ff8ab0');
-  for (const [sx, sy] of [[8, 19], [56, 22], [53, 18]] as [number, number][]) {
+  T(s, 32 - Math.round(tw / 2) + 1, 22, '#c8307a', FM, { bold: true });
+  T(s, 32 - Math.round(tw / 2), 21, enamel('#ffd34a', 0.4), FM, { bold: true });
+  curve(10, 33, 54, 33, -2, '#ff8ab0');
+  for (const [sx, sy] of [[8, 22], [56, 25], [53, 21]] as [number, number][]) {
     P(sx, sy, '#fff8e0');
-    P(sx - 1, sy, '#ffd34a');
-    P(sx + 1, sy, '#ffd34a');
-    P(sx, sy - 1, '#ffd34a');
-    P(sx, sy + 1, '#ffd34a');
+    P1(sx - 1, sy + 0.25, '#ffd34a');
+    P1(sx + 1.5, sy + 0.25, '#ffd34a');
+    P1(sx + 0.25, sy - 1, '#ffd34a');
+    P1(sx + 0.25, sy + 1.5, '#ffd34a');
   }
   // pink and gold awning
-  awning(3, 36, 58, 5, '#ff5d8f', '#ffe8a0', 3);
+  awning(3, 40, 58, 5, '#ff5d8f', '#ffe8a0', 3);
   // left window: bonnet hair dryers
-  const wy = 46;
-  R(1, wy - 2, 21, 20, '#f4b63f');
-  glass(3, wy, 17, 16, () => {
-    R(3, wy, 17, 16, '#ffe0e8');
-    R(3, wy + 11, 17, 5, '#d8a0b8');
+  const wy = 54;
+  const wh = 20;
+  R(1, wy - 2, 21, wh + 4, '#f4b63f');
+  fh(1, 22, wy - 2, '#fff0a0');
+  glassF(3, wy, 17, wh, () => {
+    R(3, wy, 17, wh, '#ffe0e8');
+    FR(3, wy, 17, 14, (fx, fy) => ((fx + fy) % 8 === 0 ? '#ffd0dc' : null));
+    R(3, wy + 14, 17, 6, '#d8a0b8');
     for (const dx2 of [3, 11]) {
-      ell(dx2 + 4, wy + 4, 3.5, 3.5, '#d8d4e8');
-      ell(dx2 + 3, wy + 3, 1.5, 1.5, '#ffffff');
-      R(dx2 + 3, wy + 7, 2, 3, '#a8a0b8');
-      RR(dx2 + 1, wy + 9, 6, 4, 1, '#ff5d8f');
-      HL(dx2 + 1, dx2 + 6, wy + 9, '#ff9ab8');
+      ell(dx2 + 4, wy + 5, 3.5, 3.5, '#d8d4e8');
+      ell(dx2 + 4, wy + 6, 3, 2, '#b8b0c8');
+      ell(dx2 + 3, wy + 4, 1.5, 1.5, '#ffffff');
+      R(dx2 + 3, wy + 8, 2, 4, '#a8a0b8');
+      RR(dx2 + 1, wy + 11, 6, 4, 1, '#ff5d8f');
+      fh(dx2 + 1, dx2 + 7, wy + 11, '#ff9ab8');
+      fv(dx2 + 4, wy + 15, wy + 20, '#a8a0b8');
     }
+    circ(8, wy + 9.5, 1.5, '#e8b090');
+    ell(8, wy + 8, 2, 1.25, '#d8d4e8');
   });
   // right window: a gold mirror and a styling chair
-  R(42, wy - 2, 21, 20, '#f4b63f');
-  glass(44, wy, 17, 16, () => {
-    R(44, wy, 17, 16, '#ffe0e8');
-    R(44, wy + 11, 17, 5, '#d8a0b8');
-    RR(47, wy + 1, 9, 9, 3, '#f4b63f');
-    RR(48, wy + 2, 7, 7, 2, '#c8e0f0');
-    P(49, wy + 3, '#ffffff');
-    RR(48, wy + 8, 7, 5, 1, '#3a2440');
-    HL(48, 54, wy + 8, '#6a4a70');
-    VL(51, wy + 13, wy + 15, '#a8a0b8');
+  R(42, wy - 2, 21, wh + 4, '#f4b63f');
+  fh(42, 63, wy - 2, '#fff0a0');
+  glassF(44, wy, 17, wh, () => {
+    R(44, wy, 17, wh, '#ffe0e8');
+    R(44, wy + 14, 17, 6, '#d8a0b8');
+    RR(47, wy + 1, 9, 10, 3, '#f4b63f');
+    RR(48, wy + 2, 7, 8, 2, '#c8e0f0');
+    L(49, wy + 7, 52, wy + 3, '#ffffff');
+    RR(48, wy + 10, 7, 5, 1, '#3a2440');
+    fh(48, 55, wy + 10, '#6a4a70');
+    fv(51.5, wy + 15, wy + 18, '#a8a0b8');
+    fh(49, 54, wy + 18.5, '#a8a0b8');
+    for (let k = 0; k < 3; k++) R(45 + k * 1.5, wy + 12 - k * 0.5, 1, 3 + k * 0.5, ['#ff5d8f', '#9a6ad0', '#3f9a92'][k]);
   });
-  barberPole(21, 42, 20, 0);
+  barberPole(21, BP_Y, 22, 0);
   // door (centre x = 32)
-  doorA(25, 44, 14, 28, '#3a2440', { glass: true, frame: '#f4b63f', knob: '#ffd34a' });
-  RR(25, 59, 14, 7, 1, '#ffd34a');
-  T('IN', 29, 60, '#3a2440', FT, {});
-  foundation(0, GY - 3, W, 3, '#d8b8c8', '#c8a8b8');
+  doorF(25, 54, 14, 34, '#3a2440', { frame: '#f4b63f', lite: true, liteH: 14, wall: '#ffe0e8', seed: 104, kick: '#f4b63f', step: '#d8b8c8' });
+  RR(26, 71, 12, 5, 1, '#ffd34a');
+  T('IN', 29.5, 71, enamel('#3a2440'), FT, {});
+  // star decals on the glass, a potted palm
+  for (const [sx, sy] of [[29, 58], [35, 61]] as [number, number][]) {
+    P1(sx, sy, '#ffd34a');
+    P1(sx - 0.5, sy + 0.5, '#ffd34a');
+    P1(sx + 0.5, sy + 0.5, '#ffd34a');
+    P1(sx, sy + 1, '#ffd34a');
+  }
+  R(55, GY - 7, 6, 6, '#3a2440');
+  fh(55, 61, GY - 7, '#6a4a70');
+  for (let k = -2; k <= 2; k++) L(58, GY - 8, 58 + k * 2.5, GY - 13 + Math.abs(k), k % 2 ? '#4f8a5a' : '#6fb070');
+  fv(58, GY - 12, GY - 7, '#8a6a4a');
+  grime(0, GY - 9, W, 7, 0.16);
+  footing(0, GY - 3, W, 3, '#d8b8c8', 105);
 }
 building('b-salon', {
   w: 64,
-  h: 72,
+  h: 88,
   door: 0,
   draw: drawSalon,
-  shadowTop: 9,
+  shadowTop: 11,
   label: 'Gorgeous',
-  anims: [{ fps: 6, frames: 6, rect: [19, 39, 7, 26], draw: (f) => barberPole(21, 42, 20, f) }],
+  solid: { x: -32, y: -62, w: 64, h: 62 },
+  anims: [{ fps: 6, frames: 6, rect: [19, BP_Y - 3, 7, 28], draw: (f) => barberPole(21, BP_Y, 22, f) }],
   lights: [
-    [11, 54, 14, WARM],
-    [52, 54, 14, WARM],
-    [32, 52, 10, WARM],
-    [32, 24, 18, '#ffd34a'],
+    [11, 64, 14, WARM],
+    [52, 64, 14, WARM],
+    [32, 63, 10, WARM],
+    [32, 28, 18, '#ffd34a'],
   ],
 });
 
