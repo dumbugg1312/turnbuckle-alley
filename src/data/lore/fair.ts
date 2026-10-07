@@ -29,6 +29,6 @@ export const LORE_FAIR: LoreTable = {
   '#tent-games': [
     { t: 'The games tent. Ring toss onto milk bottles, and a dartboard with balloons. The prizes are stuffed bears in tiny gold crowns.', when: { festival: false } },
     { t: ["The games tent is open and loud. A kid is throwing rings at milk bottles with the focus of a surgeon.", 'Every prize on the wall is a stuffed bear in a tiny gold crown. Wanda is watching them through the fence and seems to approve.'], when: { festival: true } },
-    { t: 'You throw three rings. Two bounce. One lands, wobbles, and stays. The man at the booth hands you a bear. It is the size of a thumb and bows when you squeeze it.', when: { festival: true, again: true }, set: 'won_tiny_bear' },
+    { t: 'You throw three rings. Two bounce. One lands, and wobbles for a long time, and stays. The man at the booth hands you a bear. It is the size of a thumb and bows when you squeeze it.', when: { festival: true, again: true }, set: 'won_tiny_bear' },
   ],
 };

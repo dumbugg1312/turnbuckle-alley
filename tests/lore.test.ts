@@ -76,7 +76,7 @@ describe('every object has something to say', () => {
     const unreachable: string[] = [];
     let total = 0;
     for (const def of M.MAPS.values()) {
-      if (!def.indoor || def.id === 'maxx-office' || def.id === 'apartment') continue;
+      if (def.id === 'maxx-office' || def.id === 'apartment') continue;
       const m = new M.GameMap(def);
       for (const o of m.objects) {
         if (!M.ACTIONS.has(o.id) && !M.ACTIONS.has(o.kind) && typeof o.props.text !== 'string') continue;

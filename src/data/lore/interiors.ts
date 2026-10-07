@@ -208,7 +208,7 @@ export const LORE_INTERIORS: LoreTable = {
     { t: 'A cart of folding chairs, fifty exactly. Birdie counted them in. Birdie will count them out.' },
   ],
   'vfw/ticket-table': [
-    { t: 'A cash box, a roll of red tickets, and a hand stamp shaped like a turnbuckle. On Wednesdays Birdie works this door herself.' },
+    { t: 'A cash box and a hand stamp shaped like a turnbuckle. On Wednesdays Birdie works this door herself.' },
     { t: 'The ink pad is dry. Somebody has been stamping hands with a wet thumb and a lot of confidence.' },
   ],
   'vfw/coat-rack': [

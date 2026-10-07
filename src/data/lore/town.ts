@@ -107,10 +107,6 @@ export const LORE_TOWN: LoreTable = {
     { t: 'Something plops into the water just out of sight. Lou would say it was a bluegill. Fenwick would say something else.' },
     { t: 'A red-winged blackbird holds on to a reed and announces itself to the creek.', when: { season: [0, 1], from: 6, to: 12 } },
   ],
-  'town/lilypad': [
-    { t: 'A frog sits on the lily pad like it paid for the seat.' },
-    { t: 'The lily pad has a flower on it, pink and shut tight. It opens later, for nobody in particular.' },
-  ],
   'town/rock': [
     { t: "A smooth gray rock, warm on top. A perfect skipping stone is wedged under it. Lou says you leave the good ones where they are." },
     { t: 'Somebody painted a tiny butterfly on it in gold. Then the creek tried to take the paint back, and only half-won.' },

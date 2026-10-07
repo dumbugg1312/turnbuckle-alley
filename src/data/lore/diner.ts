@@ -6,7 +6,7 @@ export const LORE_DINER: LoreTable = {
     { t: ['You drop a quarter in and press B4. *Sugar\'s Shuffle*: a piano that has had a long day and is fine about it.', 'Somebody at the counter starts tapping a spoon on the off-beat and does not seem to know it.'], song: 'theme:birdie:town', sfx: 'coin' },
     { t: ['A2. *Sugar Drop*. Old soul, all crackle and slide.', 'From the kitchen, without looking, June reaches over and turns it up one notch.'], song: 'theme:lou:town', sfx: 'coin' },
     { t: ['C7. *Dust and Denim*. A harmonica walks in and sits down.', 'Two men at the counter set their coffee down at the same moment, then pretend they did not.'], song: 'theme:clint:town', sfx: 'coin' },
-    { t: ['F1. *Mirror, Mirror*, the slow version. Bossa nova and brushed snare.', 'A woman in a booth checks her reflection in a spoon, sighs, and checks again.'], song: 'theme:gideon:town', sfx: 'coin' },
+    { t: ['F1. *Mirror, Mirror*, the slow version. Bossa nova and brushed snare.', 'A woman in a booth checks her reflection in a spoon. Then she checks again.'], song: 'theme:gideon:town', sfx: 'coin' },
     { t: ['D5. The button is less worn than all the others. *The Duchess Waltz*.', 'June stops pouring, for one bar, and then she pours.'], song: 'theme:grandma:town', sfx: 'coin', when: { again: true } },
     { t: ['G3. *Never Stop Flying*, the skate-park version.', 'The record skips once in the same place, like it is also trying a trick it has not landed yet.'], song: 'theme:dex:town', sfx: 'coin', when: { again: true } },
   ],
@@ -46,7 +46,7 @@ export const LORE_DINER: LoreTable = {
     { t: 'Through the pass you can see the cook flip four eggs at once and not look at any of them.', when: { from: 6, to: 11 } },
   ],
   'diner/door-wall': [
-    { t: 'The swinging kitchen door has a porthole window, a scuff at boot height, and a handwritten sign: *IN* on one side, *ALSO IN* on the other.' },
+    { t: 'The swinging kitchen door has a scuff at boot height and a handwritten sign: *IN* on one side, *ALSO IN* on the other.' },
   ],
   'diner/back-bar': [
     { t: 'Pie under glass domes. Beside the cherry lattice, a county fair ribbon and a card: *AGNES\'S RECIPE.* Tiny has seen the card. Tiny looks at the ceiling when she walks past it.' },

@@ -161,7 +161,7 @@ export const RIDE_LINES: Record<string, string[]> = {
   sami: ['"Jiddo rode this every year until he was eighty," Sami says.', '"He\'d wave at the whole town from the top like they could see him. Some of them could."'],
   clementine: ['Clementine reviews the view. "Four stars. The water tower is doing a lot of work."', '"The creek is underused. I\'ll be kinder in print."'],
   fenwick: ['Fenwick spends the whole ride scanning the tree line with binoculars.', 'At the top he lowers them and says, very softly, "Nothing. But a good nothing."'],
-  bev: ['Sheriff Bev uses the height to check traffic. "One car. Two raccoons. Quiet day."', 'She sounds a little disappointed, and a little relieved, and she writes it down.'],
+  bev: ['Sheriff Bev uses the height to check traffic. "One car. Two raccoons. Quiet day."', 'She sounds a little disappointed and a little relieved. She writes it down.'],
   patty: ['Coach Patty grips the safety bar. "This wheel is going exactly as fast as the sign says."', '"Huh." It is the closest thing to trust you have ever heard from her.'],
   oakes: ['Mayor Oakes holds out her arms over the town like she is presenting it on a game show.', '"A tram," she says. "From the square to right here. Think about it." You think about it.'],
   marigold: ['Marigold studies everyone\'s outfits from above. "From up here you can tell who hemmed their own pants."', 'They are completely delighted by this.'],
@@ -174,7 +174,7 @@ export const RIDE_LINES: Record<string, string[]> = {
 
 function viewLine(): string {
   const m = G.time.minutes;
-  if (m >= H(20, 30) || m < H(5, 30)) return 'Night. The streetlights draw Main Street in dots, the marquee is lit, and the red light on the water tower blinks once, and once, and once.';
+  if (m >= H(20, 30) || m < H(5, 30)) return 'Night. The streetlights draw Main Street in dots and the marquee is lit. On the water tower, the red light blinks. Once. Once.';
   if (m >= H(17)) return 'Golden hour. Every window on Main Street is on fire, and the creek is a long ribbon of it.';
   if (G.weather.today === 'rain' || G.weather.today === 'storm') return 'Rain over town. Everything is gray-green and soft, and the water tower wears a little cloud like a hat.';
   if (G.time.season === 3) return 'Snow on every roof. The whole town looks like it has been iced by someone very patient.';
@@ -391,7 +391,7 @@ async function wandaPen(): Promise<void> {
     rel('wanda').points += 40;
     await narrate(
       'You hold a spoonful of honey through the fence. Wanda takes it like a duchess taking a teacup.',
-      'She presses her paws together, closes her eyes, and makes a sound like a happy cello. Then she bows. You bow back. She bows deeper.',
+      'She presses her paws together and closes her eyes. The sound she makes is a happy cello. Then she bows, and you bow back, and she bows deeper.',
     );
     await bow();
     return;
@@ -443,7 +443,7 @@ async function strongman(): Promise<void> {
   }
   if (!G.flags['met_strongman']) {
     G.flags['met_strongman'] = true;
-    await narrate('The strongman tower: a tall red plank, a brass bell at the top, and marks painted up the side from *PIP-WEIGHT* to *HALL OF FAME*. A mallet leans against it, the handle worn smooth.', 'A coffee can on a post: *HONOR SYSTEM. $1 A SWING.*');
+    await narrate('The strongman tower: a tall red plank with a brass bell at the top, and marks painted up the side from *PIP-WEIGHT* to *HALL OF FAME*. A mallet leans against it, the handle worn smooth.', 'A coffee can on a post: *HONOR SYSTEM. $1 A SWING.*');
   }
   const c = await choose(null, 'Swing for the bell? ($1, 4 energy)', [
     { label: 'Swing', value: 'swing', style: 'primary' },
@@ -525,11 +525,11 @@ async function stageShow(): Promise<boolean> {
         ], { cancelValue: 'no' });
         if (c === 'yes') {
           G.flags['pumpkin_ribbon'] = true;
-          await narrate('You set your pumpkin on the feed scale. The needle swings, wobbles, and settles past Bo\'s and past Buck\'s, which weighed exactly the same, which neither of them will discuss.');
+          await narrate('You set your pumpkin on the feed scale. The needle swings and settles past Bo\'s and past Buck\'s, which weighed exactly the same, which neither of them will discuss.');
           await say(gus, 'Ladies and gentlemen... grown in the soil of the Dupree place... your NEWWWW Harvest Havoc pumpkin champion... {ring}!');
           sting('champion');
           gain('ribbon-pumpkin');
-          await narrate('Gus hands the pumpkin back. "Keep it. It\'s a champion now. Champions go home with the people who raised them."');
+          await narrate('Gus hands the pumpkin back with both hands, like a belt. "Keep it. I\'d only weigh it again."');
           return true;
         }
       }

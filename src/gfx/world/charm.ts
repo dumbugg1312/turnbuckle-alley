@@ -11,7 +11,8 @@ import { registerObject } from '../../world/registry';
 import type { MapObject } from '../../world/types';
 import { type Color, circ, ell, liA, mixc, P1, poly, R, shA } from '../kit';
 import { blit } from './buildings';
-import { dart, fh, fy, H1, L1, shadowF, TFC, V1 } from './props';
+import { FT, TC, TW } from '../font';
+import { dart, fh, fy, H1, L1, shadowF, V1 } from './props';
 
 // ---------------------------------------------------------------- hooks the systems fill in
 
@@ -284,24 +285,26 @@ registerObject('festival-sign', {
   draw: (ctx, o) => {
     const f = festival();
     if (!f.on) return;
+    const name = f.name.toUpperCase();
+    const W = Math.max(60, Math.ceil(TW(name, FT) / 2) * 2 + 12);
     blit(
       ctx,
-      dart(`fest-sign|${f.name}|${f.season}`, 60, 36, () => {
-        for (const x of [3, 55]) {
+      dart(`fest-sign|${name}|${f.season}`, W, 36, () => {
+        for (const x of [3, W - 5]) {
           R(x, 10, 2, 26, '#8a6a4a');
           V1(x, 10, 36, liA('#8a6a4a', 0.3));
         }
         // board with a painted edge and the name in cream
-        R(0, 4, 60, 15, shA('#7a2f31', 0.1));
-        R(1, 5, 58, 13, '#b04a3f');
-        H1(1, 59, 5, liA('#b04a3f', 0.3));
-        R(2.5, 6.5, 55, 10, () => (fy() < 7.5 ? '#c9604c' : '#b04a3f'));
-        TFC(f.name.toUpperCase(), 30, 9, '#fbf0d9');
+        R(0, 4, W, 15, shA('#7a2f31', 0.1));
+        R(1, 5, W - 2, 13, '#b04a3f');
+        H1(1, W - 1, 5, liA('#b04a3f', 0.3));
+        R(2.5, 6.5, W - 5, 10, () => (fy() < 7.5 ? '#c9604c' : '#b04a3f'));
+        TC(name, W / 2, 9, '#fbf0d9', FT);
         // pennants hanging off the bottom edge
-        for (let x = 4, k = 0; x < 57; x += 5, k++) poly([[x, 19], [x + 3, 19], [x + 1.5, 22.5]], k % 2 ? SEASON_ACCENT[f.season] : '#e8b84a');
+        for (let x = 4, k = 0; x < W - 3; x += 5, k++) poly([[x, 19], [x + 3, 19], [x + 1.5, 22.5]], k % 2 ? SEASON_ACCENT[f.season] : '#e8b84a');
         // a garland across the top
-        for (let x = 1; x < 59; x += 2) circ(x, 3.6 + Math.sin(x * 0.8) * 0.6, 1.1, x % 4 < 2 ? '#5e8a4a' : '#7aa858');
-      }, { pad: [3, 3, 3, 3], shadow: (ox, oy) => { shadowF(ox + 4, oy + 36, 2.5, 0.8); shadowF(ox + 56, oy + 36, 2.5, 0.8); } }),
+        for (let x = 1; x < W - 1; x += 2) circ(x, 3.6 + Math.sin(x * 0.8) * 0.6, 1.1, x % 4 < 2 ? '#5e8a4a' : '#7aa858');
+      }, { pad: [3, 3, 3, 3], shadow: (ox, oy) => { shadowF(ox + 4, oy + 36, 2.5, 0.8); shadowF(ox + W - 4, oy + 36, 2.5, 0.8); } }),
       o,
     );
   },
