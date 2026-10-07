@@ -310,16 +310,41 @@ interior('library', 'Public Library', 16, 11, 'wall', 'carpet', 7, [
   ['window', 4, 2.6], ['window', 11, 2.6], ['plant', 15.4, 10.4], ['lamp-floor', 0.6, 7.4],
 ], { music: 'home' });
 
+// Rosa's place: talavera counter, papel picado strung across the wall, the
+// masks (hers in gold in the middle), Abuela Celia's ofrenda with candles and
+// marigolds, a salsa bar from mild to "Rosa's", tables for the lunch rush.
 interior('taqueria', 'Taqueria Mariposa', 14, 9, 'wall-pink', 'tile', 6, [
-  ['counter', 4, 4.6, { w: 6 }, 'taq-counter'], ['cash-register', 2, 3.8], ['stove', 10.5, 4.4], ['fridge', 12.6, 4.4],
-  ['table', 3, 7.4], ['chair-wood', 2, 7.6], ['chair-wood', 4, 7.6], ['table', 10, 7.4], ['chair-wood', 9, 7.6], ['chair-wood', 11, 7.6],
-  ['poster', 7, 2.2, { variant: 0 }], ['photo', 11, 2.1, { variant: 4 }, 'abuela-photo'], ['plant', 0.6, 8.4], ['plant', 13.4, 8.4],
-], { music: 'diner' });
+  ['papel-picado', 8, 0.95, { w: 14 }],
+  ['kitchen-run', 3.5, 3.15, { w: 4, style: 'taqueria', kettle: false }],
+  ['menu-board', 8.6, 1.65, { menu: 'taq' }],
+  ['mask-wall', 11.2, 2.1],
+  ['ofrenda', 13.6, 2.95, {}, 'abuela-photo'],
+  ['counter', 5, 4.95, { w: 6, style: 'tile' }, 'taq-counter'],
+  ['cash-register', 2.6, 4.15],
+  ['salsa-bar', 13.2, 5.6],
+  ['table', 3.5, 7.6, { variant: 0 }], ['chair-wood', 2.1, 7.9], ['chair-wood', 4.9, 7.9],
+  ['table', 11.5, 7.6, { variant: 1 }], ['chair-wood', 10.1, 7.9], ['chair-wood', 12.9, 7.9],
+  ['plant', 1.4, 8.6, { variant: 0 }], ['plant', 14.4, 8.6, { variant: 2 }],
+], { music: 'diner', light: 0.92, abs: true });
 
+// Tiny's bakery: the glass case, racks of bread up the wall, the menu (the
+// "heel cake" costs villains extra), the three-tier showpiece under its dome,
+// flour sacks, a cafe table by the window, and her dollhouse bakery where
+// every pie is the size of a pea.
 interior('bakery', 'Tallbridge Bakery', 12, 8, 'wall', 'checker', 5, [
-  ['display-case', 4, 4.6, {}, 'bakery-case'], ['counter', 8.5, 4.6, { w: 3 }], ['cash-register', 9, 3.8], ['stove', 1, 4.4],
-  ['table', 9.5, 7], ['chair-wood', 8.5, 7.2], ['window', 4, 2.6], ['plant', 11.4, 7.4],
-], { music: 'diner' });
+  ['bread-rack', 3.5, 2.95, { w: 4 }],
+  ['menu-board', 8.5, 1.5, { menu: 'bakery' }],
+  ['kitchen-run', 11, 3.15, { w: 3, style: 'bakery' }],
+  ['display-case', 5, 4.95, {}, 'bakery-case'],
+  ['counter', 8.5, 4.95, { w: 3, style: 'wood' }],
+  ['cash-register', 9.2, 4.15],
+  ['tiered-cake', 1.6, 5.6],
+  ['flour-sacks', 12.2, 5.4],
+  ['table', 9.5, 6.1, { variant: 1, solid: { x: -16, y: -14, w: 32, h: 12 } }],
+  ['cafe-chair', 9.5, 6.8],
+  ['dollhouse', 11.9, 7.7],
+  ['plant', 1.4, 7.6, { variant: 2 }],
+], { music: 'diner', light: 0.94, abs: true });
 
 interior('radio', 'WRSL 1340 AM', 10, 8, 'wall-panel', 'carpet', 4, [
   ['radio-console', 5, 4.6, {}, 'radio-console'], ['mic-stand', 7.4, 4.8], ['office-chair', 5, 5.6], ['filing-cabinet', 1, 4.4], ['crt-stack', 9, 4.8],
@@ -419,9 +444,19 @@ interior('airstream', "Sweet Lou's Airstream", 9, 5, 'wall-wood', 'wood', 3, [
   ['bed', 7.5, 4.2, {}, 'lou-bed'], ['table', 2, 4.4], ['tv-vcr', 0.8, 3.6, {}, 'lou-tv'], ['photo', 4.5, 1.9, { variant: 3 }, 'lou-photo'],
 ], { music: 'home', wallRows: 2 });
 
+// Dex's night shift: the glass coolers humming (one door just says BAIT),
+// the snack aisle, the coffee station begging for exact change, the lotto
+// sign, and the counter where Dex practises dropkicks when it's slow.
 interior('gasstation', 'Gas · Bait · Snacks', 10, 7, 'wall', 'tile', 4, [
-  ['counter', 6.5, 4.6, { w: 4 }, 'gas-counter'], ['cash-register', 7, 3.8], ['shelf-goods', 2, 6.4, { w: 3 }], ['vending', 9.4, 4.6], ['fridge', 0.6, 4.2], ['poster', 4, 2.3, { variant: 2 }],
-], { music: 'diner' });
+  ['drink-cooler', 2.5, 3.9, { w: 3, solid: { x: -24, y: -6, w: 48, h: 5 } }],
+  ['notice', 6.3, 1.4, { lines: 'BAIT|NIGHTCRAWLERS|$2 A DOZ' }],
+  ['notice', 8.8, 1.3, { lines: 'LOTTO|TONIGHT', variant: 1 }],
+  ['counter', 7.5, 4.95, { w: 4, style: 'wood' }, 'gas-counter'],
+  ['cash-register', 8.6, 4.15],
+  ['vending', 10.4, 4.6],
+  ['shelf-goods', 3, 6.4, { w: 3 }],
+  ['coffee-station', 9.4, 6.5],
+], { music: 'diner', light: 0.9, abs: true });
 
 interior('salon', 'Gorgeous (Salon)', 10, 7, 'wall-pink', 'checker', 4, [
   ['dresser', 2, 4.4], ['armchair', 2, 5.6, {}, 'salon-chair-1'], ['dresser', 6, 4.4], ['armchair', 6, 5.6, {}, 'salon-chair-2'], ['counter', 9, 6.4, { w: 2 }], ['plant', 0.6, 6.4], ['poster', 4, 2.3, { variant: 2 }], ['photo', 8, 2.1, { variant: 5 }],

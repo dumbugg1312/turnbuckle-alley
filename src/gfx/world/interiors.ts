@@ -2609,6 +2609,444 @@ reg('wheelchair', {
     ),
 });
 
+// ---------------------------------------------------------------- taqueria, bakery, gas station
+
+/** Strings of papel picado across the top of a wall (cut-paper flags with fine cut-outs). */
+reg('papel-picado', {
+  draw: (ctx, o, t) => {
+    const n = num(o, 'w', 6);
+    const W = n * 16;
+    const sway = frame(t, 2, 0.7, phaseOf(o));
+    blit(
+      ctx,
+      o,
+      iart(
+        `papel-picado|${n}|${sway}`,
+        W,
+        14,
+        () => {
+          const cs: Color[] = ['#ff5d8f', '#ffd050', '#5ec0a8', '#a888ff', '#ff8a3a', '#5a9ae8'];
+          for (const row of [0, 1]) {
+            const y0 = 1 + row * 6;
+            const off = row * 3;
+            curve(0, y0, W, y0, 2, '#fbf6ea');
+            for (let x = 2 + off; x < W - 4; x += 6) {
+              const t2 = x / W;
+              const yy = y0 + 4 * 2 * t2 * (1 - t2) + (sway && (x / 6) % 2 ? 0.5 : 0);
+              const c = cs[Math.floor(x / 6 + row) % cs.length];
+              R(x, yy, 4.5, 4.5, c);
+              // fine cut-outs: a flower and a scalloped hem
+              P1(x + 2, yy + 1.5, 0);
+              P1(x + 1.5, yy + 2, 0);
+              P1(x + 2.5, yy + 2, 0);
+              P1(x + 2, yy + 2.5, 0);
+              for (let k = 0; k < 4; k++) P1(x + 0.5 + k, yy + 4, 0);
+              H1(x, x + 4.5, yy, liA(c, 0.4));
+            }
+          }
+        },
+        { outline: false },
+      ),
+    );
+  },
+});
+
+/** Luchador masks hung on the wall: La Mariposa's gold one in the middle. */
+reg('mask-wall', {
+  draw: (ctx, o) =>
+    blit(
+      ctx,
+      o,
+      iart(
+        'mask-wall',
+        36,
+        16,
+        () => {
+          const masks: [Color, Color, Color][] = [['#3a6ab0', '#fbf6ea', '#ffd050'], ['#ffd34a', '#c8307a', '#3ac0b0'], ['#d8434b', '#2b2140', '#fbf6ea']];
+          masks.forEach(([base, trim, eye], i) => {
+            const cx = 6 + i * 12;
+            const big = i === 1;
+            const rx = big ? 5 : 4;
+            const ry = big ? 6.5 : 5.5;
+            P1(cx, 0.5, '#6e688e');
+            L1(cx, 0.5, cx - 2, 3, '#9aa2c8');
+            L1(cx, 0.5, cx + 2, 3, '#9aa2c8');
+            ell(cx, 8, rx, ry, base);
+            ell(cx - 1.2, 5.5, rx * 0.5, ry * 0.4, liA(base, 0.3));
+            for (const s2 of [-1, 1]) {
+              ell(cx + s2 * 2, 7, 1.8, 1.2, trim);
+              ell(cx + s2 * 2, 7, 1, 0.6, AK);
+              if (big) for (let k = 0; k < 4; k++) P1(cx + s2 * (3.5 + k * 0.5), 5 + k, eye);
+            }
+            ell(cx, 11, 1.4, 0.8, trim);
+            V1(cx, 2, 5.5, trim);
+            if (big) {
+              // butterfly wings flaring from the temples
+              poly([[cx - 4, 5], [cx - 9, 2], [cx - 8, 9]], alpha('#ffb0c8', 220));
+              poly([[cx + 4, 5], [cx + 9, 2], [cx + 8, 9]], alpha('#ffb0c8', 220));
+            }
+          });
+          for (let k = 0; k < 3; k++) {
+            V1(6 + k * 12 + 4.5, 2, 14, SH(50));
+          }
+        },
+        { outline: false },
+      ),
+    ),
+});
+
+/** A little ofrenda on a shelf: Abuela Celia's photo, candles, marigolds, sugar skulls. */
+reg('ofrenda', {
+  lights: (o) => [light(o, 0, -10, 28, '#ffb860')],
+  draw: (ctx, o, t) => {
+    const f = frame(t, 3, 6, phaseOf(o));
+    blit(
+      ctx,
+      o,
+      iart(
+        `ofrenda|${f}`,
+        30,
+        26,
+        () => {
+          // two-tier shelf draped in a pink cloth with cut-paper edging
+          R(2, 14, 26, 2, '#8a5640');
+          R(5, 6, 20, 2, '#8a5640');
+          R(1, 16, 28, 6, '#ff94b4');
+          for (let x = 1; x < 29; x += 2) ell(x + 1, 22, 1, 0.8, '#ff94b4');
+          for (let x = 2; x < 28; x += 3) P1(x, 18, '#ffd8e8');
+          // Abuela Celia in her gold mask, framed
+          frameBox(11, -1, 8, 8, PAL.gold2, 591, 'portrait', false, false);
+          ell(15, 3, 2, 2.4, '#ffd34a');
+          ell(14.2, 2.6, 0.5, 0.4, AK);
+          ell(15.8, 2.6, 0.5, 0.4, AK);
+          // candles flickering
+          for (const [cx, h] of [[4, 6], [26, 5], [8, 4], [22, 4]] as [number, number][]) {
+            R(cx - 0.75, 14 - h, 1.5, h, '#fbf6ea');
+            ell(cx, 14 - h - 1 - (f === 1 ? 0.3 : 0), 0.7, 1.1 + (f === 2 ? 0.3 : 0), '#ffd050');
+            P1(cx, 14 - h - 0.8, '#fff4c0');
+          }
+          // marigolds and sugar skulls
+          for (const [mx, my] of [[6, 12], [10, 12.5], [20, 12.5], [24, 12]] as [number, number][]) {
+            ell(mx, my, 1.4, 1.2, '#ff8a1a');
+            P1(mx, my - 0.3, '#ffc040');
+          }
+          for (const sx of [13, 17]) {
+            ell(sx, 12.5, 1.3, 1.3, '#fbf6ea');
+            P1(sx - 0.5, 12.3, '#5ec0a8');
+            P1(sx + 0.5, 12.3, '#ff5d8f');
+          }
+          for (let k = 0; k < 8; k++) P1(4 + k * 3, 15.5, '#ff8a1a');
+        },
+        { outline: false },
+      ),
+    );
+  },
+});
+
+/** A salsa bar: four bowls, from "mild" to "Rosa's", limes, radishes. */
+reg('salsa-bar', {
+  solid: { x: -12, y: -6, w: 24, h: 5 },
+  draw: (ctx, o) =>
+    blit(
+      ctx,
+      o,
+      iart(
+        'salsa-bar',
+        26,
+        16,
+        () => {
+          R(0, 6, 26, 2, '#e8dcc4');
+          H1(0, 26, 6, '#fff6e6');
+          for (let ty = 8; ty < 16; ty += 4) for (let tx = 0; tx < 26; tx += 4) {
+            R(tx, ty, 4, 4, '#fbf6ea');
+            P1(tx + 2, ty + 2, ['#2f6ab0', '#e8a030', '#3f9a92'][(tx / 4 + ty / 4) % 3]);
+          }
+          const cs: Color[] = ['#5aa84a', '#e8a030', '#c8402a', '#7a1a1a'];
+          cs.forEach((c, i) => {
+            ell(4 + i * 6, 5, 2.6, 1.6, '#fbf6ea');
+            ell(4 + i * 6, 4.7, 2, 1, c);
+            P1(3.5 + i * 6, 4.4, liA(c, 0.4));
+          });
+          tinyT('ROSAS', 18, 1, '#c8402a');
+          for (let k = 0; k < 3; k++) ell(24 + (k % 2), 2 + k, 0.8, 0.8, '#8acd5a');
+        },
+        { shadow: [['r', 0, 14, 26, 3]] },
+      ),
+    ),
+});
+
+/** Wall racks of bread: baguettes, round loaves, braided challah, a basket of rolls. */
+reg('bread-rack', {
+  draw: (ctx, o) => {
+    const n = num(o, 'w', 3);
+    const W = n * 16;
+    blit(
+      ctx,
+      o,
+      iart(
+        `bread-rack|${n}`,
+        W,
+        34,
+        () => {
+          const wd = HONEY;
+          R(0, 0, W, 34, shA(wd.b, 0.35));
+          for (const sy of [10, 21, 32]) {
+            R(0, sy, W, 2, wd.l);
+            H1(0, W, sy, liA(wd.l, 0.4));
+          }
+          V1(0, 0, 34, wd.l);
+          V1(W - 0.5, 0, 34, wd.s);
+          const r = rng(n * 17);
+          for (const sy of [10, 21, 32]) {
+            let x = 1.5;
+            while (x < W - 4) {
+              const k = Math.floor(r() * 4);
+              if (k === 0) {
+                // round boule with a scored cross
+                ell(x + 3, sy - 2.5, 3, 2.5, '#c8803a');
+                ell(x + 2.4, sy - 3.4, 1.6, 0.9, '#e8a860');
+                L1(x + 1.5, sy - 3, x + 4.5, sy - 2, '#f6d8a8');
+                x += 7;
+              } else if (k === 1) {
+                // baguettes leaning in a bundle
+                for (let i = 0; i < 3; i++) {
+                  L1(x + i * 1.2, sy, x + 1 + i * 1.2, sy - 8, '#d89048');
+                  L1(x + 0.5 + i * 1.2, sy, x + 1.5 + i * 1.2, sy - 8, '#b87030');
+                }
+                x += 5;
+              } else if (k === 2) {
+                // braided challah, shiny
+                for (let i = 0; i < 4; i++) ell(x + 1.5 + i * 1.6, sy - 2 - (i % 2) * 0.5, 1.3, 1.6, i % 2 ? '#c87830' : '#e09848');
+                P1(x + 2, sy - 3.5, '#fff0c8');
+                x += 8;
+              } else {
+                // a basket of rolls
+                R(x, sy - 2.5, 7, 2.5, '#a87040');
+                for (let i = 0; i < 6; i++) P1(x + 0.5 + i * 0.5, sy - 2.5, '#6a4020');
+                for (let i = 0; i < 3; i++) ell(x + 1.5 + i * 2, sy - 3, 1.1, 0.9, '#e0a050');
+                x += 8;
+              }
+            }
+          }
+          // price tags
+          for (let x = 3; x < W - 3; x += 9) R(x, 10.5, 3, 1.2, '#fbf6ea');
+        },
+        { outline: false },
+      ),
+    );
+  },
+});
+
+/** Tiny's showpiece: a three-tier cake under a dome, piped roses, a little wrestler couple on top. */
+reg('tiered-cake', {
+  solid: { x: -7, y: -5, w: 14, h: 4 },
+  draw: (ctx, o) =>
+    blit(
+      ctx,
+      o,
+      iart(
+        'tiered-cake',
+        16,
+        30,
+        () => {
+          // pedestal table
+          chrome(7, 20, 2, 9);
+          ell(8, 29, 4, 1, '#9aa2c8');
+          ell(8, 20, 7, 1.6, '#fbf6ea');
+          // tiers
+          for (const [ty, w, c] of [[14, 6, '#fff4f6'], [9, 4.5, '#ffe0e8'], [5, 3, '#fff4f6']] as [number, number, Color][]) {
+            R(8 - w, ty, w * 2, 5.5, c);
+            ell(8, ty, w, 1.2, liA(c, 0.3));
+            for (let k = 0; k < w * 2; k += 1) P1(8 - w + k + 0.5, ty + 5, '#ffb0c8');
+            for (let k = 0; k < w * 2; k += 2.5) ell(8 - w + 1 + k, ty + 2.5, 0.8, 0.7, '#ff7aa8');
+          }
+          // the topper: two little wrestlers holding a belt
+          R(6, 0, 1.5, 4, '#3a4a8a');
+          R(8.5, 0, 1.5, 4, '#c9404c');
+          ell(6.7, -0.5, 0.8, 0.8, '#e6ab84');
+          ell(9.2, -0.5, 0.8, 0.8, '#c88a5e');
+          R(6, 2, 4, 0.8, '#ffd050');
+          // glass dome
+          ell(8, 9, 7.5, 12, (_a, _b, o2) => (o2 ? mixc(o2, '#e8f4ff', 0.2) : alpha('#e8f4ff', 60)));
+          L1(2.5, 6, 3.5, 2, '#ffffff');
+        },
+        { shadow: [['e', 8, 29, 5, 1.2]] },
+      ),
+    ),
+});
+
+/** Tiny's dollhouse bakery: a whole bakery smaller than a bread box, every pie the size of a pea. */
+reg('dollhouse', {
+  solid: { x: -8, y: -5, w: 16, h: 4 },
+  draw: (ctx, o) =>
+    blit(
+      ctx,
+      o,
+      iart(
+        'dollhouse',
+        18,
+        22,
+        () => {
+          // the side table it sits on
+          R(1, 14, 16, 2, WALNUT.l);
+          R(2, 16, 1.5, 6, WALNUT.d);
+          R(14.5, 16, 1.5, 6, WALNUT.d);
+          // a pink house with a striped awning and a tiny window display
+          poly([[3, 6], [9, 1], [15, 6]], '#c8507a');
+          H1(3, 15, 6, '#e8709a');
+          R(4, 6, 10, 8, '#ffd8e0');
+          R(4, 6, 10, 8, (_a, _b, o2) => (o2 && FY % 3 === 0 ? shA(o2, 0.05) : o2));
+          for (let x = 4; x < 14; x += 1) R(x, 7, 1, 1.5, Math.floor(x) % 2 ? '#fbf6ea' : '#5ec0a8');
+          R(5, 9, 4, 3, '#9cc8e0');
+          for (let k = 0; k < 4; k++) P1(5.5 + k, 11, ['#e8b060', '#ff94b4', '#fff4c0', '#c8402a'][k]);
+          R(10, 9.5, 2.5, 4.5, '#8a5640');
+          P1(12, 11.5, PAL.gold2);
+          tinyC('TINY', 9, 3.4, '#fbf6ea');
+        },
+        { shadow: [['r', 1, 20, 16, 3]] },
+      ),
+    ),
+});
+
+/** Flour sacks slumped in a corner, one split, a scoop sticking out. */
+reg('flour-sacks', {
+  solid: { x: -8, y: -5, w: 16, h: 4 },
+  draw: (ctx, o) =>
+    blit(
+      ctx,
+      o,
+      iart(
+        'flour-sacks',
+        18,
+        16,
+        () => {
+          for (const [sx, sy, c] of [[1, 4, '#e8dcc4'], [8, 5, '#f2e8d4'], [4, 0, '#e2d4b8']] as [number, number, Color][]) {
+            RR(sx, sy, 9, 11, 3, c);
+            R(sx + 0.5, sy + 0.5, 8, 10, (_a, _b, o2) => (o2 && (FX + FY * 2) % 5 === 0 ? shA(o2, 0.06) : o2));
+            H1(sx + 2, sx + 7, sy + 1, shA(c, 0.2));
+            tinyC('FLOUR', sx + 4.5, sy + 5, '#c87a5a');
+          }
+          ell(12, 5, 2.5, 1, '#fbf6ea');
+          L1(12, 5, 15, 1, '#c8cce4');
+          for (let k = 0; k < 6; k++) P1(9 + k, 15.5, '#fbf6ea');
+        },
+        { shadow: [['r', 0, 13, 18, 3]] },
+      ),
+    ),
+});
+
+/** A wall of glass-door coolers: soda, milk, and one door that just says BAIT. */
+reg('drink-cooler', {
+  lights: (o) => [light(o, 0, -14, 36, '#d8f0ff')],
+  draw: (ctx, o) => {
+    const n = num(o, 'w', 3);
+    const W = n * 16;
+    blit(
+      ctx,
+      o,
+      iart(
+        `drink-cooler|${n}`,
+        W,
+        34,
+        () => {
+          R(0, 0, W, 34, '#c8cce0');
+          R(0, 0, W, 3, '#3a4a8a');
+          tinyC('ICE COLD', W / 2, 0.4, '#fbf6ea');
+          for (let d = 0; d < n; d++) {
+            const x = d * 16 + 1;
+            R(x, 4, 14, 28, '#e8f4ff');
+            // shelves of bottles and cans, back-lit
+            for (let sy = 6; sy < 30; sy += 6) {
+              H1(x, x + 14, sy + 4.5, '#9aa2c8');
+              for (let k = 0; k < 6; k++) {
+                const c = d === n - 1 && sy > 15 ? ['#5a4a3a', '#7a6a4a'][k % 2] : ['#d8434b', '#3f9a92', '#ffd050', '#ff8a3a', '#5a7ab8', '#fbf6ea'][(k + sy + d) % 6];
+                R(x + 1 + k * 2.2, sy, 1.6, 4.5, c);
+                P1(x + 1.3 + k * 2.2, sy + 0.5, liA(c, 0.5));
+              }
+            }
+            if (d === n - 1) {
+              R(x + 2, 16, 10, 4, '#fbf6ea');
+              tinyC('BAIT', x + 7, 16.6, '#c9404c');
+            }
+            fglare(x, 4, 14, 28, 0.3);
+            chrome(x + 12, 14, 1, 7);
+            V1(x + 14, 4, 32, '#9aa2c8');
+          }
+          R(0, 32, W, 2, '#6e688e');
+        },
+        { shadow: [['r', 1, 30, W, 4]] },
+      ),
+    );
+  },
+});
+
+/** The coffee station: two pots on burners, styrofoam cups, a sign begging for exact change. */
+reg('coffee-station', {
+  solid: { x: -10, y: -6, w: 20, h: 5 },
+  draw: (ctx, o, t) => {
+    const s2 = frame(t, 4, 3, phaseOf(o));
+    blit(
+      ctx,
+      o,
+      iart(
+        `coffee-station|${s2}`,
+        22,
+        24,
+        () => {
+          R(0, 10, 22, 2, '#e8dcc4');
+          R(0, 12, 22, 12, '#8a5640');
+          fgrain(0, 12, 22, 12, WALNUT, 601, true);
+          R(1, 3, 12, 7, '#2b2140');
+          for (const px of [3, 8.5]) {
+            ell(px + 1.5, 8.5, 2.5, 1.5, alpha('#e8f4ff', 200));
+            ell(px + 1.5, 9, 2, 1, '#5a3020');
+            R(px + 3.5, 7, 1, 1.5, AK);
+            P1(px + 1.5, 10, '#ff5a3a');
+            for (let k = 0; k < 2; k++) P1(px + 1 + Math.sin(k + s2) * 0.5, 6 - k - (s2 % 2) * 0.5, alpha('#ffffff', 150));
+          }
+          for (let k = 0; k < 5; k++) R(15, 9.5 - k * 1.3, 3, 1.3, k % 2 ? '#fbf6ea' : '#f2eee4');
+          R(14, 1, 8, 5, '#fbf6ea');
+          tinyC('EXACT', 18, 1.3, '#c9404c');
+          tinyC('CHANGE', 18, 3.4, '#3a2c3a');
+        },
+        { shadow: [['r', 0, 22, 22, 3]] },
+      ),
+    );
+  },
+});
+
+/** A bentwood cafe chair seen from behind (sitters face the table to the north). */
+reg('cafe-chair', {
+  draw: (ctx, o) =>
+    blit(
+      ctx,
+      o,
+      iart(
+        'cafe-chair',
+        10,
+        16,
+        () => {
+          const c = '#6e3f38';
+          // the hoop back, the seat, splayed legs with a ring
+          ell(5, 3.5, 3.8, 3.5, c);
+          ell(5, 3.5, 2.8, 2.6, 0);
+          R(1.2, 3.5, 1, 6, c);
+          R(7.8, 3.5, 1, 6, c);
+          ell(5, 9.5, 4.5, 1.6, liA(c, 0.2));
+          ell(5, 9.2, 4, 1.1, '#c9404c');
+          L1(1.5, 10.5, 1, 15.5, c);
+          L1(8.5, 10.5, 9, 15.5, c);
+          L1(3.5, 11, 3.5, 15.5, shA(c, 0.2));
+          L1(6.5, 11, 6.5, 15.5, shA(c, 0.2));
+          ell(5, 13.5, 3.5, 0.8, (_a, _b, o2) => o2);
+          H1(1.3, 8.7, 13.5, c);
+          P1(3, 1, liA(c, 0.4));
+        },
+        { shadow: [['e', 5, 15, 4, 1.2]] },
+      ),
+    ),
+});
+
 // ================================================================ kitchen
 
 /**
@@ -3648,19 +4086,18 @@ reg('pass-window', {
   },
 });
 
-const MENU_LINES = [
-  ['COFFEE', '.50'],
-  ['PIE', '1.25'],
-  ['PILEDRIVER', '3.99'],
-  ['FRI CHILI', '1.50'],
-];
+const MENUS: Record<string, [string, [string, string][]]> = {
+  diner: ['THE HOT TAG', [['COFFEE', '.50'], ['PIE', '1.25'], ['PILEDRIVER', '3.99'], ['FRI CHILI', '1.50']]],
+  taq: ['MARIPOSA', [['TACOS', '1.00'], ['TAMALES', '2.00'], ['HORCHATA', '.75'], ['ALAS DE ORO', '3.50']]],
+  bakery: ['TALLBRIDGE', [['LOAF', '1.50'], ['CINNAMON ROLL', '.75'], ['PETITS FOURS', '.25'], ['HEEL CAKE', '9.99']]],
+};
 reg('menu-board', {
   draw: (ctx, o) =>
     blit(
       ctx,
       o,
       iart(
-        'menu-board',
+        `menu-board|${String(o.props.menu ?? 'diner')}`,
         40,
         17,
         () => {
@@ -3673,8 +4110,9 @@ reg('menu-board', {
           R(2, 3.5, 36, 12, (_a, _b, o2) => (FY % 2 === 0 && o2 ? '#332e44' : o2));
           R(2, 0.5, 36, 2.5, '#c9404c');
           H1(2, 38, 0.5, '#e8706a');
-          tinyC('THE HOT TAG', 20, 0.8, '#fff4dc');
-          MENU_LINES.forEach(([a, b], i) => {
+          const [title, lines] = MENUS[String(o.props.menu ?? 'diner')] ?? MENUS.diner;
+          tinyC(title, 20, 0.8, '#fff4dc');
+          lines.forEach(([a, b], i) => {
             const yy = 4.5 + i * 3;
             tinyT(a, 3.5, yy, '#f2eef6');
             tinyT(b, 36.5 - tinyW(b), yy, '#ffd050');
