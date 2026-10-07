@@ -351,20 +351,62 @@ interior('radio', 'WRSL 1340 AM', 10, 8, 'wall-panel', 'carpet', 4, [
   ['poster', 3, 2.3, { variant: 2 }], ['poster', 7.5, 2.3, { variant: 5 }],
 ], { music: 'diner', light: 0.85 });
 
+// Marigold's shop: bolts of fabric up the wall, the sewing machine, a dress
+// form wearing the Hall of Fame robe they're making for the Duchess "just in
+// case", the ironing board, racks of ring gear, a fitting mirror.
 interior('tailor', "Sew What? (Marigold's)", 12, 8, 'wall-pink', 'wood', 5, [
-  ['counter', 6, 4.6, { w: 4 }, 'tailor-counter'], ['sewing-machine', 9.5, 4.6, {}, 'tailor-machine'], ['mannequin', 1.5, 5], ['mannequin', 11, 5],
-  ['clothing-rack', 3, 7.4], ['clothing-rack', 9, 7.4], ['window', 6, 2.6], ['photo', 2.5, 2.1, { variant: 5 }],
-], { music: 'creator' });
+  ['fabric-bolts', 3, 2.95, { w: 4 }],
+  ['notice', 9.2, 1.4, { lines: 'MEASURE TWICE|CUT ONCE|-M.', variant: 2 }],
+  ['window', 6.4, 2.6, { variant: 0, view: 'street' }],
+  ['counter', 7, 4.95, { w: 4, style: 'wood' }, 'tailor-counter'],
+  ['sewing-machine', 10.5, 4.6, {}, 'tailor-machine'],
+  ['robe-form', 12.3, 4.7],
+  ['mannequin', 1.6, 5.6],
+  ['ironing-board', 8.6, 6.6],
+  ['clothing-rack', 3, 7.4], ['clothing-rack', 10.6, 7.6],
+  ['standing-mirror', 12.4, 7.6],
+], { music: 'creator', light: 0.92, abs: true });
 
+// Fenwick's shop: walls of VHS, a stack of TVs all tuned to static, the
+// glass counter, the trading-card shelf for Pip, the tape bin. Past the
+// brick wall, the famous back room: the Mothman sighting map with red
+// string, the repair bench, and Static the parakeet.
 interior('pawn', "Fenwick's Pawn & Tapes", 12, 9, 'wall-brick', 'wood-dark', 5, [
-  ['vhs-shelf', 2, 4.8], ['vhs-shelf', 10, 4.8], ['crt-stack', 6, 4.8], ['counter', 6, 6.6, { w: 3 }, 'pawn-counter'], ['cash-register', 6.4, 5.8],
-  ['shelf-goods', 2.5, 8.4, { w: 3 }, 'card-shelf'], ['tapebin', 10.5, 8.4, { bin: 'fenwick' }, 'bin-fenwick'], ['poster', 4, 2.3, { variant: 1 }],
-], { music: 'tapes', light: 0.8 });
+  ['neon', 2.6, 1.3, { sign: 'PAWN', color: '#ffd050' }],
+  ['neon', 6.4, 1.3, { sign: 'TAPES', color: '#5ff2d6' }],
+  ['vhs-shelf', 2, 4.6], ['vhs-shelf', 4.4, 4.6],
+  ['crt-stack', 7.4, 4.8],
+  ['counter', 6, 6.95, { w: 4, style: 'glass' }, 'pawn-counter'],
+  ['cash-register', 7.4, 6.15],
+  ['shelf-goods', 3.5, 8.4, { w: 3 }, 'card-shelf'],
+  // the back room
+  ['sighting-map', 11.1, 2.6],
+  ['tv-repair', 11.2, 4.9],
+  ['birdcage', 12.4, 7.2],
+  ['tapebin', 10.8, 8.4, { bin: 'fenwick' }, 'bin-fenwick'],
+], {
+  music: 'tapes',
+  light: 0.8,
+  abs: true,
+  shape: (b) => b.rect(9, 3, 1, 3, 'wall-brick'),
+});
 
+// Steel Chair Hardware, est. 1979 by Stan Kowalski: the tool wall behind the
+// counter, the official ACW chair on sale (the dented one circled), paint
+// cans in a pyramid, the riding mower Stan made them promise not to dent,
+// the bait fridge, an aisle of odds and ends.
 interior('hardware', 'Steel Chair Hardware', 12, 9, 'wall-brick', 'concrete', 5, [
-  ['shelf-goods', 2.5, 4.8, { w: 3 }], ['shelf-goods', 9.5, 4.8, { w: 3 }], ['counter', 6, 5, { w: 3 }, 'hardware-counter'], ['cash-register', 6.5, 4.2],
-  ['folding-chairs', 3, 8, { w: 3 }], ['crate', 10, 8], ['barrel', 11, 7.6], ['poster', 6, 2.3, { variant: 4 }],
-], { music: 'diner' });
+  ['tool-wall', 7.5, 2.75, { w: 5 }],
+  ['counter', 7.5, 4.95, { w: 5, style: 'wood' }, 'hardware-counter'],
+  ['cash-register', 8.8, 4.15],
+  ['riding-mower', 2.4, 4.95],
+  ['drink-cooler', 12.5, 3.9, { w: 1, solid: { x: -8, y: -6, w: 16, h: 5 } }],
+  ['paint-display', 11.6, 6.8],
+  ['shelf-goods', 3, 8.6, { w: 3 }],
+  ['shelf-goods', 9, 6.6, { w: 3 }],
+  ['chair-display', 10.8, 8.7],
+  ['barrel', 7.9, 8.6],
+], { music: 'diner', light: 0.9, abs: true });
 
 interior('clinic', 'Halloran Chiropractic', 10, 8, 'wall', 'tile', 4, [
   ['exam-table', 6.5, 4.8, {}, 'exam-table'], ['desk', 2.5, 4.8], ['office-chair', 2.5, 4.0], ['plant', 9.4, 7.4], ['poster', 5, 2.3, { variant: 4 }], ['window', 8, 2.6],
@@ -458,9 +500,19 @@ interior('gasstation', 'Gas · Bait · Snacks', 10, 7, 'wall', 'tile', 4, [
   ['coffee-station', 9.4, 6.5],
 ], { music: 'diner', light: 0.9, abs: true });
 
+// Gorgeous by Gideon: two stations with gold mirrors ringed in bulbs, the
+// chairs, a pink bonnet dryer, a glass counter of product, his name in pink
+// neon, and at the back the red velvet chair that was Dottie's, a plum scarf
+// folded on the seat.
 interior('salon', 'Gorgeous (Salon)', 10, 7, 'wall-pink', 'checker', 4, [
-  ['dresser', 2, 4.4], ['armchair', 2, 5.6, {}, 'salon-chair-1'], ['dresser', 6, 4.4], ['armchair', 6, 5.6, {}, 'salon-chair-2'], ['counter', 9, 6.4, { w: 2 }], ['plant', 0.6, 6.4], ['poster', 4, 2.3, { variant: 2 }], ['photo', 8, 2.1, { variant: 5 }],
-], { music: 'creator' });
+  ['neon', 5.5, 1.3, { sign: 'GORGEOUS', color: '#ff5d8f' }],
+  ['velvet-chair', 1.6, 4.7],
+  ['salon-station', 3.6, 4.4, { variant: 0 }], ['salon-station', 7.4, 4.4, { variant: 1 }],
+  ['hood-dryer', 9.6, 4.7],
+  ['armchair', 3.6, 6.6, { variant: 3 }, 'salon-chair-1'], ['armchair', 7.4, 6.6, { variant: 3 }, 'salon-chair-2'],
+  ['counter', 9.6, 6.6, { w: 2, style: 'glass' }],
+  ['plant', 1.4, 6.6, { variant: 2 }],
+], { music: 'creator', light: 0.92, abs: true });
 
 // ---------------------------------------------------------------- The city prologue
 // Floor 31 at 11:48 PM: a wall of glass onto the city with the MaxxMedia

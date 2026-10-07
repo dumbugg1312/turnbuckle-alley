@@ -4182,22 +4182,29 @@ reg('neon', {
         w,
         13,
         () => {
-          // backing rail + mounting standoffs
-          R(1, 11.5, w - 2, 1, '#4e4870');
-          for (let x = 3; x < w - 2; x += 8) P1(x, 11, '#9aa2c8');
+          // a dark backing plate so the tubes read on any wallpaper, standoffs at the corners
+          RR(0, 0.5, w, 12, 2, '#2b2140');
+          R(1, 1.5, w - 2, 10, '#3a2c4a');
+          for (const [sx, sy] of [[2, 2], [w - 2.5, 2], [2, 10.5], [w - 2.5, 10.5]] as [number, number][]) P1(sx, sy, '#9aa2c8');
           T(text, 4, 3, fl ? shA(c, 0.5) : liA(c, 0.3), FT, { bold: true });
           if (!fl) {
             // hot white core where the tube is brightest, then a fine halo around every tube
-            R(4, 3, w - 8, 6, (_a, _b, o2) => (o2 && (FX + FY) % 3 === 0 ? '#fff6fa' : o2));
+            const tube = col(liA(c, 0.3));
+            R(4, 3, w - 8, 6, (_a, _b, o2) => (o2 === tube && (FX + FY) % 3 === 0 ? '#fff6fa' : o2));
             const lit: [number, number][] = [];
-            for (let fy = 0; fy < 26; fy++) for (let fx = 0; fx < w * 2; fx++) if (GP(fx / 2, fy / 2) >>> 24 === 255 && fy < 20) lit.push([fx, fy]);
+            const plate = [col('#3a2c4a'), col('#2b2140'), col('#9aa2c8')];
+            for (let fy = 4; fy < 21; fy++) for (let fx = 4; fx < w * 2 - 4; fx++) {
+              const px = GP(fx / 2, fy / 2);
+              if (px >>> 24 === 255 && !plate.includes(px)) lit.push([fx, fy]);
+            }
             const halo = new Set<number>();
             for (const [fx, fy] of lit) for (let dy = -2; dy <= 2; dy++) for (let dx = -2; dx <= 2; dx++) if (dx * dx + dy * dy <= 5) halo.add((fy + dy) * 1000 + fx + dx);
             for (const k of halo) {
               const fx = k % 1000;
               const fy = Math.floor(k / 1000);
-              if (fx < 0 || fy < 0 || GP(fx / 2, fy / 2)) continue;
-              P1(fx / 2, fy / 2, alpha(c, 90));
+              const under = GP(fx / 2, fy / 2);
+              if (fx < 0 || fy < 0 || under === 0 || (under >>> 24 === 255 && under !== col('#3a2c4a') && under !== col('#2b2140'))) continue;
+              P1(fx / 2, fy / 2, mixc(under, c, 0.45));
             }
           }
         },
@@ -5071,6 +5078,496 @@ reg('mannequin', {
       ),
     );
   },
+});
+
+// ---------------------------------------------------------------- pawn, hardware, tailor, salon
+
+/** Fenwick's Mothman sighting map: county map, red pins, red string, blurry night photos. */
+reg('sighting-map', {
+  draw: (ctx, o) =>
+    blit(
+      ctx,
+      o,
+      iart(
+        'sighting-map',
+        34,
+        24,
+        () => {
+          R(0, 0, 34, 24, '#8a5640');
+          R(1.5, 1.5, 31, 21, '#c8925a');
+          R(1.5, 1.5, 31, 21, (_a, _b, o2) => (hash2(FX, FY, 611) < 0.15 ? '#b07a48' : o2));
+          // the county map: green land, the creek, roads, the water tower
+          R(4, 3, 17, 13, '#e8e0c0');
+          R(4, 3, 17, 13, (_a, _b, o2) => (o2 && hash2(FX >> 2, FY >> 2, 612) < 0.4 ? '#d0d8a8' : o2));
+          curve(4, 12, 21, 7, 2, '#7ab0d8');
+          H1(4, 21, 9, '#c8a878');
+          V1(12, 3, 16, '#c8a878');
+          R(15, 5, 1, 2.5, '#6e688e');
+          ell(15.5, 4.5, 1.2, 0.9, '#9aa2c8');
+          const pins: [number, number][] = [[15, 5], [8, 6], [18, 12], [10, 13], [6, 10], [14, 8]];
+          // blurry photos and a dossier page
+          for (const [px, py, k] of [[23, 3, 0], [27, 9, 1], [23, 15, 2]] as [number, number, number][]) {
+            R(px, py, 7, 6, '#fffaf0');
+            R(px + 0.5, py + 0.5, 6, 4, '#1e1a30');
+            ell(px + 3.5, py + 2.5, 1.6 + k * 0.3, 1.2, alpha('#6a5a4a', 200));
+            P1(px + 3, py + 2, '#ff3a3a');
+            P1(px + 4, py + 2, '#ff3a3a');
+          }
+          R(4, 17, 9, 5, '#fbf6ea');
+          for (let k = 0; k < 3; k++) H1(4.5, 12, 18.5 + k * 1.1, '#a89cc0');
+          tinyT('MOTH?', 14, 18, '#c9404c');
+          // string from every pin to the photos
+          for (const [px, py] of pins) L1(px, py, 26, 12, '#e8303e');
+          L1(15, 5, 26, 6, '#e8303e');
+          for (const [px, py] of pins) {
+            P1(px, py, '#ff3a3a');
+            P1(px + 0.5, py + 0.5, SH(120));
+          }
+          V1(34, 1, 24, SH(70));
+          H1(1, 34, 24, SH(70));
+        },
+        { outline: false },
+      ),
+    ),
+});
+
+/** A repair bench: an old TV with its back off, vacuum tubes, a soldering iron, a magnifier lamp. */
+reg('tv-repair', {
+  solid: { x: -14, y: -7, w: 28, h: 6 },
+  draw: (ctx, o, t) => {
+    const f = frame(t, 4, 2, phaseOf(o));
+    blit(
+      ctx,
+      o,
+      iart(
+        `tv-repair|${f}`,
+        30,
+        26,
+        () => {
+          const wd = OAK;
+          // bench
+          R(0, 12, 30, 3, wd.l);
+          fgrain(0, 12, 30, 3, { ...wd, b: wd.l }, 621);
+          R(1, 15, 2, 11, wd.s);
+          R(27, 15, 2, 11, wd.s);
+          R(3, 22, 24, 1.5, wd.s);
+          // the patient: a wood-cabinet TV with its back panel off, glowing tubes inside
+          R(3, 2, 14, 10, '#8a5a3e');
+          R(4, 3, 12, 8, '#2a2440');
+          for (let k = 0; k < 4; k++) {
+            ell(6 + k * 3, 7, 0.9, 1.6, alpha('#e8f4ff', 200));
+            P1(6 + k * 3, 7.5, (k + f) % 3 ? '#ff9a3a' : '#ffd070');
+          }
+          L1(4, 4, 15, 4, '#c8a050');
+          L1(4, 9.5, 15, 9.5, '#5ec0a8');
+          // tubes in a tray, the soldering iron with a wisp, a magnifier lamp
+          R(18, 10, 7, 2, '#c8cce4');
+          for (let k = 0; k < 4; k++) ell(19 + k * 1.6, 9.5, 0.6, 1.1, alpha('#e8f4ff', 220));
+          L1(20, 12, 26, 9, '#4e4870');
+          P1(26.5, 8.6, '#ff6a3a');
+          P1(27, 7.5 - (f % 2) * 0.5, alpha('#ffffff', 150));
+          L1(28, 12, 28, 3, '#6e688e');
+          L1(28, 3, 22, 1, '#6e688e');
+          ell(21, 1.5, 2.5, 1.4, '#c8cce4');
+          ell(21, 1.6, 1.8, 0.9, alpha('#e8f4ff', 180));
+        },
+        { shadow: [['r', 0, 23, 30, 3]] },
+      ),
+    );
+  },
+});
+
+/** Pegboard of tools: hammers, saws, wrenches by size, tape measures, a level. */
+reg('tool-wall', {
+  draw: (ctx, o) => {
+    const n = num(o, 'w', 3);
+    const W = n * 16;
+    blit(
+      ctx,
+      o,
+      iart(
+        `tool-wall|${n}`,
+        W,
+        26,
+        () => {
+          R(0, 0, W, 26, '#c8a878');
+          R(0, 0, W, 26, (_a, _b, o2) => (FX % 4 === 1 && FY % 4 === 1 ? '#7a5a38' : o2));
+          H1(0, W, 0, '#e8c898');
+          V1(W - 0.5, 0, 26, SH(60));
+          const r = rng(n * 23);
+          let x = 2;
+          while (x < W - 4) {
+            const k = Math.floor(r() * 5);
+            if (k === 0) {
+              // claw hammer
+              R(x + 1, 4, 1, 9, '#c8803a');
+              R(x - 0.5, 3, 4, 2, '#6e688e');
+              P1(x - 0.5, 4.5, '#6e688e');
+              x += 6;
+            } else if (k === 1) {
+              // handsaw
+              poly([[x, 4], [x + 7, 6], [x + 7, 8], [x, 9]], '#c8cce4');
+              for (let i = 0; i < 7; i++) P1(x + i, 9 - i * 0.15, '#6e688e');
+              R(x - 2, 4, 2.5, 5, '#c9404c');
+              x += 10;
+            } else if (k === 2) {
+              // wrenches by size
+              for (let i = 0; i < 4; i++) {
+                R(x + i * 1.6, 13, 0.8, 4 + i * 1.5, '#9aa2c8');
+                ell(x + i * 1.6 + 0.4, 12.5, 0.8, 0.8, '#9aa2c8');
+              }
+              x += 8;
+            } else if (k === 3) {
+              // tape measure and a level
+              ell(x + 2, 5, 2, 2, '#ffd050');
+              ell(x + 2, 5, 0.8, 0.8, '#2b2140');
+              R(x - 1, 18, 8, 2, '#3f9a92');
+              ell(x + 3, 19, 1, 0.6, '#c8f070');
+              x += 8;
+            } else {
+              // screwdriver set
+              for (let i = 0; i < 4; i++) {
+                R(x + i * 1.5, 14, 1, 3, ['#d8434b', '#ffd050', '#3f6ab0', '#2b2140'][i]);
+                V1(x + i * 1.5 + 0.5, 17, 21, '#c8cce4');
+              }
+              x += 7;
+            }
+          }
+          R(0, 22, W, 4, '#9a7a58');
+          tinyC('STEEL CHAIR HARDWARE', W / 2, 22.8, '#fbf6ea');
+        },
+        { outline: false },
+      ),
+    );
+  },
+});
+
+/** The shop's pride: a display of steel folding chairs. OFFICIAL CHAIR OF THE ACW. */
+reg('chair-display', {
+  solid: { x: -14, y: -7, w: 28, h: 6 },
+  draw: (ctx, o) =>
+    blit(
+      ctx,
+      o,
+      iart(
+        'chair-display',
+        30,
+        26,
+        () => {
+          // a platform, three chairs open and posed, a sign on a stake
+          R(0, 20, 30, 6, '#c9404c');
+          H1(0, 30, 20, '#e8706a');
+          for (let k = 0; k < 3; k++) {
+            const x = 2 + k * 9;
+            const c = '#a8b0d0';
+            RR(x, 6 + k, 7, 5, 1, c);
+            H1(x + 0.5, x + 6.5, 6 + k, '#ffffff');
+            chrome(x, 10 + k, 1, 10 - k);
+            chrome(x + 6, 10 + k, 1, 10 - k);
+            R(x - 0.5, 13 + k * 0.5, 8, 2, liA(c, 0.2));
+            L1(x + 1, 15 + k * 0.5, x + 0.5, 20, shA(c, 0.3));
+            L1(x + 6, 15 + k * 0.5, x + 6.5, 20, shA(c, 0.3));
+          }
+          // a dent in the middle one, lovingly circled in marker
+          ell(13, 8.5, 1.2, 0.8, '#7a7498');
+          for (let k = 0; k < 10; k++) P1(13 + Math.cos(k * 0.63) * 2, 8.5 + Math.sin(k * 0.63) * 1.4, '#d8203a');
+          R(8, 0, 14, 5, '#fbf6ea');
+          tinyC('OFFICIAL', 15, 0.3, '#c9404c');
+          tinyC('ACW CHAIR', 15, 2.5, '#3a2c3a');
+          tinyC('ON SALE', 15, 22, '#fff4dc');
+        },
+        { shadow: [['r', 0, 24, 30, 3]] },
+      ),
+    ),
+});
+
+/** Paint cans stacked into a pyramid in front of a colour-chip rack. */
+reg('paint-display', {
+  solid: { x: -10, y: -6, w: 20, h: 5 },
+  draw: (ctx, o) =>
+    blit(
+      ctx,
+      o,
+      iart(
+        'paint-display',
+        22,
+        30,
+        () => {
+          // chip rack
+          R(2, 0, 18, 16, '#fbf6ea');
+          const cs: Color[] = ['#d8434b', '#ff8a3a', '#ffd050', '#8ab868', '#3f9a92', '#5a7ab8', '#8a5aa8', '#ff94b4', '#c8a070'];
+          for (let i = 0; i < 6; i++) for (let j = 0; j < 5; j++) R(3 + i * 2.8, 1 + j * 3, 2.3, 2.5, mixc(cs[(i + j) % cs.length], '#ffffff', j * 0.12));
+          // can pyramid
+          const can = (x: number, y: number, c: Color) => {
+            R(x, y, 5, 5, '#c8cce4');
+            R(x, y + 1.5, 5, 2.5, c);
+            ell(x + 2.5, y, 2.5, 0.8, '#e4e8f8');
+            V1(x + 0.5, y, y + 5, '#ffffff');
+          };
+          for (let k = 0; k < 4; k++) can(0.5 + k * 5.2, 24, cs[k * 2]);
+          for (let k = 0; k < 3; k++) can(3 + k * 5.2, 19, cs[k * 2 + 1]);
+          for (let k = 0; k < 2; k++) can(5.5 + k * 5.2, 14, cs[k + 4]);
+          // one drip that never got wiped
+          V1(8.5, 29, 30, '#5a7ab8');
+        },
+        { shadow: [['r', 0, 28, 22, 3]] },
+      ),
+    ),
+});
+
+/** A red riding mower on display. Stan's one rule: don't dent the mowers. */
+reg('riding-mower', {
+  solid: { x: -12, y: -8, w: 24, h: 7 },
+  draw: (ctx, o) =>
+    blit(
+      ctx,
+      o,
+      iart(
+        'riding-mower',
+        26,
+        20,
+        () => {
+          // big back wheels, small front wheels, the hood, the seat, the steering wheel
+          ell(5, 15, 4, 4, '#2b2140');
+          ell(5, 15, 2, 2, '#ffd050');
+          ell(21, 17, 2.6, 2.6, '#2b2140');
+          ell(21, 17, 1.2, 1.2, '#ffd050');
+          poly([[10, 8], [25, 9], [25, 15], [9, 15]], '#d8202e');
+          H1(11, 24, 9, '#ff6a6a');
+          R(8, 14, 18, 2, '#3a3450');
+          RR(3, 5, 7, 5, 2, '#2b2140');
+          H1(4, 9, 5, '#5a4a6a');
+          L1(13, 8, 11, 3, '#4e4870');
+          ell(11, 3, 2.4, 0.8, '#2b2140');
+          R(15, 10, 6, 2, '#fbf6ea');
+          tinyC('2000', 18, 10.2, '#d8202e');
+          R(1, 16, 4, 3, '#fbf6ea');
+          tinyT('$', 2, 16.4, '#2f6a52');
+        },
+        { shadow: [['e', 13, 19, 12, 2]] },
+      ),
+    ),
+});
+
+/** Wall shelves of fabric bolts in every colour, with a sequin bin and a spool rack. */
+reg('fabric-bolts', {
+  draw: (ctx, o) => {
+    const n = num(o, 'w', 3);
+    const W = n * 16;
+    blit(
+      ctx,
+      o,
+      iart(
+        `fabric-bolts|${n}`,
+        W,
+        32,
+        () => {
+          const wd = WALNUT;
+          R(0, 0, W, 32, shA(wd.b, 0.3));
+          for (const sy of [10, 21, 31]) R(0, sy, W, 1.5, wd.l);
+          const cs: Color[] = ['#c9404c', '#ffd050', '#3a4a8a', '#ff94b4', '#5ec0a8', '#7a3a8a', '#fbf6ea', '#e2844a', '#2b2140', '#c8a070'];
+          let k = 0;
+          for (const sy of [10, 21]) {
+            for (let x = 1; x < W - 3; x += 3.2) {
+              const c = cs[k++ % cs.length];
+              R(x, sy - 9, 3, 9, c);
+              V1(x, sy - 9, sy, liA(c, 0.35));
+              V1(x + 2.5, sy - 9, sy, shA(c, 0.3));
+              if (k % 4 === 0) R(x, sy - 9, 3, 9, (_a, _b, o2) => (o2 && (FX + FY) % 3 === 0 ? liA(o2, 0.4) : o2));
+            }
+          }
+          // spools on pegs along the bottom shelf, and a bin of sequins
+          for (let x = 2; x < W - 10; x += 2.5) {
+            R(x, 26, 2, 4, cs[Math.floor(x) % cs.length]);
+            H1(x - 0.3, x + 2.3, 26, '#e8d8b0');
+            H1(x - 0.3, x + 2.3, 30, '#e8d8b0');
+          }
+          R(W - 9, 25, 8, 6, '#c8a878');
+          for (let i = 0; i < 18; i++) P1(W - 8.5 + hash2(i, 1, 631) * 7, 25.5 + hash2(i, 2, 631) * 2, ['#ffd050', '#ff94b4', '#9cd8f0', '#ffffff'][i % 4]);
+        },
+        { outline: false },
+      ),
+    );
+  },
+});
+
+/** A dress form wearing a Hall of Fame robe: plum velvet, gold trim, sequins catching the light. */
+reg('robe-form', {
+  solid: { x: -5, y: -4, w: 10, h: 3 },
+  draw: (ctx, o, t) => {
+    const f = frame(t, 4, 3, phaseOf(o));
+    blit(
+      ctx,
+      o,
+      iart(
+        `robe-form|${f}`,
+        16,
+        32,
+        () => {
+          chrome(7.5, 24, 1, 6);
+          for (const s2 of [-1, 1]) L1(8, 30, 8 + s2 * 4, 31.5, '#6e688e');
+          ell(8, 2, 2, 1.6, '#c8a878');
+          // robe: wide lapels, a long sweep, the name across the back still being sewn
+          poly([[3, 4], [13, 4], [15, 24], [1, 24]], '#5a2a6a');
+          R(1, 4, 14, 20, (_a, _b, o2) => (o2 ? mixc(o2, '#8a4a9a', Math.max(0, Math.sin(lx() * 1.2) * 0.35)) : o2));
+          poly([[6, 4], [8, 10], [10, 4]], '#ffd050');
+          L1(3, 4, 1.5, 24, '#ffd050');
+          L1(13, 4, 14.5, 24, '#ffd050');
+          H1(1.5, 14.5, 23.5, '#ffd050');
+          for (let i = 0; i < 16; i++) {
+            const sx = 2 + hash2(i, 1, 641) * 12;
+            const sy = 6 + hash2(i, 2, 641) * 16;
+            P1(sx, sy, (i + f) % 5 === 0 ? '#ffffff' : '#c8a0d8');
+          }
+          tinyC('DUCHESS', 8, 15, '#ffd050');
+          // pins still stuck in the hem, measuring tape draped over a shoulder
+          for (let k = 0; k < 4; k++) P1(3 + k * 3, 22.5, '#c8cce4');
+          L1(3, 4, 5, 14, '#ffd050');
+        },
+        { shadow: [['e', 8, 31, 5, 1.2]] },
+      ),
+    );
+  },
+});
+
+reg('ironing-board', {
+  draw: (ctx, o) =>
+    blit(
+      ctx,
+      o,
+      iart(
+        'ironing-board',
+        24,
+        16,
+        () => {
+          L1(5, 6, 15, 15.5, '#9aa2c8');
+          L1(15, 6, 5, 15.5, '#6e688e');
+          poly([[1, 3], [19, 3], [23, 4.5], [19, 6], [1, 6]], '#5ec0a8');
+          R(1, 3, 22, 3, (_a, _b, o2) => (o2 && (FX + FY) % 4 === 0 ? '#9ce0c8' : o2));
+          poly([[5, 0.5], [10, 0.5], [11, 3], [4, 3]], '#c8cce4');
+          R(6, 0, 3, 0.8, '#2b2140');
+          P1(4.5, 2.5, '#ff3a3a');
+        },
+        { shadow: [['r', 2, 14, 20, 2]] },
+      ),
+    ),
+});
+
+/** A salon station: big mirror with bulbs, a counter of products, Gideon's scissors in a jar. */
+reg('salon-station', {
+  lights: (o) => [light(o, 0, -22, 36, '#fff0d8')],
+  draw: (ctx, o) => {
+    const v = variant(o, 2);
+    blit(
+      ctx,
+      o,
+      iart(
+        `salon-station|${v}`,
+        28,
+        40,
+        () => {
+          // the mirror: gold frame, bulbs, a reflection of the salon
+          R(2, 0, 24, 24, PAL.gold2);
+          R(3, 1, 22, 22, PAL.gold3);
+          VG(4, 3, 20, 18, ['#c8a8d8', '#9a88b8', '#7a6a98']);
+          R(4, 12, 20, 9, alpha('#ff94b4', 120));
+          fglare(4, 3, 20, 18, 0.35);
+          for (let k = 0; k < 5; k++) {
+            ell(4 + k * 5, 1.5, 1.2, 1.2, '#fff6dc');
+            ell(2.5, 4 + k * 4, 1.2, 1.2, '#fff6dc');
+            ell(25.5, 4 + k * 4, 1.2, 1.2, '#fff6dc');
+          }
+          // headshots tucked in the frame
+          for (const [px, py] of v ? [[20, 4]] : [[5, 4], [20, 15]]) {
+            R(px, py, 4, 5, '#fbf6ea');
+            R(px + 0.5, py + 0.5, 3, 3, '#e6ab84');
+            ell(px + 2, py + 1, 1.4, 0.9, '#ffe07a');
+          }
+          // counter with products
+          R(0, 24, 28, 3, '#2b2140');
+          H1(0, 28, 24, '#5a4a6a');
+          R(1, 27, 26, 11, '#3a2c48');
+          for (let x = 2; x < 26; x += 8) {
+            R(x, 28, 7, 8, '#4a3a5a');
+            R(x + 3, 31, 1.5, 1, PAL.gold2);
+          }
+          const cs: Color[] = ['#ff94b4', '#ffd050', '#9cd8f0', '#c8a0d8', '#fbf6ea'];
+          for (let k = 0; k < 5; k++) {
+            R(3 + k * 2.5, 20 - (k % 2), 2, 4 + (k % 2), cs[k]);
+            P1(3.5 + k * 2.5, 19.5 - (k % 2), '#2b2140');
+          }
+          R(18, 20, 3, 4, alpha('#e8f4ff', 180));
+          L1(18.5, 20, 17.5, 16.5, '#c8cce4');
+          L1(20, 20, 21, 16.5, '#c8cce4');
+          ell(17.3, 16.2, 0.8, 0.8, '#c8cce4');
+          ell(21.2, 16.2, 0.8, 0.8, '#c8cce4');
+          L1(23, 23.5, 26, 22, '#2b2140');
+          ell(26.5, 21.6, 1.4, 1, '#3a3450');
+          R(0, 38, 28, 2, '#1e1830');
+        },
+        { shadow: [['r', 1, 36, 27, 4]] },
+      ),
+    );
+  },
+});
+
+/** A retro bonnet hair dryer on a chair. */
+reg('hood-dryer', {
+  solid: { x: -6, y: -5, w: 12, h: 4 },
+  draw: (ctx, o) =>
+    blit(
+      ctx,
+      o,
+      iart(
+        'hood-dryer',
+        16,
+        30,
+        () => {
+          // the chair
+          RR(2, 14, 12, 8, 2, '#ff94b4');
+          vinyl(2.5, 14.5, 11, 7, '#ff94b4', 3);
+          R(1, 21, 14, 3, liA('#ff94b4', 0.15));
+          chrome(3, 24, 1, 6);
+          chrome(12, 24, 1, 6);
+          // the hood on its arm
+          chrome(13.5, 4, 1, 12);
+          ell(7, 6, 6.5, 5, '#c8cce4');
+          ell(7, 6.5, 6, 4.5, '#e8ecf8');
+          ell(5, 4.5, 2.5, 1.5, '#ffffff');
+          ell(7, 10, 5, 1.5, '#9aa2c8');
+          for (let k = 0; k < 6; k++) P1(3.5 + k * 1.4, 8.5, '#6e688e');
+          R(11, 3, 3, 2, '#d8434b');
+        },
+        { shadow: [['e', 8, 29, 6, 1.4]] },
+      ),
+    ),
+});
+
+/** Dottie's chair: red velvet, kept at the back of the salon since Miss Opal braided her crown. */
+reg('velvet-chair', {
+  draw: (ctx, o) =>
+    blit(
+      ctx,
+      o,
+      iart(
+        'velvet-chair',
+        16,
+        22,
+        () => {
+          RR(1, 0, 14, 12, 4, '#8a1a2e');
+          R(2, 1, 12, 10, () => mixc('#c8304a', '#7a1428', (lx() - 2) / 12 * 0.5 + (ly() - 1) / 10 * 0.4));
+          for (const [bx, by] of [[5, 4], [8, 3.5], [11, 4], [6.5, 7], [9.5, 7]] as [number, number][]) P1(bx, by, '#5a0a1e');
+          R(0, 11, 16, 5, '#a8243a');
+          H1(0, 16, 11, '#e8506a');
+          for (const lx0 of [1.5, 13]) R(lx0, 16, 1.5, 6, PAL.gold3);
+          H1(0, 16, 15.5, PAL.gold2);
+          // a plum scarf folded on the seat
+          R(5, 12, 6, 2, '#5a3a6a');
+          H1(5, 11, 12, '#8a5a9a');
+        },
+        { shadow: [['r', 1, 20, 15, 3]] },
+      ),
+    ),
 });
 
 // ================================================================ office
