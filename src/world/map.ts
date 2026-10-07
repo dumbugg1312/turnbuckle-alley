@@ -73,10 +73,33 @@ export class GameMap {
   objectHit(o: MapObject): Box | null {
     if (o.hidden) return null;
     const k = objectKind(o.kind);
-    if (k.hit) return { x: o.x + k.hit.x, y: o.y + k.hit.y, w: k.hit.w, h: k.hit.h };
+    if (k.hit) return this.reachable({ x: o.x + k.hit.x, y: o.y + k.hit.y, w: k.hit.w, h: k.hit.h });
     const s = this.objectSolid(o);
-    if (!s) return { x: o.x - 8, y: o.y - 16, w: 16, h: 16 };
-    return { x: s.x - 3, y: s.y - 6, w: s.w + 6, h: s.h + 9 };
+    // Seats with a never-colliding solid (y far off-map) still get a normal box.
+    if (!s || s.y < o.y - 9000) return this.reachable({ x: o.x - 8, y: o.y - 16, w: 16, h: 16 });
+    return this.reachable({ x: s.x - 3, y: s.y - 6, w: s.w + 6, h: s.h + 9 });
+  }
+
+  /**
+   * Wall-mounted things (photos, notices, menu boards) sit in the wall rows,
+   * out of reach of the action probe. Stretch their box down to the first
+   * floor row in front of them, unless that spot is a door.
+   */
+  private reachable(b: Box): Box {
+    if (!this.def.indoor) return b;
+    const cx = Math.floor((b.x + b.w / 2) / TILE);
+    let row = Math.floor((b.y + b.h - 1) / TILE);
+    let n = 0;
+    while (n < 3 && this.terrainAt(cx, row).startsWith('wall')) {
+      row++;
+      n++;
+    }
+    if (n === 0 || this.terrainAt(cx, row).startsWith('wall') || this.terrainAt(cx, row) === 'void') return b;
+    const x0 = Math.floor(b.x / TILE);
+    const x1 = Math.floor((b.x + b.w - 1) / TILE);
+    const door = this.def.warps.some((w) => w.x <= x1 && w.x + w.w > x0 && w.y <= row && w.y + w.h > row - 1);
+    if (door) return b;
+    return { ...b, h: Math.max(b.h, row * TILE + 2 - b.y) };
   }
 
   rebuildBlocked(): void {
