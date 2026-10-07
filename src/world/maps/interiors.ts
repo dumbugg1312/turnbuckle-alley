@@ -271,12 +271,35 @@ interior('diner', 'Hot Tag Diner', 18, 11, 'wall-wood', 'checker', 8, [
 });
 
 // ---------------------------------------------------------------- VFW Hall (Wednesday shows)
+// Wood paneling and a portable ring in the middle of the bingo hall. The
+// bandstand with its velvet curtain, flags and podium on the left; the
+// canteen (coffee, sheet cake, pickled eggs, pull-tabs) on the right; the
+// honour wall of portraits and the bingo board above the ring; bingo tables
+// set up on both sides; chairs stacked on dollies; a card table at the door.
 interior('vfw', 'VFW Post 316', 24, 15, 'wall-wood', 'wood-dark', 11, [
-  ['ring', 12, 10, {}, 'vfw-ring'],
-  ['folding-chairs', 4, 12.4, { w: 5 }], ['folding-chairs', 20, 12.4, { w: 5 }], ['folding-chairs', 4, 14, { w: 5 }], ['folding-chairs', 20, 14, { w: 5 }],
-  ['bingo-board', 3, 2.6, {}, 'bingo-board'], ['window', 8, 2.6], ['window', 16, 2.6], ['poster', 21, 2.3, { variant: 5 }], ['photo', 11.5, 2.1, { variant: 3 }],
-  ['announce-table', 12, 11.6], ['trophy-case', 22.5, 5], ['table', 21, 8.4], ['chair-wood', 21, 7.4],
-], { music: 'show', light: 0.85 });
+  ['bandstand', 3.5, 5.95, { w: 5, solid: { x: -40, y: -46, w: 80, h: 44 } }],
+  ['trophy-case', 7, 4.6],
+  ['photo-wall', 10.6, 2.6, { variant: 2 }],
+  ['notice', 13, 1.35, { lines: 'BINGO WED|AFTER THE|MATCHES', variant: 1 }],
+  ['bingo-board', 15.6, 2.6, {}, 'bingo-board'],
+  ['canteen', 21.5, 4.95, { w: 6, solid: { x: -48, y: -12, w: 96, h: 11 } }],
+  ['ring', 13, 10, {}, 'vfw-ring'],
+  ['announce-table', 13, 11.6], ['mic-stand', 15.3, 11.4],
+  // bingo tables, both sides
+  ['bingo-table', 3, 7.6, { w: 3, solid: { x: -24, y: -9, w: 48, h: 7 } }], ['bingo-table', 3, 9.4, { w: 3, solid: { x: -24, y: -9, w: 48, h: 7 } }],
+  ['folding-chair', 1.5, 8.6], ['folding-chair', 2.5, 8.6], ['folding-chair', 3.5, 8.6],
+  ['folding-chair', 1.5, 10.4], ['folding-chair', 2.5, 10.4], ['folding-chair', 3.5, 10.4],
+  ['bingo-table', 21.5, 7.6, { w: 3, solid: { x: -24, y: -9, w: 48, h: 7 } }], ['bingo-table', 21.5, 9.4, { w: 3, solid: { x: -24, y: -9, w: 48, h: 7 } }],
+  ['folding-chair', 20.5, 8.6], ['folding-chair', 21.5, 8.6], ['folding-chair', 22.5, 8.6],
+  ['folding-chair', 20.5, 10.4], ['folding-chair', 21.5, 10.4], ['folding-chair', 22.5, 10.4],
+  // ringside front row
+  ['folding-chair', 4.5, 13.8], ['folding-chair', 5.5, 13.8], ['folding-chair', 6.5, 13.8], ['folding-chair', 7.5, 13.8], ['folding-chair', 8.5, 13.8],
+  ['folding-chair', 17.5, 13.8], ['folding-chair', 18.5, 13.8], ['folding-chair', 19.5, 13.8], ['folding-chair', 20.5, 13.8],
+  // by the door
+  ['chair-cart', 1.7, 14.7], ['chair-cart', 24.2, 14.7],
+  ['ticket-table', 16.5, 14.6],
+  ['coat-rack', 10.4, 14.6],
+], { music: 'show', light: 0.84, abs: true });
 
 // ---------------------------------------------------------------- Shops and homes
 interior('library', 'Public Library', 16, 11, 'wall', 'carpet', 7, [

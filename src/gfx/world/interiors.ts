@@ -6318,6 +6318,262 @@ reg('extinguisher', {
     ),
 });
 
+// ---------------------------------------------------------------- VFW Post 316
+
+/** A US-style flag on a pole: drawn as a generic striped flag with a starfield (no text). */
+function flagOnPole(x: number, y: number, h: number, kind: 'stripes' | 'post', wave: number): void {
+  chrome(x, y, 1, h);
+  ell(x + 0.5, y - 0.5, 1, 1, PAL.gold2);
+  const fw = 9;
+  const fh = 6;
+  for (let i = 0; i < fw * 2; i++) {
+    const fx = x + 1 + i * 0.5;
+    const off = Math.sin(i * 0.5 + wave) * 0.6;
+    for (let j = 0; j < fh * 2; j++) {
+      const fy = y + 1 + j * 0.5 + off;
+      let c: Color;
+      if (kind === 'stripes') {
+        if (i < 8 && j < 6) c = (i + j) % 3 === 0 ? '#fbf6ea' : '#3a4a8a';
+        else c = Math.floor(j / 1.7) % 2 ? '#fbf6ea' : '#c9404c';
+      } else {
+        c = j < 3 ? '#ffd050' : '#2f4e88';
+        if (i > 6 && i < 11 && j > 3 && j < 9) c = (i + j) % 2 ? '#ffd050' : '#fbf6ea';
+      }
+      P1(fx, fy, shA(c, Math.max(0, off) * 0.25));
+    }
+  }
+}
+
+/** The little bandstand: red velvet curtain, flags, the podium with the post's emblem. */
+reg('bandstand', {
+  draw: (ctx, o, t) => {
+    const n = num(o, 'w', 5);
+    const W = n * 16;
+    const wave = frame(t, 4, 2, phaseOf(o));
+    blit(
+      ctx,
+      o,
+      iart(
+        `bandstand|${n}|${wave}`,
+        W,
+        80,
+        () => {
+          // velvet curtain with deep folds and a gold fringe, climbing the wall
+          R(2, 0, W - 4, 56, () => {
+            const f2 = Math.sin(lx() * 1.3) * 0.5 + 0.5;
+            return mixc('#d8405a', '#6a1a30', f2 * 0.75 + (ly() / 56) * 0.2);
+          });
+          R(2, 0, W - 4, 5, '#8a2034');
+          for (let x = 2; x < W - 2; x += 4) ell(x + 2, 5, 2, 1.4, '#a8283c');
+          H1(2, W - 2, 0, PAL.gold2);
+          for (let x = 2; x < W - 2; x += 1) P1(x, 6.5 + (x % 2) * 0.5, PAL.gold3);
+          // red, white and blue bunting swag
+          for (let k = 0; k < 3; k++) {
+            const x0 = 4 + k * ((W - 8) / 3);
+            const x1 = x0 + (W - 8) / 3;
+            curve(x0, 9, x1, 9, 3, ['#c9404c', '#fbf6ea', '#3a4a8a'][k]);
+            curve(x0, 10, x1, 10, 3, ['#c9404c', '#fbf6ea', '#3a4a8a'][(k + 1) % 3]);
+          }
+          // flags either side, poles standing on the deck
+          flagOnPole(5, 18, 40, 'stripes', wave);
+          flagOnPole(W - 15, 18, 40, 'post', wave + 1);
+          // the stage deck and its front skirt
+          R(0, 56, W, 14, OAK.b);
+          fgrain(0, 56, W, 14, OAK, 531);
+          for (let y = 60; y < 70; y += 4) H1(0, W, y, shA(OAK.b, 0.2));
+          shade(0, 56, W, 2, 0.3, 10);
+          R(0, 70, W, 10, '#3a3478');
+          for (let x = 0; x < W; x += 4) V1(x, 70, 80, '#2f2a62');
+          H1(0, W, 70, '#5a52a0');
+          tinyC('VFW POST 316', W / 2, 73, '#ffd050');
+          // podium with the emblem, a microphone, a glass of water
+          const px = W / 2;
+          poly([[px - 6, 48], [px + 6, 48], [px + 5, 66], [px - 5, 66]], WALNUT.b);
+          fgrain(px - 6, 48, 12, 18, WALNUT, 532, true);
+          H1(px - 6, px + 6, 48, WALNUT.l);
+          circ(px, 55, 3, PAL.gold2);
+          circ(px, 55, 2.2, '#3a4a8a');
+          for (let k = 0; k < 5; k++) P1(px + Math.cos(k * 1.26 - 1.57) * 1.3, 55 + Math.sin(k * 1.26 - 1.57) * 1.3, '#fbf6ea');
+          L1(px + 2, 48, px + 4, 43, '#2b2140');
+          ell(px + 4, 42.5, 0.9, 1.2, '#4e4870');
+          R(px - 4.5, 46, 1.5, 2, alpha('#e8f4ff', 200));
+        },
+        { outline: false, shadow: [['r', 1, 76, W, 5]] },
+      ),
+    );
+  },
+});
+
+/** The canteen: coffee, sheet cake, a jar of pickled eggs nobody admits to eating. */
+reg('canteen', {
+  draw: (ctx, o, t) => {
+    const n = num(o, 'w', 6);
+    const W = n * 16;
+    const steam = frame(t, 4, 3, phaseOf(o));
+    blit(
+      ctx,
+      o,
+      iart(
+        `canteen|${n}|${steam}`,
+        W,
+        44,
+        () => {
+          // sign board
+          R(W / 2 - 22, 0, 44, 8, WALNUT.b);
+          R(W / 2 - 21, 1, 42, 6, '#2f4e88');
+          tinyC('POST 316 CANTEEN', W / 2, 2.2, '#ffd050');
+          // shelf of mugs with members' names, a raffle drum, a pull-tab box
+          R(2, 12, W - 4, 1.5, WALNUT.l);
+          for (let x = 4; x < W - 6; x += 4.5) mug(x, 9, ['#fbf6ea', '#3a4a8a', '#c9404c', '#2f6a52'][Math.floor(x) % 4]);
+          // counter
+          R(0, 26, W, 3, '#e8dcc4');
+          H1(0, W, 26, '#fff6e6');
+          R(0, 29, W, 15, WALNUT.b);
+          fgrain(0, 29, W, 15, WALNUT, 541, true);
+          for (let x = 2; x + 12 <= W; x += 16) {
+            R(x, 31, 12, 10, shA(WALNUT.b, 0.08));
+            H1(x, x + 12, 31, liA(WALNUT.b, 0.2));
+            V1(x + 11.5, 31, 41, shA(WALNUT.b, 0.3));
+          }
+          chrome(0, 42, W, 1.2, false);
+          // coffee urn (steaming), stacked cups, a sheet cake with frosted stars, pickled eggs, the raffle drum
+          chrome(3, 15, 7, 11);
+          R(5.5, 13.5, 2, 1.5, AK);
+          for (let k = 0; k < 3; k++) P1(6.5 + Math.sin(k + steam) * 0.6, 12.5 - k * 1.2, alpha('#ffffff', 160 - k * 40));
+          for (let k = 0; k < 5; k++) R(12, 25 - k * 1.5, 3, 1.5, k % 2 ? '#fbf6ea' : '#e8e0d4');
+          R(18, 22, 16, 4, '#fbf6ea');
+          R(18, 22, 16, 1, '#ffe8f0');
+          for (let k = 0; k < 4; k++) P1(20 + k * 3.5, 23.5, k % 2 ? '#c9404c' : '#3a4a8a');
+          H1(18, 34, 25.5, '#c9404c');
+          poly([[22, 22], [24, 21], [24.5, 22]], '#c8a050');
+          R(37, 17, 6, 9, alpha('#e8f4ff', 170));
+          for (let k = 0; k < 5; k++) ell(39 + (k % 2) * 2, 24 - k * 1.5, 1.2, 0.9, '#fbf6ea');
+          R(36.5, 16, 7, 1.5, '#c8a050');
+          tinyT('EGGS', 37.5, 18.5, '#7a5a3a');
+          if (W >= 80) {
+            ell(W - 14, 21, 6, 4, '#c8cce4');
+            ell(W - 14, 21, 5, 3, '#9aa2c8');
+            for (let k = 0; k < 6; k++) R(W - 18 + k * 1.4, 19.5 + (k % 2), 1, 0.8, k % 2 ? '#ffd050' : '#ff94b4');
+            chrome(W - 8, 20, 3, 1, false);
+            L1(W - 21, 25, W - 17, 23, '#6e688e');
+            L1(W - 7, 25, W - 11, 23, '#6e688e');
+            R(W - 30, 19, 7, 7, '#c9404c');
+            tinyT('TABS', W - 29.5, 21, '#fff4dc');
+          }
+        },
+        { shadow: [['r', 1, 40, W, 5]] },
+      ),
+    );
+  },
+});
+
+/** A folding table set for bingo: cards, daubers in every colour, coffee, a lucky troll. */
+reg('bingo-table', {
+  draw: (ctx, o) => {
+    const n = num(o, 'w', 3);
+    const W = n * 16;
+    const seed = Math.floor(o.x * 3 + o.y);
+    blit(
+      ctx,
+      o,
+      iart(
+        `bingo-table|${n}|${seed % 3}`,
+        W,
+        16,
+        () => {
+          for (const lx0 of [2, W - 4]) {
+            L1(lx0, 8, lx0 - 1, 15.5, '#6e688e');
+            L1(lx0 + 1, 8, lx0 + 2, 15.5, '#9aa2c8');
+          }
+          R(0, 1, W, 7, '#e8e0d0');
+          H1(0, W, 1, '#fffaf0');
+          R(0, 8, W, 1.5, '#a8a0b8');
+          const r = rng(seed * 11);
+          for (let x = 2; x < W - 6; x += 7) {
+            // a bingo card with a few daubed squares
+            R(x, 2, 5.5, 5, '#fbf6ea');
+            for (let i = 0; i < 5; i++) for (let j = 0; j < 4; j++) if (r() < 0.3) P1(x + 0.5 + i, 3 + j, ['#ff5d8f', '#5ec0a8', '#a888ff', '#ffd050'][(i + j + seed) % 4]);
+            R(x, 2, 5.5, 0.8, '#c9404c');
+            // dauber
+            R(x + 5.6, 0, 1.4, 4, ['#ff5d8f', '#5ec0a8', '#a888ff', '#ffd050'][Math.floor(r() * 4)]);
+            R(x + 5.6, -0.5, 1.4, 0.8, '#fbf6ea');
+          }
+          mug(W - 5, 3, '#fbf6ea');
+          if (seed % 3 === 0) {
+            // the lucky troll with the electric pink hair
+            R(4, 0.5, 2, 2.5, '#9a7a5a');
+            for (let k = 0; k < 4; k++) L1(5, 0.5, 3.5 + k, -2.5, '#ff5d8f');
+          }
+        },
+        { shadow: [['r', 1, 13, W, 3]] },
+      ),
+    );
+  },
+});
+
+/** Folding chairs stacked on a dolly, waiting for Wednesday. */
+reg('chair-cart', {
+  solid: { x: -10, y: -6, w: 20, h: 5 },
+  draw: (ctx, o) =>
+    blit(
+      ctx,
+      o,
+      iart(
+        'chair-cart',
+        22,
+        24,
+        () => {
+          for (let k = 0; k < 9; k++) {
+            const y = 2 + k * 2;
+            const c = k % 2 ? '#a8b0d0' : '#9aa2c8';
+            R(2, y, 18, 1.4, c);
+            H1(2, 20, y, liA(c, 0.4));
+            P1(3 + (k % 3), y + 0.5, shA(c, 0.3));
+          }
+          chrome(1, 0, 1.2, 21);
+          chrome(19.8, 0, 1.2, 21);
+          R(0, 20, 22, 2, '#4e4870');
+          for (const wx of [3, 19]) ell(wx, 22.5, 1.5, 1.5, '#2b2140');
+        },
+        { shadow: [['r', 0, 21, 22, 3]] },
+      ),
+    ),
+});
+
+/** A card table at the door: the cash box, a roll of tickets, a hand stamp. */
+reg('ticket-table', {
+  solid: { x: -14, y: -6, w: 28, h: 5 },
+  draw: (ctx, o) =>
+    blit(
+      ctx,
+      o,
+      iart(
+        'ticket-table',
+        30,
+        16,
+        () => {
+          for (const lx0 of [2, 26]) R(lx0, 8, 1.5, 8, '#6e688e');
+          R(0, 2, 30, 6, '#2f6a52');
+          R(0.5, 2.5, 29, 5, (_a, _b, o2) => (o2 && hash2(FX, FY, 551) < 0.08 ? shA(o2, 0.12) : o2));
+          H1(0, 30, 2, '#5fa882');
+          R(0, 8, 30, 1, '#1e4a3a');
+          R(3, 1, 8, 4, '#4e8a5a');
+          H1(3, 11, 1, '#7ab88a');
+          R(6, 2, 2, 0.8, PAL.gold2);
+          ell(16, 3.5, 2.5, 2.5, '#d8434b');
+          ell(16, 3.5, 1, 1, '#fbf6ea');
+          for (let x = 17.5; x < 24; x += 1.6) R(x, 4.5, 1.4, 1.6, '#d8434b');
+          R(25, 1.5, 3, 3, '#4e4870');
+          R(25.5, 4, 2, 1, '#c9404c');
+          R(4, 9.5, 10, 4, '#fbf6ea');
+          tinyC('$3 ADULT', 9, 10, '#3a2c3a');
+          tinyC('KIDS FREE', 9, 12, '#c9404c');
+        },
+        { shadow: [['r', 1, 13, 30, 3]] },
+      ),
+    ),
+});
+
 reg('bingo-board', {
   draw: (ctx, o, t) => {
     const f = frame(t, 2, 1.2, phaseOf(o));
