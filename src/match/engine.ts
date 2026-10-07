@@ -94,6 +94,8 @@ export class Match {
   playedThisTurn = 0;
   offenseThisTurn = 0;
   goalProgress = 0;
+  /** Sympathy the last played card actually added (a sell into nothing adds none). */
+  private lastSympathyGain = 0;
   nearfalls = 0;
   lastPinPop = 0;
   powers = new Set<string>();
@@ -379,6 +381,7 @@ export class Match {
       return true;
     }
 
+    const sympathyBefore = this.sympathy;
     // Side Headlock: "+1 Sympathy if you are in trouble" (winded before the breather).
     if (c.id === 'headlock' && this.gas <= GAS_WINDED) this.sympathy = Math.min(10, this.sympathy + 1);
     // Gas.
@@ -407,6 +410,7 @@ export class Match {
     } else if (c.sympathy) {
       this.sympathy = Math.min(10, this.sympathy + c.sympathy);
     }
+    this.lastSympathyGain = this.sympathy - sympathyBefore;
     if (c.cheat) this.heat += 2;
     else if (offensive && this.cfg.player.role === 'heel' && ph.id === 'heat') this.heat += 1;
 
@@ -525,7 +529,7 @@ export class Match {
     const g = this.phase.goal;
     const general = this.powers.has('general') && (c.type === 'sell' || c.id === 'hopespot');
     // Ring General: a sympathy goal gets the card's sympathy a second time.
-    if (g.kind === 'sympathy' && general) this.goalProgress += c.sympathy ?? 0;
+    if (g.kind === 'sympathy' && general) this.goalProgress += this.lastSympathyGain;
     if (g.kind !== 'play') return;
     if (!g.types.includes(c.type)) return;
     this.goalProgress += c.cheat && this.phase.id === 'heat' ? 2 : 1;

@@ -1,6 +1,7 @@
 import './tapes.css';
 import { audio } from '../../audio';
 import { block, game } from '../../core/game';
+import { hashString, Rng } from '../../core/rng';
 import { G, skillLevel } from '../../core/state';
 import { sting } from '../../core/sting';
 import { absDay, isSaturday, weekday } from '../../core/time';
@@ -116,7 +117,11 @@ function runDig(bin: BinId, key: string, slots: CrateSlot[], title: string): Pro
     const rainy = G.weather.today === 'rain' || G.weather.today === 'storm';
     const fenwickHere = bin === 'fenwick' || (bin === 'flea' && isWeekend(weekday()) && G.time.minutes >= 7 * 60 && G.time.minutes < 17 * 60);
     const honorBox = bin === 'flea' && (G.time.minutes >= 18 * 60 || G.time.minutes < 7 * 60);
-    const prices = slots.map((s) => s.price);
+    // A deal struck earlier today still stands if the crate is closed and reopened.
+    const prices = slots.map((s) => {
+      const hk = `${key}:${s.tape}`;
+      return st.haggled[hk] === absDay() && st.haggledPrice[hk] ? Math.min(s.price, st.haggledPrice[hk]) : s.price;
+    });
     let sel = 0;
     let done = false;
 
@@ -236,13 +241,16 @@ function runDig(bin: BinId, key: string, slots: CrateSlot[], title: string): Pro
       if (st.haggled[hk] === absDay()) return;
       st.haggled[hk] = absDay();
       const chance = Math.min(0.85, 0.32 + skillLevel('charisma') * 0.06 + (G.weather.today === 'rain' ? 0.08 : 0));
-      if (Math.random() < chance) {
-        prices[sel] = Math.max(1, Math.round(prices[sel] * (0.62 + Math.random() * 0.12)));
-        bubble = FENWICK_YES[Math.floor(Math.random() * FENWICK_YES.length)];
+      // Seeded by save, day and tape, so reloading and asking again gets the same answer.
+      const rng = new Rng(hashString(`haggle:${G.seed}:${hk}:${absDay()}`));
+      if (rng.next() < chance) {
+        prices[sel] = Math.max(1, Math.round(prices[sel] * (0.62 + rng.next() * 0.12)));
+        st.haggledPrice[hk] = prices[sel];
+        bubble = FENWICK_YES[Math.floor(rng.next() * FENWICK_YES.length)];
         audio.sfx('coin');
         G.player.skills.charisma += 4;
       } else {
-        bubble = FENWICK_NO[Math.floor(Math.random() * FENWICK_NO.length)];
+        bubble = FENWICK_NO[Math.floor(rng.next() * FENWICK_NO.length)];
         audio.sfx('error');
       }
       paint();

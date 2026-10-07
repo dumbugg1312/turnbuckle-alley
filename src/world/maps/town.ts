@@ -160,10 +160,11 @@ building('b-studio', 41.5, SECOND, 0, 'studio', 'Hurricane Physio & Yoga');
 building('b-vfw', 54.5, SECOND, 0, 'vfw', 'VFW Post 316');
 building('b-pawn', 66.5, SECOND, 0, 'pawn', "Fenwick's Pawn & Tapes");
 building('b-salon', 77.5, SECOND, 0, 'salon', 'Gorgeous (Salon)');
-// Behind the south row, along Main St's south sidewalk: hedges and shade trees
-o('hedge', 3, MAIN + 7.2, { w: 10 });
-o('hedge', 16, MAIN + 7.2, { w: 30 });
-o('hedge', 50, MAIN + 7.2, { w: 32 });
+// Behind the south row, along Main St's south sidewalk: hedges and shade trees.
+// At +7.6 the hedges' solid strip stays off sidewalk row 34 (at +7.2 it blocked that row for pathing).
+o('hedge', 3, MAIN + 7.6, { w: 10 });
+o('hedge', 16, MAIN + 7.6, { w: 30 });
+o('hedge', 50, MAIN + 7.6, { w: 32 });
 for (const x of [1, 46.2]) o('tree', x, MAIN + 9.5, { variant: Math.floor(x) % 3 });
 o('car', 85.5, MAIN + 11.6, { variant: 2 });
 o('car', 85.5, MAIN + 14.6, { variant: 0 });

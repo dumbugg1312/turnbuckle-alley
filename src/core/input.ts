@@ -39,14 +39,21 @@ export class Input {
     window.addEventListener('keydown', (e) => {
       this.lastDevice = 'keyboard';
       const target = e.target as HTMLElement | null;
-      if (target && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable)) return;
-      for (const l of this.listeners) l(e.key, e.code);
+      const typing = target && (target.tagName === 'TEXTAREA' || target.isContentEditable || (target.tagName === 'INPUT' && (target as HTMLInputElement).type !== 'range'));
+      if (typing) return;
+      // A focused slider keeps its arrow keys; everything else still reaches the game.
+      if (target?.tagName === 'INPUT' && e.code.startsWith('Arrow')) return;
       const a = KEYMAP[e.code];
       if (a) {
-        if (!this.held.has(a)) this.pressed.add(a);
+        if (!this.held.has(a) && !e.repeat) this.pressed.add(a);
         this.held.add(a);
         if (e.code === 'Tab' || e.code === 'Space' || e.code.startsWith('Arrow')) e.preventDefault();
       }
+      // Listeners run after the action is recorded, so an overlay that closes on this key
+      // and calls clear() swallows it (otherwise the world sees it next frame and reopens
+      // the menu or interacts again). Held-key auto-repeat only drives list navigation,
+      // never confirm or cancel, so holding E can't skip dialogue or pick a choice.
+      if (!e.repeat || e.code.startsWith('Arrow')) for (const l of [...this.listeners]) l(e.key, e.code);
     });
     window.addEventListener('keyup', (e) => {
       const a = KEYMAP[e.code];

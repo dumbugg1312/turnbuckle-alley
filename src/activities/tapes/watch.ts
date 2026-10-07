@@ -767,7 +767,7 @@ class WatchScene implements Scene {
       const x = s.getContext('2d')!;
       const rowH = H / PH;
       for (let r = 0; r < PH; r++) {
-        x.fillStyle = 'rgba(0,0,0,0.42)';
+        x.fillStyle = 'rgba(43,33,64,0.42)';
         x.fillRect(0, r * rowH + rowH * 0.62, W, rowH * 0.38);
         x.fillStyle = 'rgba(255,255,255,0.025)';
         x.fillRect(0, r * rowH, W, rowH * 0.2);
@@ -786,9 +786,9 @@ class WatchScene implements Scene {
       v.height = H;
       const x = v.getContext('2d')!;
       const g = x.createRadialGradient(W / 2, H / 2, H * 0.35, W / 2, H / 2, H * 0.85);
-      g.addColorStop(0, 'rgba(0,0,0,0)');
-      g.addColorStop(0.7, 'rgba(0,0,0,0.25)');
-      g.addColorStop(1, 'rgba(0,0,0,0.85)');
+      g.addColorStop(0, 'rgba(43,33,64,0)');
+      g.addColorStop(0.7, 'rgba(43,33,64,0.25)');
+      g.addColorStop(1, 'rgba(43,33,64,0.85)');
       x.fillStyle = g;
       x.fillRect(0, 0, W, H);
       // Glass glare.
@@ -913,7 +913,7 @@ class WatchScene implements Scene {
     x.font = `${Math.round(size)}px 'Silkscreen', monospace`;
     x.textAlign = align;
     x.textBaseline = 'top';
-    x.fillStyle = 'rgba(0,0,0,0.75)';
+    x.fillStyle = 'rgba(43,33,64,0.75)';
     x.fillText(s, px + size * 0.12, py + size * 0.12);
     x.fillStyle = color;
     x.fillText(s, px, py);
@@ -936,7 +936,7 @@ class WatchScene implements Scene {
       if (this.caption && this.state?.mode === 'show' && !this.tracking) {
         x.font = `${Math.round(fs * 0.7)}px 'Silkscreen', monospace`;
         const tw = x.measureText(this.caption).width;
-        x.fillStyle = 'rgba(0,0,0,0.85)';
+        x.fillStyle = 'rgba(43,33,64,0.85)';
         x.fillRect(W / 2 - tw / 2 - fs * 0.3, H - m - fs * 1.1, tw + fs * 0.6, fs);
         this.osdText(x, this.caption, W / 2, H - m - fs * 1.0, fs * 0.7, '#ffffff', 'center');
       }

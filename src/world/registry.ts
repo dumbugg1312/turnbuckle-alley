@@ -19,8 +19,8 @@ export function registerObject(kind: string, def: ObjectKind): void {
 const MISSING_TERRAIN: TerrainDef = {
   draw: (ctx, x, y) => {
     rect(ctx, x, y, 16, 16, '#ff00ff');
-    rect(ctx, x, y, 8, 8, '#000');
-    rect(ctx, x + 8, y + 8, 8, 8, '#000');
+    rect(ctx, x, y, 8, 8, '#2b2140');
+    rect(ctx, x + 8, y + 8, 8, 8, '#2b2140');
   },
 };
 

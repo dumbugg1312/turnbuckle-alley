@@ -43,6 +43,14 @@ const OFFENSE: Record<string, { name: string; pop: number; hurt: number; anim: s
     { name: 'Ringside Brawl', pop: 11, hurt: 4, anim: 'strike' },
     { name: 'Corner Stomps', pop: 8, hurt: 3, anim: 'kick' },
   ],
+  // Dungeon ghosts with the 'heel' style (rule-benders, matching STYLE_POOLS.heel).
+  heel: [
+    { name: 'Eye Rake', pop: 7, hurt: 2, anim: 'strike' },
+    { name: 'Rope-Assisted Choke', pop: 8, hurt: 3, anim: 'hold' },
+    { name: 'Low Blow Behind the Ref', pop: 9, hurt: 3, anim: 'kick' },
+    { name: 'Snap DDT', pop: 12, hurt: 4, anim: 'slam' },
+    { name: 'Feet-on-the-Ropes Cover', pop: 10, hurt: 3, anim: 'hold' },
+  ],
   showman: [
     { name: 'Strut & Jab', pop: 7, hurt: 2, anim: 'strike' },
     { name: 'Sequined Elbow', pop: 10, hurt: 3, anim: 'drop' },

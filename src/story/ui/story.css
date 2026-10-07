@@ -30,7 +30,7 @@
   border-radius: calc(var(--u) * 2);
   padding: calc(var(--u) * 7) calc(var(--u) * 9) calc(var(--u) * 6);
   transform: rotate(-0.6deg);
-  box-shadow: 0 calc(var(--u) * 3) 0 rgba(0, 0, 0, 0.25), 0 calc(var(--u) * 8) calc(var(--u) * 18) rgba(0, 0, 0, 0.45);
+  box-shadow: 0 calc(var(--u) * 3) 0 rgba(43, 33, 64, 0.25), 0 calc(var(--u) * 8) calc(var(--u) * 18) rgba(43, 33, 64, 0.45);
   color: #2f3f8f;
 }
 .napkin::before { /* the embossed border every diner napkin has */
@@ -53,7 +53,7 @@
   border-radius: calc(var(--u) * 4) calc(var(--u) * 4) calc(var(--u) * 2) calc(var(--u) * 2);
   border: calc(var(--u) * 0.8) solid #3a0e14;
   transform: rotate(12deg);
-  box-shadow: calc(var(--u) * 2) calc(var(--u) * 3) 0 rgba(0, 0, 0, 0.3);
+  box-shadow: calc(var(--u) * 2) calc(var(--u) * 3) 0 rgba(43, 33, 64, 0.3);
 }
 .ketchup::before { content: ''; position: absolute; top: calc(var(--u) * -5); left: 50%; transform: translateX(-50%); width: calc(var(--u) * 5); height: calc(var(--u) * 6); background: #f4f0e6; border: calc(var(--u) * 0.8) solid #3a0e14; border-radius: calc(var(--u) * 1) calc(var(--u) * 1) 0 0; }
 .ketchup::after { content: ''; position: absolute; top: calc(var(--u) * 9); left: calc(var(--u) * 1.5); right: calc(var(--u) * 1.5); height: calc(var(--u) * 6); background: #fbf0d9; border-radius: calc(var(--u) * 1); }
@@ -191,7 +191,7 @@
   flex-direction: column;
   border: calc(var(--u) * 5) solid #6b4226;
   border-radius: calc(var(--u) * 3);
-  box-shadow: inset 0 0 0 calc(var(--u) * 1) #3d2414, inset 0 0 calc(var(--u) * 16) rgba(60, 30, 10, 0.55), 0 calc(var(--u) * 4) 0 rgba(0, 0, 0, 0.45);
+  box-shadow: inset 0 0 0 calc(var(--u) * 1) #3d2414, inset 0 0 calc(var(--u) * 16) rgba(60, 30, 10, 0.55), 0 calc(var(--u) * 4) 0 rgba(43, 33, 64, 0.45);
   background:
     radial-gradient(circle at 20% 30%, rgba(90, 55, 25, 0.35) 0 1px, transparent 1.5px) 0 0 / calc(var(--u) * 7) calc(var(--u) * 7),
     radial-gradient(circle at 70% 60%, rgba(255, 230, 190, 0.22) 0 1px, transparent 1.5px) 0 0 / calc(var(--u) * 9) calc(var(--u) * 9),
@@ -225,14 +225,14 @@
 .pinned:hover { transform: rotate(0deg) translateY(calc(var(--u) * -2)); }
 .pinned.mine { background: #fff4d6; }
 .pinned.sig { background: #fff0bf; }
-.pushpin { position: absolute; top: calc(var(--u) * -4); left: 50%; width: calc(var(--u) * 9); height: calc(var(--u) * 9); margin-left: calc(var(--u) * -4.5); border-radius: 50%; background: radial-gradient(circle at 35% 35%, #ff9aa2, #d8434b 45%, #7d1824); box-shadow: calc(var(--u) * 1) calc(var(--u) * 1.5) 0 rgba(0, 0, 0, 0.35); }
+.pushpin { position: absolute; top: calc(var(--u) * -4); left: 50%; width: calc(var(--u) * 9); height: calc(var(--u) * 9); margin-left: calc(var(--u) * -4.5); border-radius: 50%; background: radial-gradient(circle at 35% 35%, #ff9aa2, #d8434b 45%, #7d1824); box-shadow: calc(var(--u) * 1) calc(var(--u) * 1.5) 0 rgba(43, 33, 64, 0.35); }
 .pushpin.teal { background: radial-gradient(circle at 35% 35%, #9ff0e4, #2fa59a 45%, #145450); }
 .pushpin.gold { background: radial-gradient(circle at 35% 35%, #ffe7a8, #f4b63f 45%, #8a5310); }
 .pinned h3 { font-family: var(--font-display); font-weight: normal; font-size: calc(var(--u) * 12); margin: 0; line-height: 0.95; }
 .pinned .shape { font-family: var(--font-label); font-size: calc(var(--u) * 4.8); color: var(--ink-soft); margin-top: calc(var(--u) * 1.5); text-transform: uppercase; }
 .rivals { position: relative; display: flex; justify-content: space-between; align-items: center; margin: calc(var(--u) * 5) calc(var(--u) * 2) calc(var(--u) * 3); }
 .rivals svg { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; pointer-events: none; }
-.polaroid { position: relative; z-index: 1; background: #fff; padding: calc(var(--u) * 1.5) calc(var(--u) * 1.5) calc(var(--u) * 5); border: calc(var(--u) * 0.6) solid #cfc6b4; box-shadow: calc(var(--u) * 1) calc(var(--u) * 1.5) 0 rgba(0, 0, 0, 0.25); transform: rotate(var(--r, -3deg)); text-align: center; width: calc(var(--u) * 34); }
+.polaroid { position: relative; z-index: 1; background: #fff; padding: calc(var(--u) * 1.5) calc(var(--u) * 1.5) calc(var(--u) * 5); border: calc(var(--u) * 0.6) solid #cfc6b4; box-shadow: calc(var(--u) * 1) calc(var(--u) * 1.5) 0 rgba(43, 33, 64, 0.25); transform: rotate(var(--r, -3deg)); text-align: center; width: calc(var(--u) * 34); }
 .polaroid canvas { width: calc(var(--u) * 30); height: calc(var(--u) * 30); display: block; image-rendering: pixelated; background: #f6d7a8; }
 .polaroid span { position: absolute; left: 0; right: 0; bottom: calc(var(--u) * 0.6); font-size: calc(var(--u) * 4.6); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; padding: 0 calc(var(--u) * 1); }
 .polaroid .al { position: absolute; top: calc(var(--u) * -3); right: calc(var(--u) * -3); font-family: var(--font-label); font-size: calc(var(--u) * 4); padding: calc(var(--u) * 0.6) calc(var(--u) * 1.5); border-radius: calc(var(--u) * 2); color: #fff; }

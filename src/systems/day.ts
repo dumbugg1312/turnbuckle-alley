@@ -50,10 +50,8 @@ let sleeping = false;
 export async function sleep(passedOut = false): Promise<void> {
   if (sleeping) return;
   sleeping = true;
+  game.sleeping = true;
   const w = WORLD;
-  // Keep the menu (and its save button) shut until the morning routine is done.
-  const wasBusy = w?.busy ?? false;
-  if (w) w.busy = true;
   try {
     audio.sfx('sleep');
     audio.music(null);
@@ -78,13 +76,30 @@ export async function sleep(passedOut = false): Promise<void> {
     if (isShowDay()) lines.push(weekday() === 2 ? "It's *Wednesday*: show night at the VFW. Doors at 6, bell at 7." : "It's *Saturday*: show night at the Sportatorium! Doors at 6, bell at 7.");
     await narrate(...lines);
   } finally {
-    if (w) w.busy = wasBusy;
     sleeping = false;
+    game.sleeping = false;
   }
 }
 
-/** Called when the clock hits 2 AM. */
+let lateQueued = false;
+
+/**
+ * Called when the clock hits 2 AM. Whatever pushed the clock there (a tape crate, a shop,
+ * a talk) may still be open on top of the world, and passing out underneath it warps and
+ * saves behind the overlay. So wait until the world is on top and idle, then pass out.
+ */
 export function onLate(): void {
-  void sleep(true);
+  if (sleeping || lateQueued) return;
+  lateQueued = true;
+  const go = () => {
+    const w = WORLD;
+    if (w && (game.blockers > 0 || w.busy || game.scenes.top !== w || game.scenes.transitioning)) {
+      setTimeout(go, 200);
+      return;
+    }
+    lateQueued = false;
+    void sleep(true);
+  };
+  go();
 }
 game.clock.onLate.push(onLate);

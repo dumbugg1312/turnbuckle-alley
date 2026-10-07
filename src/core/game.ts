@@ -26,6 +26,8 @@ export const game = {
   blockers: 0,
   bus: new Emitter<GameEvents>(),
   debug: false,
+  /** True while the sleep routine runs (systems/day.ts); the menu and saving stay shut. */
+  sleeping: false,
 };
 
 export function block(): () => void {

@@ -179,6 +179,8 @@ export interface TapesState {
   storyStars: Record<string, number>;
   /** `${crateKey}:${tape}` -> day Fenwick was haggled with over it. */
   haggled: Record<string, number>;
+  /** `${crateKey}:${tape}` -> the price Fenwick came down to (valid on the haggled day). */
+  haggledPrice: Record<string, number>;
   tutorial: { dig: boolean; watch: boolean; library: boolean };
   stats: { dug: number; bought: number; watched: number; caught: number; lost: number; perfect: number };
 }

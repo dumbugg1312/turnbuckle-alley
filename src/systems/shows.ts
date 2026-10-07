@@ -1,6 +1,7 @@
 import './shows.css';
 import { audio } from '../audio';
 import { block, game } from '../core/game';
+import { hashString, Rng } from '../core/rng';
 import { G, ext, hearts, skillLevel } from '../core/state';
 import { sting } from '../core/sting';
 import { absDay, BELL_TIME, isShowDay, isSupershow, SUPERSHOWS, weekday } from '../core/time';
@@ -116,7 +117,9 @@ function attendance(venue: Venue): number {
   base += Math.min(60, Math.floor(fans / 25));
   if (G.weather.today === 'rain' || G.weather.today === 'storm') base *= 0.85;
   if (supershowName()) base *= 1.6;
-  return Math.max(12, Math.min(cap, Math.round(base + (Math.random() - 0.5) * 8)));
+  // Seeded per show night, so reloading the morning save doesn't reroll the gate.
+  const jitter = new Rng(hashString(`gate:${G.seed}:${absDay()}`)).next();
+  return Math.max(12, Math.min(cap, Math.round(base + (jitter - 0.5) * 8)));
 }
 
 function pay(stars: number | null): number {
@@ -286,14 +289,12 @@ async function entrance(seg: Segment): Promise<void> {
 function playMatch(seg: Segment, venue: Venue): Promise<MatchResult> {
   return new Promise((resolve) => {
     const cfg = buildMatchConfig(seg, venue);
-    const reward = G.player.matches < 2 || Math.random() < 0.6;
+    const rng = new Rng(hashString(`reward:${G.seed}:${absDay()}:${seg.id}`));
+    const reward = G.player.matches < 2 || rng.next() < 0.6;
     import('../match/cards').then(({ rewardPool }) => {
       const pool = rewardPool(cfg.opponent.style);
-      const picks: string[] = [];
-      while (reward && picks.length < 3 && pool.length) {
-        const c = pool[Math.floor(Math.random() * pool.length)];
-        if (!picks.includes(c)) picks.push(c);
-      }
+      // rewardPool() is de-duplicated, so a shuffle can't loop forever on a small pool.
+      const picks: string[] = reward ? rng.shuffle([...pool]).slice(0, 3) : [];
       game.scenes.push(
         new MatchScene({
           config: cfg,
@@ -420,7 +421,12 @@ onTalk(async (npcId) => {
   const sp = speakerFor('birdie');
   if (mine?.match) {
     const opp = NPC_BY_ID[mine.match.opponent];
-    await say(sp, `There you are, sugar. You're working ${opp?.wrestler?.ringName ?? opp?.short} tonight. ${mine.match.winner === 'player' ? "You're going over. Don't let it go to your head." : 'You\'re putting them over. Make it look good and the people will remember you, not the finish.'}`);
+    // The show floor is public (placeKind 'show'), so nothing spoken here can give away the finish.
+    // Birdie passes it with an old hand signal in narration, which only the player sees.
+    await say(sp, `There you are, sugar. You've got ${opp?.wrestler?.ringName ?? opp?.short} tonight. Go give these folks a fight.`);
+    await narrate(mine.match.winner === 'player'
+      ? 'Out of sight of the front row, Birdie taps two fingers on her wrist: the old signal. *You go home with the win tonight.*'
+      : "Out of sight of the front row, Birdie lays a flat palm on her knee: the old signal. *Tonight you put them over. Make it look good and they'll remember you, not the finish.*");
   } else {
     await say(sp, "No match for you tonight, but I want you here. Watch. Learn. Carry a chair if somebody needs one.");
   }

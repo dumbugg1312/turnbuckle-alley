@@ -17,6 +17,7 @@ export function tapesState(): TapesState {
     hammers: [],
     storyStars: {},
     haggled: {},
+    haggledPrice: {},
     tutorial: { dig: false, watch: false, library: false },
     stats: { dug: 0, bought: 0, watched: 0, caught: 0, lost: 0, perfect: 0 },
   }));
@@ -30,6 +31,7 @@ export function tapesState(): TapesState {
   s.hammers ??= [];
   s.storyStars ??= {};
   s.haggled ??= {};
+  s.haggledPrice ??= {};
   s.tutorial ??= { dig: false, watch: false, library: false };
   s.stats ??= { dug: 0, bought: 0, watched: 0, caught: 0, lost: 0, perfect: 0 };
   return s;

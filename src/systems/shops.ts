@@ -1,6 +1,6 @@
 import { audio } from '../audio';
 import { block, game } from '../core/game';
-import { G, addItem } from '../core/state';
+import { G, addItem, hasItem } from '../core/state';
 import { item } from '../data/items';
 import { iconFor } from '../gfx/icons';
 import { say, toast } from '../ui/dialog';
@@ -83,7 +83,19 @@ function shopUi(shop: ShopDef): Promise<void> {
     let sell: HTMLElement | null = null;
     if (shop.buys) {
       sell = el('button', { class: 'btn teal' }, 'Sell something');
+      // One picker at a time: a double tap while the menu module loads stacked two, and the
+      // second could sell an item the first had already sold.
+      let selling = false;
       sell.addEventListener('click', async () => {
+        if (selling) return;
+        selling = true;
+        try {
+          await sellOne();
+        } finally {
+          selling = false;
+        }
+      });
+      const sellOne = async () => {
         const { pickItem } = await import('../ui/menu');
         const ids = Object.keys(G.player.inventory).filter((id) => shop.buys!.includes(item(id).cat) && G.player.inventory[id] > 0);
         if (!ids.length) {
@@ -91,14 +103,14 @@ function shopUi(shop: ShopDef): Promise<void> {
           return;
         }
         const id = await pickItem('Sell which item? (half price)', ids);
-        if (!id) return;
+        if (!id || !hasItem(id)) return;
         const price = Math.max(1, Math.floor(item(id).price / 2));
         addItem(id, -1);
         G.player.money += price;
         audio.sfx('coin');
         toast(`Sold ${item(id).name} for $${price}`);
         refresh();
-      });
+      };
     }
     const leave = el('button', { class: 'btn' }, 'Thanks!');
     const done = () => {

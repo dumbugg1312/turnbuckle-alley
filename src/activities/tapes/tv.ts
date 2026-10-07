@@ -242,7 +242,7 @@ export class TvPicture {
       // Apron.
       x.fillStyle = pal.apron;
       x.fillRect(RING_L - 8, 94, RING_R - RING_L + 16, 12);
-      x.fillStyle = 'rgba(0,0,0,0.25)';
+      x.fillStyle = 'rgba(43,33,64,0.25)';
       x.fillRect(RING_L - 8, 104, RING_R - RING_L + 16, 2);
       const name = (p.tape.promo.match(/\b[A-Z]/g) ?? ['T', 'A']).join('').slice(0, 5);
       pixelText(x, name, 80 - textWidth(name) / 2, 97, '#fff4dc', 1);

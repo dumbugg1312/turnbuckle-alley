@@ -143,7 +143,18 @@ export class WorldScene implements Scene {
   private grade: Grade = gradeAt(9 * 60, 'sun', false);
   private warping = false;
   private lastTick = -1;
-  busy = false;
+  /**
+   * Nesting depth of things that own the player right now (object use, talks, enter-hook
+   * cutscenes). A counter, not a saved-and-restored flag, so two async flows that overlap
+   * (e.g. 2 AM passing out while a tape bin is open) can't leave the world stuck busy.
+   */
+  private busyDepth = 0;
+  get busy(): boolean {
+    return this.busyDepth > 0;
+  }
+  private release(): void {
+    this.busyDepth = Math.max(0, this.busyDepth - 1);
+  }
   /** Called by HUD to show the action button label. */
   onPrompt: ((label: string | null) => void) | null = null;
   private promptLabel: string | null = null;
@@ -178,7 +189,8 @@ export class WorldScene implements Scene {
   private ensureSafeSpawn(): void {
     const m = this.map;
     const p = this.player;
-    if (Number.isFinite(p.x) && Number.isFinite(p.y) && !m.collides(p.box())) return;
+    // Door arrival spots can graze a wall with the full hitbox, so only test the feet.
+    if (Number.isFinite(p.x) && Number.isFinite(p.y) && !m.collides({ x: p.x - 1, y: p.y - 2, w: 2, h: 2 })) return;
     const cx = Math.floor(Math.min(Math.max(Number.isFinite(p.x) ? p.x : 0, 0), m.pxW - 1) / TILE);
     const cy = Math.floor(Math.min(Math.max(Number.isFinite(p.y) ? p.y : 0, 0), m.pxH - 1) / TILE);
     let best: { x: number; y: number } | null = null;
@@ -228,7 +240,7 @@ export class WorldScene implements Scene {
     this.hud = new Hud(
       () => {
         // Same gate as the menu key: saving mid-cutscene stores half-applied story flags.
-        if (game.blockers > 0 || this.busy || this.warping) return;
+        if (game.blockers > 0 || this.busy || this.warping || game.sleeping) return;
         void import('../ui/menu').then((m) => m.openMenu());
       },
       () => this.interact(),
@@ -333,14 +345,13 @@ export class WorldScene implements Scene {
     // Enter hooks are cutscenes. Between their lines (and during NPC walks) no
     // dialog is open, so without this the player could walk off or talk to a
     // cutscene NPC and start a second, interleaved conversation.
-    const was = this.busy;
-    this.busy = true;
+    this.busyDepth++;
     try {
       for (const h of ENTER_HOOKS) {
         if (await h(mapId)) break;
       }
     } finally {
-      this.busy = was;
+      this.release();
     }
   }
 
@@ -586,7 +597,7 @@ export class WorldScene implements Scene {
     // Taps.
     for (const t of inp.takeTaps()) this.onTap(t.x, t.y);
     if (inp.consume('interact')) this.interact();
-    if (inp.consume('menu') || inp.consume('cancel')) void import('../ui/menu').then((m) => m.openMenu());
+    if ((inp.consume('menu') || inp.consume('cancel')) && !game.sleeping) void import('../ui/menu').then((m) => m.openMenu());
   }
 
   /** Turn frames, hops, emotes; footfalls become dust, splashes and step sounds. */
@@ -633,7 +644,7 @@ export class WorldScene implements Scene {
     if (this.busy || this.warping) return;
     const locked = w.locked?.() ?? DOOR_RULES.get(w.to)?.() ?? null;
     if (locked) {
-      this.busy = true;
+      this.busyDepth++;
       try {
         this.player.stop();
         // Step back off the warp so it doesn't retrigger.
@@ -643,7 +654,7 @@ export class WorldScene implements Scene {
         // Don't let a still-held key re-open the same message instantly.
         game.input.clear();
       } finally {
-        this.busy = false;
+        this.release();
       }
       return;
     }
@@ -798,21 +809,21 @@ export class WorldScene implements Scene {
 
   private async talk(n: NpcActor): Promise<void> {
     if (this.busy) return;
-    this.busy = true;
+    this.busyDepth++;
     try {
       n.faceToward(this.player.x, this.player.y);
       this.player.faceToward(n.x, n.y);
       const { talkTo } = await import('./talk');
       await talkTo(n.def.id, placeKind(this.map.id, n.tx, n.ty));
     } finally {
-      this.busy = false;
+      this.release();
       n.facing = (n.def.schedule(dayCtx()).find((e) => e.map === this.map.id)?.facing ?? n.facing) as Dir;
     }
   }
 
   private async useObject(o: MapObject): Promise<void> {
     if (this.busy) return;
-    this.busy = true;
+    this.busyDepth++;
     try {
       const fn = ACTIONS.get(String(o.props.action ?? '')) ?? ACTIONS.get(o.id) ?? ACTIONS.get(o.kind);
       if (fn) await fn({ object: o, mapId: this.map.id });
@@ -821,7 +832,7 @@ export class WorldScene implements Scene {
         await say(null, o.props.text);
       }
     } finally {
-      this.busy = false;
+      this.release();
     }
   }
 
@@ -968,7 +979,7 @@ export class WorldScene implements Scene {
       for (const r of this.rain) ctx.fillRect(Math.round(r.x), Math.round(r.y), 1, 4);
     }
     // Map name card on arrival.
-    if (game.debug) pixelTextOutlined(ctx, `${this.map.id} ${this.player.tx},${this.player.ty}`, 4, h - 10, '#fff', '#000');
+    if (game.debug) pixelTextOutlined(ctx, `${this.map.id} ${this.player.tx},${this.player.ty}`, 4, h - 10, '#fff', '#2b2140');
   }
 
   private drawEmote(ctx: CanvasRenderingContext2D, a: Actor, yOff = 0): void {

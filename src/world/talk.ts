@@ -1,12 +1,13 @@
 import { audio } from '../audio';
 import { sting } from '../core/sting';
 import { game } from '../core/game';
-import { G, ext, hearts, rel, setFlag, addItem } from '../core/state';
+import { G, ext, hearts, rel, setFlag, addItem, hasItem } from '../core/state';
 import { isShowDay, weekday } from '../core/time';
 import { DIALOGUE } from '../data/dialogue';
 import type { Cond, DialogueSet, EventApi, Line, Place } from '../data/dialogue/types';
 import { ITEMS, item } from '../data/items';
 import { NPC_BY_ID } from '../data/npcs';
+import { CARDS as MOVE_CARDS } from '../match/cards';
 import { renderPortrait } from '../gfx/characters';
 import { choose, narrate, say, toast, type Speaker } from '../ui/dialog';
 import { iconFor } from '../gfx/icons';
@@ -27,6 +28,8 @@ function talkState(): TalkState {
 }
 
 const portraitCache = new Map<string, HTMLCanvasElement>();
+/** Characters with a dialogue file but no NPCS entry (they never walk a schedule). */
+const EXTRA_NAMES: Record<string, string> = { jobber: 'Jobber' };
 export function speakerFor(id: string, mood: Line['mood'] = 'neutral'): Speaker | null {
   if (id === 'narrator') return null;
   if (id === 'player') {
@@ -35,7 +38,7 @@ export function speakerFor(id: string, mood: Line['mood'] = 'neutral'): Speaker 
   const def = NPC_BY_ID[id];
   const key = `${id}:${mood}`;
   return {
-    name: def?.short ?? id,
+    name: def?.short ?? EXTRA_NAMES[id] ?? id,
     sub: def?.insider && def.wrestler ? undefined : undefined,
     color: npcColor(id),
     portrait: () => {
@@ -113,12 +116,12 @@ export function makeApi(defaultWho: string): EventApi {
     learnCard: (cardId) => {
       G.player.deck.push(cardId);
       sting('level-up');
-      toast(`New move learned! (${cardId})`);
+      toast(`New move learned: *${MOVE_CARDS[cardId]?.name ?? cardId}*!`);
     },
     learnStoryCard: (cardId) => {
       const s = ext<{ owned: string[] }>('story-cards', () => ({ owned: [] }));
       if (!s.owned.includes(cardId)) s.owned.push(cardId);
-      toast(`New story card: ${cardId}`);
+      void import('../story/data/cards').then(({ CARDS }) => toast(`New story card: *${CARDS.find((c) => c.id === cardId)?.name ?? cardId}*`));
     },
     playerName: G.player.name,
   };
@@ -208,7 +211,7 @@ export function giftables(): string[] {
 async function giveGift(npcId: string): Promise<void> {
   const { pickItem } = await import('../ui/menu');
   const id = await pickItem('Give which gift?', giftables());
-  if (!id) return;
+  if (!id || !hasItem(id)) return;
   const ds = DIALOGUE[npcId];
   const r = rel(npcId);
   addItem(id, -1);
@@ -221,7 +224,8 @@ async function giveGift(npcId: string): Promise<void> {
   else if (ds?.gifts.likes.includes(id)) tier = 'like';
   else if (ds?.gifts.dislikes.includes(id)) tier = 'dislike';
   const pts = { love: 80, like: 45, neutral: 20, dislike: -20 }[tier] * (bday ? 3 : 1);
-  const replies = bday && ds?.giftReplies.birthday?.length ? ds.giftReplies.birthday : ds?.giftReplies[tier] ?? ['Oh! Thank you.'];
+  // A disliked birthday gift still stings (x3), so it gets the dislike reply, not a warm thank you.
+  const replies = bday && tier !== 'dislike' && ds?.giftReplies.birthday?.length ? ds.giftReplies.birthday : ds?.giftReplies[tier] ?? ['Oh! Thank you.'];
   const mood = tier === 'love' ? 'love' : tier === 'like' ? 'happy' : tier === 'dislike' ? 'sad' : 'neutral';
   await say(speakerFor(npcId, mood), replies[Math.floor(Math.random() * replies.length)]);
   addHearts(npcId, pts);
