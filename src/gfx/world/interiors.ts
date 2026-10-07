@@ -347,13 +347,51 @@ const CURTAINS: [Color, Color, Color][] = [
   ['#f6d38a', '#fff1c2', '#c8963a'],
   ['#9a7ad0', '#c4a8ea', '#6a4aa0'],
 ];
+/** What a window looks out on (props.view): the default hills, the marquee, the city, the street. */
+function windowView(view: string, gx: number, gy: number, gw: number, gh: number): void {
+  if (view === 'marquee') {
+    // dusk over the rooftops, and the Sportatorium marquee lit up across the street
+    VG(gx, gy, gw, gh, ['#5a4a8a', '#c87a9a', '#f6b88a']);
+    R(gx, gy + 7, gw, gh - 7, '#4a3a5a');
+    for (let x = 0; x < gw; x += 3) R(gx + x, gy + 6 + (x % 2), 2, 2, '#3a2c4a');
+    R(gx + 2, gy + 3, 12, 6, '#2b2140');
+    R(gx + 2.5, gy + 3.5, 11, 5, '#3a3478');
+    tinyC('SAT ACW', gx + 8, gy + 4.2, '#ffd050');
+    for (let x = gx + 2.5; x < gx + 14; x += 1.5) {
+      P1(x, gy + 3.2, '#fff4c0');
+      P1(x + 0.5, gy + 8.5, '#fff4c0');
+    }
+    for (let k = 0; k < 6; k++) P1(gx + 1 + k * 2.6, gy + 9.5 + (k % 2), '#ffe08a');
+    P1(gx + 13, gy + 1, '#ffffff');
+    return;
+  }
+  if (view === 'city') {
+    VG(gx, gy, gw, gh, ['#7a9ad0', '#b8c8e8', '#f0d8c8']);
+    for (let k = 0; k < 6; k++) {
+      const bh = 4 + hash2(k, 7, 501) * (gh - 3);
+      const bx = gx + k * 2.8;
+      R(bx, gy + gh - bh, 2.4, bh, k % 2 ? '#5a6a90' : '#6a7aa0');
+      for (let w = 1; w < bh - 1; w += 1.5) if (hash2(k, w * 3, 502) < 0.45) P1(bx + 0.5 + (w % 2), gy + gh - bh + w, '#ffe8a8');
+    }
+    return;
+  }
+  if (view === 'street') {
+    VG(gx, gy, gw, gh * 0.55, ['#9cc8e8', '#d8ecf4']);
+    R(gx, gy + gh * 0.55, gw, gh * 0.45, '#c87a5a');
+    R(gx, gy + gh * 0.55, gw, gh * 0.45, (_a, _b, o2) => (o2 && (FY % 3 === 0 || FX % 7 === 0) ? '#a85a4a' : o2));
+    R(gx + 3, gy + gh * 0.55 + 1.5, 4, 3, '#ffe08a');
+    R(gx + 10, gy + gh * 0.55 + 1.5, 4, 3, '#9cc8e0');
+    return;
+  }
+}
 reg('window', {
   draw: (ctx, o) => {
     const v = variant(o, 4);
+    const view = String(o.props.view ?? '');
     blit(
       ctx,
       o,
-      iart(`window|${v}`, 24, 20, () => {
+      iart(`window|${v}|${view}`, 24, 20, () => {
         const [cb, cl, cd] = CURTAINS[v];
         // frame
         R(2, 2, 20, 15, '#fbf0d9');
@@ -382,7 +420,8 @@ reg('window', {
         }
         ell(gx + 3, gy + 8, 2, 2, '#5e8a5a');
         ell(gx + 11, gy + 9, 2.5, 2, '#6a9a5e');
-        glare(gx, gy, gw, gh, 0.4);
+        if (view) windowView(view, gx, gy, gw, gh);
+        fglare(gx, gy, gw, gh, 0.32);
         // mullions
         VL(11, 4, 14, '#efe2c8');
         VL(12, 4, 14, '#d6c2a4');
@@ -675,7 +714,7 @@ reg('calendar', {
       ctx,
       o,
       iart(
-        'calendar',
+        `calendar|${String(o.props.year ?? '')}`,
         13,
         15,
         () => {
@@ -704,6 +743,14 @@ reg('calendar', {
           }
           P(4, 8, '#ff6a6a');
           P(6, 8, '#ff6a6a');
+          if (o.props.year) {
+            // stopped on a month forty years ago: yellowed, one date ringed hard in red
+            R(0, 2, 12, 12, (_a, _b, o2) => (o2 && dth(FX, FY, 5) ? mixc(o2, '#e8d8a8', 0.35) : o2));
+            R(1, 5.5, 10, 2, '#fbf6ea');
+            tinyC(`OCT ${String(o.props.year)}`, 6, 5.6, '#a8343e');
+            ell(9, 12, 1.8, 1.4, (_a, _b, o2) => o2);
+            for (let k = 0; k < 10; k++) P1(9 + Math.cos(k * 0.63) * 1.6, 12 + Math.sin(k * 0.63) * 1.2, '#d8202e');
+          }
           wallShadow(0, 2, 12, 12);
         },
         { outline: false },
@@ -872,7 +919,7 @@ reg('dresser', {
       ctx,
       o,
       iart(
-        'dresser',
+        `dresser|${o.props.labels ? 1 : 0}`,
         24,
         24,
         () => {
@@ -915,6 +962,14 @@ reg('dresser', {
           // feet
           R(1, 22, 2, 2, wd.d);
           R(21, 22, 2, 2, wd.d);
+          if (o.props.labels) {
+            // Sami's label-maker tape on every drawer
+            for (const [cx, ly0, txt] of [[6.5, 11.5, 'SOCKS'], [17.5, 11.5, 'HATS'], [12, 15.5, 'CARDIGANS'], [12, 19.5, 'NO LAVINIA']] as [number, number, string][]) {
+              const w = tinyW(txt) + 1;
+              R(cx - w / 2, ly0, w, 2.5, '#2b2140');
+              tinyC(txt, cx, ly0 + 0.1, '#f2eef6');
+            }
+          }
         },
         { shadow: [['r', 2, 20, 24, 5]] },
       ),
@@ -1761,6 +1816,501 @@ reg('lamp-floor', {
             HL(2, 7, 8, '#fff6d0');
             P(4, 7, '#ffffff');
             P(5, 7, '#fffbe8');
+          },
+        },
+      ),
+    ),
+});
+
+// ---------------------------------------------------------------- Grandma's house and other homes
+
+/** White dust sheets thrown over furniture forty years ago: armchair, tall thing, side table. */
+reg('dust-sheet', {
+  solid: { x: -8, y: -6, w: 16, h: 5 },
+  draw: (ctx, o) => {
+    const v = variant(o, 3);
+    const W = [22, 14, 18][v];
+    const H = [20, 30, 14][v];
+    blit(
+      ctx,
+      o,
+      iart(
+        `dust-sheet|${v}`,
+        W,
+        H,
+        () => {
+          const sheet = '#efe8dc';
+          // silhouette of whatever is underneath
+          if (v === 0) {
+            // an armchair: wings, a sagging seat, the sheet pooling on the floor
+            poly([[2, 4], [5, 1], [17, 1], [20, 4], [21, 12], [22, 19], [0, 19], [1, 12]], sheet);
+          } else if (v === 1) {
+            // something tall: a standing mirror or a coat rack
+            poly([[5, 0], [9, 0], [11, 8], [12, 22], [14, 29], [0, 29], [2, 22], [3, 8]], sheet);
+          } else {
+            // a side table with a lamp on it
+            poly([[7, 0], [11, 0], [12, 4], [17, 6], [18, 13], [0, 13], [1, 6], [6, 4]], sheet);
+          }
+          // folds: soft shading that falls away from the light, crease lines, dust on top
+          R(0, 0, W, H, (_a, _b, o2) => {
+            if (!o2) return o2;
+            const x = lx();
+            const y = ly();
+            const fold = Math.sin(x * 1.1 + Math.sin(y * 0.4) * 2) * 0.5 + 0.5;
+            let c = mixc('#fbf6ee', '#c8bcb0', fold * 0.45 + (y / H) * 0.35 + (x / W) * 0.15);
+            if (y < 4 && hash2(FX, FY, 461) < 0.25) c = mixc(c, '#b8b0a4', 0.35);
+            if (hash2(FX, FY, 462) < 0.02) c = shA(c, 0.12);
+            return c;
+          });
+          for (let k = 0; k < 4; k++) {
+            const fx0 = W * (0.2 + 0.2 * k);
+            L1(fx0, H * 0.35, fx0 + (k % 2 ? 1.5 : -1.5), H - 0.5, '#bfb2a4');
+          }
+          // the hem pools on the floor
+          H1(0, W, H - 0.5, '#a89c90');
+          for (let x = 0.5; x < W; x += 3) P1(x, H - 1, '#d8ccc0');
+        },
+        { shadow: [['r', 0, H - 3, W, 4]] },
+      ),
+    );
+  },
+});
+
+/** A cobweb in a wall corner (props.flip for the right-hand corner). */
+reg('cobweb', {
+  draw: (ctx, o) => {
+    const flip = o.props.flip === true;
+    blit(
+      ctx,
+      o,
+      iart(
+        `cobweb|${flip ? 1 : 0}`,
+        12,
+        12,
+        () => {
+          const X = (x: number) => (flip ? 12 - x : x);
+          const c = alpha('#f2eef6', 170);
+          for (let k = 0; k < 5; k++) {
+            const a = (k / 4) * (Math.PI / 2);
+            L1(X(0), 0, X(Math.cos(a) * 11), Math.sin(a) * 11, c);
+          }
+          for (const r0 of [3, 5.5, 8, 10.5]) {
+            let px = X(r0);
+            let py = 0;
+            for (let k = 1; k <= 4; k++) {
+              const a = (k / 4) * (Math.PI / 2);
+              const nx = X(Math.cos(a) * r0 * (0.92 + (k % 2) * 0.08));
+              const ny = Math.sin(a) * r0 * (0.92 + (k % 2) * 0.08);
+              L1(px, py, nx, ny, c);
+              px = nx;
+              py = ny;
+            }
+          }
+          P1(X(6), 5, '#5a4a5a');
+          P1(X(6.5), 5, '#3a2c3a');
+        },
+        { outline: false },
+      ),
+    );
+  },
+});
+
+/** A shaft of window light with dust motes drifting in it (drawn over everything, very faint). */
+reg('sunbeam', {
+  above: true,
+  draw: (ctx, o, t) => {
+    const f = frame(t, 8, 2, phaseOf(o));
+    const len = num(o, 'len', 4);
+    blit(
+      ctx,
+      o,
+      iart(
+        `sunbeam|${f}|${len}`,
+        28,
+        len * 16,
+        () => {
+          const H = len * 16;
+          // a parallelogram falling down-right from the window
+          for (let y = 0; y < H; y += 0.5) {
+            const t2 = y / H;
+            const x0 = 2 + t2 * 8;
+            const w = 14 + t2 * 4;
+            R(x0, y, w, 0.5, () => (dth(FX, FY, Math.round(3 - t2 * 2)) ? alpha('#fff4d0', 70) : null));
+          }
+          // motes
+          for (let k = 0; k < 12; k++) {
+            const mx = 4 + hash2(k, 1, 471) * 18 + hash2(k, 2, 471) * (H / 16) * 2;
+            const my = (hash2(k, 3, 471) * H + f * 2 + k * 3) % H;
+            P1(mx + (my / H) * 8, my, alpha('#ffffff', 200));
+          }
+        },
+        { outline: false },
+      ),
+    );
+  },
+});
+
+/** A run of kitchen counters against the back wall, upper cabinets climbing the wall. */
+const KITCHENS: Record<string, { cab: Color; top: Color; tile: Color; tile2: Color }> = {
+  grandma: { cab: '#f2d68a', top: '#e8e0d0', tile: '#fbf6ea', tile2: '#d8a040' },
+  taqueria: { cab: '#3f8a86', top: '#e8dcc4', tile: '#fbf6ea', tile2: '#2f6ab0' },
+  bakery: { cab: '#f2c8d0', top: '#fbf6ea', tile: '#fbf6ea', tile2: '#e88a9a' },
+  steel: { cab: '#c8cce0', top: '#f2eef6', tile: '#e8eef2', tile2: '#9aa2c8' },
+};
+reg('kitchen-run', {
+  draw: (ctx, o, t) => {
+    const n = num(o, 'w', 3);
+    const W = n * 16;
+    const style = String(o.props.style ?? 'grandma');
+    const k = KITCHENS[style] ?? KITCHENS.grandma;
+    const steam = frame(t, 4, 3, phaseOf(o));
+    const kettle = o.props.kettle !== false;
+    blit(
+      ctx,
+      o,
+      iart(
+        `kitchen-run|${n}|${style}|${kettle ? steam : 'x'}`,
+        W,
+        38,
+        () => {
+          // tiled backsplash with a fine grout grid and a border of accent tiles
+          R(0, 12, W, 10, k.tile);
+          R(0, 12, W, 10, (_a, _b, o2) => (o2 && (FX % 6 === 0 || FY % 6 === 0) ? shA(k.tile, 0.12) : o2));
+          for (let x = 0; x < W; x += 3) R(x, 12, 1.5, 1.5, k.tile2);
+          // upper cabinets with little knobs; one door ajar showing the good dishes
+          for (let x = 0; x < W; x += 16) {
+            R(x + 0.5, 0, 15, 11, k.cab);
+            R(x + 1.5, 1, 6, 9, liA(k.cab, 0.08));
+            R(x + 8.5, 1, 6, 9, liA(k.cab, 0.08));
+            H1(x + 1.5, x + 7.5, 1, liA(k.cab, 0.4));
+            H1(x + 8.5, x + 14.5, 1, liA(k.cab, 0.4));
+            V1(x + 8, 0, 11, shA(k.cab, 0.35));
+            P1(x + 7, 8, '#9aa2c8');
+            P1(x + 9, 8, '#9aa2c8');
+            H1(x + 0.5, x + 15.5, 10.5, shA(k.cab, 0.35));
+          }
+          if (n >= 2) {
+            R(17.5, 1, 6, 9, '#4a3a4a');
+            for (let i = 0; i < 3; i++) ell(20.5, 3 + i * 2.5, 2.4, 0.8, i % 2 ? '#fbf6ea' : '#9cc8e0');
+            poly([[23.5, 1], [26, 2], [26, 11], [23.5, 10]], liA(k.cab, 0.15));
+          }
+          // worktop
+          R(0, 22, W, 2.5, k.top);
+          H1(0, W, 22, '#ffffff');
+          chrome(0, 24.5, W, 0.8, false);
+          // sink in the middle with a gooseneck tap and a dish rack
+          const sx = Math.floor(n / 2) * 16 + 2;
+          R(sx, 22.5, 12, 1.8, '#9aa2c8');
+          chrome(sx + 5, 18, 1, 4.5);
+          L1(sx + 5.5, 18, sx + 8, 18.5, '#c8cce4');
+          for (let i = 0; i < 4; i++) ell(sx + 14 + i * 1.6, 20.5, 0.6, 2, i % 2 ? '#fbf6ea' : '#e8dcd0');
+          // canisters, a kettle on the left
+          if (kettle) {
+            ell(5, 21, 3.5, 2, '#d8434b');
+            R(2, 18, 6, 3, '#d8434b');
+            ell(5, 18, 2.5, 1, '#e8706a');
+            L1(8, 19, 10, 17.5, '#d8434b');
+            for (let s2 = 0; s2 < 3; s2++) P1(10.5 + s2 * 0.6, 16.5 - s2 * 1.3 - (steam % 2) * 0.5, alpha('#ffffff', 170 - s2 * 40));
+          }
+          for (let i = 0; i < 3; i++) {
+            const cx = W - 14 + i * 4;
+            R(cx, 22 - (4 - i), 3, 4 - i, '#fbf6ea');
+            H1(cx, cx + 3, 22 - (4 - i), shA(k.tile2, 0.1));
+            R(cx, 20 - (3 - i), 3, 0.8, k.tile2);
+          }
+          // base cabinets, a dish towel over the oven-door handle
+          R(0, 25.3, W, 12.7, k.cab);
+          for (let x = 0; x < W; x += 16) {
+            R(x + 1.5, 26.5, 13, 9.5, liA(k.cab, 0.06));
+            H1(x + 1.5, x + 14.5, 26.5, liA(k.cab, 0.35));
+            V1(x + 14.5, 26.5, 36, shA(k.cab, 0.3));
+            R(x + 6, 28, 4, 0.8, '#9aa2c8');
+          }
+          R(4, 28.5, 4, 6, '#fbf6ea');
+          R(4, 30, 4, 1, '#d8434b');
+          R(0, 36.5, W, 1.5, shA(k.cab, 0.5));
+        },
+        { outline: false },
+      ),
+    );
+  },
+});
+
+reg('wall-phone', {
+  draw: (ctx, o) =>
+    blit(
+      ctx,
+      o,
+      iart(
+        'wall-phone',
+        10,
+        24,
+        () => {
+          // a harvest-gold rotary wall phone with a cord long enough to cook dinner on
+          RR(1, 0, 8, 12, 1, '#d8a040');
+          R(1.5, 0.5, 7, 11, (_a, _b) => mixc('#f2c060', '#b8802a', (lx() - 1.5) / 7));
+          circ(5, 7, 2.6, '#fbf6ea');
+          for (let k = 0; k < 10; k++) P1(5 + Math.cos(k * 0.62) * 1.8, 7 + Math.sin(k * 0.62) * 1.8, '#5a4a3a');
+          P1(5, 7, '#d8a040');
+          RR(0, 1, 2.5, 9, 1, '#c8902a');
+          for (let i = 0; i < 18; i++) {
+            const cy = 11 + i * 0.7;
+            P1(1.2 + Math.sin(i * 1.7) * 0.9 + i * 0.1, cy, '#c8902a');
+          }
+          // a list pinned beside it in Grandma's hand
+          R(6, 14, 4, 5.5, '#fbf6ea');
+          H1(6.5, 9.5, 15, '#a89cc0');
+          H1(6.5, 9, 16, '#a89cc0');
+          H1(6.5, 9.5, 17, '#a89cc0');
+        },
+        { outline: false },
+      ),
+    ),
+});
+
+/** A vanity table with a round mirror ringed in bulbs (Grandma's; later, Room 7's). */
+reg('vanity', {
+  solid: { x: -10, y: -6, w: 20, h: 5 },
+  lights: (o) => [light(o, 0, -24, 36, '#fff0d0')],
+  draw: (ctx, o) => {
+    const covered = o.props.covered === true;
+    blit(
+      ctx,
+      o,
+      iart(
+        `vanity|${covered ? 1 : 0}`,
+        24,
+        36,
+        () => {
+          const wd = CHERRY;
+          // round mirror, a ring of bulbs, photos tucked in the frame
+          circ(12, 10, 10, '#e8c870');
+          circ(12, 10, 9, '#c8a050');
+          circ(12, 10, 8, '#8ab0c0');
+          VG(4, 2, 16, 16, ['#a8c8d8', '#7aa0b8', '#5a7a98']);
+          R(0, 0, 24, 20, (_a, _b, o2) => (Math.hypot(lx() - 12, ly() - 10) > 8 && Math.hypot(lx() - 12, ly() - 10) < 8.6 ? '#c8a050' : o2));
+          R(0, 0, 24, 20, (_a, _b, o2) => (Math.hypot(lx() - 12, ly() - 10) > 10.2 ? 0 : o2));
+          fglare(4, 2, 16, 16, 0.3);
+          for (let k = 0; k < 12; k++) {
+            const a = (k / 12) * Math.PI * 2;
+            ell(12 + Math.cos(a) * 9.5, 10 + Math.sin(a) * 9.5, 1, 1, covered ? '#d8d0c0' : '#fff6dc');
+          }
+          if (!covered) {
+            R(15, 4, 4, 5, '#fbf6ea');
+            R(15.5, 4.5, 3, 3, '#e8c8a0');
+            ell(16.3, 5.5, 0.6, 0.6, '#6a4a3a');
+            ell(17.6, 5.5, 0.6, 0.6, '#c89a5a');
+          }
+          // the table: cherry, three drawers, a kidney-shaped skirt
+          R(0, 19, 24, 3, wd.l);
+          fgrain(0, 19, 24, 3, { ...wd, b: wd.l }, 481);
+          H1(0, 24, 19, liA(wd.l, 0.4));
+          R(1, 22, 22, 8, wd.b);
+          fgrain(1, 22, 22, 8, wd, 482, true);
+          for (const dx0 of [2, 9, 16]) {
+            R(dx0, 23, 6, 3, shA(wd.b, 0.06));
+            H1(dx0, dx0 + 6, 23, liA(wd.b, 0.25));
+            P1(dx0 + 3, 24.5, PAL.gold2);
+          }
+          for (const lx0 of [1.5, 21]) R(lx0, 30, 1.5, 6, wd.d);
+          // perfume bottles, a powder puff, a wig on a foam head (platinum, for the ring)
+          R(3, 16.5, 2, 2.5, '#ff94b4');
+          P1(3.5, 16, PAL.gold2);
+          R(6, 17, 1.5, 2, '#c8e0f0');
+          ell(19, 18.2, 2, 0.8, '#ffd8e0');
+          if (!covered) {
+            ell(9.5, 15.5, 2.5, 2.8, '#e8e0d4');
+            ell(9.5, 13.8, 3, 2.2, '#f6ecd0');
+            for (let k = 0; k < 6; k++) P1(7 + k, 13.5 + (k % 2) * 0.5, '#fff8e8');
+          }
+          if (covered) {
+            // a sheet thrown over the mirror and half sliding off
+            poly([[2, 1], [22, 2], [21, 14], [14, 18], [3, 12]], '#efe8dc');
+            L1(8, 3, 9, 15, '#c8bcb0');
+            L1(15, 3, 15.5, 16, '#c8bcb0');
+          }
+        },
+        { shadow: [['r', 1, 33, 23, 4]] },
+      ),
+    );
+  },
+});
+
+reg('coffee-table', {
+  solid: { x: -12, y: -7, w: 24, h: 6 },
+  draw: (ctx, o) =>
+    blit(
+      ctx,
+      o,
+      iart(
+        'coffee-table',
+        26,
+        14,
+        () => {
+          const wd = WALNUT;
+          // low oval table, a lace doily, a candy dish, TV guides from 1983, reading glasses
+          for (const lx0 of [3, 21]) R(lx0, 7, 2, 7, wd.d);
+          ell(13, 5, 13, 4.5, wd.b);
+          ell(13, 4.5, 12.5, 4, wd.l);
+          fgrain(1, 1, 24, 7, { ...wd, b: wd.l }, 491);
+          R(0, 0, 26, 10, (_a, _b, o2) => (o2 && Math.hypot((lx() - 13) / 12.5, (ly() - 4.5) / 4) > 1 && ly() < 6 ? 0 : o2));
+          ell(13, 8.2, 12, 1.6, wd.s);
+          ell(10, 4.5, 4.5, 2, '#fffaf0');
+          for (let k = 0; k < 12; k++) P1(10 + Math.cos(k * 0.52) * 4.2, 4.5 + Math.sin(k * 0.52) * 1.9, '#e8dcd0');
+          ell(10, 4, 2, 1, '#9cc8e0');
+          for (let k = 0; k < 5; k++) P1(9 + k * 0.5, 3.8, k % 2 ? '#d8434b' : '#ffd050');
+          R(16, 2.5, 6, 4, '#fbf6ea');
+          R(16, 2.5, 6, 1.5, '#d8434b');
+          tinyT('TV', 16.5, 4.2, '#3a2c3a');
+          R(16.5, 1.5, 6, 4, '#fbf6ea');
+          R(16.5, 1.5, 6, 1.2, '#3f6ab0');
+          ell(5, 3.5, 1, 0.7, '#4e4870');
+          ell(7.2, 3.5, 1, 0.7, '#4e4870');
+          H1(5.5, 6.5, 3.5, '#4e4870');
+        },
+        { shadow: [['e', 13, 12, 12, 2]] },
+      ),
+    ),
+});
+
+/** A blanket ladder hung with folded quilts, and Grandma's hatbox at its foot. */
+reg('quilt-rack', {
+  solid: { x: -7, y: -4, w: 14, h: 3 },
+  draw: (ctx, o) =>
+    blit(
+      ctx,
+      o,
+      iart(
+        'quilt-rack',
+        16,
+        30,
+        () => {
+          const wd = OAK;
+          for (const rx of [2, 12]) {
+            R(rx, 0, 2, 28, wd.b);
+            V1(rx, 0, 28, wd.l);
+          }
+          for (const ry of [4, 12, 20]) R(2, ry, 12, 1.2, wd.s);
+          const qs = QUILTS;
+          [3.5, 11.5, 19.5].forEach((qy, i) => {
+            const q = qs[i % qs.length];
+            R(1, qy, 14, 6 - i, (_a, _b) => q[(Math.floor(lx() / 2.5) + Math.floor((ly() - qy) / 2.5) * 2) % q.length]);
+            H1(1, 15, qy, liA(q[0], 0.4));
+            H1(1, 15, qy + 6 - i - 0.5, shA(q[1], 0.3));
+          });
+          // the hatbox
+          ell(8, 27.5, 6, 2, '#5a3a6a');
+          R(2, 23.5, 12, 4, '#7a4a8a');
+          ell(8, 23.5, 6, 2, '#9a6aaa');
+          H1(2, 14, 25, '#ffd050');
+        },
+        { shadow: [['e', 8, 29, 7, 1.5]] },
+      ),
+    ),
+});
+
+
+/** Wall hooks: cardigans in a row, one plum scarf. */
+reg('coat-hooks', {
+  draw: (ctx, o) =>
+    blit(
+      ctx,
+      o,
+      iart(
+        'coat-hooks',
+        26,
+        22,
+        () => {
+          R(0, 1, 26, 2, OAK.b);
+          H1(0, 26, 1, OAK.l);
+          const cs: Color[] = ['#c8a8d8', '#e8c870', '#9cc8b8', '#5a3a6a'];
+          cs.forEach((c, i) => {
+            const x = 2 + i * 6;
+            P1(x + 2, 3, PAL.gold2);
+            if (i === 3) {
+              // the plum scarf
+              poly([[x + 1, 3], [x + 3, 3], [x + 3.5, 16], [x + 2, 18], [x + 1.5, 16]], c);
+              for (let k = 0; k < 3; k++) P1(x + 2 + k * 0.5, 18.5, c);
+              return;
+            }
+            poly([[x, 4], [x + 4, 4], [x + 5, 18], [x - 1, 18]], c);
+            R(x - 1, 4, 6, 14, (_a, _b, o2) => (o2 && FY % 2 === 0 ? shA(o2, 0.08) : o2));
+            V1(x + 2, 5, 18, shA(c, 0.3));
+            for (let k = 0; k < 4; k++) P1(x + 2.5, 7 + k * 3, '#fbf6ea');
+            H1(x - 1, x + 5, 17.5, shA(c, 0.25));
+          });
+          V1(26, 2, 20, SH(60));
+        },
+        { outline: false },
+      ),
+    ),
+});
+
+/** Sneakers lined up toes out, the way you line up boots in a locker room. */
+reg('sneakers', {
+  draw: (ctx, o) =>
+    blit(
+      ctx,
+      o,
+      iart(
+        'sneakers',
+        22,
+        6,
+        () => {
+          const cs: Color[] = ['#fbf6ea', '#c8a8d8', '#9cc8e0'];
+          cs.forEach((c, i) => {
+            for (const dx of [0, 3]) {
+              const x = 1 + i * 7 + dx;
+              RR(x, 0.5, 2.6, 5, 1, c);
+              R(x, 4, 2.6, 1.2, '#e8dcd0');
+              P1(x + 1, 1.5, '#5a4a6a');
+              P1(x + 1, 2.5, '#5a4a6a');
+            }
+          });
+        },
+        { shadow: [['r', 0, 4, 22, 2]] },
+      ),
+    ),
+});
+
+/** A little side table: reading lamp and the memory book Sami keeps with her. */
+reg('side-table', {
+  solid: { x: -5, y: -4, w: 10, h: 3 },
+  lights: (o) => [light(o, -1, -18, 30, '#ffe0a0')],
+  draw: (ctx, o) =>
+    blit(
+      ctx,
+      o,
+      iart(
+        'side-table',
+        14,
+        24,
+        () => {
+          const wd = WALNUT;
+          // lamp
+          R(5.5, 6, 1, 6, PAL.gold3);
+          poly([[3, 0], [9, 0], [10.5, 6], [1.5, 6]], '#f2c8d0');
+          H1(3, 9, 0, '#ffe8ee');
+          for (let x = 2.5; x < 10; x += 1.5) V1(x, 1.5, 6, '#e0a8b8');
+          // tabletop with the memory book, a deck of cards, peppermints
+          R(0, 12, 14, 2, wd.l);
+          H1(0, 14, 12, liA(wd.l, 0.4));
+          R(1, 9.5, 7, 2.5, '#7a4a8a');
+          H1(1, 8, 9.5, '#9a6aaa');
+          R(1.5, 11.5, 6, 0.5, '#fbf6ea');
+          tinyT('MEMORY', 1.5, 10, '#ffd050');
+          R(9, 10.5, 3, 1.5, '#d8434b');
+          R(9.2, 10, 2.6, 0.6, '#fbf6ea');
+          R(1, 14, 12, 8, wd.b);
+          fgrain(1, 14, 12, 8, wd, 511, true);
+          H1(1, 13, 14, wd.s);
+          R(5, 16, 4, 1, PAL.gold2);
+          for (const lx0 of [1.5, 11]) R(lx0, 22, 1.5, 2, wd.d);
+        },
+        {
+          shadow: [['r', 1, 21, 13, 3]],
+          over: () => {
+            R(2, 6, 8, 2, () => (dth(FX, FY, 4) ? alpha('#fff0c0', 110) : null));
           },
         },
       ),

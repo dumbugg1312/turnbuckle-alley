@@ -74,13 +74,52 @@ function interior(id: string, name: string, w: number, h: number, wall: TerrainI
 }
 
 // ---------------------------------------------------------------- Grandma's house
+// Shut up since October 1983, taxes paid every year from wherever she was.
+// A harvest-gold kitchen in the corner with the wall phone and the gingham
+// table; the living room around the fireplace, the Polaroid of the Velvet
+// Hammers over the mantel, a couch with an afghan; dust sheets still over
+// the things you haven't got to yet; cobwebs in the corners. Past the wall,
+// her bedroom: the quilt, the vanity with its ring of bulbs, the calendar
+// still on October 1983, and the trunk with the faded gold star.
 interior('grandma-house', "Grandma's House", 14, 10, 'wall-blue', 'wood', 3, [
-  ['window', 3.5, 2.6], ['window', 9.5, 2.6], ['photo', 6.5, 2.2, { variant: 0 }, 'velvet-photo'], ['calendar', 12, 2.2],
-  ['bed', 12.5, 6.2, {}, 'bed'], ['dresser', 10.2, 4.4],
-  ['tv-vcr', 1.2, 4.6, {}, 'home-tv'], ['couch', 3, 7.3], ['rug', 3, 8.2, { w: 4, h: 2, variant: 1 }],
-  ['fireplace', 7, 4.4], ['bookshelf', 13.6, 9.2], ['trunk', 9.5, 8.6, {}, 'grandma-trunk'],
-  ['plant', 0.6, 9.4], ['lamp-floor', 5.4, 6.4],
-], { music: 'home', light: 0.9 });
+  // kitchen
+  ['kitchen-run', 2.5, 3.15, { w: 3, style: 'grandma' }],
+  ['fridge', 4.5, 4.0],
+  ['wall-phone', 5.5, 2.4],
+  ['table', 2.6, 6.6, { variant: 1 }], ['chair-wood', 1.4, 6.9], ['chair-wood', 3.8, 6.9],
+  ['cobweb', 1.375, 0.75],
+  // living room
+  ['fireplace', 7.5, 4.4],
+  ['photo', 7.5, 1.55, { variant: 0 }, 'velvet-photo'],
+  ['window', 9.4, 2.0, { variant: 1 }],
+  ['tv-vcr', 9.3, 4.6, {}, 'home-tv'],
+  ['rug', 7.5, 9.6, { w: 5, h: 3, variant: 1 }],
+  ['couch', 7.5, 7.0, { variant: 1 }],
+  ['coffee-table', 7.5, 8.5],
+  ['lamp-floor', 5.4, 6.6],
+  ['sunbeam', 9.9, 6.6, { len: 4 }],
+  ['dust-sheet', 9.1, 8.9, { variant: 0 }],
+  ['dust-sheet', 1.6, 9.3, { variant: 1 }],
+  // her bedroom
+  ['vanity', 11.75, 4.1],
+  ['calendar', 12.2, 1.6, { year: '1983' }],
+  ['window', 13.5, 2.6, { variant: 3 }],
+  ['bed', 13.5, 6.2, { variant: 0 }, 'bed'],
+  ['dust-sheet', 11.5, 6.7, { variant: 2 }],
+  ['rug', 12.9, 9.5, { w: 3, h: 2, variant: 0 }],
+  ['trunk', 11.8, 8.7, {}, 'grandma-trunk'],
+  ['quilt-rack', 14.4, 8.8],
+  ['cobweb', 14.625, 0.75, { flip: true }],
+], {
+  music: 'home',
+  light: 0.88,
+  abs: true,
+  shape: (b) => {
+    b.rect(1, 3, 4, 4, 'checker');
+    b.rect(10, 3, 1, 3, 'wall-blue');
+    b.rect(11, 3, 4, 7, 'carpet');
+  },
+});
 
 // ---------------------------------------------------------------- The Sportatorium (arena), Birdie's office, locker room
 // The ring is the altar: dead centre under a lighting truss, an entrance stage
@@ -296,9 +335,28 @@ interior('sunnypines', 'The Evening Bell Residence', 18, 10, 'wall', 'carpet', 8
   extraWarps: [{ x: 18, y: 2, w: 1, h: 2, to: 'grandma-room', tx: 4, ty: 6, facing: 'up', door: true, label: 'Room 7' }],
 });
 
+// Room 7: she chose it for the window, which faces the Sportatorium marquee.
+// She arranges it like a locker room: cardigans on hooks, sneakers toes-out,
+// the vanity with the ring of bulbs Hank rewired, drawers Sami labelled (and
+// relabelled), the memory book by her chair, the hatbox under the bed.
 interior('grandma-room', 'Room 7', 8, 7, 'wall-blue', 'carpet', 3, [
-  ['bed', 6.5, 5.2, {}, 'grandma-bed'], ['armchair', 2, 5, {}, 'grandma-chair'], ['tv-vcr', 1, 3.8, {}, 'grandma-tv'], ['window', 5, 2.6], ['photo', 3, 2.1, { variant: 0 }], ['plant', 7.4, 6.4],
-], { music: 'sad' });
+  ['vanity', 1.8, 4.3],
+  ['coat-hooks', 3.7, 2.55],
+  ['dresser', 4, 4.4, { labels: true }],
+  ['photo', 5.25, 1.55, { variant: 0 }],
+  ['window', 6.4, 2.6, { variant: 3, view: 'marquee' }],
+  ['tv-vcr', 6, 4.6, {}, 'grandma-tv'],
+  ['bed', 7.6, 5.2, { variant: 2 }, 'grandma-bed'],
+  ['quilt-rack', 8.4, 6.85],
+  ['rug', 4.5, 6.8, { w: 3, h: 2, variant: 0 }],
+  ['armchair', 3.5, 5.8, { variant: 3, solid: { x: 0, y: 0, w: 0, h: 0 } }, 'grandma-chair'],
+  ['side-table', 1.9, 5.9],
+  ['sneakers', 6.4, 6.85],
+], {
+  music: 'sad',
+  light: 0.84,
+  abs: true,
+});
 
 interior('school', 'Turnbuckle Alley High Gym', 18, 12, 'wall-panel', 'mat', 8, [
   ['bleachers', 3, 6, { w: 5 }], ['bleachers', 15, 6, { w: 5 }], ['trophy-case', 9, 4.4, {}, 'school-trophies'], ['poster', 6, 2.3, { variant: 4 }], ['poster', 12, 2.3, { variant: 2 }],
