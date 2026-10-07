@@ -222,7 +222,10 @@ function castShadow(img: HTMLCanvasElement, bucket: number): Shadow | null {
       const fade = 0.62 - 0.3 * (above / Math.max(1, hgt));
       return bay(X, Y) < fade ? rgba(INK[0], INK[1], INK[2], 255) : 0;
     });
-    s = { cv, ox: 0, oy: m.base + 1 };
+    // Dense sprites (gfx/kit density) measure in fine pixels: tag the shadow to match.
+    const k = (img as HTMLCanvasElement & { __k?: number }).__k ?? 1;
+    if (k > 1) (cv as HTMLCanvasElement & { __k?: number }).__k = k;
+    s = { cv, ox: 0, oy: (m.base + 1) / k };
   }
   per.set(bucket, s);
   return s;

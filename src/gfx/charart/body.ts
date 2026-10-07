@@ -5,7 +5,7 @@ import { clamp, D2R, type Pt } from './raster';
 /**
  * Body metrics, poses and kinematics for the character art.
  *
- * Proportions are natural rather than chibi: a standard adult is 33 px tall
+ * Proportions are natural rather than chibi: a standard adult is 30 px tall (D-019)
  * with an 8 px head (about 1/4 of the height), a visible neck, shoulders
  * wider than the waist and real feet. Giants reach the low forties, kids the
  * low twenties.
@@ -47,12 +47,12 @@ export interface Met {
 }
 
 const BODY: Record<string, Met> = {
-  petite: { headW: 7, headH: 7, neck: 2, torsoH: 8, shW: 8, waistW: 6, hipW: 7, belly: 0, depth: 5, upArm: 4, foreArm: 4, armD: 2, foreD: 2, handD: 2, thigh: 5, shin: 5, legD: 2, calfD: 2, footL: 4, gap: 1, shoe: 2, stoop: 0, ripped: 0.2 },
-  lean: { headW: 7, headH: 8, neck: 2, torsoH: 9, shW: 9, waistW: 6, hipW: 7, belly: 0, depth: 5, upArm: 5, foreArm: 5, armD: 2, foreD: 2, handD: 3, thigh: 6, shin: 6, legD: 3, calfD: 2, footL: 5, gap: 1, shoe: 2, stoop: 0, ripped: 0.5 },
-  athletic: { headW: 7, headH: 8, neck: 2, torsoH: 9, shW: 10, waistW: 7, hipW: 8, belly: 0, depth: 6, upArm: 5, foreArm: 5, armD: 3, foreD: 3, handD: 3, thigh: 6, shin: 6, legD: 3, calfD: 3, footL: 5, gap: 1, shoe: 2, stoop: 0, ripped: 1 },
-  stocky: { headW: 8, headH: 8, neck: 2, torsoH: 9, shW: 12, waistW: 10, hipW: 10, belly: 1, depth: 8, upArm: 5, foreArm: 4, armD: 4, foreD: 3, handD: 3, thigh: 5, shin: 5, legD: 4, calfD: 4, footL: 5, gap: 2, shoe: 2, stoop: 0, ripped: 0.7 },
-  heavy: { headW: 8, headH: 8, neck: 2, torsoH: 10, shW: 12, waistW: 13, hipW: 12, belly: 2, depth: 10, upArm: 5, foreArm: 4, armD: 4, foreD: 4, handD: 3, thigh: 5, shin: 5, legD: 5, calfD: 4, footL: 6, gap: 2, shoe: 2, stoop: 0, ripped: 0 },
-  giant: { headW: 9, headH: 9, neck: 2, torsoH: 11, shW: 15, waistW: 12, hipW: 12, belly: 1, depth: 10, upArm: 7, foreArm: 6, armD: 5, foreD: 4, handD: 4, thigh: 7, shin: 7, legD: 5, calfD: 4, footL: 7, gap: 2, shoe: 2, stoop: 0, ripped: 0.8 },
+  petite: { headW: 7, headH: 7, neck: 2, torsoH: 7, shW: 8, waistW: 6, hipW: 7, belly: 0, depth: 5, upArm: 4, foreArm: 3, armD: 2, foreD: 2, handD: 2, thigh: 4, shin: 4, legD: 2, calfD: 2, footL: 4, gap: 1, shoe: 2, stoop: 0, ripped: 0.2 },
+  lean: { headW: 7, headH: 8, neck: 2, torsoH: 8, shW: 9, waistW: 6, hipW: 7, belly: 0, depth: 5, upArm: 5, foreArm: 4, armD: 2, foreD: 2, handD: 3, thigh: 5, shin: 5, legD: 3, calfD: 2, footL: 5, gap: 1, shoe: 2, stoop: 0, ripped: 0.5 },
+  athletic: { headW: 7, headH: 8, neck: 2, torsoH: 8, shW: 10, waistW: 7, hipW: 8, belly: 0, depth: 6, upArm: 5, foreArm: 4, armD: 3, foreD: 3, handD: 3, thigh: 5, shin: 5, legD: 3, calfD: 3, footL: 5, gap: 1, shoe: 2, stoop: 0, ripped: 1 },
+  stocky: { headW: 8, headH: 8, neck: 2, torsoH: 8, shW: 12, waistW: 10, hipW: 10, belly: 1, depth: 8, upArm: 5, foreArm: 3, armD: 4, foreD: 3, handD: 3, thigh: 4, shin: 4, legD: 4, calfD: 4, footL: 5, gap: 2, shoe: 2, stoop: 0, ripped: 0.7 },
+  heavy: { headW: 8, headH: 8, neck: 2, torsoH: 9, shW: 12, waistW: 13, hipW: 12, belly: 2, depth: 10, upArm: 5, foreArm: 3, armD: 4, foreD: 4, handD: 3, thigh: 4, shin: 4, legD: 5, calfD: 4, footL: 6, gap: 2, shoe: 2, stoop: 0, ripped: 0 },
+  giant: { headW: 9, headH: 9, neck: 2, torsoH: 10, shW: 15, waistW: 12, hipW: 12, belly: 1, depth: 10, upArm: 7, foreArm: 5, armD: 5, foreD: 4, handD: 4, thigh: 6, shin: 6, legD: 5, calfD: 4, footL: 7, gap: 2, shoe: 2, stoop: 0, ripped: 0.8 },
 };
 
 /**
