@@ -1092,9 +1092,6 @@ function micro(s: string, x: number, y: number, c: Color, f = FT): void {
   }
 }
 
-/** Material kit, referenced so builds stay clean while buildings adopt it. */
-export const FINE_KIT = { worn, siding, brickF, shingleF, stucco, streaks, win, doorF, acUnit, ventF };
-
 // =====================================================================
 //  Building registration
 // =====================================================================
