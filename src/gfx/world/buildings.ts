@@ -526,11 +526,11 @@ function fv(x: number, y0: number, y1: number, c: Color | ((x: number, y: number
   R(x, y0, HF, y1 - y0, c);
 }
 const tint = (c: Color, a: number) => (_x: number, _y: number, o: number) => (o ? mixc(o, c, a) : null);
-/** Enamel lettering: each letter pixel gets a lit fine corner (hand-painted sheen). */
+/** Enamel lettering: a lit fine line along the tops of the strokes (hand-painted sheen). */
 const enamel = (c: Color, k = 0.3) => {
   const lit = liA(c, k);
   const C = col(c);
-  return () => ((FX & 1) === 0 && (FY & 1) === 0 ? lit : C);
+  return (_x: number, _y: number, _o: number, r?: number) => (r === 0 && (FY & 1) === 0 ? lit : C);
 };
 /** Weathered paint lettering: a few fine pixels worn back to the board. */
 const worn = (c: Color, seed: number, amt = 0.08) => {
@@ -1741,8 +1741,10 @@ function drawSportatorium(): void {
   P1(cx - 0.5, cyB - 21.5, '#fff0a0');
   fv(cx, cyB - 30, cyB - 21, '#4a3550');
   fh(cx - 3, cx + 3.5, cyB - 25, '#4a3550');
-  micro('W', cx - 5.5, cyB - 26.25, '#4a3550');
-  micro('E', cx + 4, cyB - 26.25, '#4a3550');
+  P1(cx - 3.5, cyB - 25.5, '#4a3550');
+  P1(cx - 3.5, cyB - 24.5, '#4a3550');
+  P1(cx + 4, cyB - 25.5, '#4a3550');
+  P1(cx + 4, cyB - 24.5, '#4a3550');
   // the rooster, in a luchador mask
   const rx = cx - 4;
   const ry = cyB - 35;
