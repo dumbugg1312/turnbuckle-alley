@@ -18,7 +18,7 @@ export default defineConfig({
     },
   },
   // No HMR: several people edit files at once, and auto-reloads break playtests.
-  server: { host: true, hmr: false, watch: { ignored: ['**/.claude/**'] } },
+  server: { host: true, hmr: false, watch: { ignored: [resolve('.claude') + '/**'] } },
   // Helpers' git worktrees live in .claude/worktrees; keep their copies out of the test run.
   test: { exclude: ['**/node_modules/**', '**/dist/**', '**/.claude/**'] },
 });

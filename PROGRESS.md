@@ -35,7 +35,8 @@ Status of the overnight build (night of 2026-10-06).
 - Scale fixed: adults are 30 px, doors 33–36 px, cars 68–72 px, lamps 54 px.
 - The UI was redesigned as in-world paper, enamel and brass (D-020).
 - Animation: an 8-frame walk that plants its feet, a run, idle life, per-character quirks, and touches such as hops, dust and splashes (D-021).
-- Still running: interior room layouts and art, and the bus ride rebuild. Weaker spots helpers flagged: fair set pieces (water tower, Ferris wheel, tents), winter trees, the show poster and entrance CSS, the Dungeon and tapes screens' CSS, and town ground load time (~1.8 s first build).
+- Stardew scale (D-022): buildings 7–18 tiles wide and low with 16×32 doors; the town grew to 104×70 and every coordinate moved; the camera aims for 270 px. Not rescaled yet: Grandma's house and the shed on the farm map; #gallery cells are too small for the wider buildings.
+- Bus ride rebuilt (D-023). Still running: interior room layouts and art. Weaker spots helpers flagged: fair set pieces (water tower, Ferris wheel, tents), winter trees, the show poster and entrance CSS, the Dungeon and tapes screens' CSS, and town ground load time (~1.8 s first build).
 
 ## In progress at the end of the night
 - Done since: all 34 characters have dialogue files; the main story runs through the Homecoming finale and credits (src/story-main/chapters/).
