@@ -24,6 +24,12 @@ Status of the overnight build (night of 2026-10-06).
 - World atmosphere (src/world/atmosphere.ts): time-of-day grading, god rays, sun-cast shadows, night bloom and light pools, particles.
 - Not done yet: the terrain texture pass (manholes, mortar, caustics), rain splashes and wet sheen, interior window sunbeams, birds.
 
+## Animation pass (2026-10-07, D-020)
+- Walk and run gaits solved from foot placement in all four facings, with frames driven by distance walked, so feet plant without sliding. Body-type and age personalities.
+- Idle life: breathing, weight shifts, glances, double blinks, and per-character quirks (table `IDLE_QUIRK` in world/scene.ts).
+- Juice: a one-frame turn when reversing direction, settling into the passing pose when stopping, an eased start, happy hops on ♥/♪/! emotes (`WORLD.hop(id)`), emote bubbles with squash and stretch and pixel icons (with a heartbeat), dust puffs on dirt, sand and gravel, splashes in rain and shallow water, and footstep sounds synced to footfalls (src/world/stepfx.ts).
+- Not done yet: foot pitch (heel and toe roll) when the foot leaves the ground, and the dungeon scene doesn't call `Actor.animate`, so it has no turn frames, hops or dust there yet.
+
 ## In progress at the end of the night
 - Done since: all 34 characters have dialogue files; the main story runs through the Homecoming finale and credits (src/story-main/chapters/).
 

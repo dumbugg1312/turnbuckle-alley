@@ -877,7 +877,8 @@ export class WorldScene implements Scene {
     this.particles.draw(ctx, g, game.t);
     // Interaction marker above target.
     const t = this.interactTarget;
-    if (t && game.blockers === 0 && !this.busy) {
+    // (An emote bubble takes the spot over an NPC's head while it shows.)
+    if (t && game.blockers === 0 && !this.busy && !(t.kind === 'npc' && t.npc.emote)) {
       let mx = 0;
       let my = 0;
       if (t.kind === 'npc') {
