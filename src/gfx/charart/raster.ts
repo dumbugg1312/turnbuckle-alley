@@ -423,9 +423,12 @@ export function lightPass(s: Spr): void {
         }
       if (!shade && m.bottom && outside(x, y + 1, Lr)) shade = true;
       if (!shade) {
-        const up = y > 0 ? lay[i - W] : 0;
-        const lf = x > 0 ? lay[i - 1] : 0;
-        if ((up > Lr && src[i - W] && MATS[up]?.cast && !(FLG[i - W] & F_DECAL)) || (lf > Lr && src[i - 1] && MATS[lf]?.cast && !(FLG[i - 1] & F_DECAL))) shade = true;
+        // Contact shadow: a front part up to CAST_BAND pixels above or to the left.
+        for (let k = 1; k <= CAST_BAND && !shade; k++) {
+          const up = y >= k ? lay[i - k * W] : 0;
+          const lf = x >= k ? lay[i - k] : 0;
+          if ((up > Lr && src[i - k * W] && MATS[up]?.cast && !(FLG[i - k * W] & F_DECAL)) || (lf > Lr && src[i - k] && MATS[lf]?.cast && !(FLG[i - k] & F_DECAL))) shade = true;
+        }
       }
       if (shade) d[i] = shA(c, m.sh);
       else if (m.hl > 0 && (outside(x, y - 1, Lr) || (m.hlLeft && outside(x - 1, y, Lr)))) d[i] = liA(c, m.hl);
@@ -468,18 +471,60 @@ export function outlineSoft(c: number, side: 'lit' | 'dark'): number {
   return side === 'dark' ? shA(c, 0.62) : shA(c, 0.4);
 }
 
+/** Contact-shadow band width (art pixels) and silhouette outline thickness. */
+export let CAST_BAND = 1;
+export let OUTLINE_W = 1;
+export function setLineWeights(cast: number, outline: number): void {
+  CAST_BAND = cast;
+  OUTLINE_W = outline;
+}
+
+/**
+ * Thicken a 1-px selective outline to `n` pixels by growing each ring with
+ * the colour of the ring pixel it touches (so the lit/dark sides stay).
+ */
+function thicken(s: Spr, fill: Spr, n: number): Spr {
+  let cur = s;
+  let pad = 1;
+  for (let r = 1; r < n; r++) {
+    const w = cur.w + 2;
+    const h = cur.h + 2;
+    const d = new Uint32Array(w * h);
+    for (let y = 0; y < cur.h; y++) for (let x = 0; x < cur.w; x++) d[(y + 1) * w + x + 1] = cur.d[y * cur.w + x];
+    const src = d.slice();
+    const at = (x: number, y: number) => (x < 0 || y < 0 || x >= w || y >= h ? 0 : src[y * w + x]);
+    pad++;
+    const isFill = (x: number, y: number) => {
+      const fx = x - pad;
+      const fy = y - pad;
+      return fx >= 0 && fy >= 0 && fx < fill.w && fy < fill.h && fill.d[fy * fill.w + fx] !== 0;
+    };
+    for (let y = 0; y < h; y++)
+      for (let x = 0; x < w; x++) {
+        if (src[y * w + x]) continue;
+        const n0 = at(x, y - 1) || at(x - 1, y) || at(x + 1, y) || at(x, y + 1);
+        if (n0 && !isFill(x, y)) d[y * w + x] = n0;
+      }
+    cur = { w, h, d, name: s.name };
+  }
+  return cur;
+}
+
 /**
  * Outline then anti-alias: convex corners of large shapes get a half-tone
- * pixel between the fill and the outline so curves read smoothly.
+ * pixel between the fill and the outline so curves read smoothly. The
+ * silhouette outline is OUTLINE_W pixels thick; interior lines stay 1 px.
  */
-export function finish(cs: Spr, lay: Uint8Array, flg: Uint8Array, soft = false): Spr {
-  const out = OUT(cs, soft ? outlineSoft : outlineColor);
+export function finish(cs: Spr, lay: Uint8Array, flg: Uint8Array, soft = false, thick = OUTLINE_W): Spr {
+  const out1 = OUT(cs, soft ? outlineSoft : outlineColor);
+  const out = thick > 1 ? thicken(out1, cs, thick) : out1;
+  const pad = thick > 1 ? thick : 1;
   const W = out.w;
   const H = out.h;
   const src = out.d.slice();
-  const layAt = (x: number, y: number) => (x < 1 || y < 1 || x > cs.w || y > cs.h ? 0 : lay[(y - 1) * cs.w + (x - 1)]);
-  const flgAt = (x: number, y: number) => (x < 1 || y < 1 || x > cs.w || y > cs.h ? 0 : flg[(y - 1) * cs.w + (x - 1)]);
-  const fillAt = (x: number, y: number) => (x < 1 || y < 1 || x > cs.w || y > cs.h ? 0 : cs.d[(y - 1) * cs.w + (x - 1)]);
+  const layAt = (x: number, y: number) => (x < pad || y < pad || x >= cs.w + pad || y >= cs.h + pad ? 0 : lay[(y - pad) * cs.w + (x - pad)]);
+  const flgAt = (x: number, y: number) => (x < pad || y < pad || x >= cs.w + pad || y >= cs.h + pad ? 0 : flg[(y - pad) * cs.w + (x - pad)]);
+  const fillAt = (x: number, y: number) => (x < pad || y < pad || x >= cs.w + pad || y >= cs.h + pad ? 0 : cs.d[(y - pad) * cs.w + (x - pad)]);
   const isOutline = (x: number, y: number) => x >= 0 && y >= 0 && x < W && y < H && src[y * W + x] !== 0 && fillAt(x, y) === 0;
   for (let y = 1; y < H - 1; y++)
     for (let x = 1; x < W - 1; x++) {

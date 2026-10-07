@@ -55,6 +55,22 @@ const BODY: Record<string, Met> = {
   giant: { headW: 9, headH: 9, neck: 2, torsoH: 11, shW: 15, waistW: 12, hipW: 12, belly: 1, depth: 10, upArm: 7, foreArm: 6, armD: 5, foreD: 4, handD: 4, thigh: 7, shin: 7, legD: 5, calfD: 4, footL: 7, gap: 2, shoe: 2, stoop: 0, ripped: 0.8 },
 };
 
+/**
+ * Art pixels per native (world) pixel. Sprites are painted on a grid K times
+ * finer than the world and drawn at 1/K, so silhouettes keep their on-screen
+ * size while faces, hands and cloth get K*K the pixels (DECISIONS.md D-017).
+ */
+export const K = 2;
+
+/** Metrics in art pixels (native metrics scaled by K). */
+export function metricsArt(look: Look): Met {
+  const m = metrics(look);
+  const o = { ...m };
+  for (const key of ['headW', 'headH', 'neck', 'torsoH', 'shW', 'waistW', 'hipW', 'belly', 'depth', 'upArm', 'foreArm', 'armD', 'foreD', 'handD', 'thigh', 'shin', 'legD', 'calfD', 'footL', 'gap', 'shoe'] as const) o[key] = m[key] * K;
+  return o;
+}
+
+/** Metrics in native pixels (used for layout and the portraits). */
 export function metrics(look: Look): Met {
   const m = { ...(BODY[look.body] ?? BODY.athletic) };
   const age = look.age ?? 'adult';
@@ -290,19 +306,23 @@ export interface Rig {
 export const dirv = (deg: number, outward = 1): Pt => ({ x: Math.sin(deg * D2R) * outward, y: Math.cos(deg * D2R) });
 export const add = (p: Pt, v: Pt, k: number): Pt => ({ x: p.x + v.x * k, y: p.y + v.y * k });
 
-/** Solve joints relative to the feet anchor (0, 0); y grows downward. */
-export function solve(def: PoseDef, m: Met): Rig {
+/**
+ * Solve joints relative to the feet anchor (0, 0); y grows downward. Pose
+ * offsets (lift, bob, hipX, up) are in native pixels; `k` converts them to
+ * the metric units in use (K for art-pixel metrics).
+ */
+export function solve(def: PoseDef, m: Met, k = 1): Rig {
   const side = def.view === 'side';
   const lean = def.torso + (side ? m.stoop * 5 : 0);
   const th = lean * D2R;
   const up = side ? { x: Math.sin(th), y: -Math.cos(th) } : { x: 0, y: -1 };
   const fw = side ? { x: Math.cos(th), y: Math.sin(th) } : { x: 1, y: 0 };
-  let hip: Pt = { x: def.hipX ?? 0, y: 0 };
+  let hip: Pt = { x: (def.hipX ?? 0) * k, y: 0 };
   const legJ = (lg: Lb, hx: number, out: number) => {
     const h0 = { x: hip.x + hx, y: hip.y };
     const kn = add(h0, dirv(lg.a, out), m.thigh);
     const an = add(kn, dirv(lg.b, out), m.shin);
-    an.y -= lg.up ?? 0;
+    an.y -= (lg.up ?? 0) * k;
     return { h0, kn, an };
   };
   const legX = side ? 0.5 : m.gap / 2 + m.legD / 2;
@@ -319,12 +339,12 @@ export function solve(def: PoseDef, m: Met): Rig {
     low = Math.max(low, LF.kn.y + m.legD / 2, LB.kn.y + m.legD / 2);
     if (side) low = Math.max(low, hip.y + m.hipW * 0.25);
   }
-  const dy = -low - (def.lift ?? 0);
+  const dy = -low - (def.lift ?? 0) * k;
   hip = { x: hip.x, y: hip.y + dy };
   const sh = (o: Pt) => ({ x: o.x, y: o.y + dy });
   LF = { h0: sh(LF.h0), kn: sh(LF.kn), an: sh(LF.an) };
   LB = { h0: sh(LB.h0), kn: sh(LB.kn), an: sh(LB.an) };
-  const bob = def.bob ?? 0;
+  const bob = (def.bob ?? 0) * k;
   const torsoBase = { x: hip.x, y: hip.y + bob };
   const neck = add(torsoBase, up, m.torsoH);
   const hd = (side ? def.head + lean * 0.5 + m.stoop * 6 : 0) * D2R;
@@ -345,7 +365,7 @@ export function solve(def: PoseDef, m: Met): Rig {
   const armJ = (s: Pt, a: Lb, out: number) => {
     const el = add(s, dirv(a.a, out), m.upArm);
     const ha = add(el, dirv(a.b, out), m.foreArm);
-    ha.y -= a.up ?? 0;
+    ha.y -= (a.up ?? 0) * k;
     return { el, ha };
   };
   const AF = armJ(shF, def.armF, 1);
