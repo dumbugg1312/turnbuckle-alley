@@ -123,9 +123,10 @@ export function addHearts(npc: string, points: number): void {
 
 export function makeApi(defaultWho: string): EventApi {
   return {
-    say: (who, ...lines) => say(speakerFor(who), ...lines),
-    sayMood: (who, mood, ...lines) => say(speakerFor(who, mood), ...lines),
-    narrate: (...lines) => narrate(...lines),
+    // Scenes can use memory placeholders too ({opponent}, {venue}, {lastGift}...).
+    say: (who, ...lines) => say(speakerFor(who), ...lines.map((l) => fillMemory(l, who))),
+    sayMood: (who, mood, ...lines) => say(speakerFor(who, mood), ...lines.map((l) => fillMemory(l, who))),
+    narrate: (...lines) => narrate(...lines.map((l) => fillMemory(l, defaultWho))),
     choose: async (prompt, options, who) => choose(speakerFor(who ?? defaultWho), prompt, options),
     hearts: (npc, d) => addHearts(npc, d),
     flag: (name, v = true) => setFlag(name, v),

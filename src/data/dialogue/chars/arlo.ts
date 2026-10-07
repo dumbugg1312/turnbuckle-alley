@@ -5,7 +5,7 @@ import type { DialogueSet } from '../types';
  * 'prologue') who quits in the fall of Year 1 and opens Rewind, a VHS repair and
  * restoration shop, in town (flag 'arlo_in_town'). A mark: he believes every match
  * and every rivalry completely, which is exactly why the clip floor is breaking
- * his heart. He has rated every match he has ever seen on a spreadsheet: eleven
+ * his heart. He has rated every match he has ever seen on a spreadsheet: nine
  * thousand rows, and one gap at 1983.
  *
  * Romanceable. 12 = Behind the Curtain (he joins the crew as ACW's video
@@ -18,18 +18,18 @@ export default {
   intro: [
     "(A tall, gangly man with curly red hair and enormous headphones pokes his head over the cubicle wall.) Oh, hey. Midnight shift buddy.",
     "Arlo, if the name's slipped you. It slips people.",
-    "Nine seconds. They want a forty-minute match in nine seconds. That's not a clip. That's a crime scene.",
-    "I keep a spreadsheet of every match I've ever seen. Eleven thousand rows. It's not a problem. It's a lifestyle.",
+    "Nine seconds. They want a forty-minute match in nine seconds. I timed a referee's three-count once. It's longer than that.",
+    "I keep a spreadsheet of every match I've ever seen. Nine thousand rows. My sister calls it 'a lot.' I call it 'nearly complete.'",
     "Noodles? I always make too many. It's a gift. I'm told that's how gifts work.",
   ],
   lines: [
     // ---------------------------------------------------------------- The prologue: the clip floor
     { text: "Nine seconds. They want a forty-minute match in nine seconds. That's not a clip. That's a crime scene.", when: { flag: 'prologue' }, weight: 2 },
     { text: ["You can't cut a story into nine seconds. The comeback IS the story.", "I say this at every meeting. They write 'Arlo: passionate' on a sticky note."], when: { flag: 'prologue' } },
-    { text: "Eleven thousand rows. Every match since I was nine. Don't make that face. You've got a spreadsheet too. Yours is just inside your head.", when: { flag: 'prologue' } },
+    { text: "Nine thousand rows. Every match since I was nine. Don't make that face. You've got a spreadsheet too. Yours is just inside your head.", when: { flag: 'prologue' } },
     { text: "(He slurps noodles over his keyboard.) Hydration. Protein. Sodium. A balanced meal, if you squint.", when: { flag: 'prologue' } },
     { text: ["I saw a match last night that made me cry in the break room. The janitor patted my shoulder.", "'Wrestling, huh?' 'Wrestling.' 'Yeah.' Best conversation of my week."], when: { flag: 'prologue' } },
-    { text: ["Royce says retention. I hear 'attention span.' I hear 'we've decided people don't have any.' Don't tell him I said that.", "He's actually kind of nice. That's the worst part."], when: { flag: 'prologue' } },
+    { text: ["Royce says retention. I hear 'attention span.' I hear 'we've decided people don't have any.'", "He brought me soup when I had the flu. Good soup. From the place with the line. I'm so angry about the soup."], when: { flag: 'prologue' } },
     { text: "Your grandma was the Duchess? THE Duchess? There's one gap in my spreadsheet. 1983. Nobody's got a clean tape of the Broken Belt. Not one.", when: { flag: 'prologue' } },
 
     // ---------------------------------------------------------------- Town: Rewind
@@ -50,8 +50,10 @@ export default {
     { text: ["I take a clipboard to the VFW. The VFW lady asked if I was with the health department. I said I was here to rate the show.", "She gave me bingo."], when: { notFlag: 'prologue', weekday: [2] } },
     { text: ["Third row on the aisle. Rating every bout. The Mountain didn't even blink at the pyro last week. That man is ice.", "4.0, deducted for being terrifying."], when: { notFlag: 'prologue', weekday: [5], place: ['public', 'show'] } },
     { text: "Are you wrestling tonight? I'm already nervous. I brought a highlighter in your color.", when: { notFlag: 'prologue', showDay: true, hearts: [3, 10] } },
-    { text: "Your comeback on Saturday: 4.7. I didn't cry. I saved it for the car.", when: { notFlag: 'prologue', alignment: ['face'], flag: 'debuted' } },
-    { text: "I know you're a villain now. I rated your match a 4.2. I can separate the art from the artist. It's a very high 4.2.", when: { notFlag: 'prologue', alignment: ['heel'], flag: 'debuted' } },
+    { text: "You and {opponent} at {venue}: {stars}. I didn't cry. I saved it for the car. I don't have a car. I saved it for the bus.", when: { notFlag: 'prologue', alignment: ['face', 'tweener'], lastMatch: { minStars: 3, maxDaysAgo: 5 } } },
+    { text: ["You and {opponent}: {stars}. I'm sorry. I don't round up. My hands won't let me.", "The opening was a 4. Something in the middle wandered off. I wrote 'where did it go' in the notes column."], when: { notFlag: 'prologue', lastMatch: { maxStars: 2.5, maxDaysAgo: 5 } } },
+    { text: "I know you're a villain now. I rated you and {opponent} a {stars}. I can separate the art from the artist. I wrote that in the cell, in case I forget.", when: { notFlag: 'prologue', alignment: ['heel'], lastMatch: { minStars: 3, maxDaysAgo: 5 } } },
+    { text: "{finisher}. I rewound it in my head on the walk home and tripped on a curb. Worth it. Bruise is a 4.", when: { notFlag: 'prologue', lastMatch: { won: true, minStars: 3.5, maxDaysAgo: 3 } }, mood: 'happy' },
     { text: "You're main-eventing! The rating isn't in my spreadsheet yet. I left the cell blank. I'm scared of the number.", when: { notFlag: 'prologue', rank: ['main'] } },
 
     // ---------------------------------------------------------------- Weather and seasons
@@ -66,7 +68,7 @@ export default {
     { text: ["Frame 4,410. She was crying. She REGRETTED it. The second she did it. ...I'm saying that like a theory.", "It's the most obvious thing in the world."], when: { flag: 'truth_revealed', notFlag: 'reunion_done', hearts: [6, 10] }, mood: 'sad' },
     { text: "I made you a mixtape. A tape tape. It has three songs and forty minutes of me describing why the songs are good.", when: { dating: true }, mood: 'love' },
     { text: "I wake up, and I can walk to a bakery and see you, and I rate the day a 5.0. I don't do that. I never do that.", when: { dating: true, flag: 'arlo_curtain' }, mood: 'love' },
-    { text: "Eleven thousand rows, and every one of them is two people trusting each other not to get hurt. I just had to find the right column.", when: { place: ['insider'], flag: 'arlo_curtain' } },
+    { text: "Nine thousand rows, and every one of them is two people trusting each other not to get hurt. I just had to find the right column.", when: { place: ['insider'], flag: 'arlo_curtain' } },
     { text: ["I used to wonder how a match could be so perfect and so... impossible. Now I know. It's trust, rehearsed. Rehearsed trust.", "I'm going to cry again."], when: { place: ['insider'], flag: 'arlo_curtain' }, mood: 'happy' },
     { text: "Tag partner! I'm somebody's tag partner! I'm on the right side of the camera for once!", when: { married: true }, mood: 'love' },
   ],
@@ -79,7 +81,7 @@ export default {
     love: [
       "Mold on the reel, a crease at forty minutes, a label I've never seen. It's PERFECT. I'm going to save you. Yes, I'm talking to the tape.",
       "(He clutches it to his chest and stares at the ceiling for a moment.) I need to sit down. Don't look at me. I'm having a feeling.",
-      "Is this... where did you find... no. Don't tell me. I'm going to cry, and I'd like to do it with some mystery.",
+      "Is this... where did you find... no. Say nothing. I'm going to cry, and I'd like to do it with some mystery.",
     ],
     like: [
       "Oh! That's great! Thank you! I'm going to put a label on it. A label that says 'from {name}.' In the good font.",
@@ -92,14 +94,38 @@ export default {
     ],
     dislike: [
       "(He holds it out at arm's length.) A shirt with a face on it? That's... that's content. Sorry. I'm sorry. Thank you.",
-      "Thank you! I... okay. I'm going to put this somewhere I can't see it. I'm not crying. I'm not.",
+      "Thank you! I... okay. I'm going to put this somewhere I can't see it. I'll be fine. Give me a minute and a noodle.",
       "I'm going to be very brave and say 'thank you,' and then I'm going to put it under a pile of VCRs.",
     ],
     birthday: [
-      "You remembered my birthday? Nobody remembers my birthday. They remember the day my spreadsheet crashed. That's April.",
-      "A birthday present! I get a rating system for gifts, but this one's off the charts. I'm going to make a new chart.",
+      "A {item}. On my birthday. Everyone else remembers the day my spreadsheet crashed. That's April. This is better than April.",
+      "I rate birthdays. Last year was a 2.1 (cake fell on the bus). This one just went to a 4.6 and the {item} is why.",
+    ],
+    byItem: {
+      cassette: "'PUMP UP JAMS 4 SAT.' Somebody had a Saturday they needed pumping up for. I'm going to find out what was on it. Carefully. With gloves.",
+      'old-program': "1979! Look at the card. Look at the PACING of this card. Somebody booked this with a pencil and a lot of coffee.",
+      vinyl: "Somebody's entrance music, pressed in 1984. Side B has a scratch at the bridge. Of course it does. The bridge is the best part.",
+      tape: "Athletic tape! I'm going to fix my headphones with it. A trainer would weep. Let them weep.",
+      scrap: "Scrap metal. Yes. I need a bracket for the tape heads. This is a bracket. It doesn't know it yet.",
+      'toy-wrestler': "He's got a chew mark on the boot. Somebody's dog loved him. I'm going to give him a shelf next to the good VCR.",
+      coffee: "June's coffee. I'm going to drink it standing up in front of the drum heads, like a professional.",
+      comic: "Wrestle-Bot vs. The Moon. Issue one. The moon has no chance. I'm rating it before I read it.",
+      'chili-dog': "A chili dog in a paper boat. I'm going to eat this over the sink so the tapes never know.",
+    },
+    later: [
+      "I'm still using the {lastGift}. I gave it a row in the spreadsheet. It's doing very well.",
+      "The {lastGift} lives on the counter now. Customers ask about it. I tell them it's from you. Some of them don't know who you are. I explain.",
     ],
   },
+  again: [
+    "I'm mid-rewind. Talk in ninety seconds? Eighty-nine?",
+    "(Arlo holds up a tape and a screwdriver, as if that answers it. It does, a bit.)",
+    "Still me! Same Arlo. I haven't changed in the last hour. I checked the spreadsheet.",
+  ],
+  idle: [
+    "(Arlo is wearing one headphone and humming a commercial jingle from 1989.)",
+    "(He's labeling something. The label maker clicks like a very small typewriter.)",
+  ],
   birthday: { season: 3, day: 3 },
   events: [
     // ---------------------------------------------------------------- 2 (prologue): The comeback is the story
@@ -176,13 +202,13 @@ export default {
         }
       },
     },
-    // ---------------------------------------------------------------- 6: Eleven thousand rows
+    // ---------------------------------------------------------------- 6: Nine thousand rows
     {
       id: 'arlo-6', hearts: 6, map: 'pawn', title: 'Eleven Thousand Rows',
       script: async (api) => {
         await api.narrate('Rewind, after closing. The CRT hums. Arlo has dragged two folding chairs together and put a laptop on a milk crate between them.');
         await api.say('arlo', 'I have never shown anybody this. Okay. Okay. Here.');
-        await api.narrate('A spreadsheet. Eleven thousand rows. Columns: DATE, MATCH, CROWD, PACING, SELLING, STORY, RATING. Every row in tiny, careful type.', 'A decade of Saturdays.');
+        await api.narrate('A spreadsheet. Nine thousand rows. Columns: DATE, MATCH, CROWD, PACING, SELLING, STORY, RATING. Every row in tiny, careful type.', 'A decade of Saturdays.');
         await api.say('arlo', "Highest rating in the whole sheet. Row 8,214. A five-point-oh. I've given three fives in my life. This is the first one.");
         await api.narrate('He scrolls. The row reads: TURNBUCKLE ALLEY. SPORTATORIUM. BOOTLEG. (VELVET HAMMERS?) 5.0.');
         await api.say('arlo', "The tape's so fuzzy I can't see who they're wrestling. It cuts out at minute forty.", "It's two women in a barn in front of six hundred people and they look at each other like...");
@@ -272,7 +298,7 @@ export default {
         await api.narrate("Birdie watches him go. She is not worried. She has seen this walk before. It's a walk that goes toward something.");
         await api.fade();
         await api.narrate("The next evening. The Hot Tag's back booth.", "Arlo slides in with his laptop and a face like somebody who has not slept and has not cried recently and is about to do both.");
-        await api.say('arlo', "I spent all day thinking about it. About everything. The spreadsheet. The eleven thousand rows.");
+        await api.say('arlo', "I spent all day thinking about it. About everything. The spreadsheet. The nine thousand rows.");
         await api.say('arlo', "I thought I was rating fights. I wasn't. I was rating people trusting each other.");
         await api.narrate('He turns the laptop around. A new column on the spreadsheet, in bold at the top of the sheet: TRUST.');
         const c = await api.choose(null, [

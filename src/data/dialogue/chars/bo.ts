@@ -37,30 +37,30 @@ export default {
     { text: "A villain. We have a discount: ten percent. We also have a *rival* discount. It's zero. It's for you.", when: { place: ['public'], alignment: ['heel'], flag: 'debuted' }, mood: 'smug' },
     { text: "We do not patronize Tallbridge Bakery. A villain surcharge is an *insult.* We've never once been inside. There is a back door. I've never seen it.", when: { place: ['public'] } },
     { text: "Thursday dinner at my aunt's. Pot roast. She asks if the Bruiser thing is 'fake.' I say it's the realest thing I've ever done. She says that's not an answer.", when: { place: ['public'], hearts: [3, 10], weekday: [3] }, weight: 2 },
-    { text: "Friday night Buck plays harmonica on the radio. With Gus. I listen. Don't tell him I listen.", when: { place: ['public'], hearts: [3, 10], weekday: [4] } },
+    { text: "Friday night Buck plays harmonica on the radio. With Gus. I listen with the radio facing the wall, so it doesn't look like listening.", when: { place: ['public'], hearts: [3, 10], weekday: [4] } },
     { text: "Tonight: Measure Twice, Cut Once. And if Buck's late for the tag again, I'm hitting *him.*", when: { showDay: true, place: ['public', 'show'] }, weight: 2 },
     { text: "Hank is in the back workshop borrowing our clamps again. She treats us like nephews. We *are* nephews who keep borrowing clamps.", when: { place: ['public'], hearts: [3, 10] } },
 
     // ---------------------------------------------------------------- Weather and seasons
-    { text: "Rain. Umbrella sales are up eleven percent. Don't tell Buck. He thinks it's his marketing.", when: { weather: ['rain'] } },
-    { text: "Storm. Tarps. I've prepared. We have four hundred tarps. Buck says that's too many. Buck has never been in a storm.", when: { weather: ['storm'] } },
-    { text: "Snow. Shovels, salt, heaters. A good day for being right.", when: { weather: ['snow'] } },
-    { text: "Wind. Kites. Hats. Heartbreak. In that order.", when: { weather: ['wind'] } },
-    { text: "Spring. Seed packets, fence posts, and a thirty-percent spike in lumber for 'ring repairs.' Hank's a very good customer.", when: { season: [0] }, weight: 2 },
-    { text: "Summer. Grills, fans, and Buck's 'sleeping on the roof' phase. Please don't encourage it.", when: { season: [1] } },
-    { text: "Fall. Leaf rakes, space heaters, inventory. Please, God, inventory.", when: { season: [2] } },
-    { text: "Winter. Heaters, salt. And my annual 'what do I get Buck' list. It's always a tape measure. He's lost eleven.", when: { season: [3] } },
+    { text: "Umbrellas are up nine percent since Monday. Buck thinks it's his window sign. His window sign says UMBRELLAS? with a question mark.", when: { weather: ['rain'] } },
+    { text: "Storm. We have four hundred tarps. Buck says that's too many. Buck has never been in a storm. Buck has been in every storm. He forgets.", when: { weather: ['storm'] } },
+    { text: "Man came in at six for rock salt, in slippers. I sold him salt and boots. He thanked me for the boots more. People always thank you for the boots.", when: { weather: ['snow'] } },
+    { text: "Wind took the OPEN flag down Main Street again. Pip brought it back and asked for a reward. I printed him a label. PIP (HELPFUL). He wore it to school.", when: { weather: ['wind'] } },
+    { text: "Hank bought forty feet of lumber 'for ring repairs' and asked me not to write down the ring part. I wrote it down. I write everything down.", when: { season: [0] }, weight: 2 },
+    { text: "Buck's been sleeping on the roof since June. For the breeze, he says. The breeze is a box fan on my extension cord. My good one. The orange one.", when: { season: [1] } },
+    { text: "Inventory's in three weeks. I've marked it on three calendars, in case two of them are lying.", when: { season: [2] } },
+    { text: "I've bought Buck a tape measure every Christmas for nine years. He's lost all nine. This year I'm not wrapping it. I'm handing it to him with a look.", when: { season: [3] } },
 
     // ---------------------------------------------------------------- Insider: Bo, unlabeled
     { text: "I do inventory at night. It's calming. Nothing in the ledger is on fire.", when: { place: ['insider'], hearts: [0, 3] } },
     { text: "In here I can say it: I love inventory. Counting things makes me feel like the world *has* an end.", when: { place: ['insider'] } },
     { text: "Buck's 'self-tightening turnbuckle' tightened itself around Marigold's good scissors. I'm not saying it's his fault. I'm saying I labeled it FUTURE LAWSUIT.", when: { place: ['insider'] }, mood: 'happy' },
-    { text: "We buy cupcakes from Tiny's back door. Twelve at a time. Buck eats nine. I count. Don't tell her I count.", when: { place: ['insider'], hearts: [3, 10] } },
-    { text: "Dinner at Aunt Patty's: we argue for real. That's the secret. You can't fake a brother, and she's never gotten a straight answer because there isn't one.", when: { place: ['insider'] } },
+    { text: "We buy cupcakes from Tiny's back door. Twelve at a time. Buck eats nine. I count. Tiny knows I count. She puts in a thirteenth so the count comes out wrong.", when: { place: ['insider'], hearts: [3, 10] } },
+    { text: "Dinner at Aunt Patty's: we argue for real. She's never gotten a straight answer about the Bruiser thing because there isn't one. There's a crooked one. It's ours.", when: { place: ['insider'] } },
     { text: "Stan and Donna call weekly from Arizona with grout advice. We don't have a tile floor. They know. They offer it anyway. It's love.", when: { place: ['insider'], hearts: [3, 10] } },
     { text: "Dad always said the Velvet Hammers 'have to get mended someday, or this town never will.' He sold Hank her first table saw that winter. Dad's never wrong about tools.", when: { place: ['insider'], hearts: [3, 10] } },
-    { text: "Buck's songs live in the bait fridge. I've read every one. They're all sad. I've never told him they're good. ...They're good. Don't tell him.", when: { place: ['insider'], hearts: [6, 10] } },
-    { text: "Sundays Buck goes fishing and writes songs; I do inventory. It's the best day of our week. We're apart and we're both happy. Don't tell either of us I said that.", when: { place: ['insider'], hearts: [6, 10], weekday: [6] } },
+    { text: "Buck's songs live in the bait fridge. I've read every one. They're all sad. I've never told him they're good. ...They're good. I'd never say it to his face. His face would be unbearable for a month.", when: { place: ['insider'], hearts: [6, 10] } },
+    { text: "Sundays Buck goes fishing and writes songs; I do inventory. It's the best day of our week. We're apart and we're both happy. We'd deny it at the same time, in two different keys.", when: { place: ['insider'], hearts: [6, 10], weekday: [6] } },
     { text: "Rule one of the Bruiser Twins: argue in public. Rule two: never in front of Pip. He thinks it's a real fight. He cries. It's terrible.", when: { place: ['insider'] } },
     { text: "You're new. Measure twice, cut once. In the ring that means: check your landing twice, take the bump once. Also, check your wrist tape twice.", when: { place: ['insider'], rank: ['rookie', 'opener'] } },
     { text: "Main event. That's a lot of inventory to carry. Label it. It helps. It always helps.", when: { place: ['insider'], rank: ['main', 'assistant', 'pencil', 'owner'] } },
@@ -73,7 +73,9 @@ export default {
     { text: "The letter's in my drawer, under the staples. I haven't told him. I'll tell him. After the show. After the *next* show.", when: { flag: 'bo_offer', notFlag: 'bo_stay', place: ['insider'] }, mood: 'sad', weight: 3 },
     { text: "I told him. It took four hours, two sandwiches, and a minor argument about whose turn it was to talk. He asked me to stay. That's all I wanted. I know. I'm ridiculous.", when: { flag: 'bo_stay', place: ['insider'] }, mood: 'happy', weight: 2 },
     { text: "We knock now. Two and three. I won't say what they mean. ...You know what they mean.", when: { flag: 'twins_wall', place: ['insider'] }, mood: 'love', weight: 3 },
-    { text: "He's the only person alive who knows what I sounded like before my voice dropped. You can't replace that. You can't even explain it.", when: { hearts: [9, 10], place: ['insider'] } },
+    { text: "He's the only person alive who knows what I sounded like before my voice dropped. He does an impression. It's accurate. I hate it.", when: { hearts: [9, 10], place: ['insider'] } },
+    { text: ["You beat us. I've written down how.", "Page three of the notebook is the word 'how', underlined twice. Buck added a drawing. It's a duck. I don't know why it's a duck."], when: { place: ['insider'], lastMatch: { won: true, opponent: ['bo', 'buck'], maxDaysAgo: 5 } } },
+    { text: "I timed you and {opponent}: sixteen minutes, four seconds. Buck says fifteen. Buck's stopwatch has a dent in it.", when: { place: ['insider'], lastMatch: { maxDaysAgo: 3 } } },
   ],
   gifts: {
     loves: ['tape', 'vinyl', 'coffee'],
@@ -83,7 +85,7 @@ export default {
   giftReplies: {
     love: [
       "(He inspects it, turns it a quarter turn, and nods.) Perfect. This goes *exactly* here. I'll label the spot.",
-      "You absolute professional. ...I'm not going to cry. I'm going to alphabetize something. Quickly.",
+      "You absolute professional. ...I'm going to alphabetize something. Quickly. Don't watch.",
       "Nobody ever gets me the right thing. They get me *a* thing. You got me *the* thing. I'm adding you to the file. Under 'good.'",
     ],
     like: [
@@ -101,10 +103,32 @@ export default {
       "Please. Take it back. My shelves are in a state of grace.",
     ],
     birthday: [
-      "Our birthday. Mine and Buck's. I was born four minutes earlier, which means I get to be thanked first. ...Thank you. I mean it.",
-      "Summer, the second. Buck will say it's his day, too. He's wrong. It's *both.* I'll tell him later.",
+      "Our birthday. I was born four minutes earlier, which means I get thanked first. ...Thank you for the {item}. I've labeled it already. In my head.",
+      "Summer, the second. Buck will say it's his day. It's both. I've checked the certificate. He's on the second line.",
+    ],
+    byItem: {
+      tape: "Athletic tape. The good roll, with the tear-edge that actually tears. You know how rare that is? Buck doesn't. Buck uses his teeth.",
+      vinyl: "1984 pressing. The sleeve has a coffee ring. I'm not going to clean it. Somebody had coffee listening to this. That's provenance.",
+      coffee: "Black. No sugar. You noticed. Nobody notices. Buck puts sugar in mine to see if I'll say something. I always say something.",
+      chalk: "Chalk. I'll put it in the bin marked CHALK. It's been empty since March. The bin will be relieved.",
+      plank: "Good straight board. Barely a knot. I'm going to stand it in the corner and not use it for a while. A man can admire a board.",
+      'old-program': "1979 card. Look at the margins on this thing. Somebody printed this with a ruler and a prayer.",
+      pie: "Pie. I'll split it with Buck exactly down the middle. I have a tool for that. He'll still say mine's bigger.",
+    },
+    later: [
+      "The {lastGift} has a label now. It says {lastGift} (FROM A FRIEND). I went back and forth on FRIEND. I kept it.",
+      "Buck asked about the {lastGift}. I said it's mine. He said 'whose?' I said MINE. We've been doing that for three days.",
     ],
   },
+  again: [
+    "We spoke. I've logged it. Is this a follow-up?",
+    "(Bo holds up the label maker and prints something without looking. It says BUSY.)",
+    "Aisle four, bottom shelf. Whatever it is. It's usually aisle four.",
+  ],
+  idle: [
+    "(Bo is restacking paint cans so the labels all face the same way.)",
+    "Buck's in the back. Or the roof. Or the creek. I'll find him at closing. I always find him at closing.",
+  ],
   birthday: { season: 1, day: 2 },
   events: [
     // ---------------------------------------------------------------- 2: FEELINGS (EMPTY)
@@ -143,7 +167,7 @@ export default {
       id: 'bo-4', hearts: 4, map: 'hardware', title: 'Two A.M.',
       script: async (api) => {
         await api.narrate("A slow afternoon at the store. Bo flips the ledger closed the second you walk in, slides it under the counter, and says nothing for four seconds.");
-        await api.say('bo', "Come by after close. The back office. Don't tell Buck. ...Don't tell Buck *anything.*");
+        await api.say('bo', "Come by after close. The back office. Buck doesn't need to know. Buck doesn't need to know *anything.*");
         await api.fade();
         await api.narrate("Two a.m. The shop is dark except for a desk lamp in the back office. Over your head, through the ceiling, the faint sound of a man snoring like a tractor.");
         await api.say('bo', "That's Buck. It's the most reassuring sound I know. And the most expensive.");
@@ -158,7 +182,7 @@ export default {
         if (c === 'look') {
           api.hearts('bo', 30);
           await api.narrate("You pull up a stool. The two of you go line by line until the sky outside the shop window starts to go gray.");
-          await api.say('bo', "Nobody has ever looked at the ledger with me. It's a very intimate document. I'm not sure how I feel. ...I feel good. Don't tell the ledger.");
+          await api.say('bo', "Nobody has ever looked at the ledger with me. It's a very intimate document. I'm not sure how I feel. ...I feel good. The ledger can find out on its own.");
         } else if (c === 'idea') {
           api.hearts('bo', 30);
           await api.sayMood('bo', 'surprised', "Birdie's *always* short on chairs. A standing order. A contract. With an invoice.");
@@ -286,7 +310,7 @@ export default {
         await api.fade();
         await api.narrate("The landing above the store, late. Two doors side by side, one red, one blue, a thin wall between them. You sit on the top stair in the dark. A strip of light shows under each door.");
         await api.narrate("Silence. A clock ticks somewhere. Then, from behind the red door: two knocks. Careful. Even. Measured, as if someone had tested the weight of the fist first.");
-        await api.narrate("Nothing. A long pause. Eleven seconds. You count them.");
+        await api.narrate("Nothing. A long pause. Nine seconds. You count them.");
         await api.narrate("Then from the blue door, three knocks. Fast, loud, a little out of rhythm. Followed by a muffled 'ow,' as if someone had hit a stud.");
         await api.narrate("From both sides of the wall, at once, two very different laughs.");
         await api.narrate("Both doors open. Bo, in pressed pajamas. Buck, in a sweater with a hole in the elbow. They look at each other across the landing, as if for the first time in years.");

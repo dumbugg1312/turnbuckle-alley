@@ -29,13 +29,14 @@ export default {
   lines: [
     // ---------------------------------------------------------------- Public: the carpenter
     { text: "Table broke 'cause the Mountain's heavy, ma'am. I build 'em sturdy. He's sturdier.", when: { place: ['public'] } },
-    { text: ["Measure twice. Cut once.", "Measure once more. That's the whole trade."], when: { hearts: [0, 4], place: ['public'] } },
+    { text: ["Measure twice. Cut once.", "Then measure again, because Gus walked by talking and I lost the number."], when: { hearts: [0, 4], place: ['public'] } },
     { text: ["(She taps a plank with a knuckle and listens.)", "Pine's cheap. Walnut's honest. Oak lies a little."], when: { hearts: [0, 5], place: ['public'] } },
     { text: ["(Plumb leans his whole weight against your shin, on three legs, perfectly balanced.)", "Don't feel sorry for him. He doesn't."], when: { hearts: [0, 6] } },
     { text: "The mayor orders keys to the city by the dozen. I cut 'em from brass blanks. They open nothing. Opening nothing is harder than it sounds.", when: { hearts: [3, 10], place: ['public'] } },
     { text: "Need a hand carrying lumber? Don't talk while you carry. Talking drops planks.", when: { hearts: [3, 8], place: ['public'] } },
-    { text: "Heard you hit somebody with a chair. One of mine? Bring it back. I'll fix the leg. Chairs have feelings. Mostly in the legs.", when: { place: ['public'], alignment: ['heel'], flag: 'debuted' } },
-    { text: "Saw you hit the ropes Saturday. They held. That's me. (She goes back to sanding.)", when: { place: ['public'], alignment: ['face'], flag: 'debuted' } },
+    { text: "Heard you ran {opponent} into my turnbuckle. Middle pad's split. I'll fix it. Next time pick the top one. It's newer.", when: { place: ['public'], alignment: ['heel'], lastMatch: { maxDaysAgo: 4 } } },
+    { text: "Saw you hit the ropes against {opponent}. They held. That's me. (She goes back to sanding.)", when: { place: ['public'], alignment: ['face', 'tweener'], lastMatch: { maxDaysAgo: 4 } } },
+    { text: "You landed {opponent} dead center for the {finisher}. Middle of the ring rings. I heard it from the shop.", when: { place: ['insider'], lastMatch: { won: true, maxDaysAgo: 3 } } },
     { text: "Ring's up. Ropes are tight. Whatever happens tonight, it's not the ring's fault.", when: { showDay: true, place: ['public', 'show'] }, weight: 2 },
     { text: ["Cribbage with Gus tonight.", "He counts fifteen-two, fifteen-four, and then a number I've never heard. I count his counting."], when: { weekday: [6] } },
     { text: "Seven a.m. Best light for sanding. Worst light for conversation.", when: { time: [400, 540] } },
@@ -43,16 +44,16 @@ export default {
     { text: "Storm coming. Plumb's already under the ring. Smarter than the forecast.", when: { weather: ['storm'] } },
 
     // ---------------------------------------------------------------- Seasons
-    { text: "Thaw. Wood moves when it thaws. Everything moves. I check the bolts twice.", when: { season: [0] }, weight: 2 },
-    { text: "Hot. Canvas goes soft in the heat. I tighten the ring at dawn. Folks think it's magic. It's a wrench.", when: { season: [1] } },
+    { text: "Wood moves when it thaws. The north corner post groans every March like it's getting out of bed. I check the bolts twice.", when: { season: [0] }, weight: 2 },
+    { text: "Canvas goes soft in the heat. I tighten the ring at dawn. Folks think it's magic. It's a wrench and a thermos.", when: { season: [1] } },
     { text: "Leaves in the ring skirt every October. Every October I say I'll build a roof. Every October it rains.", when: { season: [2] } },
     { text: "Cold shrinks rope. A ring tuned in January is loose by July. You tune for the weather, same as a banjo.", when: { season: [3] } },
 
     // ---------------------------------------------------------------- Insider: the instrument
     { text: "Every ring has a voice. This one's a little flat on the north side. I've been meaning to fix it since 1994.", when: { place: ['insider'] }, weight: 2 },
-    { text: ["Tightened the ropes till they sang one note. B-flat.", "Wrestlers feel it in their feet. They don't know why they like this ring. That's why."], when: { hearts: [3, 10], place: ['insider'] } },
+    { text: ["Tightened the ropes till they sang one note. B-flat.", "Wrestlers feel it in their feet. Dex says this ring 'feels like a Friday.' I'm keeping that."], when: { hearts: [3, 10], place: ['insider'] } },
     { text: "Scored the breakaway tables at an eighth of an inch. Splits like a cracker. Nobody's been hurt on one of mine. I'd eat the saw first.", when: { place: ['insider'] } },
-    { text: "Mariposa's butterflies: four hundred paper wings on a pulley. Took eleven tries to make them fall like they meant it.", when: { place: ['insider'] } },
+    { text: "Mariposa's butterflies: four hundred paper wings on a pulley. Took fourteen tries to make them fall like they meant it.", when: { place: ['insider'] } },
     { text: "The Dust Devil's tumbleweeds are chicken wire and good intentions. I weigh each one. They have to roll slow enough to look sad.", when: { place: ['insider'], hearts: [3, 10] } },
     { text: "The Twins get real sparks off that grinder. Fake danger, real sparks. I measure the distance with my pinky. Quarter inch. Always.", when: { place: ['insider'] } },
     { text: "Lost the tip of this pinky to a table saw in '91. Now it's a quarter-inch gauge. Handy. Wouldn't recommend.", when: { place: ['insider'], hearts: [3, 10] } },
@@ -60,7 +61,7 @@ export default {
     { text: "Plumb found a bent nail under the apron. Three legs and a metal detector. Best crew I've got.", when: { place: ['insider'] } },
     { text: "Somebody keeps the '79 porch-light wiring under the ring in perfect order. Neat splices. Good heat shrink. I've never asked who.", when: { place: ['insider'], hearts: [3, 10] } },
     { text: "Bump from the middle, not the edge. The middle rings. The edge only thuds.", when: { place: ['insider'], rank: ['rookie', 'opener'] } },
-    { text: "Main event. I re-tensioned the north ropes for you. Don't tell the others. They'll all want it.", when: { place: ['insider'], rank: ['main', 'assistant', 'pencil', 'owner'] } },
+    { text: "Main event. I re-tensioned the north ropes for you. The others will feel it by Thursday. They'll all want it.", when: { place: ['insider'], rank: ['main', 'assistant', 'pencil', 'owner'] } },
     { text: "Walk the apron before the doors open. Learn the boards. Boards remember where you land.", when: { place: ['insider'], showDay: true } },
     { text: "Ever wonder what the canvas feels like from the bottom? I do. ...Never mind. Hand me the wrench.", when: { place: ['insider'], hearts: [6, 10] }, mood: 'sad' },
     { text: "Changed one lock in my life without asking why. I was seventeen. Some questions are load-bearing.", when: { place: ['insider'], hearts: [6, 10], flag: 'grandma_in_town', notFlag: 'truth_revealed' } },
@@ -76,7 +77,7 @@ export default {
   giftReplies: {
     love: [
       "(She runs a thumb along it, squints, holds it to the light.) That's real good. That's a belt plate. Or a box for something that matters.",
-      "Hm. (A long look. A small nod.) You pick well. Don't tell the dog. He picks by smell.",
+      "Hm. (A long look. A small nod.) You pick well. Plumb picks by smell. You'd tie.",
       "(Hank sets it on the high shelf, where she keeps the things she's saving.) ...Thank you. I mean it. I say it once a year.",
     ],
     like: [
@@ -95,10 +96,33 @@ export default {
       "That'll go in the stove. Respectfully.",
     ],
     birthday: [
-      "You remembered. (She clears her throat, twice.) Plumb, that's a birthday. Look alive.",
-      "Another year, still plumb. Thank you. I'll put a candle in a nail hole. It's tradition. I just made it one.",
+      "(She clears her throat, twice, holding the {item}.) Plumb. That's a birthday. Look alive.",
+      "Fifty-eight. Still plumb. I'll put a candle in a nail hole. It's tradition. I just made it one.",
+    ],
+    byItem: {
+      plank: "(She sights down the edge, one eye shut.) Straight. Tight grain. Somebody kiln-dried this right. I'll make a step for Plumb.",
+      iron: "Old Dungeon iron. Rusted soft. (She raps it with a knuckle.) Good ring to it. This'll be a hinge, or a hook, or a reason to stay late.",
+      rope: ["Real ring rope. (She weighs it.) This is from the '80s. The braid's tighter than they make now.", "...Thank you. I'll put it on the north side. That side's been flat since '94."],
+      coffee: "Coffee. Black. Good. I drink it cold by the time I remember it. Don't watch me drink it cold.",
+      canvas: "Old ring canvas. Stain's from the Copperhead Sisters' tag in '81. I sanded around it then. I'll sand around it now.",
+      leather: "Leather strap. I'll make Plumb a new collar. He'll pretend he doesn't like it. He'll wear it to bed.",
+      tape: "Athletic tape. I use it for everything but athletes.",
+      'chili-dog': "(She eats it in three bites, standing, and wipes her hands on her overalls.) Good. Plumb gets the end.",
+    },
+    later: [
+      "Used the {lastGift}. It held. (That's the whole review.)",
+      "Plumb sleeps by the {lastGift} now. Three legs, one opinion.",
     ],
   },
+  again: [
+    "(Hank holds up one finger without looking. She's mid-cut.)",
+    "Still here. Hand me the level, then. If you're staying, you're working.",
+    "Talked already. I'm out of words till supper.",
+  ],
+  idle: [
+    "(Hank is sanding something. Plumb is supervising.)",
+    "Don't lean on that. Thanks.",
+  ],
   birthday: { season: 1, day: 27 },
   events: [
     // ---------------------------------------------------------------- 2: Every chair is a seat

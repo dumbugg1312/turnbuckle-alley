@@ -36,9 +36,10 @@ export default {
     { text: "Your first match is the one I'll remember you by. No pressure. I'll be in press row with a sharpened pencil and no mercy.", when: { notFlag: 'debuted' } },
 
     // ---------------------------------------------------------------- reviews of you
-    { text: ["Two and a half stars. The heat segment dragged and the comeback was rushed.", "The dropkick, however, was journalism."], when: { flag: 'debuted', weekday: [3, 6] }, mood: 'smug' },
-    { text: "Wednesday's review is set. Three stars. I'd have given three and a half, but you missed a cue at minute six. I saw it. Agnes saw it.", when: { flag: 'debuted', weekday: [3] } },
-    { text: "Saturday's headline is already typeset. I won't tell you what it says. I'll tell you it has an exclamation point. I don't hand those out.", when: { flag: 'debuted', weekday: [6], hearts: [3, 14] }, mood: 'happy' },
+    { text: ["{stars} stars, you and {opponent}. The heat segment dragged and the comeback was rushed.", "The {finisher}, however, was journalism."], when: { lastMatch: { maxStars: 3, maxDaysAgo: 3 } }, mood: 'smug' },
+    { text: "The VFW review is set. {stars} stars for you and {opponent}. You looked at the bingo board during the heat. I saw it. Agnes saw it. The bingo board saw it.", when: { lastMatch: { venue: ['vfw'], maxDaysAgo: 2 } } },
+    { text: "Tomorrow's headline is already typeset. I won't say what it says. I'll say it has an exclamation point. I don't hand those out.", when: { lastMatch: { venue: ['sportatorium'], minStars: 3.5, maxDaysAgo: 1 }, hearts: [3, 14] }, mood: 'happy' },
+    { text: ["{opponent} beat you and I gave it {stars} stars. Readers wrote in. Two of them were furious with me.", "One was Agnes. The other was also Agnes, on her nephew's stationery."], when: { lastMatch: { won: false, minStars: 3, maxDaysAgo: 4 } } },
 
     // ---------------------------------------------------------------- weekly rhythm
     { text: "Print night. I'll be in the basement till two. If you hear swearing, it's the press. If you hear crying, it's also the press.", when: { weekday: [3] } },
@@ -68,8 +69,8 @@ export default {
 
     // ---------------------------------------------------------------- hearts
     { text: "You're becoming a recurring character in my paper. Readers ask about you. I tell them I'm 'monitoring the situation.'", when: { hearts: [3, 5] } },
-    { text: ["I had an offer from a city paper once. I stayed.", "A town without a paper forgets what happened to it."], when: { hearts: [3, 14] } },
-    { text: ["Somebody has to write down what happens here. If nobody writes it down, it's like it didn't matter.", "And it matters. All of it."], when: { hearts: [6, 14] } },
+    { text: ["I had an offer from a city paper once. Captions. For photos of salads.", "I came home on the bus and reviewed a pie. Four stars. It made me so happy I had to lie down."], when: { hearts: [3, 14] } },
+    { text: ["I keep a carbon of every issue in the basement. Four hundred boxes.", "When the furnace floods, I carry 1983 upstairs first. Then the rest. Then the cat, who is fine, and furious."], when: { hearts: [6, 14] } },
     { text: ["I've been writing a mystery novel for six years. About a small-town editor who solves crimes.", "Nobody calls her the paper girl. It's fiction."], when: { hearts: [6, 14] } },
     { text: "Lavinia asked about you. 'Is that the one you keep mentioning?' I said I don't keep mentioning anyone. She circled 'keep' in red.", when: { hearts: [6, 14] }, mood: 'surprised' },
     { text: "That quarter-page ad of yours is still running. It's the only ad we have that people clip out. I don't know how I feel about that.", when: { flag: 'clem_ad' } },
@@ -96,8 +97,8 @@ export default {
     { text: "Our wedding got five stars in the Tattler. I recused myself. Lavinia wrote the review. She docked half a star for my veil.", when: { married: true }, mood: 'smug' },
   ],
   gifts: {
-    loves: ['paperback', 'old-program', 'polaroid', 'bouquet'],
-    likes: ['coffee', 'teacup', 'pie', 'wildflowers', 'cassette', 'concha', 'vinyl'],
+    loves: ['paperback', 'polaroid', 'bouquet'],
+    likes: ['old-program', 'coffee', 'teacup', 'pie', 'wildflowers', 'cassette', 'concha', 'vinyl'],
     dislikes: ['gas-hotdog', 'scrap', 'foam-finger', 'fiber'],
   },
   giftReplies: {
@@ -120,10 +121,36 @@ export default {
       "One star, and that's for the wrapping.",
     ],
     birthday: [
-      "You remembered? Lavinia's letter just said 'Another year, another comma splice.' Yours is better.",
-      "I don't celebrate birthdays. I cover them. ...Fine. Exception. Front page.",
+      "Lavinia's birthday letter just said 'Another year, another comma splice.' You brought a {item}. You win. Narrowly.",
+      "I don't celebrate birthdays. I cover them. ...Fine. Exception. A {item}. Front page, below the fold.",
+    ],
+    byItem: {
+      paperback: "A mystery with the last page torn out. That's the cruelest thing anyone's ever handed me. I'll be up all night. Thank you.",
+      polaroid: ["A crowd shot, badly framed, flash too late. The woman in front has a purse raised.", "This is the best photograph anyone's taken in this county in ten years and I hate that I didn't take it."],
+      bouquet: "From the bakery window. Somebody saw you buy these. It'll be in the gossip column by Thursday. I write the gossip column. I'll be fair.",
+      'old-program': "1979. The typesetting on this is criminal. I love it. Look at the kerning on MALONE.",
+      coffee: "Coffee. Thank you. I'm on my fourth. This is my fifth. Stop me at seven.",
+      teacup: "Chipped. I'll keep paperclips in it. The paperclips have been in a mayonnaise jar, and they've been very patient.",
+      pie: "June's pie. I'm going to eat it over the layout table and get crumbs in the classifieds. Readers will assume it's a code.",
+      wildflowers: "I'll put them in the jar on the press. Everything I print this week will smell faintly of creek. I'm choosing to be fine with it.",
+      cassette: "PUMP UP JAMS 4 SAT. I need to know who made this. That's not a gift, that's a lead.",
+      concha: "Rosa's concha. I eat the sugar shell first and leave a trail across the desk like a slug with a sweet tooth.",
+      vinyl: "Somebody's entrance music. I'll play it while I write the review. If it's good, I'll be meaner. Good music raises standards.",
+    },
+    later: [
+      "The {lastGift} made it into a sentence this week. Page three. You'll have to find it. It's hidden in a review of the bake sale.",
+      "Lavinia saw the {lastGift} on my desk and wrote me a letter about it. Two paragraphs. No commas. She's trying to tell me something.",
     ],
   },
+  again: [
+    "On deadline. Say it in fewer words. ...Fewer than that.",
+    "(Clementine raises her pencil without looking up. It means 'later.' It also means 'you're in my light.')",
+    "We've covered this. I don't run the same story twice in a day.",
+  ],
+  idle: [
+    "(Clementine is reading a galley proof with a red pencil in her teeth.)",
+    "No comment. That's a joke. I always have a comment. I just don't have time for it.",
+  ],
   birthday: { season: 3, day: 20 },
   events: [
     {
@@ -245,7 +272,7 @@ export default {
           await api.say('clementine', "Thank you for coming out here. You always come out here. Did you know that? You always do.");
           api.hearts('clementine', 30);
         } else {
-          await api.narrate(`Lavinia's mouth twitches. "Don't tell her I can be nice," she says. "It would ruin my brand."`);
+          await api.narrate(`Lavinia's mouth twitches. "If word gets out I can be nice," she says, "it will ruin my brand."`);
           await api.narrate('When Clementine comes back in, eyes pink, Lavinia is already complaining loudly about the font size of the bake sale results.');
           api.hearts('clementine', 15);
         }
@@ -257,7 +284,7 @@ export default {
         await api.narrate("Saturday. You're not booked tonight. Clementine has saved you the seat next to hers in press row, with a pencil already sharpened for you.");
         await api.say('clementine', "Rules. Whisper only. No cheering. Press doesn't cheer. Press... observes, loudly, in its heart.");
         await api.narrate('The opener starts. She leans in, close, and reviews it into your ear in a whisper. Every spot. Every miss. Every save.');
-        await api.say('clementine', "Watch his feet. He's setting up the... there. Lovely. Half a star for that alone. Don't tell him.");
+        await api.say('clementine', "Watch his feet. He's setting up the... there. Lovely. Half a star for that alone. He'll never hear it from me.");
         await api.narrate('By the main event she has stopped writing. By the finish she is gripping your sleeve. When the three-count hits, she makes a small noise.');
         await api.narrate("It is, very nearly, a cheer. She claps a hand over her mouth and looks around to see if anyone noticed.");
         const c = await api.choose('Clementine is pretending nothing happened.', [

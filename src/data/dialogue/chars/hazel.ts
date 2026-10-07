@@ -51,22 +51,25 @@ export default {
     { text: "Thursday chair yoga at Evening Bell. A woman in plum narrates every stretch like a title match. 'She's going for the hamstring... the Duchess REVERSES.'", when: { place: ['public'], weekday: [3], flag: 'grandma_in_town' }, weight: 3, mood: 'happy' },
 
     // ---------------------------------------------------------------- Weather and seasons
-    { text: "Rain. Good. Everyone's got a little storm in them. Let it fall.", when: { weather: ['rain'], place: ['public'] } },
+    { text: "Rain. Sunrise class moved inside. Mrs. Purcell brought her own towel and a thermos of something that is not tea.", when: { weather: ['rain'], place: ['public'] } },
     { text: "Storm. The sky's practicing. I respect the work.", when: { weather: ['storm'], place: ['public'] } },
-    { text: "Snow. The quiet storm. Breathe it in. It'll tell you what you're carrying.", when: { weather: ['snow'], place: ['public'] } },
+    { text: "Snow. I shoveled the studio steps at five and did the whole sequence on the landing. The man across the street watched in a bathrobe. He waved at the end.", when: { weather: ['snow'], place: ['public'] } },
     { text: "Wind picks up at three. The forecast is always right when I'm the one issuing it.", when: { weather: ['wind'], place: ['public'] } },
     { text: "Thaw Brawl. Two years, nearly. I'm not counting. I'm *forecasting.*", when: { season: [0], place: ['public'] }, weight: 2 },
     { text: "Summer thunderstorm. My favorite. The best match I never wrestled.", when: { season: [1], place: ['public'] } },
-    { text: "Fall's the best training weather. Cold enough to sharpen, warm enough to forgive.", when: { season: [2], place: ['public'] } },
+    { text: "Cold mornings, the knee takes four extra minutes to agree with me. I spend the four minutes glaring at Dex.", when: { season: [2], place: ['public'] } },
     { text: "Winter yoga. We do it in sweaters. It's a very good imitation of a spa. Don't let anyone tell you otherwise.", when: { season: [3], place: ['public'] } },
 
     // ---------------------------------------------------------------- Insider: Hazel, at last, a person
     { text: "Six hundred and eleven days as champion. Seven hundred and thirty since the knee. I count both. I don't know which number's winning.", when: { place: ['insider'], hearts: [3, 10] }, weight: 2 },
-    { text: "The knee's healed. I keep saying that. It's true. But healed and trusted are different things. Healed is a fact. Trusted is a *relationship.*", when: { place: ['insider'], hearts: [6, 10] } },
+    { text: "The knee's healed. I keep saying that. It's true. I still go down stairs left foot first, like the stairs might have heard something.", when: { place: ['insider'], hearts: [6, 10] } },
     { text: "Gideon taught me to accept a compliment. I'm at about twenty percent. Last week somebody said I looked nice and I only said 'no' twice.", when: { place: ['insider'], hearts: [3, 10] }, mood: 'happy' },
     { text: "Doc doesn't want me back yet. He's right. I hate it. Don't tell him he's right.", when: { place: ['insider'] } },
     { text: "I yell at Dex because I know what a bad landing costs. He thinks it's tough love. It's *terrified* love.", when: { place: ['insider'], hearts: [3, 10] } },
-    { text: "Clint brings me honey for my knee tea. Don't tell anyone. We have a feud. A feud with honey in it is very confusing for the sheriff.", when: { place: ['insider'], hearts: [3, 10] }, mood: 'happy' },
+    { text: "Clint brings me honey for my knee tea. We have a feud. A feud with honey in it is very confusing for the sheriff. She's started a second file.", when: { place: ['insider'], hearts: [3, 10] }, mood: 'happy' },
+    { text: ["You and {opponent}. Your landing on the second bump was flat. I heard it from the desk.", "Studio. Seven a.m. I'll show you where the sound came from. It came from your heels."], when: { place: ['insider'], lastMatch: { maxStars: 3, maxDaysAgo: 3 } } },
+    { text: "That was clean. You and {opponent}. I counted your breathing from the desk. You never held it once. Good.", when: { place: ['insider'], lastMatch: { minStars: 3.5, maxDaysAgo: 3 } }, mood: 'happy' },
+    { text: "On commentary I called your match with {opponent} 'a squall.' Gus said 'is that good?' On air. I said 'it's weather, Gus.'", when: { place: ['public'], lastMatch: { maxDaysAgo: 3 } } },
     { text: "The trick to mahjong is the same as the trick to wrestling: let the other person think they're winning until they're out of tiles.", when: { place: ['insider'] } },
     { text: "You're new, so: breathe out on impact. Everybody says breathe in. In is for *before.* Out is for *survive.*", when: { place: ['insider'], rank: ['rookie', 'opener'] } },
     { text: "Main event. Everything gets bigger up there. Landings, too. Land smaller than you look.", when: { place: ['insider'], rank: ['main', 'assistant', 'pencil', 'owner'] } },
@@ -84,16 +87,16 @@ export default {
 
     // ---------------------------------------------------------------- Dating
     { text: "(From the commentary desk, she taps the desk twice when you walk past. It's the closest thing to a wave you'll get.)", when: { dating: true, place: ['show', 'public'], showDay: true }, weight: 2 },
-    { text: "I tape your wrists before every show. Don't tell the mirror. Don't tell Gideon. Gideon's going to cry.", when: { flag: 'hazel_romance_secret', place: ['insider'] }, mood: 'love', weight: 2 },
+    { text: "I tape your wrists before every show. Gideon walked in once while I was doing it. Gideon had to go sit in his car.", when: { flag: 'hazel_romance_secret', place: ['insider'] }, mood: 'love', weight: 2 },
     { text: "'Calm Before the Storm.' That's what they're calling us. Gus says it every Saturday. I want to throw something. I don't. I smile.", when: { flag: 'hazel_romance_onscreen' }, mood: 'happy', weight: 2 },
     { text: "I made that class longer so you'd stay. I'll deny it. I'll also do it again.", when: { dating: true, place: ['insider'] }, mood: 'love' },
 
     // ---------------------------------------------------------------- Family
-    { text: "You're one of the very few people who doesn't ask if I'm okay. You ask what I need. It's a tiny difference. It's the whole difference.", when: { hearts: [9, 14], place: ['insider'] }, mood: 'love' },
+    { text: "You're one of the very few people who doesn't ask if I'm okay. You ask what I need. Then you go get it. Usually it's tea. Once it was a ladder.", when: { hearts: [9, 14], place: ['insider'] }, mood: 'love' },
   ],
   gifts: {
-    loves: ['teacup', 'polaroid', 'river-stone'],
-    likes: ['honey', 'rope', 'tape', 'horchata', 'coffee'],
+    loves: ['teacup', 'river-stone', 'tape'],
+    likes: ['honey', 'rope', 'horchata', 'coffee', 'polaroid'],
     dislikes: ['bouquet', 'gas-hotdog', 'foam-finger'],
   },
   giftReplies: {
@@ -112,15 +115,38 @@ export default {
       "Hm. Interesting. I'll consider it. Possibly while holding a plank.",
     ],
     dislike: [
-      "I've been well for a year. I'm just scared. There's no gift for that.",
+      "Get-well flowers? I'm *well.* I'll give them to the front desk. The front desk is always a little unwell.",
       "Thank you. I'll put it somewhere I don't have to look at it. That's not a statement. It's logistics.",
       "(She holds it between thumb and forefinger.) Is this a *get-well* gift? Because I'm *well.*",
     ],
     birthday: [
-      "My birthday. I'm not good at these. People ask what I'm *recovering* from. You asked what I'd like. ...Thank you.",
-      "Fall, the twelfth. Hurricane season, technically. Fitting. ...Thank you for bringing a gift and not a *concern.*",
+      "My birthday. I'm not good at these. People ask what I'm *recovering* from. You brought a {item}. ...Thank you.",
+      "Fall, the twelfth. Hurricane season, technically. Thank you for bringing a {item} and not a *concern.*",
+    ],
+    byItem: {
+      teacup: "A teacup. Floral. Chipped. Oolong at five a.m., before the knee wakes up. You've just become part of my routine. I'm very strict about my routine.",
+      'river-stone': "Smooth. Cold. (She holds it in her palm and closes her fingers.) I'll keep it in the brace pocket. Something to squeeze that isn't a person.",
+      tape: "Athletic tape. The good stuff, with the edge that tears clean. I'll tape your wrists with it. Don't make it a thing.",
+      honey: "Honey. For the tea. Clint's going to smell it on me and think I've found another supplier.",
+      rope: "Real ring rope. I'll use it for stretching. The knee will look at it and remember. That's the idea.",
+      horchata: "Horchata. Rosa's. Cold. I'm drinking it right now, before it warms up. Don't talk. This is important.",
+      coffee: "Coffee. Thank you. I'll drink half and forget the rest on the windowsill, where it'll watch me all day.",
+      polaroid: "A crowd shot. I used to be able to tell a crowd's mood from a photo. This one's... hopeful. Annoyingly.",
+    },
+    later: [
+      "Still using the {lastGift}. Every morning. It's part of the count now.",
+      "My mother saw the {lastGift} on the video call and asked who gave it to me. I changed the subject to her roof. She has a lot to say about her roof.",
     ],
   },
+  again: [
+    "Still here? Breathe in. Hold it. ...Okay. Now go.",
+    "We talked. I'm counting reps. You're interrupting rep thirty-one.",
+    "(Hazel raises two fingers from the mat without opening her eyes. Later.)",
+  ],
+  idle: [
+    "(Hazel is balancing on her left leg, eyes shut, counting under her breath.)",
+    "Six a.m. Tomorrow. Bring a mat.",
+  ],
   birthday: { season: 2, day: 12 },
   events: [
     // ---------------------------------------------------------------- 2: Where your center isn't
@@ -275,7 +301,7 @@ export default {
       id: 'hazel-10', hearts: 10, map: 'studio', title: 'Still Water',
       script: async (api) => {
         await api.narrate("Evening at the studio. The mats are pushed into a ring-sized square, and Hazel sits in the middle of it with a notebook of drawn-out stick figures, each one in a different grappling position.");
-        await api.say('hazel', "I'm coming back. Not as the old Hurricane. The Hurricane's finisher was a corkscrew dive to the floor. I will never do it again. I've made peace with that. It took eleven months.");
+        await api.say('hazel', "I'm coming back. Not as the old Hurricane. The Hurricane's finisher was a corkscrew dive to the floor. I will never do it again. I've made peace with that. It took most of a year.");
         await api.say('hazel', "I want a new one. A finisher that doesn't ask my knee for anything. A hold. Something grounded.");
         await api.say('hazel', "I don't want to be the storm anymore. I want to be the quiet part in the middle.");
         await api.narrate("She turns the notebook toward you. A figure kneeling, an arm trapped, a second figure's head tilted in a crossface. In the margin, in her tiny printing: *STILL WATER?*");
@@ -296,7 +322,7 @@ export default {
         await api.narrate("You work through it, link by link, for the rest of the evening. She traps your arm for a demonstration, slowly. The hold is firm and kind at the same time.");
         await api.say('hazel', "Tap when you want. Nobody taps from this one fast. That's the point. It doesn't hurt. It just waits until you're ready to stop.");
         await api.narrate("She releases. Under the frozen board that says 2:10 A.M. TO THE CITY, she writes one line on the whiteboard, over the number: *Still Water. Built with {name}.*");
-        await api.say('hazel', "Don't tell Gideon I got a name card done before I got a bedtime. He'll want one for his hair.");
+        await api.say('hazel', "Gideon can't find out I got a name card done before I got a bedtime. He'll want one for his hair.");
       },
     },
     // ---------------------------------------------------------------- 12: Tree pose

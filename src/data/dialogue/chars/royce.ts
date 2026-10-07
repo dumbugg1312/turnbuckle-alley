@@ -60,7 +60,7 @@ export default {
     { text: "Main event. The numbers are... let me look. (His watch buzzes. He doesn't check it.) No. I'm not going to look. I'm just going to watch.", when: { rank: ['main'], notFlag: 'prologue' }, mood: 'happy' },
 
     // ---------------------------------------------------------------- Insider: the man upstairs
-    { text: ["Arlo had a spreadsheet of every match he'd ever seen. Eleven thousand rows. He believed every one.", "I envied him so much I couldn't look at him."], when: { place: ['insider'], hearts: [6, 10] }, mood: 'sad' },
+    { text: ["Arlo had a spreadsheet of every match he'd ever seen. Nine thousand rows. He believed every one.", "I envied him so much I couldn't look at him."], when: { place: ['insider'], hearts: [6, 10] }, mood: 'sad' },
     { text: ["Thirty-first floor, they write it down. The stories. Dates, finishes, beats. I used to believe, you know. All of it.", "Then they promoted me to the floor where they write it down."], when: { place: ['insider'], hearts: [6, 10] }, mood: 'sad' },
     { text: "I keep a foam finger in my desk drawer. Number one. I was nine. My dad took me to Pell's Crossing. Don't tell anyone.", when: { place: ['insider'], hearts: [6, 10] } },
     { text: "Birdie Malone can smell a corporate lanyard from the county line. I don't know why I find that so comforting.", when: { place: ['insider'], hearts: [3, 10] } },

@@ -27,9 +27,9 @@ export default {
     { text: "Does June still burn the toast? She burned it on purpose once, in '82, so a promoter would leave. He left. He never came back.", when: { notFlag: 'grandma_in_town' } },
     { text: "Tell me about the house. Does the porch swing still hold? Sit in it for me. Gently. That swing is older than your knees.", when: { notFlag: 'grandma_in_town', hearts: [0, 5] } },
     { text: "Did you eat today? You didn't. I can hear you not eating. There's a whole diner wrapped around that phone, chère.", when: { notFlag: 'grandma_in_town' } },
-    { text: "I hear a limp in your voice. Fifty years of listening to wrestlers walk down hallways. Ice it. Then call me. No. Sunday.", when: { notFlag: 'grandma_in_town', flag: 'debuted' } },
-    { text: ["Does she still wear that awful jacket? The red velvet one?", "...Good. Good. Don't tell her I asked."], when: { notFlag: 'grandma_in_town' }, mood: 'sad' },
-    { text: "What did Birdie teach you this week? Say it back to me. ...Ha! She stole that from me in 1974. Don't tell her I said so.", when: { notFlag: 'grandma_in_town', flag: 'met_birdie' } },
+    { text: "I hear a limp in your voice. {opponent}? Fifty years of listening to wrestlers walk down hallways. Ice it. Then call me. No. Sunday.", when: { notFlag: 'grandma_in_town', lastMatch: { won: false, maxDaysAgo: 3 } } },
+    { text: ["Does she still wear that awful jacket? The red velvet one?", "...Good. Good. She'd want to know if I asked. You'll say no."], when: { notFlag: 'grandma_in_town' }, mood: 'sad' },
+    { text: "What did Birdie teach you this week? Say it back to me. ...Ha! She stole that from me in 1974. Tell her I said so. Watch her face. Report back.", when: { notFlag: 'grandma_in_town', flag: 'met_birdie' } },
     { text: "My neighbor plays her stories so loud I know every soap opera in America. Everybody in them has amnesia. Very relatable, chère.", when: { notFlag: 'grandma_in_town', hearts: [3, 10] }, mood: 'smug' },
     { text: "Raining there too? Same storm, I bet. Everything goes through Turnbuckle Alley first, then it comes to me. Always has.", when: { notFlag: 'grandma_in_town', weather: ['rain', 'storm'] } },
     { text: "It's a show day. I can hear it in your voice. Go. Tape your wrists. Call me Sunday and tell me every single thing.", when: { notFlag: 'grandma_in_town', showDay: true } },
@@ -59,7 +59,7 @@ export default {
     { text: "Is she still sweeping the ring herself? Singing? Off-key? ...Ha. She never could find a note with both hands and a map.", when: { flag: 'grandma_in_town', notFlag: 'reunion_done' }, mood: 'happy' },
     { text: "When the marquee lights come on, I say goodnight to them. Don't you tell anybody. Especially not the marquee.", when: { flag: 'grandma_in_town', notFlag: 'reunion_done', time: [1080, 1560] } },
     { text: "Three blocks. I walked to the corner today. You can see her back door from there. I stood a while. Then I came home.", when: { flag: 'grandma_in_town', notFlag: 'truth_revealed', hearts: [3, 10] }, mood: 'sad', weight: 2 },
-    { text: "Don't tell her I'm here. She knows. The whole town knows. But don't you be the one to tell her.", when: { flag: 'grandma_in_town', notFlag: 'truth_revealed' } },
+    { text: "She knows I'm here. The whole town knows. But I'd rather it wasn't you who said it to her. Let her come to it.", when: { flag: 'grandma_in_town', notFlag: 'truth_revealed' } },
     { text: "I'm sorry. That's the only line I'd change, if they let me rewrite the whole card. Just the last line. Make it 'I'm sorry.'", when: { flag: 'grandma_in_town', notFlag: 'truth_revealed', hearts: [6, 10] }, mood: 'sad', weight: 2 },
 
     // ---------------------------------------------------------------- Evening Bell: the weekly rhythm
@@ -71,7 +71,7 @@ export default {
     { text: "Friday's dance night. Farid has waited since 1975 to have his toes stepped on by the Duchess. I'm a giver.", when: { flag: 'grandma_in_town', weekday: [4] } },
     { text: "Saturday. The marquee lights come on at dusk. I watch for them like a girl watching for headlights. Sit. Watch with me.", when: { flag: 'grandma_in_town', weekday: [5], map: ['grandma-room'], notFlag: 'reunion_done' }, mood: 'love', weight: 2 },
     { text: "Read me the card, chère. My eyes are fine. I just like it in your voice. ...Is her name on it? Of course it is. It always is.", when: { flag: 'grandma_in_town', weekday: [5], notFlag: 'reunion_done' }, weight: 2 },
-    { text: "Sunday. Did you bring a tape? Don't tell me which one. Put it in. I'll tell you which one.", when: { flag: 'grandma_in_town', weekday: [6] }, mood: 'happy', weight: 2 },
+    { text: "Sunday. Did you bring a tape? Say nothing. Put it in. I'll tell you which one by the second bump.", when: { flag: 'grandma_in_town', weekday: [6] }, mood: 'happy', weight: 2 },
 
     // ---------------------------------------------------------------- The sunroom (marks everywhere; the Duchess is on)
     { text: "(The Duchess lifts her chin at a passing visitor and gives the back-of-the-hand wave. Somebody boos on reflex. She glows.)", when: { flag: 'grandma_in_town', map: ['sunnypines'] }, weight: 2 },
@@ -85,19 +85,21 @@ export default {
     { text: "Bird? You're early. Help me with my braid. My hands won't do what I tell them today.", when: { flag: 'grandma_in_town', time: [900, 1560] }, mood: 'sad' },
     { text: "Have you seen my boots, Bird? The white ones. We're on third tonight, and Agnes will never let me forget it if I go out in sneakers.", when: { flag: 'grandma_in_town', time: [900, 1560], hearts: [3, 10] } },
     { text: "There you are. I saved you the good half of the mirror. You always take too long with your hair, Bird.", when: { flag: 'grandma_in_town', time: [900, 1560], hearts: [3, 10] }, mood: 'love' },
-    { text: "What year is it, chère? ...No. Don't tell me. If I'm wrong, let me be wrong a little longer. It's a nice year.", when: { flag: 'grandma_in_town', hearts: [3, 10] }, mood: 'sad' },
-    { text: "I had breakfast. Or I meant to. The intention counts, chère. In breakfast and in love.", when: { flag: 'grandma_in_town' } },
+    { text: "What year is it, chère? ...No. Wait. If I'm wrong, let me be wrong a little longer. It's a nice year.", when: { flag: 'grandma_in_town', hearts: [3, 10] }, mood: 'sad' },
+    { text: "I had breakfast. Or I meant to. Sami says there's toast on my cardigan, so the evidence leans my way.", when: { flag: 'grandma_in_town' } },
     { text: ["Bird, the bus is...", "(She stops. She looks at you for a long moment, and starts over.) Never mind. Sit down, chère. Tell me about your day. Slowly."], when: { flag: 'grandma_in_town', hearts: [6, 10], notFlag: 'truth_revealed', time: [900, 1560] }, mood: 'sad' },
     { text: "Is it Saturday? It feels like Saturday. Everything's lit up inside me like a marquee, and I can't find the switch.", when: { flag: 'grandma_in_town', time: [900, 1560] } },
 
     // ---------------------------------------------------------------- The back booth (the only place for business truth)
-    { text: "June still sets out chicory and two sugars without asking. Forty years. That isn't a diner, chère. That's a vow.", when: { map: ['diner'], place: ['insider'] }, mood: 'love', weight: 2 },
+    { text: "June still sets out chicory and two sugars without asking. Tonight she put them down before I'd sat. She didn't look at me while she did it.", when: { map: ['diner'], place: ['insider'] }, mood: 'love', weight: 2 },
     { text: "In here I can say it. I watched every Saturday. Every single one. I watched her get old on me one show at a time.", when: { map: ['diner'], place: ['insider'], hearts: [6, 10], notFlag: 'truth_revealed' }, mood: 'sad', weight: 2 },
     { text: "Forty years I watched her on Lou's tapes, chère. Every Saturday. She got old on me one VHS at a time.", when: { map: ['diner'], place: ['insider'], flag: 'truth_revealed' }, mood: 'sad', weight: 3 },
     { text: "The finish was supposed to be hers. She'd turn on me, they'd boo her for six weeks, and we'd make up at Homecoming. I changed one line.", when: { map: ['diner'], place: ['insider'], flag: 'truth_revealed' }, weight: 2 },
 
     // ---------------------------------------------------------------- Your career
-    { text: "I heard your match on the radio. You stalled too long before the comeback. Then you came back. That's the whole job, chère.", when: { flag: 'grandma_in_town', showDay: false, rank: ['opener', 'undercard', 'midcard'] } },
+    { text: ["I heard you and {opponent} on the radio. Gus said your name like it was a holiday.", "You stalled before the comeback. I could hear it. Then you came back, and I hit the bed rail so hard Sami came running."], when: { flag: 'grandma_in_town', lastMatch: { maxDaysAgo: 3 } } },
+    { text: ["{finisher}! Gus shouted it so loud the radio rattled on the sill.", "Velma said 'who's that?' I said 'mine.'"], when: { flag: 'grandma_in_town', lastMatch: { won: true, maxDaysAgo: 4 } }, mood: 'happy' },
+    { text: "You lost to {opponent}. I know. I heard. I'm proud anyway, and I'm the Duchess, so it counts double.", when: { flag: 'grandma_in_town', lastMatch: { won: false, maxDaysAgo: 4 } }, mood: 'love' },
     { text: "Main event? My grandbaby? Somebody find Lavinia. I want it in the paper. Above the fold. In a bigger font than the weather.", when: { rank: ['main'] }, mood: 'happy', weight: 2 },
     { text: "They gave you the pencil. Bird's pencil. She's chewed on that thing since 1984. Hold it like it's still warm.", when: { rank: ['pencil', 'owner'] }, mood: 'love', weight: 2 },
     { text: "A hero. Well. Somebody in this family had to be. Wave at the children, chère. Mean it every time.", when: { alignment: ['face'], flag: 'debuted' } },
@@ -156,16 +158,43 @@ export default {
       "Chère. I love you. Take this back.",
     ],
     birthday: [
-      "My birthday? You remembered. I didn't. That's the arrangement now, chère, and I like it very much.",
-      "Seventy-some years and they still make a fuss. Make a bigger one. I'm the Duchess.",
-      "Thank you, chère. Now sing. Badly. I'll sing worse. It's tradition.",
+      "My birthday? Somebody kept track. It wasn't me. That's the arrangement now, chère, and I like it very much. ...A {item}! Sit.",
+      "Seventy-some years and they still make a fuss. Make a bigger one. Put the {item} where Lavinia can see it from the hall.",
+      "Thank you for the {item}, chère. Now sing. Badly. I'll sing worse. Sami will leave the room. That's how we know it's a party.",
+    ],
+    byItem: {
+      'old-program': ["1979. There's Bird, flexing on the cover like she invented arms.", "And there, in the corner, cut off at the shoulder. That's my elbow. I'd know my elbow anywhere."],
+      'tiny-cake': "One of Tiny's? Look at the roses. She did those with a pin. I'll eat it in three bites so it lasts.",
+      coffee: "Chicory? ...No, it's June's. Close enough. Closer than anything in this building. Sit while I drink it. Don't talk till half.",
+      polaroid: ["A crowd. Front row. A purse in the air.", "That's Agnes. That's 1980-something, she's swinging at somebody, and I'm almost certain it's me."],
+      'grandmas-chili': "My chili. From the back of the poster. You made it? ...It needs more cumin. It's perfect. Don't change a thing. Add cumin.",
+      bouquet: "Flowers from the bakery window. Put them in the water pitcher. Sami will say the pitcher is for water. Sami will lose.",
+      wildflowers: "Creek flowers. The yellow ones grew by the Sportatorium back door in '76. Bird used to pick them to throw at me. Nobody knew it was a bit.",
+      teacup: "A teacup with a chip. Good. I'll drink from the chip side. Keeps you humble.",
+      paperback: "A mystery with the last page gone. I'll make up an ending. It'll be better. I'll tell it to Lavinia and she'll want to read it, and she can't. Ha.",
+      'merch-sign': "A sign! With glitter! I'm putting it in the window so the whole Evening Bell knows whose grandbaby you are.",
+      pie: "Pie. Agnes's recipe. I'm going to tell Agnes I ate it. I want to watch her face do the thing.",
+      vinyl: "Somebody's entrance music. Put it on, chère. I'll tell you who it was by the second bar. ...Oh. Oh, I know this one.",
+    },
+    later: [
+      "The {lastGift} is on the vanity, chère, right where the bulbs can see it. Sami tried to dust it. I told him the Duchess dusts her own tributes.",
+      "Somebody gave me a {lastGift}. Was it you? It was you. I knew. I was testing you.",
     ],
   },
+  again: [
+    "You're still here. Good. Sit. If I tell you the same story twice, it's because it's a good one.",
+    "(Grandma pats the bed beside her without looking up from her cards. She's winning. She's cheating.)",
+    "Chère, we just talked. Didn't we? ...We did. I remember. I remember the important things.",
+  ],
+  idle: [
+    "(Grandma is humming a waltz and doing the hand parts.)",
+    "Shh. Gus is on the radio. Sit and listen with me.",
+  ],
   birthday: { season: 3, day: 9 },
   events: [
     // ---------------------------------------------------------------- 2: Sunday, six o'clock
     {
-      id: 'grandma-2', hearts: 2, title: "Don't Tell Her I Asked",
+      id: 'grandma-2', hearts: 2, title: 'The Red Velvet Jacket',
       script: async (api) => {
         const away = !api.hasFlag('grandma_in_town');
         if (away) {
@@ -348,7 +377,7 @@ export default {
         await api.narrate("She stands, straight as a ring post, and sinks into a slow, perfect curtsy. Her hand hooks your ankle. You're on the bed before you know it.");
         await api.narrate("She's grinning like it's 1979.");
         await api.sayMood('grandma', 'smug', "The Curtsy. Lesson one.");
-        await api.sayMood('grandma', 'love', "You'll learn it three Sundays running, chère. When you already know it, don't tell me. Let me teach it to you anyway.");
+        await api.sayMood('grandma', 'love', "You'll learn it three Sundays running, chère. When you already know it, keep quiet. Let me teach it to you anyway.");
         api.flag('grandma_training', true);
       },
     },

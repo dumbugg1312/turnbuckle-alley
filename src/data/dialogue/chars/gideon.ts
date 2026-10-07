@@ -44,7 +44,7 @@ export default {
     { text: "Clementine gave my entrance two stars. *Two.* She wrote that it 'lacked humility.' It's an entrance, darling, not a monastery.", when: { place: ['public'], hearts: [3, 10] } },
     { text: "Tonight, darling, I will be *devastating*. Do try to survive it. Bring a cardigan. The wind from my hair is considerable.", when: { showDay: true, place: ['public', 'show'] }, weight: 2 },
     { text: "A postcard from Miss Opal. 'The hair's good here too, Gideon. Not as good as yours.' Signed 'Your Mother in Hair.' I will not be weeping in a public salon.", when: { place: ['public'], hearts: [3, 10], map: ['salon'] }, mood: 'sad' },
-    { text: "Mondays I do hair at Evening Bell. Visiting royalty. ...Don't tell. I haven't *lost* my edge. I've *lent* it to the residents.", when: { flag: 'grandma_in_town', weekday: [0], place: ['public'] }, mood: 'smug' },
+    { text: "Mondays I do hair at Evening Bell. Visiting royalty. ...I haven't *lost* my edge. I've *lent* it to the residents. On a short loan. With interest.", when: { flag: 'grandma_in_town', weekday: [0], place: ['public'] }, mood: 'smug' },
 
     // ---------------------------------------------------------------- Weather and seasons
     { text: "Rain. *Frizz.* Do not make eye contact. I'm composing myself.", when: { weather: ['rain'], place: ['public'] } },
@@ -60,8 +60,8 @@ export default {
     { text: "Do you ever feel like if you stop performing for one second, everybody will see the seams? No? Just me? Great. Fantastic. Pass the bag.", when: { place: ['insider'], hearts: [0, 5] }, weight: 2 },
     { text: "I knit. In case you wondered. Mostly scarves. Occasionally small hats for a cat that doesn't exist yet.", when: { place: ['insider'], hearts: [3, 10] } },
     { text: "A compliment should be precise. 'You look nice' is a sedative. 'The way you tilt your head when you're lying' is a *gift.*", when: { place: ['insider'] } },
-    { text: "Hazel taught me box breathing. In for four, hold four, out four, hold four. I've done it eleven thousand times and I still use the bag. Redundancy, darling.", when: { place: ['insider'] } },
-    { text: "Tuesdays at noon I talk to someone who's paid to be kind to me. Best money I've ever spent. Don't tell the Mountain. He's on the waiting list.", when: { place: ['insider'], hearts: [3, 10] } },
+    { text: "Hazel taught me box breathing. In for four, hold four, out four, hold four. I've done it four thousand times and I still use the bag. Redundancy, darling.", when: { place: ['insider'] } },
+    { text: "Tuesdays at noon I talk to someone who's paid to be kind to me. Best money I've ever spent. I put the Mountain on her waiting list. He sent me a thank-you card with a sparrow on it.", when: { place: ['insider'], hearts: [3, 10] } },
     { text: "Every contract I've ever signed has the Hair Clause. Birdie reads it aloud every Christmas. She laughs until she coughs.", when: { place: ['insider'] } },
     { text: "There's a bag in my gear bag. There's always a bag in my gear bag. It's the single most professional thing I own.", when: { place: ['insider'], showDay: true }, mood: 'sad' },
     { text: "You're new, so, first rule: nobody can use a nerve you've already named out loud. Say it. 'I'm terrified.' Then go do the thing.", when: { place: ['insider'], rank: ['rookie', 'opener'] } },
@@ -78,7 +78,7 @@ export default {
     { text: "I learned the crown braid from a 1981 photograph. Seventeen attempts. On a wig head. On Marigold. On Jobber. Don't ask about Jobber.", when: { place: ['insider'], flag: 'grandma_in_town' }, mood: 'happy', weight: 2 },
     { text: "Her hands were shaking this morning, so I did the braid slowly. We pretended it was a *performance.* I'm very good at pretending it's a performance.", when: { place: ['insider'], flag: 'grandma_in_town', weekday: [0] }, mood: 'sad', weight: 2 },
     { text: "The Hair Match is coming. I'm terrified. I'm also *thrilled.* Neither of those is the least bit helpful.", when: { flag: 'gideon_hair_match', place: ['insider'], season: [2] } },
-    { text: "She wore the braid. I did it Monday, eleven minutes. Her hands were steady. I let mine shake.", when: { flag: 'reunion_done', place: ['insider'] }, mood: 'happy', weight: 2 },
+    { text: "She wore the braid. I did it Monday, twelve minutes. Her hands were steady. I let mine shake.", when: { flag: 'reunion_done', place: ['insider'] }, mood: 'happy', weight: 2 },
 
     // ---------------------------------------------------------------- Dating
     { text: "(Gideon makes the waiter take forty photos of his good side. Under the table, his other hand is shaking, and holding yours.)", when: { dating: true, place: ['public'], map: ['diner'] }, weight: 2 },
@@ -88,6 +88,9 @@ export default {
 
     // ---------------------------------------------------------------- Family
     { text: "If they're looking at the hair, they aren't looking at me. You look at me. I've noticed. It's... a lot. A *good* lot.", when: { hearts: [9, 14], place: ['insider'] }, mood: 'love' },
+    { text: ["I watched you and {opponent} from the curtain, through the gap where the velvet's worn.", "Your hair did *nothing* for the finish, darling. Nothing. Come Tuesday. I'll fix the finish."], when: { place: ['insider'], lastMatch: { maxDaysAgo: 3 } } },
+    { text: "{opponent}? Beating *you*? I've seen better wins at a raffle. ...You sold it beautifully. I'll deny that at the salon.", when: { place: ['insider'], lastMatch: { won: false, minStars: 3, maxDaysAgo: 4 } }, mood: 'smug' },
+    { text: "Oh, I heard about {opponent}. Everyone heard. Darling, a *win* like that and you still came out in that jacket?", when: { place: ['public'], alignment: ['face', 'tweener'], lastMatch: { won: true, maxDaysAgo: 4 } }, mood: 'smug' },
   ],
   gifts: {
     loves: ['teacup', 'bouquet', 'merch-sign', 'rhinestone'],
@@ -115,10 +118,34 @@ export default {
       "Static. You have brought static into my *salon.*",
     ],
     birthday: [
-      "My birthday! You remembered! Miss Opal sends a postcard every year signed 'Your Mother in Hair.' This year there are *two* of you. ...Don't tell the mirror. It's jealous.",
-      "The fourteenth of winter. A coronation, really. And you came with a gift. Sit. I'm going to do something *magnificent* with your hair.",
+      "Miss Opal sends a postcard every birthday signed 'Your Mother in Hair.' And now a {item}. Two tributes. I'm going to need a *taller* mantel.",
+      "The fourteenth of winter. A coronation, really. And you came bearing a {item}. Sit. I'm going to do something *magnificent* with your hair.",
+    ],
+    byItem: {
+      teacup: "A floral teacup with a chip on the rim. Chamomile, Tuesday at eleven, before the call. You've just become part of my therapy. Congratulations.",
+      bouquet: ["From the bakery window. Somebody on Main Street *saw* you buy these for me.", "Good. Let them talk. I'll be putting them in the salon window where talk can see them."],
+      'merch-sign': "A sign. With *glitter.* Hand-painted. Look at the G. Somebody worked on that G. I'm going to hang it over the red chair and never explain it.",
+      rhinestone: "A real rhinestone. From down there. (He holds it to the light.) This is going on the collar. Front and center. Where my *heart* would be, if I were sentimental.",
+      sequins: "A handful of sequins. They'll get everywhere. They'll be in the floor grout till 2050. Thank you.",
+      yarn: "Pink yarn. Perfect for a hat for the cat I'm going to get one day. The cat's name is Duchess. I've decided.",
+      wildflowers: "Creek flowers. Wild, unkempt, a little frizzy. I relate. I'll put them in the good vase.",
+      'tiny-cake': "One of Tiny's. I'll eat it at the station between clients. Tiny frosts like I tease: with total commitment and a very fine tool.",
+      vinyl: "An old entrance theme. I'll play it while I sweep up. I sweep beautifully to strings.",
+    },
+    later: [
+      "The {lastGift} has a place of honor by the mirror. The mirror has opinions. I've asked it to keep them to itself.",
+      "A client asked about the {lastGift}. I said 'a gift from someone with *taste*.' She asked who. I said 'not you, darling.'",
     ],
   },
+  again: [
+    "Back for more? I'm flattered. I'm also mid-foil. Two minutes.",
+    "(Gideon holds up the hand mirror, checks you in it, and nods. That was the whole conversation.)",
+    "Darling, we've *spoken.* Don't overexpose yourself. It's how they get you.",
+  ],
+  idle: [
+    "(Gideon is arranging combs by color. Again.)",
+    "Not now, darling. I'm being looked at by a window.",
+  ],
   birthday: { season: 3, day: 14 },
   events: [
     // ---------------------------------------------------------------- 2: Three compliments
@@ -160,7 +187,7 @@ export default {
     {
       id: 'gideon-4', hearts: 4, map: 'salon', when: { weekday: [2] }, title: 'Fifty Folding Chairs',
       script: async (api) => {
-        await api.narrate("Wednesday afternoon. The salon's empty, the sign turned to BACK IN FIVE MINUTES. Gideon's at his station, folding the same towel for the eleventh time.");
+        await api.narrate("Wednesday afternoon. The salon's empty, the sign turned to BACK IN FIVE MINUTES. Gideon's at his station, folding the same towel for the ninth time.");
         await api.say('gideon', "Walk with me. The Hot Tag. I'm about to have a *moment* and I would like it to be near pie.");
         await api.fade();
         await api.narrate("The back booth. A paper lunch bag is already on the table, crumpled and soft with use. Gideon sits down, pressing it to his mouth, and breathes in and out like a leaky tire.");
@@ -175,7 +202,7 @@ export default {
         if (c === 'breathe') {
           api.hearts('gideon', 30);
           await api.narrate("You breathe. In for four. Hold. Out. After the third round, his shoulders drop an inch. After the sixth, two.");
-          await api.say('gideon', "Hazel taught me that. I do it eleven times a day. I'd just never done it with *company.*");
+          await api.say('gideon', "Hazel taught me that. I do it six times a day. I'd just never done it with *company.*");
         } else if (c === 'nervous') {
           api.hearts('gideon', 30);
           await api.sayMood('gideon', 'surprised', "You are? You *look* so... you walk out there like... oh. Oh, we're all just doing a very convincing impression of a person.");
@@ -228,7 +255,7 @@ export default {
         await api.narrate("He sets a fat, battered ledger on the counter. On the cover, in marker gone brown with age: HAIR.");
         await api.narrate("Inside: a page for every hairstyle since he was nine. Little drawings, notes, photographs taped in at the corners.");
         await api.say('gideon', "Age nine. First page. 'MOP.' Written in red crayon on my desk, by somebody else. I copied it into the book myself. If I wrote it down first, it couldn't ambush me.");
-        await api.say('gideon', "Eleven: 'The Bowl.' Thirteen: 'The Terrible Thing With The Gel.' Fifteen: the first pompadour. 'Nobody laughed. I checked.'");
+        await api.say('gideon', "Ten: 'The Bowl.' Thirteen: 'The Terrible Thing With The Gel.' Fifteen: the first pompadour. 'Nobody laughed. I checked.'");
         await api.say('gideon', "Every page is armor. The hair is armor. If they're looking at the hair, they're not looking at me.");
         await api.sayMood('gideon', 'sad', "The last page has been blank for a year. I keep thinking I'll write something. But all I can think of is, 'Here is the man under it.'");
         const c = await api.choose(null, [
