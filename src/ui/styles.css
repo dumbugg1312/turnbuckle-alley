@@ -168,7 +168,7 @@ button { font-family: inherit; color: inherit; font-variant-ligatures: none; }
 
 /* Brass corner brackets on the big framed objects. */
 .ornate { position: relative; }
-.ornate::before, .menu-book::before, .cr-panel::before, .m-kick::before, .hud-ticket::before {
+.ornate::before, .menu-book::before, .cr-panel::before, .m-kick::before {
   content: '';
   position: absolute;
   inset: calc(var(--px) * 1);

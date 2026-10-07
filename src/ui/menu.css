@@ -62,11 +62,11 @@
   height: calc(var(--px) * 9);
   font-size: 0;
   color: transparent;
-  background: currentColor;
+  background: var(--ink-soft);
   -webkit-mask: var(--tab-ico) center / 100% 100% no-repeat;
   mask: var(--tab-ico) center / 100% 100% no-repeat;
 }
-.menu-tab .ico { background: var(--ink-soft); }
+
 .menu-tab[data-tab='bag'] { --tab-ico: var(--ico-bag); }
 .menu-tab[data-tab='moves'] { --tab-ico: var(--ico-moves); }
 .menu-tab[data-tab='people'] { --tab-ico: var(--ico-people); }
