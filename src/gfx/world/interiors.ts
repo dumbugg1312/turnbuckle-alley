@@ -3998,6 +3998,283 @@ reg('corkboard', {
     ),
 });
 
+// ---------------------------------------------------------------- Birdie's office and other working rooms
+
+/** Birdie's desk: napkins with whole storylines on them, ticket rolls, the bank's final notice. */
+reg('promoter-desk', {
+  label: () => 'Look',
+  lights: (o) => [light(o, 14, -22, 30, '#ffe0a0')],
+  draw: (ctx, o) =>
+    blit(
+      ctx,
+      o,
+      iart(
+        'promoter-desk',
+        42,
+        26,
+        () => {
+          const wd = WALNUT;
+          // the top: walnut with a leather blotter, buried
+          R(0, 6, 42, 8, wd.l);
+          fgrain(0, 6, 42, 8, { ...wd, b: wd.l }, 441);
+          H1(0, 42, 6, liA(wd.l, 0.4));
+          R(9, 7, 18, 6, '#3f6a4a');
+          H1(9, 27, 7, '#5f8a6a');
+          // napkins scrawled with storylines: arrows, names, a circled "TITLE?"
+          const nap: [number, number][] = [[10, 6.5], [15, 8], [20, 6], [12, 10]];
+          nap.forEach(([nx, ny], i) => {
+            R(nx, ny, 6, 5, '#fbf6ea');
+            H1(nx, nx + 6, ny + 5, '#d8cdc4');
+            L1(nx + 0.5, ny + 1.5, nx + 3, ny + 1.5, '#3f6ab0');
+            L1(nx + 3, ny + 1.5, nx + 5, ny + 3, '#3f6ab0');
+            P1(nx + 4.5, ny + 3.5, '#3f6ab0');
+            if (i === 2) ell(nx + 3, ny + 3.2, 2.2, 1.2, (_a, _b, o2) => o2);
+            if (i % 2) L1(nx + 1, ny + 3.5, nx + 3, ny + 3.5, '#c9404c');
+          });
+          // ticket rolls: red and blue, one unspooled across the desk
+          for (const [tx, c] of [[30, '#d8434b'], [34, '#3f6ab0']] as [number, Color][]) {
+            ell(tx, 6.5, 2, 2, c);
+            ell(tx, 6.5, 0.8, 0.8, '#fbf6ea');
+            P1(tx - 0.5, 5.5, liA(c, 0.4));
+          }
+          for (let x = 30; x > 22; x -= 1.5) R(x - 1.5, 9 + Math.sin(x) * 0.5, 1.4, 1.6, '#d8434b');
+          // the bank letter with a red stamp
+          R(28, 9.5, 6, 4, '#fbf6ea');
+          R(29, 10.5, 3, 1.5, alpha('#c9404c', 200));
+          // rotary phone, mug, a dish of peppermints
+          RR(1, 3, 8, 3.5, 1, '#2b2140');
+          RR(1.5, 6, 7, 3.5, 1, '#3a3050');
+          circ(5, 7.8, 1.3, '#d8dcf0');
+          for (let k = 0; k < 8; k++) P1(5 + Math.cos(k * 0.8) * 0.9, 7.8 + Math.sin(k * 0.8) * 0.9, '#3a3050');
+          mug(36.5, 9, '#fbf6ea', true);
+          P1(37.5, 9.5, '#6a3a2a');
+          ell(4, 12, 2.5, 1, '#e4e8f8');
+          for (let k = 0; k < 4; k++) {
+            P1(2.8 + k * 0.8, 11.6, k % 2 ? '#d8434b' : '#fbf6ea');
+            P1(3 + k * 0.8, 12, '#fbf6ea');
+          }
+          // green banker's lamp
+          R(37.5, 0.5, 1, 5, PAL.gold3);
+          poly([[33.5, 1], [41.5, 1], [42, 3.5], [33, 3.5]], '#2f6a52');
+          H1(34, 41, 1, '#5fa882');
+          ell(38, 6, 2.5, 0.8, PAL.gold3);
+          // front: drawers (the bottom left one sticks: it's ajar) and a brass nameplate
+          R(0, 14, 42, 10, wd.b);
+          fgrain(0, 14, 42, 10, wd, 442, true);
+          H1(0, 42, 14, wd.s);
+          for (const dx0 of [1, 32]) {
+            for (const dy0 of [15, 19.5]) {
+              R(dx0, dy0, 9, 4, shA(wd.b, 0.06));
+              H1(dx0, dx0 + 9, dy0, liA(wd.b, 0.2));
+              H1(dx0, dx0 + 9, dy0 + 3.5, shA(wd.b, 0.35));
+              R(dx0 + 3.5, dy0 + 1.5, 2, 0.8, PAL.gold2);
+            }
+          }
+          R(1, 23, 9, 1, shA(wd.b, 0.5));
+          R(1.5, 22.5, 8, 0.6, '#fbf6ea');
+          R(12, 15.5, 18, 7, shA(wd.b, 0.15));
+          R(11.5, 16.5, 19, 3.5, PAL.gold2);
+          H1(11.5, 30.5, 16.5, '#fff0a0');
+          H1(11.5, 30.5, 19.5, PAL.gold3);
+          tinyC('B. MALONE', 21, 17.2, '#5a3a2a');
+          R(0, 24, 42, 2, wd.d);
+        },
+        {
+          shadow: [['r', 2, 22, 42, 5]],
+          over: () => {
+            ell(38, 4.2, 3.5, 0.8, '#fff6dc');
+            R(34, 5, 8, 4, () => (dth(FX, FY, 3) ? alpha('#fff0c0', 90) : null));
+          },
+        },
+      ),
+    ),
+});
+
+/** A window with venetian blinds half-open, slatted daylight. */
+reg('window-blinds', {
+  lights: (o) => [light(o, 0, -6, 34, '#fff4d8')],
+  draw: (ctx, o) => {
+    const v = variant(o, 2);
+    blit(
+      ctx,
+      o,
+      iart(
+        `window-blinds|${v}`,
+        24,
+        22,
+        () => {
+          // painted frame, sky and a brick wall across the alley (or the city, high up)
+          R(0, 0, 24, 20, '#fbf0d9');
+          H1(0, 24, 0, '#ffffff');
+          V1(23.5, 0, 20, '#d6c2a4');
+          if (v === 0) {
+            VG(2, 2, 20, 16, ['#a8d4ec', '#d8ecf4', '#f6e2c0']);
+            R(2, 10, 20, 8, '#b85a4a');
+            R(2, 10, 20, 8, (_a, _b, o2) => (o2 && (FY % 4 === 0 || (FX + (Math.floor(FY / 4) % 2) * 4) % 8 === 0) ? '#d8a890' : o2));
+            R(14, 6, 1, 4, '#4e4870');
+            H1(8, 22, 6, '#4e4870');
+          } else {
+            VG(2, 2, 20, 16, ['#5a7ab8', '#8aa8d8', '#e8c0a8']);
+            for (let k = 0; k < 7; k++) {
+              const bh = 4 + hash2(k, 1, 451) * 9;
+              R(2 + k * 3, 18 - bh, 2.5, bh, '#3a3a5a');
+              for (let w = 0; w < bh - 1; w += 1.5) if (hash2(k, w * 2, 452) < 0.4) P1(2.5 + k * 3 + (w % 2), 18 - bh + 1 + w, '#ffe08a');
+            }
+          }
+          fglare(2, 2, 20, 16, 0.25);
+          // the blinds: fine slats, lower half drawn, cords dangling
+          for (let y = 2; y < 11; y += 1) {
+            H1(2, 22, y, '#f2eee4');
+            H1(2, 22, y + 0.5, '#c8c0b0');
+          }
+          R(1.5, 1, 21, 1.5, '#e8e0d0');
+          V1(5, 11, 16, '#c8c0b0');
+          P1(5, 16, '#a89878');
+          V1(19, 11, 14, '#c8c0b0');
+          // sill with a dusty plant
+          R(0, 18, 24, 2, '#fff4e0');
+          H1(0, 24, 20, '#cdb898');
+          sprig(17, 14.5);
+          V1(24, 1, 21, SH(70));
+          H1(1, 24, 21, SH(70));
+        },
+        { outline: false },
+      ),
+    );
+  },
+});
+
+reg('safe', {
+  solid: { x: -7, y: -6, w: 14, h: 5 },
+  draw: (ctx, o) =>
+    blit(
+      ctx,
+      o,
+      iart(
+        'safe',
+        16,
+        20,
+        () => {
+          // a squat iron safe on casters, gold pinstripes, a dial nobody remembers
+          RR(0, 0, 16, 18, 2, '#3a4250');
+          R(0.5, 0.5, 15, 17, (_a, _b) => mixc('#56607a', '#2e3442', (ly() / 17) * 0.7 + (lx() / 15) * 0.3));
+          H1(1, 15, 0.5, '#8a96b0');
+          R(2, 2, 12, 13, (_a, _b, o2) => o2);
+          for (const [x0, y0, w, h] of [[2, 2, 12, 13]] as [number, number, number, number][]) {
+            H1(x0, x0 + w, y0, PAL.gold2);
+            H1(x0, x0 + w, y0 + h, PAL.gold3);
+            V1(x0, y0, y0 + h, PAL.gold2);
+            V1(x0 + w, y0, y0 + h, PAL.gold3);
+          }
+          tinyC('ACW', 8, 3.5, PAL.gold2);
+          circ(8, 9.5, 2.5, '#c8cce4');
+          circ(8, 9.5, 1.8, '#2b2140');
+          for (let k = 0; k < 12; k++) P1(8 + Math.cos(k / 1.9) * 2.2, 9.5 + Math.sin(k / 1.9) * 2.2, '#9aa2c8');
+          P1(8, 8, '#ffffff');
+          chrome(11.5, 11.5, 1, 3);
+          for (const cx of [2, 14]) ell(cx, 18.6, 1.3, 1.3, '#2b2140');
+        },
+        { shadow: [['e', 8, 19, 7, 1.5]] },
+      ),
+    ),
+});
+
+/** A stack of cardboard boxes (props.label). */
+reg('box-stack', {
+  solid: { x: -9, y: -6, w: 18, h: 5 },
+  draw: (ctx, o) => {
+    const label = String(o.props.label ?? 'FLYERS').toUpperCase();
+    blit(
+      ctx,
+      o,
+      iart(
+        `box-stack|${label}`,
+        20,
+        22,
+        () => {
+          const box = (x: number, y: number, w: number, h: number, c: Color, lab: string) => {
+            R(x, y, w, h, c);
+            R(x, y, w, 2, liA(c, 0.25));
+            H1(x, x + w, y, liA(c, 0.45));
+            V1(x + w / 2, y, y + 2, shA(c, 0.3));
+            R(x + w / 2 - 1, y + 2, 2, h - 2, alpha('#e8d8a8', 180));
+            V1(x + w - 0.5, y, y + h, shA(c, 0.25));
+            if (lab) tinyC(lab, x + w / 2, y + h / 2, '#3a2c3a');
+          };
+          box(1, 10, 18, 12, '#c8a070', label);
+          box(3, 2, 13, 9, '#b89060', '');
+          // a flyer escaping the top box
+          poly([[9, 1], [15, 0], [16, 4], [10, 5]], '#ffd050');
+          L1(11, 2, 14, 1.5, '#c9404c');
+          L1(11, 3, 14.5, 2.5, '#3a3478');
+        },
+        { shadow: [['r', 1, 19, 20, 4]] },
+      ),
+    );
+  },
+});
+
+reg('cot', {
+  solid: { x: -15, y: -9, w: 30, h: 8 },
+  draw: (ctx, o) =>
+    blit(
+      ctx,
+      o,
+      iart(
+        'cot',
+        32,
+        16,
+        () => {
+          // army cot where Birdie sleeps after the late shows; a crocheted blanket, one sneaker
+          for (const lx0 of [2, 29]) {
+            L1(lx0, 8, lx0 - 1, 15, '#5a6a4a');
+            L1(lx0, 8, lx0 + 1, 15, '#4a5a3a');
+          }
+          R(0, 4, 32, 6, '#6a7a52');
+          R(0.5, 4.5, 31, 5, (_a, _b) => mixc('#8a9a6a', '#5a6a42', (ly() - 4.5) / 5));
+          RR(1, 2, 8, 4, 1, '#fbf6ea');
+          H1(2, 8, 2, '#ffffff');
+          afghan(10, 3, 20, 6);
+          R(0, 9.5, 32, 1, '#4a5a3a');
+          ell(24, 14.5, 2.5, 1.2, '#fbf6ea');
+          H1(22, 26, 14, '#d8434b');
+        },
+        { shadow: [['r', 1, 12, 32, 4]] },
+      ),
+    ),
+});
+
+reg('fishing-gear', {
+  draw: (ctx, o) =>
+    blit(
+      ctx,
+      o,
+      iart(
+        'fishing-gear',
+        14,
+        30,
+        () => {
+          // rod leaning on the wall, line wound, a red-and-white bobber; tackle box and bucket
+          L1(9, 29, 13, 0, '#8a5640');
+          L1(9.5, 29, 13.5, 0, '#c08a5a');
+          ell(10, 22, 1.4, 1.4, '#9aa2c8');
+          L1(13, 0.5, 12, 8, alpha('#e8f4ff', 200));
+          ell(12, 9, 1, 1, '#d8434b');
+          P1(12, 9.5, '#fbf6ea');
+          R(0, 22, 9, 6, '#2f6a52');
+          H1(0, 9, 22, '#5fa882');
+          R(3.5, 21, 2, 1, '#9aa2c8');
+          R(0, 24.5, 9, 0.5, '#1e4a3a');
+          R(7, 24, 6, 6, '#9aa2c8');
+          chrome(7, 24, 6, 6);
+          L1(7, 24, 10, 21, '#6e688e');
+          L1(10, 21, 13, 24, '#6e688e');
+        },
+        { shadow: [['e', 7, 29, 6, 1.5]] },
+      ),
+    ),
+});
+
 reg('trophy-case', {
   solid: { x: -16, y: -10, w: 32, h: 9 },
   draw: (ctx, o) => {
@@ -4075,37 +4352,63 @@ reg('trophy-case', {
 
 // ================================================================ arena
 
-function lockerUnit(x: number, base: Color, k: number): void {
-  // one 12 x 28 locker door at x
-  const lc = liA(base, 0.25);
+// ---------------------------------------------------------------- the locker room
+
+/** One 12 x 30 steel locker door with a masking-tape name strip, in fine detail. */
+function lockerDoor(x: number, base: Color, k: number, name: string, old = false): void {
+  const lc = liA(base, 0.22);
   const dc = shA(base, 0.25);
-  R(x, 0, 12, 28, base);
-  VL(x, 0, 27, lc);
-  VL(x + 11, 0, 27, dc);
-  HL(x, x + 11, 0, liA(base, 0.4));
-  // vents
-  for (const y of [3, 5, 7]) HL(x + 3, x + 8, y, shA(base, 0.4));
-  for (const y of [20, 22]) HL(x + 3, x + 8, y, shA(base, 0.4));
-  // number plate + handle
-  R(x + 4, 10, 4, 3, '#d8dcf0');
-  P(x + 5, 11, '#4e4870');
-  P(x + 6, 11, '#4e4870');
-  R(x + 9, 13, 1, 4, '#d8dcf0');
-  P(x + 9, 14, '#6e688e');
-  R(x, 25, 12, 3, shA(base, 0.45));
-  // a little lived-in detail on some doors
-  if (k < 0.18) {
-    // band sticker
-    RR(x + 2, 15, 5, 4, 1, '#ffd050');
-    P(x + 3, 16, '#d8434b');
+  R(x, 0, 12, 30, base);
+  R(x + 0.5, 0.5, 11, 29, (_a, _b) => {
+    // baked enamel: a soft vertical sheen, fine orange-peel speckle
+    const t = (lx() - x) / 12;
+    let c = mixc(lc, dc, Math.min(1, Math.abs(t - 0.3) * 1.6));
+    const h = hash2(FX, FY, 233 + Math.floor(k * 100));
+    if (h < 0.05) c = shA(c, 0.08);
+    else if (h > 0.97) c = liA(c, 0.12);
+    return c;
+  });
+  V1(x, 0, 30, liA(base, 0.35));
+  V1(x + 11.5, 0, 30, shA(base, 0.4));
+  H1(x, x + 12, 0, liA(base, 0.45));
+  // louvred vents top and bottom
+  for (const vy of [2.5, 4, 5.5, 23, 24.5]) {
+    H1(x + 3, x + 9, vy, shA(base, 0.5));
+    H1(x + 3, x + 9, vy + 0.5, liA(base, 0.3));
+  }
+  // latch handle and a number plate
+  chrome(x + 9, 13, 1.5, 5);
+  R(x + 4.5, 13.5, 3, 2, '#d8dcf0');
+  tinyC(String(10 + Math.floor(k * 89)), x + 6, 13.6, '#4e4870');
+  R(x, 27, 12, 3, shA(base, 0.45));
+  H1(x, x + 12, 27, shA(base, 0.25));
+  // lived-in touches
+  if (k < 0.15) {
+    // a band sticker and a strip of athletic tape
+    RR(x + 2, 17, 5, 4, 1, '#ffd050');
+    P1(x + 3.5, 18.5, '#d8434b');
+    R(x + 6, 19, 4, 1, '#fbf6ea');
   } else if (k > 0.85) {
-    // towel hanging from the vent
-    R(x + 2, 5, 4, 8, '#fbf6ea');
-    HL(x + 2, x + 5, 10, '#d8434b');
-  } else if (k > 0.7 && k < 0.78) {
-    // dent
-    P(x + 6, 17, dc);
-    P(x + 7, 18, lc);
+    // a towel hung through the vent
+    R(x + 2, 4, 4, 9, '#fbf6ea');
+    H1(x + 2, x + 6, 10, '#d8434b');
+    V1(x + 5.5, 4, 13, '#d8d0c8');
+  } else if (k > 0.6 && k < 0.7) {
+    // a dent from somebody's bad night
+    ell(x + 6.5, 20, 1.6, 1.2, dc);
+    L1(x + 5.5, 19, x + 7, 21, lc);
+  } else if (k > 0.35 && k < 0.45) {
+    // a Polaroid tucked in the frame
+    R(x + 7, 16, 4, 4.5, '#fbf6ea');
+    R(x + 7.5, 16.5, 3, 2.5, '#9cc8e0');
+    ell(x + 9, 18, 0.8, 0.8, '#e6ab84');
+  }
+  // name strip: masking tape and marker
+  if (name) {
+    R(x + 1.5, 8.5, 9, 3, old ? '#e2d4b0' : '#f2e6c4');
+    H1(x + 1.5, x + 10.5, 8.5, '#fff6dc');
+    P1(x + 10, 11, '#d8c8a0');
+    tinyC(name.slice(0, 6), x + 6, 9, old ? '#9a7a6a' : '#3a2c3a');
   }
 }
 reg('locker', {
@@ -4113,23 +4416,25 @@ reg('locker', {
   draw: (ctx, o) => {
     const n = num(o, 'w', 3);
     const W = n * 12;
+    const names = String(o.props.names ?? '').split(',');
     ensureSolid(o, { x: -Math.floor(W / 2), y: -8, w: W, h: 7 });
     blit(
       ctx,
       o,
       iart(
-        `locker|${n}|${o.x % 7}`,
+        `locker|${n}|${o.x % 7}|${names.join(',')}`,
         W,
-        28,
+        31,
         () => {
-          for (let i = 0; i < n; i++) lockerUnit(i * 12, i % 2 ? '#4f8a9a' : '#5694a2', hash2(i, o.x % 7, 231));
+          for (let i = 0; i < n; i++) lockerDoor(i * 12, i % 2 ? '#4f8a9a' : '#5694a2', hash2(i, o.x % 7, 231), (names[i] ?? '').trim());
+          // a steel bench-top cap running along the bank
+          chrome(0, 30, W, 1, false);
         },
-        { shadow: [['r', 2, 24, W + 1, 5]] },
+        { shadow: [['r', 2, 26, W + 1, 5]] },
       ),
     );
   },
 });
-
 reg('locked-locker', {
   solid: { x: -6, y: -8, w: 12, h: 7 },
   label: () => 'Look',
@@ -4141,30 +4446,378 @@ reg('locked-locker', {
       iart(
         `locked-locker|${f}`,
         12,
-        28,
+        31,
         () => {
-          // the same locker as the rest, but older: faded paint, dust, 40 years shut
-          lockerUnit(0, '#6a8a92', 0.5);
-          R(0, 0, 12, 28, (x, y, c) => (hash2(x, y, 241) < 0.12 ? mixc(c, '#b8b0a8', 0.35) : c));
-          HL(0, 11, 0, '#c8c0b8');
+          // the same locker as the rest, but older: faded paint, dust, forty years shut
+          lockerDoor(0, '#6a8a92', 0.5, 'D.D.', true);
+          R(0, 0, 12, 30, (_a, _b, c) => (c && hash2(FX, FY, 241) < 0.14 ? mixc(c, '#b8b0a8', 0.4) : c));
+          H1(0, 12, 0, '#c8c0b8');
+          H1(0, 12, 0.5, '#d8d0c8');
           // a dried rose tucked into the vent
-          L(4, 5, 7, 2, '#5a6a4a');
-          P(7, 1, '#a8344a');
-          P(8, 2, '#8a2a40');
-          // faded masking-tape label "D.D."
-          R(2, 9, 8, 4, '#e8dcb8');
-          P(9, 9, '#d8cca8');
-          T('DD', 3, 9, '#9a7a6a', FT, {});
-          // heavy brass padlock through the latch
-          R(8, 14, 1, 3, '#9aa2c8');
-          circ(9, 17.5, 1.6, '#9aa2c8');
-          RR(7, 17, 5, 5, 1, PAL.gold3);
-          HL(8, 10, 17, PAL.gold2);
-          P(9, 19, AK);
-          P(9, 20, AK);
-          if (f) sparkle(8, 17);
+          L1(4, 6, 7, 2, '#5a6a4a');
+          ell(7.5, 1.6, 1.1, 1, '#a8344a');
+          P1(7, 1, '#c8506a');
+          P1(8, 2.5, '#6a2a3a');
+          // heavy brass padlock through the latch, a little sparkle now and then
+          chrome(8.5, 14.5, 1, 3);
+          circ(9.5, 18, 1.5, '#9aa2c8');
+          circ(9.5, 18, 0.8, '#6a8a92');
+          RR(7.5, 18, 4.5, 5, 1, PAL.gold3);
+          H1(8, 11.5, 18, PAL.gold2);
+          V1(8, 18.5, 22.5, '#ffe48e');
+          P1(9.5, 20, AK);
+          P1(9.5, 20.5, AK);
+          P1(9.5, 21, AK);
+          if (f) sparkle(8, 18);
         },
-        { shadow: [['r', 2, 24, 13, 5]] },
+        { shadow: [['r', 2, 26, 13, 5]] },
+      ),
+    );
+  },
+});
+
+/** The long locker-room mirror: a vanity bulb strip, taped notes, a crack in one corner. */
+reg('mirror-vanity', {
+  lights: (o) => [light(o, 0, -26, 40, '#fff0c8')],
+  draw: (ctx, o) => {
+    const n = num(o, 'w', 3);
+    const W = n * 16;
+    blit(
+      ctx,
+      o,
+      iart(
+        `mirror-vanity|${n}`,
+        W,
+        40,
+        () => {
+          // the glass: the room reflected dim and teal, with long diagonal glare
+          R(1, 3, W - 2, 22, '#c8cce4');
+          VG(2, 4, W - 4, 20, ['#8ab0b8', '#6a9098', '#4e6a78']);
+          for (let x = 4; x < W - 4; x += 6) R(x, 14, 4, 10, alpha('#4f8a9a', 160));
+          fglare(2, 4, W - 4, 20, 0.35);
+          // a crack spidering out of the bottom-left corner, held together with tape
+          L1(2.5, 23, 7, 17, '#e8f4ff');
+          L1(5, 20, 9, 21, '#e8f4ff');
+          L1(4, 21.5, 3, 16, '#e8f4ff');
+          R(4.5, 18.5, 5, 1.5, alpha('#f2e6c4', 220));
+          // bulbs along the top
+          R(0, 0, W, 3.5, '#4e4870');
+          for (let x = 3; x < W - 2; x += 5) {
+            ell(x, 1.8, 1.4, 1.4, '#fff6dc');
+            P1(x - 0.5, 1.2, '#ffffff');
+          }
+          // taped-up notes, photos, a match card, a lipstick heart
+          const notes: [number, number, Color][] = [[W - 12, 5, '#fff4a0'], [W - 7, 7, '#fbf6ea'], [10, 5, '#ffc8d8'], [W / 2 - 2, 4.5, '#fbf6ea']];
+          notes.forEach(([nx, ny, c], i) => {
+            R(nx, ny, 5, 5.5, c);
+            H1(nx + 0.5, nx + 4.5, ny + 2, '#a89cc0');
+            H1(nx + 0.5, nx + 3.5, ny + 3, '#a89cc0');
+            R(nx + 1.5, ny - 0.5, 2, 1, alpha('#f2e6c4', 230));
+            if (i === 3) {
+              R(nx + 0.5, ny + 0.5, 4, 2.5, '#9cc8e0');
+              ell(nx + 2.5, ny + 2, 0.8, 0.8, '#e6ab84');
+            }
+          });
+          L1(W / 2 + 6, 15, W / 2 + 7.5, 13.5, '#d8304a');
+          L1(W / 2 + 7.5, 13.5, W / 2 + 9, 15, '#d8304a');
+          L1(W / 2 + 6, 15, W / 2 + 7.5, 17, '#d8304a');
+          L1(W / 2 + 9, 15, W / 2 + 7.5, 17, '#d8304a');
+          tinyT('BE GREAT', 6, 19.5, '#d8304a');
+          // the counter: laminate top, hair spray, a can of baby powder, tape rolls, Gideon's comb
+          R(0, 25, W, 3, '#e8dcc4');
+          H1(0, W, 25, '#fff6e6');
+          R(0, 28, W, 12, '#7a5a4a');
+          fgrain(0, 28, W, 12, WALNUT, 411, true);
+          for (let x = 2; x + 12 <= W; x += 16) {
+            H1(x, x + 12, 29.5, shA(WALNUT.b, 0.3));
+            V1(x, 29.5, 38, shA(WALNUT.b, 0.3));
+            R(x + 5, 32, 2, 1, PAL.gold2);
+          }
+          R(4, 20, 2, 5, '#c9404c');
+          R(4, 19.5, 2, 1, '#9aa2c8');
+          R(8, 21, 3, 4, '#fbf6ea');
+          tinyT('BABY', 8, 22, '#5a7ab8');
+          for (let k = 0; k < 3; k++) {
+            ell(W - 18 + k * 4, 23.5, 1.6, 1.6, '#fbf6ea');
+            ell(W - 18 + k * 4, 23.5, 0.6, 0.6, '#c8c0b8');
+          }
+          R(W / 2 - 4, 23.5, 7, 1, '#2b2140');
+          for (let x = W / 2 - 4; x < W / 2 + 3; x += 0.5) P1(x, 24.5, '#2b2140');
+        },
+        { outline: false },
+      ),
+    );
+  },
+});
+
+reg('shower-stall', {
+  draw: (ctx, o, t) => {
+    const drip = frame(t, 6, 3, phaseOf(o));
+    blit(
+      ctx,
+      o,
+      iart(
+        `shower-stall|${drip}`,
+        26,
+        44,
+        () => {
+          // white tile surround with fine grout, a chrome head and a striped curtain half drawn
+          R(0, 0, 26, 40, '#e8eef2');
+          R(0, 0, 26, 40, (_a, _b, o2) => (o2 && (FX % 8 === 0 || FY % 8 === 0) ? '#c8d0dc' : o2));
+          R(0, 32, 26, 8, '#9cc8c8');
+          R(0, 32, 26, 8, (_a, _b, o2) => (o2 && (FX % 6 === 0 || FY % 6 === 0) ? '#7aa8a8' : o2));
+          chrome(14, 4, 1.5, 6);
+          chrome(10, 3, 6, 1.5, false);
+          ell(10, 5, 2.5, 1, '#c8cce4');
+          for (let k = 0; k < 3; k++) {
+            const dy = 7 + ((drip + k * 2) % 6) * 4;
+            if (dy < 32) P1(9 + k, dy, '#9cd8f0');
+          }
+          chrome(16, 18, 4, 1.5, false);
+          ell(18, 18.7, 1.3, 1.3, '#d8434b');
+          // curtain rod + curtain
+          chrome(0, 1, 26, 1, false);
+          for (let x = 0; x < 9; x += 0.5) {
+            const fold = Math.sin(x * 1.6) * 0.5 + 0.5;
+            const c = Math.floor(x / 2) % 2 ? '#fbf6ea' : '#3f9a92';
+            V1(x, 2, 36 - fold * 2, mixc(c, shA(c, 0.3), fold));
+          }
+          for (let x = 0; x < 9; x += 1.5) P1(x, 1.5, '#9aa2c8');
+          // drain, a bar of soap, flip-flops left behind
+          ell(15, 38, 2, 0.8, '#6e688e');
+          RR(20, 35.5, 3, 1.5, 1, '#ffc8d8');
+          ell(5, 41, 1.5, 2.5, '#5a7ab8');
+          ell(8, 41.5, 1.5, 2.5, '#5a7ab8');
+          // threshold lip
+          R(0, 40, 26, 4, '#d8dcf0');
+          H1(0, 26, 40, '#ffffff');
+          H1(0, 26, 43.5, '#9aa2c8');
+        },
+        { outline: false },
+      ),
+    );
+  },
+});
+
+reg('locker-bench', {
+  draw: (ctx, o) => {
+    const n = num(o, 'w', 3);
+    const W = n * 16;
+    const seed = Math.floor(o.x + o.y * 3);
+    blit(
+      ctx,
+      o,
+      iart(
+        `locker-bench|${n}|${seed % 4}`,
+        W,
+        16,
+        () => {
+          // varnished maple plank on steel pedestals
+          for (const lx0 of [3, W - 6]) {
+            chrome(lx0, 8, 3, 7);
+            ell(lx0 + 1.5, 15, 3, 0.8, '#6e688e');
+          }
+          R(0, 4, W, 4, OAK.l);
+          fgrain(0, 4, W, 4, { ...OAK, b: OAK.l }, 421 + seed);
+          H1(0, W, 4, liA(OAK.l, 0.45));
+          R(0, 8, W, 1.5, OAK.s);
+          H1(0, W, 9.5, shA(OAK.s, 0.3));
+          // whatever got left on it today
+          const r = rng(seed * 13 + 7);
+          let x = 2 + r() * 4;
+          while (x < W - 8) {
+            const k = Math.floor(r() * 5);
+            if (k === 0) {
+              // gym duffel
+              RR(x, 0, 10, 5, 2, '#3a3478');
+              H1(x + 1, x + 9, 0.5, '#5a52a0');
+              chrome(x + 2, 2, 6, 0.6, false);
+              L1(x + 2, 0.5, x + 5, -1.5, '#2b2140');
+              L1(x + 5, -1.5, x + 8, 0.5, '#2b2140');
+              x += 12;
+            } else if (k === 1) {
+              // folded towel
+              R(x, 2, 7, 2.5, '#fbf6ea');
+              H1(x, x + 7, 3.5, '#d8434b');
+              x += 9;
+            } else if (k === 2) {
+              // a pair of ring boots, laces dangling
+              for (const bx of [x, x + 3.5]) {
+                R(bx, -1, 3, 5, '#2b2140');
+                H1(bx, bx + 3, -1, '#5a4a6a');
+                for (let i = 0; i < 3; i++) P1(bx + 1.5, i * 1.2, '#fbf6ea');
+              }
+              x += 9;
+            } else if (k === 3) {
+              // athletic tape rolls and scissors
+              for (let i = 0; i < 2; i++) {
+                ell(x + 1.5 + i * 3.5, 2.5, 1.5, 1.5, '#fbf6ea');
+                ell(x + 1.5 + i * 3.5, 2.5, 0.6, 0.6, '#c8c0b8');
+              }
+              L1(x + 7, 3.5, x + 9, 2, '#9aa2c8');
+              x += 11;
+            } else {
+              // a sports drink
+              R(x, -0.5, 2, 4.5, '#ff8a3a');
+              R(x, -1, 2, 1, '#fbf6ea');
+              x += 5;
+            }
+          }
+        },
+        { shadow: [['r', 1, 13, W, 4]] },
+      ),
+    );
+  },
+});
+
+reg('taping-table', {
+  draw: (ctx, o) =>
+    blit(
+      ctx,
+      o,
+      iart(
+        'taping-table',
+        32,
+        20,
+        () => {
+          // padded trainer's table: tan vinyl, chrome legs, a paper roll, tape and an ice bucket
+          for (const lx0 of [2, 28]) chrome(lx0, 10, 2, 10);
+          RR(0, 3, 32, 8, 2, '#c8905a');
+          vinyl(0.5, 3.5, 31, 7, '#c8905a', 8, true);
+          R(3, 4, 20, 6, '#fbf6ea');
+          H1(3, 23, 4, '#ffffff');
+          V1(23, 4, 10, '#d8d0c8');
+          ell(26.5, 6, 2, 1.4, '#e8e0d4');
+          for (let k = 0; k < 4; k++) {
+            ell(5 + k * 3.5, 6.5, 1.4, 1.4, k === 3 ? '#ffd050' : '#fbf6ea');
+            ell(5 + k * 3.5, 6.5, 0.5, 0.5, '#c8c0b8');
+          }
+          // ice bucket under the table
+          R(10, 13, 7, 6, '#9aa2c8');
+          chrome(10, 13, 7, 6);
+          for (let k = 0; k < 4; k++) P1(11 + k * 1.5, 12.5, '#e8f8ff');
+          R(0, 11, 32, 1, shA('#c8905a', 0.45));
+        },
+        { shadow: [['r', 1, 17, 32, 4]] },
+      ),
+    ),
+});
+
+reg('laundry-cart', {
+  draw: (ctx, o) =>
+    blit(
+      ctx,
+      o,
+      iart(
+        'laundry-cart',
+        18,
+        16,
+        () => {
+          // canvas hamper on a steel frame, heaped with towels
+          chrome(1, 3, 16, 1.5, false);
+          R(1.5, 4.5, 15, 8, '#c8b898');
+          R(1.5, 4.5, 15, 8, (_a, _b, o2) => (o2 && (FX + FY * 3) % 7 === 0 ? shA(o2, 0.1) : o2));
+          for (let k = 0; k < 6; k++) ell(3.5 + k * 2.3, 3 - (k % 2), 2.4, 1.6, k % 3 ? '#fbf6ea' : '#e8dcd0');
+          H1(4, 7, 2.5, '#d8434b');
+          tinyC('ACW', 9, 7, '#6a5a4a');
+          for (const wx of [2.5, 15.5]) ell(wx, 14.5, 1.3, 1.3, '#2b2140');
+          V1(2.5, 12.5, 14, '#9aa2c8');
+          V1(15.5, 12.5, 14, '#9aa2c8');
+        },
+        { shadow: [['e', 9, 15, 8, 1.6]] },
+      ),
+    ),
+});
+
+reg('water-cooler', {
+  draw: (ctx, o, t) => {
+    const b = frame(t, 8, 1, phaseOf(o));
+    blit(
+      ctx,
+      o,
+      iart(
+        `water-cooler|${b === 0 ? 1 : 0}`,
+        10,
+        24,
+        () => {
+          // blue jug upside down, a glug of a bubble now and then, the paper-cup dispenser
+          ell(5, 4.5, 4, 4.5, alpha('#7ab8e8', 210));
+          R(1, 4, 8, 4, alpha('#7ab8e8', 210));
+          R(3.5, 8, 3, 2, '#5a90c8');
+          L1(2, 1.5, 3, 7, '#d8f0ff');
+          if (b === 0) ell(5, 5, 0.8, 0.8, '#e8f8ff');
+          RR(1, 10, 8, 14, 1, '#f2eef6');
+          R(1.5, 10.5, 7, 13, (_a, _b) => mixc('#ffffff', '#c8cce4', (lx() - 1.5) / 7));
+          R(2.5, 12, 2, 1.5, '#5a7ab8');
+          R(5.5, 12, 2, 1.5, '#d8434b');
+          R(2, 14.5, 6, 1, '#9aa2c8');
+          R(9, 12, 1.5, 6, '#e8e0d4');
+          H1(1, 9, 23.5, '#9aa2c8');
+        },
+        { shadow: [['e', 5, 23, 4, 1.2]] },
+      ),
+    );
+  },
+});
+
+/** A rolling whiteboard: tonight's card in Birdie's handwriting. */
+reg('whiteboard', {
+  draw: (ctx, o) =>
+    blit(
+      ctx,
+      o,
+      iart(
+        'whiteboard',
+        28,
+        30,
+        () => {
+          chrome(2, 18, 1.5, 11);
+          chrome(24.5, 18, 1.5, 11);
+          for (const wx of [2.5, 25]) ell(wx, 29, 1.6, 1, '#2b2140');
+          R(0, 0, 28, 19, '#c8cce4');
+          R(0.5, 0.5, 27, 18, '#fbfcff');
+          fglare(0.5, 0.5, 27, 18, 0.12);
+          tinyC('TONIGHT', 14, 1.2, '#c9404c');
+          const lines = ['ROSA V EARL', 'DEX V BO', 'HAZEL V ?', 'MAIN: YOU'];
+          lines.forEach((ln, i) => tinyT(ln, 2, 4.5 + i * 3, i === 3 ? '#3f6ab0' : '#2b2140'));
+          L1(20, 11, 26, 9, '#2b2140');
+          ell(23, 14, 2.5, 1.6, (_a, _b, o2) => o2);
+          tinyT('NO', 21, 13.5, '#c9404c');
+          L1(20.5, 15, 25, 13, '#c9404c');
+          R(2, 17.5, 24, 1.5, '#9aa2c8');
+          R(6, 16.5, 4, 1, '#2b2140');
+          R(12, 16.5, 4, 1, '#c9404c');
+        },
+        { shadow: [['r', 2, 27, 26, 3]] },
+      ),
+    ),
+});
+
+/** A paper notice pinned to a wall: tiny hand-lettered lines (props.lines, '|' separated). */
+reg('notice', {
+  draw: (ctx, o) => {
+    const lines = String(o.props.lines ?? 'NOTICE').toUpperCase().split('|');
+    const v = variant(o, 3);
+    const w = Math.max(10, Math.ceil(Math.max(...lines.map(tinyW)) + 4));
+    const h = lines.length * 3 + 3;
+    blit(
+      ctx,
+      o,
+      iart(
+        `notice|${v}|${lines.join('|')}`,
+        w + 1,
+        h + 1,
+        () => {
+          const paper = ['#fbf6ea', '#fff4a0', '#ffd8e0'][v];
+          R(0, 0, w, h, paper);
+          R(0, 0, w, h, (_a, _b, o2) => (o2 && hash2(FX, FY, 431) < 0.04 ? shA(o2, 0.06) : o2));
+          lines.forEach((ln, i) => tinyC(ln, w / 2, 1.5 + i * 3, i === 0 ? '#c9404c' : '#3a2c3a'));
+          ell(w / 2, 0.6, 0.8, 0.8, '#d8434b');
+          P1(w - 1, h - 1, shA(paper, 0.2));
+          V1(w, 1, h + 1, SH(70));
+          H1(1, w + 1, h, SH(70));
+        },
+        { outline: false },
       ),
     );
   },
@@ -4385,21 +5038,604 @@ reg('ring', {
                 [52, 72],
               ])
                 ell(x, y, 3, 1, '#d6cee2');
+              // canvas weave in fine pixels, a few boot scuffs and taped seams
+              R(st.mx, st.my + 1, st.mw, st.mh - 1, (_a, _b, o2) => {
+                if (!o2) return o2;
+                const h = hash2(FX, FY, 263);
+                if ((FX + FY) % 4 === 0 && h < 0.5) return shA(o2, 0.04);
+                if (h > 0.985) return liA(o2, 0.18);
+                return o2;
+              });
+              for (const [x, y, w] of [[40, 52, 6], [100, 44, 5], [70, 76, 7], [124, 74, 4]] as [number, number, number][]) L1(x, y, x + w, y + 0.5, '#c4b8d4');
+              H1(st.mx + 2, st.mx + st.mw - 2, st.my + st.mh / 2, '#dcd4e6');
             },
             () => {
               const y = st.my + st.mh + 2;
               TC('ALLEY CHAMPIONSHIP WRESTLING', 80, y + 9, '#ffd560', FT, { sp: 1 });
               HL(26, 133, y + 16, '#5a52a0');
               for (const sx of [12, 143]) stampRows(['..#..', '.###.', '#####', '.###.', '.#.#.'], { '#': '#f6f0f4' }, sx, y + 8);
+              // gold trim along the apron, the skirt's velvet nap
+              H1(st.mx - 2, st.mx + st.mw + 2, y + 0.5, '#ffd560');
+              H1(st.mx - 2, st.mx + st.mw + 2, y + st.apron - 3, '#c8a040');
+              R(st.mx - 2, y + 1, st.mw + 4, st.apron - 4, (_a, _b, o2) => (o2 && hash2(FX, FY, 264) < 0.06 ? liA(o2, 0.12) : o2));
               // ringside steel steps at the front-right corner
-              R(140, y + 14, 14, 3, '#9aa2c8');
-              R(142, y + 17, 12, 3, '#8a8aaa');
-              R(144, y + 20, 10, 3, '#7a7a9a');
-              HL(140, 153, y + 14, '#d8dcf0');
+              for (let i = 0; i < 3; i++) {
+                chrome(140 + i * 2, y + 14 + i * 3, 14 - i * 2, 3, false);
+                H1(140 + i * 2, 154, y + 14 + i * 3, '#ffffff');
+                for (let x = 141 + i * 2; x < 153; x += 2) P1(x, y + 15.5 + i * 3, '#6e688e');
+              }
             },
           );
         },
         { shadow: [['r', 4, 106, 158, 8]] },
+      ),
+    ),
+});
+
+// ---------------------------------------------------------------- the Sportatorium, piece by piece
+
+/**
+ * Side grandstand facing the ring: tiers run north-south and step up away from
+ * the ring (left stands rise to the west, right stands to the east). Seen in
+ * 3/4, each tier's plank top is lifted by its height and its south end shows
+ * as a step in the silhouette. Footprint: (tiers*18+4) px wide, len tiles deep.
+ */
+reg('grandstand', {
+  draw: (ctx, o) => {
+    const T = num(o, 'tiers', 4);
+    const len = num(o, 'len', 7);
+    const right = o.props.side === 'right';
+    const tw = 18;
+    const lift = 8;
+    const W = T * tw + 4;
+    const L = len * 16;
+    const H = L + T * lift + 10;
+    blit(
+      ctx,
+      o,
+      iart(
+        `grandstand|${T}|${len}|${right ? 'r' : 'l'}`,
+        W,
+        H,
+        () => {
+          // X maps "distance from the ring side" to sprite x
+          const X = (x: number, w: number) => (right ? x : W - x - w);
+          const base = H; // floor line (south edge of the footprint)
+          const topY = (t: number) => base - L - (t + 1) * lift + 2;
+          for (let t = T - 1; t >= 0; t--) {
+            const x = X(2 + t * tw, tw);
+            const y = topY(t);
+            const wd = t % 2 ? OAK : HONEY;
+            // the south end of the tier: a riser face as tall as the tier is high, steel legs under it
+            const fh = (t + 1) * lift - 2;
+            R(x, y + L, tw, fh, '#2f2a44');
+            R(x, y + L, tw, 4, shA(wd.b, 0.15));
+            fgrain(x, y + L, tw, 4, { ...wd, b: shA(wd.b, 0.15) }, 360 + t, false);
+            H1(x, x + tw, y + L, liA(wd.b, 0.25));
+            for (const lxx of [x + 1, x + tw - 2.5]) chrome(lxx, y + L + 4, 1.5, fh - 4);
+            if (fh > 8) {
+              L1(x + 2, y + L + fh - 1, x + tw - 2, y + L + 5, '#6e688e');
+              L1(x + tw - 2, y + L + fh - 1, x + 2, y + L + 5, '#5a5478');
+            }
+            tinyC('ABCDEF'[t], x + tw / 2, y + L + 0.8, '#fff4dc');
+            // the top: seat plank away from the ring, foot plank toward it, a dark gap between
+            const seatX = right ? x + 9 : x;
+            const footX = right ? x : x + 10;
+            R(x, y, tw, L, '#2f2a44');
+            R(footX, y, 8, L, shA(wd.l, 0.18));
+            fgrain(footX, y, 8, L, { ...wd, b: shA(wd.l, 0.18) }, 370 + t, true);
+            R(seatX, y, 9, L, wd.l);
+            fgrain(seatX, y, 9, L, { ...wd, b: wd.l }, 380 + t, true);
+            // rounded seat nosing catches the light; the riser of the next tier up throws a shadow
+            V1(right ? seatX + 0.5 : seatX + 8.5, y, y + L, liA(wd.l, 0.45));
+            const riserX = right ? x + tw - 1.5 : x;
+            if (t < T - 1) {
+              R(riserX, y, 1.5, L, shA(wd.b, 0.35));
+              V1(right ? riserX - 0.5 : riserX + 1.5, y, y + L, shA(wd.l, 0.3));
+            }
+            H1(x, x + tw, y, liA(wd.l, 0.3));
+            // board joints, bolt heads and painted seat numbers every tile
+            for (let yy = 8; yy < L; yy += 16) {
+              H1(seatX, seatX + 9, y + yy, shA(wd.l, 0.28));
+              H1(footX, footX + 8, y + yy + 4, shA(wd.l, 0.35));
+              P1(seatX + 1.5, y + yy - 1, '#9aa2c8');
+              P1(seatX + 7, y + yy - 1, '#9aa2c8');
+            }
+            for (let k = 0; k < len; k++) tinyT(String(k + 1), seatX + 3, y + k * 16 + 3, shA(wd.l, 0.4));
+          }
+          // a chrome guard rail along the top tier
+          const tx = X(2 + (T - 1) * tw, tw);
+          const ty = topY(T - 1);
+          const railX = right ? tx + tw - 2 : tx + 1;
+          for (let yy = 0; yy <= L; yy += 16) {
+            chrome(railX, ty + yy - 9, 1.5, 9);
+          }
+          chrome(railX - 0.5, ty - 10, 2.5, 1.5, false);
+          R(railX - 0.5, ty - 10, 2.5, L + 2, (_a, _b) => CHROME[2 + (Math.floor(FY / 3) % 2)]);
+          // leftovers from last Saturday: a foam finger, a popcorn box, a program, a jacket
+          const r = rng(len * 7 + T + (right ? 50 : 0));
+          for (let k = 0; k < 5; k++) {
+            const t = Math.floor(r() * T);
+            const sx = X(2 + t * tw, tw) + (right ? 9 : 1) + r() * 6;
+            const sy = topY(t) + 6 + r() * (L - 14);
+            const kind = k % 4;
+            if (kind === 0) {
+              poly([[sx, sy + 6], [sx + 3, sy + 6], [sx + 3, sy + 2], [sx + 1.5, sy - 1], [sx, sy + 2]], '#ffd050');
+              V1(sx + 1.5, sy - 1, sy + 2, '#c88a2a');
+            } else if (kind === 1) {
+              poly([[sx, sy], [sx + 3, sy], [sx + 2.5, sy + 4], [sx + 0.5, sy + 4]], '#fbf6ea');
+              for (let i = 0; i < 3; i++) V1(sx + 0.5 + i, sy, sy + 4, '#d8434b');
+              for (let i = 0; i < 4; i++) P1(sx + i * 0.8, sy - 0.5, '#fff4c0');
+            } else if (kind === 2) {
+              R(sx, sy, 3.5, 4.5, '#fbf6ea');
+              R(sx, sy, 3.5, 1.5, '#3a3478');
+              P1(sx + 1.5, sy + 2.5, '#d8434b');
+            } else {
+              RR(sx - 1, sy, 6, 8, 1, '#3f6ab0');
+              V1(sx + 2, sy, sy + 8, '#2f4e88');
+              P1(sx + 1, sy + 2, '#ffd050');
+            }
+          }
+        },
+        { shadow: [['r', 2, H - 4, W, 6]] },
+      ),
+    );
+  },
+});
+
+/** The entrance stage at the head of the aisle: tinsel curtain, marquee, speaker stacks. */
+reg('entrance-stage', {
+  lights: (o) => [light(o, 0, -40, 60, '#ffb8e0'), light(o, -48, -20, 30, '#a8c8ff'), light(o, 48, -20, 30, '#a8c8ff')],
+  draw: (ctx, o, t) => {
+    const n = num(o, 'w', 8);
+    const W = n * 16;
+    const f = frame(t, 4, 5, phaseOf(o));
+    blit(
+      ctx,
+      o,
+      iart(
+        `entrance-stage|${n}|${f}`,
+        W,
+        90,
+        () => {
+          const cx = W / 2;
+          // backdrop frame: black flats either side of the curtain
+          R(6, 8, W - 12, 42, '#231c34');
+          // the tinsel curtain: thousands of fine silver/gold/pink strands, parted at the middle
+          const cw = W - 28;
+          const x0 = 14;
+          R(x0, 10, cw, 40, () => {
+            const sx = lx() - x0;
+            const gap = Math.abs(sx - cw / 2) < 3 + (f % 2) * 0.5;
+            if (gap) return mixc('#3a2850', '#6a3a7a', (ly() - 10) / 40);
+            const strand = hash2(FX, 0, 391);
+            const tw2 = hash2(FX, FY >> 2, 392 + f);
+            const base = strand < 0.35 ? '#c8cce4' : strand < 0.6 ? '#e8c060' : strand < 0.8 ? '#ff94c8' : '#9aa2c8';
+            const k = (ly() - 10) / 40;
+            let c: Color = mixc(base, shA(base, 0.35), k * 0.6);
+            if (tw2 > 0.93) c = '#ffffff';
+            else if (tw2 < 0.25) c = shA(c, 0.25);
+            return c;
+          });
+          // a glow spilling through the part
+          glow(cx - 6, 18, 12, 32, '#ffd8f0', 0.3, 8);
+          // marquee header with chasing bulbs
+          RR(x0 - 4, 0, cw + 8, 10, 2, '#3a3478');
+          R(x0 - 3, 1, cw + 6, 8, '#2f2a62');
+          T('ACW', cx - 11, 2, '#ffd050', FT, { bold: true, ls: 2 });
+          H1(x0 - 3, x0 + cw + 3, 1, '#5a52a0');
+          for (let x = x0 - 2; x < x0 + cw + 3; x += 3) {
+            const on = Math.floor(x / 3 + f) % 3 === 0;
+            P1(x, 0.5, on ? '#fff4c0' : '#c8a050');
+            P1(x + 0.5, 9.5, on ? '#c8a050' : '#fff4c0');
+          }
+          for (const sx of [x0 + 2, x0 + cw - 8]) {
+            for (let k = 0; k < 5; k++) P1(sx + k * 1.5, 4.5, (k + f) % 2 ? '#ff94c8' : '#5ff2d6');
+          }
+          // speaker stacks on both ends
+          for (const sx of [0, W - 12]) {
+            R(sx, 22, 12, 30, '#2b2140');
+            for (const sy of [24, 34, 44]) {
+              RR(sx + 1, sy, 10, 9, 1, '#3a3050');
+              circ(sx + 6, sy + 4.5, 3.4, '#1e1830');
+              circ(sx + 6, sy + 4.5, 2, '#4e4870');
+              P1(sx + 5, sy + 3.5, '#9aa2c8');
+            }
+            H1(sx, sx + 12, 22, '#5a5070');
+          }
+          // the stage deck: planks running across, scuffed in the middle where everyone walks
+          const dy = 50;
+          R(4, dy, W - 8, 30, HONEY.b);
+          fgrain(4, dy, W - 8, 30, HONEY, 393);
+          for (let y = dy + 5; y < dy + 30; y += 5) H1(4, W - 4, y, shA(HONEY.b, 0.22));
+          glow(cx - 14, dy, 28, 30, '#f6e2c0', 0.25, 6);
+          // gaffer tape marks for the wrestlers' entrance spots
+          for (const [mx, my] of [[cx - 20, dy + 12], [cx + 18, dy + 12], [cx, dy + 22]] as [number, number][]) {
+            R(mx - 2, my, 4, 0.8, '#e8e0d0');
+            R(mx - 0.4, my - 1.6, 0.8, 4, '#e8e0d0');
+          }
+          // front lip with a skirt of black velvet and a row of footlights
+          R(2, 80, W - 4, 10, '#2b2140');
+          R(2, 80, W - 4, 2, '#4a3a5a');
+          for (let x = 6; x < W - 6; x += 6) {
+            ell(x, 81, 1.4, 0.8, f % 2 ? '#fff0c0' : '#ffe08a');
+          }
+          for (let x = 4; x < W - 4; x += 3) V1(x, 83, 90, '#3a2c4a');
+          // steps down to the aisle at the centre
+          for (let i = 0; i < 3; i++) {
+            R(cx - 10 + i, 80 + i * 3.3, 20 - 2 * i, 3.3, i % 2 ? '#9aa2c8' : '#c8cce4');
+            H1(cx - 10 + i, cx + 10 - i, 80 + i * 3.3, '#ffffff');
+          }
+        },
+        { outline: false, shadow: [['r', 2, 86, W - 2, 6]] },
+      ),
+    );
+  },
+});
+
+const SNACK_MENU: [string, string][] = [
+  ['POPCORN', '25C'],
+  ['HOT DOG', '50C'],
+  ['ORANGE DRINK', '25C'],
+  ['NACHOS', '75C'],
+];
+reg('concession', {
+  lights: (o) => [light(o, -24, -18, 34, '#ffd070')],
+  label: () => 'Look',
+  draw: (ctx, o, t) => {
+    const n = num(o, 'w', 5);
+    const W = n * 16;
+    const f = frame(t, 4, 6, phaseOf(o));
+    blit(
+      ctx,
+      o,
+      iart(
+        `concession|${n}|${f}`,
+        W,
+        48,
+        () => {
+          // menu board on the wall behind
+          R(8, 0, W - 16, 16, '#3a2c3a');
+          R(9, 1, W - 18, 14, '#f6ecd8');
+          tinyC('SNACK BAR', W / 2, 1.5, '#c9404c');
+          SNACK_MENU.forEach(([a, b], i) => {
+            const yy = 4.6 + i * 2.75;
+            tinyT(a, 11, yy, '#3a2c3a');
+            tinyT(b, W - 11 - tinyW(b), yy, '#3f6ab0');
+          });
+          // striped awning with a scalloped hem
+          R(0, 16, W, 6, (_a, _b) => (Math.floor(lx() / 4) % 2 ? '#fbf6ea' : '#d8434b'));
+          H1(0, W, 16, '#ffb0a0');
+          for (let x = 0; x < W; x += 4) ell(x + 2, 22, 2, 1.4, Math.floor(x / 4) % 2 ? '#fbf6ea' : '#d8434b');
+          shade(0, 23.5, W, 2, 0.25, 10);
+          // popcorn machine: red frame, glass, a heap of popcorn, the kettle glowing
+          const px = 3;
+          R(px, 22, 16, 15, '#c9404c');
+          R(px + 1, 23, 14, 12, alpha('#fff4dc', 120));
+          R(px + 1, 30, 14, 5, '#ffe08a');
+          for (let i = 0; i < 40; i++) P1(px + 1.5 + hash2(i, 1, 395) * 13, 29 + hash2(i, 2, 395) * 6, hash2(i, 3, 395) < 0.5 ? '#fff8e0' : '#f6d38a');
+          ell(px + 8, 25.5, 3, 1.6, '#9aa2c8');
+          glow(px + 1, 23, 14, 7, '#ffd070', 0.35, 6 + f);
+          for (let k = 0; k < 3; k++) P1(px + 5 + k * 3 + (f % 2) * 0.5, 27 + ((k + f) % 3), '#fff8e0');
+          tinyC('POPCORN', px + 8, 23.3, '#fff4dc');
+          fglare(px + 1, 23, 14, 12, 0.2);
+          // soda fountain with three taps, and a stack of cups
+          chrome(24, 28, 12, 9);
+          for (let k = 0; k < 3; k++) {
+            R(25.5 + k * 3.5, 26, 2, 2, ['#ff8a3a', '#6a3a2a', '#d8434b'][k]);
+            V1(26.5 + k * 3.5, 33, 35, AK);
+          }
+          for (let k = 0; k < 4; k++) R(38, 36 - k * 1.6, 3, 1.6, k % 2 ? '#fbf6ea' : '#e8e0d4');
+          // hot dogs turning on the roller
+          R(44, 33, 14, 4, '#9aa2c8');
+          for (let k = 0; k < 4; k++) {
+            const hx = 45 + k * 3.3;
+            ell(hx + 1, 34.5, 1.3, 0.8, '#c8603a');
+            P1(hx + 0.5 + ((k + f) % 2) * 0.5, 34, '#f08a5a');
+          }
+          // napkins, mustard, a tip cup
+          R(W - 18, 32, 4, 5, '#fbf6ea');
+          R(W - 13, 31, 2, 6, '#ffd050');
+          R(W - 9, 33, 3.5, 4, alpha('#e8f4ff', 170));
+          // the counter: worn red top, cream-and-red front with SNACKS in hand-painted letters
+          R(0, 37, W, 2, '#a8343e');
+          H1(0, W, 37, '#e8706a');
+          R(0, 39, W, 9, '#f2e2c4');
+          for (let x = 0; x < W; x += 8) R(x, 39, 1, 9, '#e8d0a8');
+          T('SNACKS', W / 2 - 14, 41, '#c9404c', FT, {});
+          H1(0, W, 47.5, '#8a5a4a');
+        },
+        { shadow: [['r', 2, 45, W, 5]] },
+      ),
+    );
+  },
+});
+
+reg('merch-table', {
+  draw: (ctx, o) => {
+    const n = num(o, 'w', 4);
+    const W = n * 16;
+    blit(
+      ctx,
+      o,
+      iart(
+        `merch-table|${n}`,
+        W,
+        40,
+        () => {
+          // pegboard on the wall with shirts and foam fingers hung up
+          R(2, 0, W - 4, 22, '#c8a878');
+          R(2, 0, W - 4, 22, (_a, _b, o2) => (FX % 4 === 1 && FY % 4 === 1 ? '#8a6a48' : o2));
+          const shirts: Color[] = ['#3a3478', '#d8434b', '#fbf6ea', '#3f9a92', '#2b2140'];
+          for (let k = 0; k < Math.floor((W - 8) / 12); k++) {
+            const sx = 5 + k * 12;
+            const c = shirts[k % shirts.length];
+            poly([[sx, 3], [sx + 3, 2], [sx + 7, 2], [sx + 10, 3], [sx + 10, 6], [sx + 8, 6], [sx + 8, 14], [sx + 2, 14], [sx + 2, 6], [sx, 6]], c);
+            tinyC(k % 2 ? 'ACW' : 'VH', sx + 5, 6.5, k % 3 === 2 ? '#c9404c' : '#ffd050');
+            P1(sx + 5, 1.5, '#9aa2c8');
+          }
+          for (let k = 0; k < 2; k++) {
+            const fx = W - 14 + k * 6;
+            poly([[fx, 21], [fx + 4, 21], [fx + 4, 16], [fx + 2, 14], [fx, 16]], k ? '#ffd050' : '#5ec0a8');
+          }
+          // the folding table under a cloth, stacked shirts, 8x10s, a cash box
+          R(0, 24, W, 3, '#f6f0f4');
+          R(0, 27, W, 10, '#3a3478');
+          for (let x = 2; x < W; x += 5) V1(x, 27, 37, '#332e6c');
+          tinyC('ALLEY CHAMPIONSHIP WRESTLING', W / 2, 30, '#ffd050');
+          for (let k = 0; k < 3; k++) {
+            const sx = 3 + k * 9;
+            for (let i = 0; i < 3; i++) R(sx, 23.5 - i * 1.2, 7, 1.2, i % 2 ? liA(shirts[k], 0.2) : shirts[k]);
+          }
+          for (let k = 0; k < 3; k++) frameBox(W - 30 + k * 7, 18.5, 6, 6, '#f6f0f4', 470 + k, k === 1 ? 'team' : 'wrestler', false, true);
+          R(W - 9, 21, 7, 3.5, '#4e8a5a');
+          H1(W - 9, W - 2, 21, '#7ab88a');
+          R(W - 6.5, 22, 2, 1, PAL.gold2);
+          // hand-lettered price card
+          R(W / 2 - 6, 19, 12, 5, '#fbf6ea');
+          tinyC('8X10 $2', W / 2, 19.6, '#3a2c3a');
+          tinyC('SIGNED $3', W / 2, 21.8, '#c9404c');
+          R(1, 37, 2, 3, '#6e688e');
+          R(W - 3, 37, 2, 3, '#6e688e');
+        },
+        { shadow: [['r', 1, 35, W, 5]] },
+      ),
+    );
+  },
+});
+
+const BANNERS: [Color, Color, string[]][] = [
+  ['#3a3478', '#ffd050', ['ACW', 'TAG', 'CHAMP', '1981']],
+  ['#c9404c', '#fbf6ea', ['TERR', 'OF THE', 'YEAR', '1979']],
+  ['#2f6a52', '#ffd050', ['SOLD', 'OUT', '1984']],
+  ['#5a3a7a', '#ff94c8', ['WOMENS', 'CHAMP', '1983']],
+  ['#2b2140', '#c8cce4', ['MID', 'SOUTH', '1977']],
+  ['#d8a040', '#3a2c3a', ['50', 'YEARS', 'OF', 'FIGHTS']],
+];
+reg('banner', {
+  draw: (ctx, o, t) => {
+    const v = variant(o, BANNERS.length);
+    const sway = Math.sin(t * 0.8 + phaseOf(o)) > 0.6 ? 1 : 0;
+    blit(
+      ctx,
+      o,
+      iart(
+        `banner|${v}|${sway}`,
+        14,
+        30,
+        () => {
+          const [bg, fg, lines] = BANNERS[v];
+          chrome(0, 0, 14, 1.5, false);
+          P1(0, 0.5, '#ffffff');
+          poly([[1, 1.5], [13, 1.5], [13 + sway * 0.5, 26], [7 + sway * 0.5, 29], [1 + sway * 0.5, 26]], bg);
+          // a gold border stitched near the edge, a faint fold crease
+          poly([[2, 2.5], [12, 2.5], [12 + sway * 0.5, 25.4], [7 + sway * 0.5, 27.8], [2 + sway * 0.5, 25.4]], (_a, _b, o2) => o2);
+          V1(1.5, 2, 26, fg);
+          V1(12.5 + sway * 0.5, 2, 26, fg);
+          R(1, 1.5, 12, 30, (_a, _b, o2) => (o2 && Math.abs(lx() - 7) < 0.3 ? shA(o2, 0.15) : o2));
+          lines.forEach((ln, i) => tinyC(ln, 7 + sway * 0.25, 4 + i * 4, fg));
+          for (let k = 0; k < 3; k++) P1(5 + k * 2, 22.5, fg);
+          shade(1, 1.5, 12, 2, 0.2, 8);
+        },
+        { outline: false },
+      ),
+    );
+  },
+});
+
+/** The lighting truss over the ring (hangs from the rafters, drawn above everything). */
+reg('truss', {
+  above: true,
+  lights: (o) => [light(o, -50, -12, 46, '#fff4e0'), light(o, 50, -12, 46, '#fff4e0'), light(o, 0, -4, 64, '#fff0d8')],
+  draw: (ctx, o) =>
+    blit(
+      ctx,
+      o,
+      iart(
+        'truss',
+        176,
+        100,
+        () => {
+          // a box truss: top + bottom chords with a zig-zag web, in dark steel with a lit top edge
+          const girder = (x0: number, y0: number, x1: number, y1: number, d: number) => {
+            const n = Math.max(2, Math.ceil(Math.hypot(x1 - x0, y1 - y0) / 4));
+            for (let i = 0; i < n; i++) {
+              const a = i / n;
+              const b = (i + 1) / n;
+              const ax = x0 + (x1 - x0) * a;
+              const ay = y0 + (y1 - y0) * a;
+              const bx = x0 + (x1 - x0) * b;
+              const by = y0 + (y1 - y0) * b;
+              L1(ax, ay, bx, by + d, '#5a5478');
+              L1(ax, ay + d, bx, by, '#4e4870');
+            }
+            L1(x0, y0, x1, y1, '#3a3450');
+            L1(x0, y0 - 0.5, x1, y1 - 0.5, '#c8cce4');
+            L1(x0, y0 + d, x1, y1 + d, '#2b2140');
+            L1(x0, y0 + d + 0.5, x1, y1 + d + 0.5, '#3a3450');
+          };
+          // chains up into the dark rafters
+          for (const cx of [10, 166]) for (let y = 0; y < 30; y += 1) P1(cx + (y % 2) * 0.5, y, '#6e688e');
+          girder(10, 30, 166, 30, 2.5);
+          girder(10, 30, 4, 52, 2.5);
+          girder(166, 30, 172, 52, 2.5);
+          // par cans on the back chord (small, far) and the front chord (big, near)
+          for (const cx of [30, 66, 110, 146]) {
+            R(cx - 0.5, 33, 1, 1.5, '#4e4870');
+            RR(cx - 2, 34.5, 4, 4, 1, '#2b2140');
+            ell(cx, 38.5, 1.6, 0.6, '#fff6dc');
+          }
+          girder(4, 52, 172, 52, 3);
+          for (const cx of [22, 62, 114, 154]) {
+            R(cx - 0.5, 55.5, 1, 2, '#4e4870');
+            RR(cx - 3, 57, 6, 6, 1, '#2b2140');
+            H1(cx - 3, cx + 3, 57, '#5a5070');
+            V1(cx - 2.5, 58, 62, '#4e4870');
+            ell(cx, 63, 2.6, 1, '#fff6dc');
+            P1(cx, 63, '#ffffff');
+          }
+          // a faded ACW banner zip-tied to the front chord
+          R(76, 53.5, 24, 7, '#3a3478');
+          H1(76, 100, 53.5, '#5a52a0');
+          tinyC('ACW', 88, 55.5, '#ffd050');
+          P1(77, 53, '#9aa2c8');
+          P1(99, 53, '#9aa2c8');
+        },
+        {
+          outline: false,
+          over: () => {
+            // soft beams falling to the canvas
+            for (const cx of [22, 62, 114, 154]) {
+              for (let y = 64; y < 98; y++) {
+                const t = (y - 64) / 34;
+                const w = 2.5 + t * 7;
+                const ox = (88 - cx) * t * 0.25;
+                R(cx + ox - w, y, w * 2, 1, () => (dth(FX, FY, Math.round(5 - t * 3)) ? alpha('#fff8e8', 80) : null));
+              }
+            }
+          },
+        },
+      ),
+    ),
+});
+
+reg('folding-chair', {
+  draw: (ctx, o) => {
+    const reserved = o.props.reserved === true;
+    const k = hash2(o.x, o.y, 401);
+    blit(
+      ctx,
+      o,
+      iart(
+        `folding-chair|${reserved ? 'r' : Math.floor(k * 4)}`,
+        10,
+        17,
+        () => {
+          const c = k < 0.5 ? '#a8b0d0' : '#b0a8c8';
+          // backrest seen from behind, seat, splayed legs, cross bar
+          RR(1, 0, 8, 5.5, 1, c);
+          R(1.5, 0.5, 7, 4.5, (_a, _b) => mixc(liA(c, 0.25), shA(c, 0.2), (ly() - 0.5) / 4.5));
+          H1(1.5, 8.5, 0.5, '#ffffff');
+          chrome(1, 5.5, 1, 11);
+          chrome(8, 5.5, 1, 11);
+          R(0.5, 8, 9, 2.5, liA(c, 0.15));
+          H1(0.5, 9.5, 8, '#f2eef6');
+          H1(0.5, 9.5, 10.5, shA(c, 0.4));
+          L1(2, 11, 3, 16.5, shA(c, 0.25));
+          L1(7.5, 11, 6.5, 16.5, shA(c, 0.35));
+          H1(2.5, 7.5, 14, shA(c, 0.3));
+          if (reserved) {
+            // Seat A1: kept empty since 1984; a card taped to the back and a rose on the seat
+            R(2.5, 1, 5, 3.5, '#fbf6ea');
+            tinyC('A1', 5, 1.6, '#c9404c');
+            L1(3, 9.5, 7, 8.5, '#3a6a3a');
+            ell(7.5, 8.5, 1.1, 0.9, '#c8304a');
+            P1(7.5, 8, '#ff6a8a');
+          } else if (k > 0.85) {
+            R(2, 1, 6, 4, '#d8434b');
+            tinyC('ACW', 5, 1.8, '#fff4dc');
+          }
+        },
+        { shadow: [['e', 5.5, 16, 4.5, 1.4]] },
+      ),
+    );
+  },
+});
+
+reg('camera-rig', {
+  draw: (ctx, o) =>
+    blit(
+      ctx,
+      o,
+      iart(
+        'camera-rig',
+        16,
+        26,
+        () => {
+          // Sweet Lou's tripod and the shoulder camcorder that has taped every show since 1979
+          L1(8, 12, 3, 25, '#4e4870');
+          L1(8, 12, 13, 25, '#6e688e');
+          L1(8, 12, 8, 25.5, '#5a5070');
+          R(7, 11, 2, 2, '#2b2140');
+          RR(3, 4, 10, 7, 1, '#3a3450');
+          R(3.5, 4.5, 9, 2, '#4e4870');
+          ell(3, 7.5, 2, 2.3, '#2b2140');
+          ell(2.6, 7.5, 1.2, 1.5, '#5a7ab0');
+          P1(2.2, 7, '#c8e0ff');
+          R(9, 2, 4, 2.5, '#2b2140');
+          P1(12, 5, '#ff3a3a');
+          tinyT('VHS', 6, 8, '#c8cce4');
+          // a milk crate of labelled tapes at its foot
+          R(9, 19, 7, 6, '#3f6ab0');
+          for (let k = 0; k < 4; k++) R(9.5 + k * 1.6, 18, 1.4, 4, k % 2 ? '#2b2140' : '#3a3050');
+          for (let k = 0; k < 4; k++) H1(9.5 + k * 1.6, 10.9 + k * 1.6, 18.5, '#fbf6ea');
+          R(9, 21, 7, 4, (_a, _b, o2) => (o2 && (FX + FY) % 3 === 0 ? '#2f4e88' : o2));
+        },
+        { shadow: [['e', 8, 25, 6, 1.6]] },
+      ),
+    ),
+});
+
+reg('exit-sign', {
+  lights: (o) => [light(o, 0, -4, 18, '#ff5040')],
+  draw: (ctx, o) =>
+    blit(
+      ctx,
+      o,
+      iart(
+        'exit-sign',
+        18,
+        7,
+        () => {
+          R(0, 0, 18, 7, '#3a3450');
+          R(0.5, 0.5, 17, 6, '#fbf6ea');
+          TC('EXIT', 9, 1, '#e83a3a', FT, {});
+        },
+        { outline: false },
+      ),
+    ),
+});
+
+reg('extinguisher', {
+  draw: (ctx, o) =>
+    blit(
+      ctx,
+      o,
+      iart(
+        'extinguisher',
+        8,
+        16,
+        () => {
+          R(1, 0, 6, 2, '#c9404c');
+          tinyC('FIRE', 4, 0.2, '#fff4dc');
+          RR(2, 4, 4, 11, 1, '#d8434b');
+          V1(2.5, 5, 14, '#ff8a80');
+          R(2.5, 3, 3, 1.5, '#2b2140');
+          L1(5, 3.5, 7, 6, '#2b2140');
+          R(2.5, 8, 3, 2.5, '#fbf6ea');
+          H1(2, 6, 15, '#8e2c4c');
+        },
+        { outline: false },
       ),
     ),
 });

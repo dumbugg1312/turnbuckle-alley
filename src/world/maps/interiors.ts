@@ -31,6 +31,7 @@ const WIDE: Record<string, (w: number) => { x: number; y: number; w: number; h: 
   counter: (w) => ({ x: -w * 8, y: -15, w: w * 16, h: 14 }),
   'booth-seat': (w) => ({ x: -w * 8 + 1, y: -12, w: w * 16 - 2, h: 10 }),
   'booth-table': (w) => ({ x: -w * 8 + 2, y: -15, w: w * 16 - 4, h: 11 }),
+  'folding-chairs': (w) => ({ x: -w * 8, y: -6, w: w * 16, h: 5 }),
 };
 
 interface InteriorOpts {
@@ -82,39 +83,102 @@ interior('grandma-house', "Grandma's House", 14, 10, 'wall-blue', 'wood', 3, [
 ], { music: 'home', light: 0.9 });
 
 // ---------------------------------------------------------------- The Sportatorium (arena), Birdie's office, locker room
+// The ring is the altar: dead centre under a lighting truss, an entrance stage
+// with a tinsel curtain at the head of the aisle, grandstands rising on both
+// sides, the snack bar and the merch table along the back wall under fifty
+// years of championship banners. Front row ringside: seat A1, kept empty
+// since 1984, and the announce table where Gus calls every match.
 interior('sportatorium', 'The Sportatorium', 30, 20, 'wall-brick', 'concrete', 14, [
-  ['ring', 15, 13.6, {}, 'arena-ring'],
-  ['bleachers', 3.5, 13, { w: 5 }], ['bleachers', 26.5, 13, { w: 5 }],
-  ['folding-chairs', 9, 16.4, { w: 5 }], ['folding-chairs', 21, 16.4, { w: 5 }], ['folding-chairs', 9, 18, { w: 5 }], ['folding-chairs', 21, 18, { w: 5 }],
-  ['announce-table', 15, 15.6, {}, 'announce-table'],
-  ['poster', 8, 2.2, { variant: 0 }], ['poster', 12, 2.2, { variant: 1 }], ['poster', 18, 2.2, { variant: 2 }], ['poster', 22, 2.2, { variant: 3 }],
-  ['door-wall', 3, 3, { text: 'OFFICE' }, 'door-office'], ['door-wall', 27, 3, { text: 'LOCKERS' }, 'door-lockers'],
-  ['torch', 0.4, 2.6], ['mic-stand', 18.5, 15.2],
-  ['chair', 28.5, 18.2, {}, 'chair-arena'],
+  // back wall
+  ['door-wall', 4, 3, { text: 'OFFICE' }, 'door-office'], ['door-wall', 28, 3, { text: 'LOCKERS' }, 'door-lockers'],
+  ['exit-sign', 4, 0.7], ['exit-sign', 28, 0.7],
+  ['poster', 1.7, 2.4, { variant: 3 }], ['poster', 30.3, 2.4, { variant: 4 }],
+  ['banner', 6.6, 2.0, { variant: 0 }], ['banner', 8.5, 2.0, { variant: 3 }], ['banner', 10.4, 2.0, { variant: 1 }],
+  ['banner', 21.6, 2.0, { variant: 2 }], ['banner', 23.5, 2.0, { variant: 4 }], ['banner', 25.4, 2.0, { variant: 5 }],
+  ['concession', 8.5, 4.95, { w: 5, text: 'The snack bar. Popcorn is a quarter, same as 1979. Birdie says raising it would be "a betrayal of the people."', solid: { x: -40, y: -12, w: 80, h: 11 } }],
+  ['merch-table', 23, 4.95, { w: 4, solid: { x: -32, y: -12, w: 64, h: 11 } }],
+  ['extinguisher', 25.8, 2.9],
+  ['entrance-stage', 16, 5.95, { w: 8, solid: { x: -64, y: -46, w: 128, h: 44 } }],
+  ['stool', 11.4, 5.7],
+  // the ring and its lights
+  ['ring', 16, 13.6, {}, 'arena-ring'],
+  ['truss', 16, 12.1],
+  // grandstands
+  ['grandstand', 3.375, 13, { tiers: 4, len: 7, side: 'left', solid: { x: -38, y: -112, w: 76, h: 111 } }],
+  ['grandstand', 28.625, 13, { tiers: 4, len: 7, side: 'right', solid: { x: -38, y: -112, w: 76, h: 111 } }],
+  // ringside: front row (seat A1 is Grandma's, if she ever comes back), announce table, the rows behind
+  ['folding-chair', 10.5, 16.8], ['folding-chair', 11.5, 16.8], ['folding-chair', 12.5, 16.8], ['folding-chair', 13.5, 16.8],
+  ['folding-chair', 14.5, 16.8, { reserved: true }],
+  ['folding-chair', 18.5, 16.8], ['folding-chair', 19.5, 16.8], ['folding-chair', 20.5, 16.8], ['folding-chair', 21.5, 16.8],
+  ['announce-table', 16.5, 15.6, {}, 'announce-table'], ['mic-stand', 18.6, 15.4],
+  ['folding-chairs', 10, 17.8, { w: 4 }], ['folding-chairs', 19.5, 17.8, { w: 5 }],
+  ['folding-chairs', 10.5, 18.8, { w: 5 }], ['folding-chairs', 25.5, 18.8, { w: 3 }],
+  // Sweet Lou's camera, rolling since 1979
+  ['camera-rig', 27.5, 15.4], ['stool', 28.5, 16.8],
+  ['chair', 29.5, 18.2, {}, 'chair-arena'],
 ], {
   music: 'sportatorium',
-  light: 0.8,
+  light: 0.78,
+  abs: true,
   extraWarps: [
     { x: 4, y: 2, w: 1, h: 2, to: 'birdie-office', tx: 5, ty: 7, facing: 'up', door: true, label: "Birdie's office" },
     { x: 28, y: 2, w: 1, h: 2, to: 'lockers', tx: 7, ty: 8, facing: 'up', door: true, label: 'Locker room' },
   ],
 });
 
-interior('birdie-office', "Birdie's Office", 10, 8, 'wall-pink', 'carpet', 4, [
-  ['corkboard', 5, 2.4, {}, 'corkboard'], ['photo', 2, 2.1, { variant: 1 }], ['poster', 8.6, 2.3, { variant: 3 }],
-  ['desk', 5, 4.8, {}, 'birdie-desk'], ['office-chair', 5, 4.0], ['filing-cabinet', 1, 4.4], ['trophy-case', 8.6, 4.6, {}, 'trophies'], ['plant', 0.8, 7.4],
-  ['rug', 3, 7, { w: 4, h: 1, variant: 2 }],
+// Wood paneling, a carny's clutter: the corkboard of feuds with red string,
+// napkins full of storylines on the desk, ticket rolls, the bank's final
+// notice, peppermints, the safe, boxes of flyers, the cot for late nights,
+// and her fishing rod for Monday mornings with Lou.
+interior('birdie-office', "Birdie's Office", 10, 8, 'wall-wood', 'carpet', 4, [
+  ['corkboard', 3, 2.4, {}, 'corkboard'],
+  ['photo', 5.4, 1.85, { variant: 0 }],
+  ['notice', 6.9, 1.25, { lines: 'BANK|FRIDAY!!', variant: 1 }],
+  ['window-blinds', 8.4, 2.7],
+  ['rug', 5.5, 7.4, { w: 5, h: 2, variant: 1 }],
+  ['promoter-desk', 6, 4.95, { solid: { x: -20, y: -12, w: 40, h: 11 } }, 'birdie-desk'],
+  ['office-chair', 6.6, 3.7, { solid: { x: 0, y: 0, w: 0, h: 0 } }],
+  ['filing-cabinet', 1.5, 4.4], ['filing-cabinet', 2.4, 4.4],
+  ['trophy-case', 9.6, 4.6, {}, 'trophies'],
+  ['safe', 1.6, 6.6],
+  ['box-stack', 3, 7.8, { label: 'FLYERS' }],
+  ['cot', 9.4, 7.75],
+  ['fishing-gear', 10.5, 6.3],
+  ['plant', 7.4, 7.7, { variant: 1 }],
 ], {
   music: 'sportatorium',
-  extraWarps: [],
+  light: 0.86,
+  abs: true,
 });
 
-interior('lockers', 'Locker Room', 14, 9, 'wall-panel', 'rubber', 6, [
-  ['locker', 3.5, 3.6, { w: 6 }], ['locked-locker', 7.2, 3.6, {}, 'dottie-locker'], ['locker', 10.5, 3.6, { w: 5 }],
-  ['bench', 5, 6], ['bench', 10, 6],
-  ['stairs-down', 12.5, 8.2, {}, 'dungeon-stairs'],
-  ['poster', 1, 2.4, { variant: 4 }], ['plant', 0.6, 8.4],
-], { music: 'sportatorium', light: 0.75 });
+// Steel lockers with everyone's name on masking tape, and one padlocked locker
+// that nobody has opened since 1983. The long mirror is held together with
+// tape and notes; there's a shower stall in the corner, benches covered in
+// boots and duffels, the taping table, tonight's card on the whiteboard, and
+// in the far corner the stairs down to the Dungeon.
+interior('lockers', 'Locker Room', 14, 9, 'wall-panel', 'concrete', 6, [
+  ['locker', 4.375, 3.65, { w: 9, names: 'ROSA,DEX,HAZEL,EARL,TINY,GIDEON,CLINT,LACEY,PATTY', solid: { x: -54, y: -8, w: 108, h: 7 } }],
+  ['locked-locker', 8.1875, 3.65, {}, 'dottie-locker'],
+  ['locker', 9.3125, 3.65, { w: 2, names: 'BO,BUCK', solid: { x: -12, y: -8, w: 24, h: 7 } }],
+  ['mirror-vanity', 11.5625, 3.15, { w: 3 }],
+  ['shower-stall', 13.9, 4.0],
+  ['wall-clock', 3, 1.05],
+  ['notice', 6.2, 1.25, { lines: 'HANG YOUR TOWEL|WIN OR LOSE|-B.M.' }],
+  ['notice', 9.4, 1.1, { lines: 'NO SPITTING|ON THE MAT|THIS MEANS|BUCK', variant: 1 }],
+  ['floor-mat', 6, 4.95, { w: 9, h: 0.8, variant: 0 }],
+  ['locker-bench', 4.5, 6.2, { w: 4, solid: { x: -32, y: -8, w: 64, h: 6 } }],
+  ['locker-bench', 10.5, 6.2, { w: 3, solid: { x: -24, y: -8, w: 48, h: 6 } }],
+  ['taping-table', 2.6, 8.4, {}, ],
+  ['laundry-cart', 5.2, 8.6],
+  ['water-cooler', 9.6, 8.6],
+  ['whiteboard', 11.2, 8.75],
+  ['stairs-down', 13.5, 8.2, {}, 'dungeon-stairs'],
+], {
+  music: 'sportatorium',
+  light: 0.78,
+  abs: true,
+  shape: (b) => b.rect(13, 3, 2, 2, 'tile'),
+});
 
 // ---------------------------------------------------------------- Hot Tag Diner
 // June Oyelaran's place since '87. The counter splits the room: June's side
