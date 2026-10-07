@@ -3047,6 +3047,295 @@ reg('cafe-chair', {
     ),
 });
 
+// ---------------------------------------------------------------- Lou's Airstream, Birdie's house, the Abernathys'
+
+/** Forty years of tapes on shelves, every spine hand-labelled with a date. */
+reg('tape-wall', {
+  draw: (ctx, o) => {
+    const n = num(o, 'w', 3);
+    const W = n * 16;
+    const rows = num(o, 'rows', 2);
+    blit(
+      ctx,
+      o,
+      iart(
+        `tape-wall|${n}|${rows}`,
+        W,
+        rows * 8 + 1,
+        () => {
+          const wd = WALNUT;
+          for (let r = 0; r < rows; r++) {
+            const y = r * 8;
+            R(0, y, W, 8, wd.d);
+            R(0, y + 7, W, 1.2, wd.l);
+            for (let x = 0.5; x < W - 1; x += 1.4) {
+              const k = hash2(Math.floor(x * 3), r, 681);
+              R(x, y + 1 + (k < 0.1 ? 1 : 0), 1.2, 6, k < 0.5 ? '#2b2140' : '#3a3050');
+              H1(x, x + 1.2, y + 3, k < 0.8 ? '#fbf6ea' : '#ffd050');
+              P1(x + 0.5, y + 4, '#6a5a6a');
+            }
+          }
+          V1(W, 0, rows * 8 + 1, SH(60));
+        },
+        { outline: false },
+      ),
+    );
+  },
+});
+
+/** Lou's dubbing rig: a TV on top of two VCRs, both running, the screen glowing blue. */
+reg('dub-station', {
+  solid: { x: -10, y: -6, w: 20, h: 5 },
+  label: () => 'Watch',
+  lights: (o) => [light(o, 0, -14, 40, '#7ab0ff')],
+  draw: (ctx, o, t) => {
+    const f = frame(t, 4, 3, phaseOf(o));
+    blit(
+      ctx,
+      o,
+      iart(
+        `dub-station|${f}`,
+        22,
+        28,
+        () => {
+          // the stand, two VCRs with their red counters ticking
+          R(1, 16, 20, 12, WALNUT.b);
+          fgrain(1, 16, 20, 12, WALNUT, 691, true);
+          for (const vy of [18, 22.5]) {
+            R(2.5, vy, 17, 3.5, '#3a3450');
+            H1(2.5, 19.5, vy, '#5a5470');
+            R(4, vy + 1, 7, 1, '#24202e');
+            R(13, vy + 1, 5, 1.2, '#1e1830');
+            tinyT(`${(f + vy) % 10}${(f * 3) % 10}`, 13.5, vy + 0.8, '#ff5a50');
+            P1(18.5, vy + 1.5, '#5fff7a');
+          }
+          // cable between them
+          curve(20, 20, 20, 24, 1.5, '#2b2140');
+          // the TV, wood-grain, with a blue screen and a tape playing
+          RR(2, 2, 18, 14, 2, '#8a5a3e');
+          fgrain(3, 3, 16, 12, { l: '#c08a5a', b: '#a06a44', s: '#7a4a38', d: '#5a3434' }, 692);
+          RR(3, 3, 12, 11, 2, '#2a2440');
+          crtScreen(4, 4, 10, 9, f, 'match');
+          R(4, 4, 10, 9, (_a, _b, o2) => (o2 ? mixc(o2, '#5a7ab8', 0.3) : o2));
+          R(16, 4, 3, 9, '#d8c8b0');
+          circ(17.5, 6, 0.9, '#5a4a5a');
+          circ(17.5, 9, 0.9, '#5a4a5a');
+          // a padded mailer waiting by the set, stamps already on
+          R(15, 26, 6, 2, '#e8d8a8');
+          R(19, 26, 1.5, 1, '#c9404c');
+        },
+        { shadow: [['r', 1, 25, 21, 3]] },
+      ),
+    );
+  },
+});
+
+/** The Biscuit's dinette bench: lavender vinyl (his colour), a stack of padded mailers on the end. */
+reg('dinette', {
+  draw: (ctx, o) =>
+    blit(
+      ctx,
+      o,
+      iart(
+        'dinette',
+        28,
+        14,
+        () => {
+          R(0, 0, 28, 14, WALNUT.b);
+          fgrain(0, 0, 28, 14, WALNUT, 741, true);
+          vinyl(1.5, 1, 25, 7, '#8a6aa8', 4);
+          R(1.5, 8, 25, 4, liA('#8a6aa8', 0.15));
+          vinyl(1.5, 8, 25, 4, '#8a6aa8', 6, true);
+          chrome(1, 12, 26, 1, false);
+          for (let k = 0; k < 3; k++) {
+            R(20 + k * 0.6, 5.5 - k * 0.8, 6, 3, '#e8d8a8');
+            H1(20 + k * 0.6, 26 + k * 0.6, 5.5 - k * 0.8, '#f6e8c0');
+          }
+          R(24, 3.5, 1.5, 1, '#c9404c');
+        },
+        { shadow: [['r', 0, 12, 28, 3]] },
+      ),
+    ),
+});
+
+/** A portable record player with a stack of 45s. */
+reg('record-player', {
+  draw: (ctx, o, t) => {
+    const f = frame(t, 4, 4, phaseOf(o));
+    blit(
+      ctx,
+      o,
+      iart(
+        `record-player|${f}`,
+        16,
+        10,
+        () => {
+          RR(0, 3, 16, 7, 1, '#d8434b');
+          R(0.5, 3.5, 15, 1, '#e8706a');
+          ell(6, 6, 4, 2, '#2b2140');
+          ell(6, 6, 1, 0.5, '#ffd050');
+          P1(6 + Math.cos(f * 1.57) * 2.5, 6 + Math.sin(f * 1.57) * 1.2, '#6a6a8a');
+          L1(13, 4, 9, 6, '#c8cce4');
+          for (let k = 0; k < 4; k++) ell(13, 2.5 - k * 0.6, 2.5, 0.8, k % 2 ? '#2b2140' : '#3a3050');
+        },
+        { shadow: [['r', 0, 8, 16, 2]] },
+      ),
+    );
+  },
+});
+
+/** A round porthole-style window, blue at night (the Biscuit's windows glow while the VCRs run). */
+reg('round-window', {
+  draw: (ctx, o) =>
+    blit(
+      ctx,
+      o,
+      iart(
+        'round-window',
+        14,
+        14,
+        () => {
+          circ(7, 7, 7, '#c8cce4');
+          circ(7, 7, 6, '#9aa2c8');
+          circ(7, 7, 5.2, '#5a7ab8');
+          R(0, 0, 14, 14, (_a, _b, o2) => (o2 && Math.hypot(lx() - 7, ly() - 7) < 5.2 ? mixc('#2a3a6a', '#7aa0d8', (ly() - 2) / 10) : o2));
+          for (let k = 0; k < 6; k++) P1(4 + hash2(k, 1, 701) * 6, 3.5 + hash2(k, 2, 701) * 3, '#fff8e8');
+          R(0, 0, 14, 14, (_a, _b, o2) => (o2 && Math.hypot(lx() - 7, ly() - 7) < 5.2 && ly() > 9 ? '#3a5a3a' : o2));
+          L1(4, 4, 6, 2.5, '#ffffff');
+          for (let k = 0; k < 8; k++) P1(7 + Math.cos(k * 0.785) * 6.5, 7 + Math.sin(k * 0.785) * 6.5, '#e4e8f8');
+        },
+        { outline: false },
+      ),
+    ),
+});
+
+/** Birdie's half of the championship belt, in a shadow box she never mentions. */
+reg('half-belt', {
+  draw: (ctx, o, t) => {
+    const glint = (t + phaseOf(o)) % 7 < 0.3 ? 1 : 0;
+    blit(
+      ctx,
+      o,
+      iart(
+        `half-belt|${glint}`,
+        24,
+        14,
+        () => {
+          R(0, 0, 24, 14, '#2b2140');
+          R(1, 1, 22, 12, '#5a1a2e');
+          R(1, 1, 22, 12, (_a, _b, o2) => (hash2(FX, FY, 711) < 0.08 ? '#6a2a3e' : o2));
+          // the leather strap ends in a ragged tear; the gold plate is cut clean through the middle
+          R(2, 5, 12, 4, '#3a2a2a');
+          H1(2, 14, 5, '#5a4a4a');
+          for (let k = 0; k < 5; k++) P1(3 + k * 2.5, 7, PAL.gold3);
+          poly([[12, 3], [19, 3.5], [20.5, 7], [19, 10.5], [12, 11]], PAL.gold2);
+          poly([[13, 4.5], [18, 5], [19, 7], [18, 9], [13, 9.5]], '#ffe48e');
+          for (let y = 3; y < 11.5; y += 0.5) P1(20 + Math.sin(y * 3.1) * 0.6, y, '#c8a040');
+          ell(16, 7, 1.6, 1.6, '#c9404c');
+          tinyT('VH', 13.5, 4.8, '#8a5a2a');
+          if (glint) sparkle(17, 5);
+          fglare(1, 1, 22, 12, 0.18);
+          // a brass plate below: no words, just the year
+          R(8, 11.5, 8, 1.5, PAL.gold3);
+          tinyC('1983', 12, 11.3, '#3a2a2a');
+        },
+        { outline: false },
+      ),
+    );
+  },
+});
+
+/** A largemouth bass mounted on a plaque, mouth open mid-song. */
+reg('mounted-bass', {
+  draw: (ctx, o) =>
+    blit(
+      ctx,
+      o,
+      iart(
+        'mounted-bass',
+        22,
+        12,
+        () => {
+          RR(0, 1, 22, 10, 3, '#8a5640');
+          fgrain(1, 2, 20, 8, WALNUT, 721);
+          ell(11, 6, 8, 3.2, '#5a8a4a');
+          ell(11, 5.2, 7, 2, '#7aaa5a');
+          ell(11, 7.5, 6, 1.4, '#e8e0b0');
+          poly([[18, 6], [21.5, 3], [21.5, 9]], '#5a8a4a');
+          ell(4.5, 6, 2, 1.8, '#3a5a3a');
+          ell(4.2, 6.2, 1.2, 1.1, '#d8b0a0');
+          ell(6.5, 5, 0.8, 0.8, '#fff4c0');
+          P1(6.6, 5, AK);
+          for (let k = 0; k < 5; k++) P1(9 + k * 1.8, 4 - (k % 2) * 0.5, '#4a7a3a');
+          R(8, 10, 6, 1.5, PAL.gold2);
+        },
+        { outline: false },
+      ),
+    ),
+});
+
+/** A shoebox wrestling ring on the floor, action figures mid-match. */
+reg('toy-ring', {
+  draw: (ctx, o) =>
+    blit(
+      ctx,
+      o,
+      iart(
+        'toy-ring',
+        22,
+        14,
+        () => {
+          // the box, ropes made of rubber bands, a sticker for a logo
+          R(1, 6, 20, 7, '#c8a070');
+          R(1, 6, 20, 2, '#e8c090');
+          tinyC('PIP ACW', 11, 9, '#c9404c');
+          R(2, 2, 18, 5, '#fbf6ea');
+          for (const [px, py] of [[2, 1], [19.5, 1], [2, 6], [19.5, 6]] as [number, number][]) R(px - 0.5, py - 1, 1.2, 3, '#3a6ab0');
+          for (let k = 0; k < 3; k++) {
+            H1(2, 19.5, 1 + k * 1.2, k % 2 ? '#fbf6ea' : '#d8434b');
+          }
+          // two figures and a third tossed outside the ring
+          R(7, 0, 1.6, 4.5, '#ffd34a');
+          ell(7.8, -0.5, 0.8, 0.8, '#c88a5e');
+          R(12, 1, 1.6, 4, '#5a6a8a');
+          ell(12.8, 0.5, 0.8, 0.8, '#6a4a3a');
+          R(16, 11.5, 4, 1.5, '#d8434b');
+          ell(20.5, 12.2, 0.7, 0.7, '#e6ab84');
+          // trading cards scattered
+          for (let k = 0; k < 3; k++) R(1 + k * 3, 12 + (k % 2), 2, 2.5, ['#fbf6ea', '#ffd050', '#5ec0a8'][k]);
+        },
+        { shadow: [['r', 0, 12, 22, 2]] },
+      ),
+    ),
+});
+
+/** A championship belt cut out of cardboard, gold marker, PIP in glitter glue. */
+reg('cardboard-belt', {
+  draw: (ctx, o) =>
+    blit(
+      ctx,
+      o,
+      iart(
+        'cardboard-belt',
+        22,
+        10,
+        () => {
+          R(0, 3, 22, 4, '#c8a070');
+          R(0, 3, 22, 4, (_a, _b, o2) => (o2 && FY % 2 === 0 ? shA(o2, 0.06) : o2));
+          ell(11, 5, 6, 4.5, '#ffd050');
+          ell(11, 5, 4.5, 3.4, '#e8b830');
+          tinyC('PIP', 11, 3.6, '#c9404c');
+          for (let k = 0; k < 10; k++) P1(7 + hash2(k, 1, 731) * 8, 2 + hash2(k, 2, 731) * 6, '#ffffff');
+          R(1, 4, 2, 2, '#3a6ab0');
+          R(19, 4, 2, 2, '#3a6ab0');
+          R(5, 0, 3, 1.5, alpha('#f2e6c4', 230));
+          R(15, 0, 3, 1.5, alpha('#f2e6c4', 230));
+        },
+        { outline: false },
+      ),
+    ),
+});
+
 // ================================================================ kitchen
 
 /**

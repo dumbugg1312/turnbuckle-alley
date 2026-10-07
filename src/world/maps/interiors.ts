@@ -518,21 +518,60 @@ interior('school', 'Turnbuckle Alley High Gym', 18, 12, 'wall-panel', 'wood', 8,
   ['chair-cart', 1.7, 11.6],
 ], { music: 'workout', light: 0.95, abs: true });
 
+// Birdie's house, where she only ever sits in one of the two chairs: her
+// recliner and the empty one with the afghan folded on it, the lamp in the
+// window she leaves on, her half of the belt in a shadow box she never
+// mentions, Lou's bass on a plaque, boxes of posters, an unmade bed.
 interior('birdie-house', "Birdie's House", 12, 8, 'wall-pink', 'wood', 4, [
-  ['couch', 3, 6], ['tv-vcr', 1, 4.4], ['armchair', 6, 5], ['bed', 10.5, 5.2], ['photo', 4, 2.1, { variant: 1 }], ['window', 7.5, 2.6], ['plant', 11.4, 7.4], ['rug', 2, 7, { w: 4, h: 1, variant: 0 }],
-], { music: 'home' });
+  ['half-belt', 4.6, 2.2],
+  ['window', 6.8, 2.6, { variant: 2 }],
+  ['photo-wall', 9.6, 2.6, { variant: 1 }],
+  ['mounted-bass', 11.9, 1.4],
+  ['tv-vcr', 2.2, 4.4],
+  ['armchair', 3.5, 5.8, { variant: 0, solid: { x: 0, y: 0, w: 0, h: 0 } }],
+  ['side-table', 4.65, 5.9],
+  ['armchair', 5.8, 5.8, { variant: 1 }],
+  ['lamp-floor', 7.4, 4.8],
+  ['rug', 5, 7.6, { w: 5, h: 2, variant: 0 }],
+  ['bed', 11.5, 6.6, { variant: 1 }],
+  ['box-stack', 8.8, 7.7, { label: 'POSTERS' }],
+  ['plant', 1.4, 7.6, { variant: 1 }],
+], { music: 'home', light: 0.86, abs: true });
 
+// The Abernathys': Pip's shoebox wrestling ring on the floor mid-match, his
+// cardboard championship belt taped to the wall, the TV he watches every
+// show on, crayon drawings, the kitchen table, the couch.
 interior('house-abernathy', "The Abernathys' House", 10, 7, 'wall', 'wood', 4, [
-  ['couch', 3, 5], ['table', 7, 5.4], ['chair-wood', 6, 5.6], ['chair-wood', 8, 5.6], ['tv-vcr', 1, 4.2], ['window', 5, 2.6], ['plant', 9.4, 6.4],
-], { music: 'home' });
+  ['cardboard-belt', 5, 1.8],
+  ['notice', 2.6, 1.6, { lines: 'MY HERO|IS MY|FRIEND', variant: 2 }],
+  ['photo', 9.8, 1.8, { variant: 1 }],
+  ['window', 7.5, 2.6, { variant: 0 }],
+  ['fridge', 1.6, 4.0],
+  ['tv-vcr', 3.2, 4.4],
+  ['couch', 7.5, 4.4, { variant: 2 }],
+  ['rug', 5.5, 7, { w: 4, h: 2, variant: 2 }],
+  ['toy-ring', 4.6, 6.6],
+  ['table', 9.4, 6.6, { variant: 1 }],
+  ['plant', 10.4, 6.6, { variant: 2 }],
+], { music: 'home', light: 0.92, abs: true });
 
+// The Biscuit, Sweet Lou's Airstream by Chokeslam Creek: round windows that
+// glow blue on Saturday nights, forty years of hand-labelled tapes on the
+// wall, two VCRs dubbing under the TV with a padded mailer waiting, the
+// lavender dinette, 45s on the record player, a narrow bed, his rod and bucket.
 interior('airstream', "Sweet Lou's Airstream", 9, 5, 'wall-wood', 'wood', 3, [
-  ['bed', 7.5, 4.2, {}, 'lou-bed'], ['table', 2, 4.4], ['tv-vcr', 0.8, 3.6, {}, 'lou-tv'], ['photo', 4.5, 1.9, { variant: 3 }, 'lou-photo'],
-], { music: 'home', wallRows: 2 });
+  ['round-window', 1.9, 1.3],
+  ['photo', 3.9, 1.2, { variant: 3 }, 'lou-photo'],
+  ['tape-wall', 6.6, 1.65, { w: 3, rows: 2 }],
+  ['round-window', 9.2, 1.3],
+  ['dinette', 3, 3.55],
+  ['booth-table', 3, 4.6, { w: 2 }],
+  ['dub-station', 6.3, 3.6, {}, 'lou-tv'],
+  ['record-player', 5, 4.85],
+  ['bed', 8.6, 4.2, { variant: 1 }, 'lou-bed'],
+  ['fishing-gear', 9.6, 4.8],
+], { music: 'home', light: 0.82, abs: true, wallRows: 2 });
 
-// Dex's night shift: the glass coolers humming (one door just says BAIT),
-// the snack aisle, the coffee station begging for exact change, the lotto
-// sign, and the counter where Dex practises dropkicks when it's slow.
 interior('gasstation', 'Gas · Bait · Snacks', 10, 7, 'wall', 'tile', 4, [
   ['drink-cooler', 2.5, 3.9, { w: 3, solid: { x: -24, y: -6, w: 48, h: 5 } }],
   ['notice', 6.3, 1.4, { lines: 'BAIT|NIGHTCRAWLERS|$2 A DOZ' }],
