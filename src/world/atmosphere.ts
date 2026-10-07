@@ -38,14 +38,38 @@ const KEYS: Key[] = [
   [18.5, [250, 200, 160], [255, 130, 70, 0.4], [255, 140, 110, 0.08], 0.35, 1.2, 0.3, 0.8],
   [19.3, [220, 158, 172], [255, 110, 120, 0.34], [255, 110, 150, 0.08], 0.7, 0.95, 0.24, 0.35],
   [19.9, [165, 130, 200], [200, 110, 200, 0.24], [140, 90, 200, 0.07], 0.9, 0.4, 0.14, 0],
-  [20.6, [112, 112, 195], [80, 70, 160, 0.14], [50, 60, 140, 0.08], 1, 0.1, 0.06, 0],
-  [21.5, [86, 90, 172], [50, 40, 120, 0.12], [40, 50, 120, 0.1], 1, 0, 0, 0],
-  [23.0, [70, 74, 155], [40, 30, 100, 0.12], [30, 40, 110, 0.1], 1, 0, 0, 0],
-  [26.5, [62, 66, 150], [40, 30, 90, 0.12], [30, 40, 110, 0.1], 1, 0, 0, 0],
+  // Night: a touch less saturated blue in the ambient (the screen haze keeps
+  // the blue), so warm lamp light reads amber instead of lavender.
+  [20.6, [112, 112, 188], [80, 70, 160, 0.14], [50, 60, 140, 0.09], 1, 0.1, 0.06, 0],
+  [21.5, [88, 92, 160], [50, 40, 120, 0.12], [40, 50, 120, 0.12], 1, 0, 0, 0],
+  [23.0, [72, 77, 146], [40, 30, 100, 0.12], [30, 40, 110, 0.12], 1, 0, 0, 0],
+  [26.5, [64, 68, 140], [40, 30, 90, 0.12], [30, 40, 110, 0.12], 1, 0, 0, 0],
 ];
 const lerp = (a: number, b: number, t: number) => a + (b - a) * t;
+/**
+ * How much later (hours) the evening runs in each season. The KEYS table is
+ * an early-autumn day; spring and summer evenings stretch so 6 PM is golden
+ * hour and dark comes late, winter's dark comes early.
+ */
+const DUSK_SHIFT = [0.6, 1.1, -0.15, -0.9];
+/** The hour on the KEYS clock that `minutes` looks like in the current season. */
+export function skyHour(minutes: number, season = G.time.season): number {
+  const h = minutes / 60;
+  const off = DUSK_SHIFT[((season % 4) + 4) % 4] ?? 0;
+  // The morning is shared; the shift eases in over the early afternoon.
+  const w = h <= 13 ? 0 : h >= 16 ? 1 : ((h - 13) / 3) ** 2 * (3 - 2 * ((h - 13) / 3));
+  return h - off * w;
+}
+export type SkyPhase = 'day' | 'gold' | 'dusk' | 'night' | 'rain';
+/** What the sky looks like right now, for art that shows it (interior windows). */
+export function skyPhase(minutes = G.time.minutes, weather: string = G.weather.today): SkyPhase {
+  const h = skyHour(minutes);
+  let p: SkyPhase = h < 5.9 || h >= 20.4 ? 'night' : h < 6.3 || h >= 19.4 ? 'dusk' : h < 7.6 || h >= 16.8 ? 'gold' : 'day';
+  if ((weather === 'rain' || weather === 'storm') && p !== 'night') p = 'rain';
+  return p;
+}
 export function gradeAt(minutes: number, weather: string, indoor: boolean, indoorLight = 0.95): Grade {
-  const h = Math.max(KEYS[0][0], Math.min(KEYS[KEYS.length - 1][0], minutes / 60));
+  const h = Math.max(KEYS[0][0], Math.min(KEYS[KEYS.length - 1][0], skyHour(minutes)));
   let i = 0;
   while (i < KEYS.length - 2 && KEYS[i + 1][0] <= h) i++;
   const a = KEYS[i];
@@ -106,8 +130,14 @@ function parse(c: string): [number, number, number] {
   return [(n >> 16) & 255, (n >> 8) & 255, n & 255];
 }
 
-// ---------------------------------------------------------------- light sprites (pixel-banded, dithered)
+// ---------------------------------------------------------------- light sprites (soft, finely stepped)
 const lightCache = new Map<string, HTMLCanvasElement>();
+/**
+ * The colour the world scene uses for the faint light it keeps around the
+ * player outdoors at night. It is drawn as a barely-there lantern: a small,
+ * very low glow, so the player never looks haloed.
+ */
+export const PLAYER_GLOW = '#ffe8c0';
 /** Radial light in `color` for the lightmap ('lighter'). squash = ry/rx (ground pools). */
 export function lightSprite(color: string, r: number, squash = 1, levels = 6, pow = 1.6): HTMLCanvasElement {
   const rr = Math.max(4, Math.round(r / 2) * 2);
@@ -118,6 +148,10 @@ export function lightSprite(color: string, r: number, squash = 1, levels = 6, po
   const ry = Math.max(2, Math.round(rr * squash));
   const w = rr * 2;
   const h = ry * 2;
+  const lantern = color === PLAYER_GLOW && squash === 1 && levels === 6;
+  // Three times the requested steps: each step is a sliver of brightness, so
+  // the dither between them reads as a soft falloff instead of rings.
+  const steps = Math.max(12, levels * 3);
   const c = fromBuf(w, h, (x, y) => {
     const dx = (x + 0.5 - rr) / rr;
     const dy = (y + 0.5 - ry) / ry;
@@ -125,9 +159,12 @@ export function lightSprite(color: string, r: number, squash = 1, levels = 6, po
     // Intensity lives in alpha (not a black background), so a glow can never
     // show up as a dark square whatever composite mode it lands in.
     if (d >= 1) return rgba(0, 0, 0, 0);
-    const i = Math.pow(1 - d, pow);
-    const q = Math.floor(i * levels + bay(x, y)) / levels;
-    return rgba(cr, cg, cb, 255 * q);
+    // smoothstep shoulder: no hard edge where the light ends
+    const s = 1 - d;
+    let i = Math.pow(s * s * (3 - 2 * s), pow * 0.85);
+    if (lantern) i *= 0.16 * Math.max(0, 1 - d * 1.4);
+    const q = Math.floor(i * steps + bay(x, y) * 0.999) / steps;
+    return rgba(cr, cg, cb, 255 * Math.min(1, q));
   });
   lightCache.set(key, c);
   return c;
@@ -144,8 +181,8 @@ export function spillSprite(color: string, w0: number, h: number): HTMLCanvasEle
     const hw = w0 / 2 + y * 0.5;
     const dx = Math.abs(x + 0.5 - W / 2) / hw;
     if (dx >= 1) return rgba(0, 0, 0, 0);
-    const i = Math.pow(1 - t, 1.4) * (1 - dx * dx * 0.7);
-    const q = Math.floor(i * 5 + bay(x, y)) / 5;
+    const i = Math.pow(1 - t, 1.4) * (1 - dx * dx * 0.7) * (1 - Math.max(0, dx - 0.7) / 0.3 * 0.6);
+    const q = Math.floor(i * 14 + bay(x, y) * 0.999) / 14;
     return rgba(cr, cg, cb, 255 * q);
   });
   lightCache.set(key, c);

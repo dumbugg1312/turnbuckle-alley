@@ -83,6 +83,14 @@ export function fbm(x: number, y: number, seed: number, scale = 1): number {
   const n = vnoise(x / (26 * scale), y / (26 * scale), seed) * 0.55 + vnoise(x / (10 * scale), y / (10 * scale), seed + 7) * 0.3 + vnoise(x / (3.6 * scale), y / (3.6 * scale), seed + 13) * 0.15;
   return Math.max(0, Math.min(1, (n - 0.5) * 1.9 + 0.5));
 }
+/**
+ * Two broad octaves only: the calm base for lawns, earth and pavement (the
+ * fine third octave was most of the "uniform noise"), and a third cheaper.
+ */
+export function fbm2(x: number, y: number, seed: number, scale = 1): number {
+  const n = vnoise(x / (26 * scale), y / (26 * scale), seed) * 0.65 + vnoise(x / (10 * scale), y / (10 * scale), seed + 7) * 0.35;
+  return Math.max(0, Math.min(1, (n - 0.5) * 1.9 + 0.5));
+}
 /** fbm at fine coordinates (same world-space field, sampled twice as finely). */
 const fbF = (X: number, Y: number, seed: number, scale = 1) => fbm(X / K, Y / K, seed, scale);
 /** Pick from a ramp of colours with a soft ordered-dither between neighbours. */
@@ -153,6 +161,11 @@ const GRASS_DARK: Record<Season, GrassPal> = {
   fall: { deep: C('#4a4446'), dark: C('#5e5640'), mid: C('#746a3e'), base: C('#887a40'), lite: C('#a08c4a'), hi: C('#c4ac64'), tip: C('#dcc684') },
   winter: { deep: C('#56606c'), dark: C('#687676'), mid: C('#7a8a84'), base: C('#8e9c92'), lite: C('#a6b2a6'), hi: C('#c8d2c8'), tip: C('#e4eae2') },
 };
+/** The season's grass ramp, deep to tip (for decals and props that grow out of the lawn). */
+export function grassTones(dark = false): number[] {
+  const p = (dark ? GRASS_DARK : GRASS)[SEASON];
+  return [p.deep, p.dark, p.mid, p.base, p.lite, p.hi, p.tip];
+}
 const FLOWER_COLS: Record<Season, string[]> = {
   spring: ['#ff8fae', '#ffe070', '#fff6ee', '#c08ae0', '#ff8fae', '#fff6ee', '#ffb6cc'],
   summer: ['#ffe070', '#ff6a5a', '#fff6ee', '#ffb040', '#ff8fae', '#9a7ae0'],
@@ -274,23 +287,39 @@ function clump(X: number, Y: number, seed: number, cw: number, ch: number, big: 
       if (d > lim) continue;
       bestCy = cy;
       const s = dy + dx * 0.3;
-      v = dy < -0.3 && d > lim - 0.2 ? 4.95 : s < -0.5 ? 4.15 : s < 0.15 ? 3.55 : s < 0.65 ? 3.1 : 2.6;
+      v = dy < -0.3 && d > lim - 0.2 ? 4.45 : s < -0.5 ? 3.95 : s < 0.15 ? 3.5 : s < 0.65 ? 3.2 : 2.85;
     }
     if (bestCy > -1e9) return v;
   }
-  return 1.9;
+  return 2.45;
 }
-function grassTex(P: () => GrassPal, rk: string, seed: number, big = 1.2) {
+/**
+ * Where life happens: a slow world-space field (0..1) that gathers small
+ * detail (tufts, clover, flowers, pebbles, cracks) into clumps and leaves
+ * calm stretches between them, the way a hand-painted map places it.
+ */
+export function lively(wx: number, wy: number, seed: number): number {
+  const a = vnoise(wx / 46, wy / 38, seed) * 0.7 + vnoise(wx / 15, wy / 13, seed + 3) * 0.3;
+  return Math.max(0, Math.min(1, (a - 0.42) * 2.6));
+}
+function grassTex(P: () => GrassPal, rk: string, seed: number, big = 1.45) {
+  // the ramps change only with the season; don't look them up per pixel
+  let r: Ramps | null = null;
+  let rSeason = '';
   return (X: number, Y: number) => {
-    const r = ramps(SEASON + rk, P());
+    if (rSeason !== SEASON || !r) {
+      r = ramps(SEASON + rk, P());
+      rSeason = SEASON;
+    }
     const wx = X / K;
     const wy = Y / K;
-    // big soft tonal drifts and sun-warmed / cool patches over the clumps
-    const t = fbm(wx, wy, seed, 1.2);
-    let i = clump(X, Y, seed + 50, 11 * big, 7 * big, big) + (t - 0.5) * 2 + (bay(X, Y) - 0.5) * 0.7;
+    // big soft tonal drifts and sun-warmed / cool patches over larger, calmer
+    // clumps; only a whisper of per-pixel dither so the lawn can rest the eye
+    const t = fbm2(wx, wy, seed, 1.5);
+    let i = clump(X, Y, seed + 50, 11 * big, 7 * big, big) + (t - 0.5) * 1.5 + (bay(X, Y) - 0.5) * 0.22;
     const n = hh(X, Y, seed + 40);
-    if (n < 0.03) i -= 1;
-    else if (n > 0.975) i += 1;
+    if (n < 0.008) i -= 1;
+    else if (n > 0.994) i += 1;
     const hue = vnoise(wx / 30, wy / 30, seed + 60) + (bay(X, Y) - 0.5) * 0.08;
     const ramp = hue > 0.63 ? r.w : hue < 0.3 ? r.c : r.n;
     return ramp[Math.max(0, Math.min(6, Math.floor(i)))];
@@ -308,8 +337,10 @@ function grassDeco(P: () => GrassPal, seed: number, tuftProb: number, extras: bo
   return (d: DecoCtx) => {
     const p = P();
     // 2. tufts: fans of longer blades with a contact shadow, allowed to spill over edges
-    cells(d.X0, d.Y0, 13, 11, seed + 1, tuftProb, (cx, cy, h, gx, gy) => {
+    cells(d.X0, d.Y0, 13, 11, seed + 1, tuftProb * 1.6, (cx, cy, h, gx, gy) => {
       if (!d.mine(cx, cy)) return;
+      // clumps of tufts with calm lawn between them
+      if (hh(gx, gy, seed + 4) > lively(cx / K, cy / K, seed + 70) * 0.85) return;
       const n = 4 + Math.floor(h * 4);
       const w = Math.ceil(n * 0.6);
       for (let i = -w; i <= w; i++) {
@@ -325,13 +356,14 @@ function grassDeco(P: () => GrassPal, seed: number, tuftProb: number, extras: bo
       }
     });
     // 3. sun flecks
-    cells(d.X0, d.Y0, 5, 5, seed + 9, 0.2, (cx, cy) => {
-      if (d.mine(cx, cy)) d.put(cx, cy, liA(d.base(cx, cy), 0.42));
+    cells(d.X0, d.Y0, 7, 7, seed + 9, 0.16, (cx, cy) => {
+      if (d.mine(cx, cy) && lively(cx / K, cy / K, seed + 70) > 0.35) d.put(cx, cy, liA(d.base(cx, cy), 0.32));
     });
     if (!extras) return;
     if (SEASON === 'spring' || SEASON === 'summer') {
       // clover patches
-      cells(d.X0, d.Y0, 26, 22, seed + 21, 0.16, (cx, cy, h, gx, gy) => {
+      cells(d.X0, d.Y0, 26, 22, seed + 21, 0.3, (cx, cy, h, gx, gy) => {
+        if (lively(cx / K, cy / K, seed + 71) < 0.55) return;
         const n = 2 + Math.floor(h * 4);
         for (let i = 0; i < n; i++) {
           const x = cx + Math.round((hh(gx, gy * 5 + i, seed + 22) - 0.5) * 10);
@@ -347,8 +379,9 @@ function grassDeco(P: () => GrassPal, seed: number, tuftProb: number, extras: bo
       });
       // tiny wildflowers
       const fl = FLOWER_COLS[SEASON];
-      cells(d.X0, d.Y0, 19, 17, seed + 25, 0.2, (cx, cy, h, gx, gy) => {
+      cells(d.X0, d.Y0, 19, 17, seed + 25, 0.34, (cx, cy, h, gx, gy) => {
         if (!d.mine(cx, cy + 2)) return;
+        if (hh(gx, gy, seed + 5) > lively(cx / K, cy / K, seed + 72) * 0.9) return;
         const fc = C(h < 0.45 ? '#fff8ee' : h < 0.7 ? '#ffe27a' : fl[Math.floor(hh(gx, gy, seed + 26) * fl.length)]);
         d.put(cx, cy + 1, p.dark);
         d.put(cx, cy + 2, p.deep);
@@ -367,8 +400,9 @@ function grassDeco(P: () => GrassPal, seed: number, tuftProb: number, extras: bo
       });
     } else if (SEASON === 'fall') {
       const leaves = [C('#e8803a'), C('#d65a3a'), C('#f2b84a'), C('#b8483e'), C('#c8763a')];
-      cells(d.X0, d.Y0, 11, 10, seed + 23, 0.5, (cx, cy, h, gx, gy) => {
+      cells(d.X0, d.Y0, 11, 10, seed + 23, 0.4, (cx, cy, h, gx, gy) => {
         if (!d.mine(cx, cy)) return;
+        if (hh(gx, gy, seed + 6) > lively(cx / K, cy / K, seed + 73) * 0.7) return;
         const lc = leaves[Math.floor(hh(gx, gy, seed + 27) * leaves.length)];
         const flip = h > 0.5;
         d.put(cx + 1, cy + 1, shA(d.base(cx + 1, cy + 1), 0.25));
@@ -464,25 +498,26 @@ function earthTex(P: typeof DIRT, seed: number) {
   return (X: number, Y: number) => {
     const wx = X / K;
     const wy = Y / K;
-    let t = fbm(wx, wy, seed, 0.8) * 0.78 + 0.1;
+    let t = fbm2(wx, wy, seed, 0.8) * 0.78 + 0.1;
     // footpath wear: meandering compacted strips, smoother and paler
     const w = vnoise(wx / 17, wy / 17, seed + 9);
     const ridge = Math.max(0, 1 - Math.abs(w - 0.5) * 11);
     t += ridge * 0.26;
     const g = hh(X, Y, seed + 3);
-    t += (g - 0.5) * (0.24 - ridge * 0.16);
-    const c = band(t, [P.deep, P.dark, P.base, P.lite, P.hi], X, Y, 0.5);
-    // gritty speckle
-    if (g < 0.035 && ridge < 0.5) return P.peb;
-    if (g > 0.975) return shA(c, 0.2);
+    t += (g - 0.5) * (0.1 - ridge * 0.06);
+    const c = band(t, [P.deep, P.dark, P.base, P.lite, P.hi], X, Y, 0.3);
+    // a little grit, gathered where the ground is lively
+    if (g < 0.016 && ridge < 0.5 && lively(wx, wy, seed + 8) > 0.4) return P.peb;
+    if (g > 0.992) return shA(c, 0.18);
     return c;
   };
 }
 function earthDeco(P: typeof DIRT, seed: number) {
   return (d: DecoCtx) => {
     // pebbles: lit top-left, a cast shadow bottom-right
-    cells(d.X0, d.Y0, 9, 8, seed, 0.46, (cx, cy, h) => {
+    cells(d.X0, d.Y0, 9, 8, seed, 0.5, (cx, cy, h, gx, gy) => {
       if (!d.mine(cx, cy)) return;
+      if (hh(gx, gy, seed + 9) > lively(cx / K, cy / K, seed + 8) * 0.75) return;
       const sh = shA(d.base(cx + 1, cy + 1), 0.3);
       if (h < 0.45) {
         d.put(cx, cy, P.peb);
@@ -496,6 +531,7 @@ function earthDeco(P: typeof DIRT, seed: number) {
     });
     // hairline dry cracks with a lit lower lip
     cells(d.X0, d.Y0, 28, 26, seed + 5, 0.3, (cx, cy, h) => {
+      if (lively(cx / K, cy / K, seed + 11) < 0.5) return;
       let x = cx;
       let y = cy;
       const len = 6 + Math.floor(h * 8);
@@ -819,23 +855,26 @@ INFO['deep-water'] = {
 function asphalt(X: number, Y: number): number {
   const wx = X / K;
   const wy = Y / K;
-  const t = fbm(wx, wy, 111, 1.4) * 0.6 + 0.2 + (vnoise(wx / 48, wy / 48, 119) - 0.5) * 0.2;
-  // aggregate: pale stones, warm grit, dark pits
+  // calm, broad tone: worn lanes and patches rather than per-pixel fizz
+  const t = fbm2(wx, wy, 111, 2.2) * 0.34 + 0.33 + (vnoise(wx / 48, wy / 48, 119) - 0.5) * 0.24;
+  // aggregate: pale stones, warm grit, dark pits (sparser, and only where the surface is old)
   const n = hh(X, Y, 112);
-  if (n < 0.045) return hh(X, Y, 113) < 0.5 ? ROAD.agg : ROAD.hi;
-  if (n < 0.07) return ROAD.warm;
-  if (n > 0.955) return ROAD.d2;
-  // a world-space crack network: raw hairlines and older tar-sealed seams
-  const m = vnoise(wx / 15, wy / 15, 118);
-  if (m > 0.58) {
+  const old = vnoise(wx / 30, wy / 22, 120);
+  const grit = 0.006 + old * old * 0.03;
+  if (n < grit) return hh(X, Y, 113) < 0.5 ? ROAD.agg : ROAD.hi;
+  if (n < grit * 1.5) return ROAD.warm;
+  if (n > 1 - grit) return ROAD.d2;
+  // a world-space crack network, only in the older stretches: raw hairlines and tar-sealed seams
+  const m = vnoise(wx / 15, wy / 15, 118) * 0.5 + vnoise(wx / 70, wy / 40, 121) * 0.5;
+  if (m > 0.7) {
     const v = voronoi(X, Y, 21, 117, 1);
     const e = v.d2 - v.d1;
-    if (m > 0.7) {
+    if (m > 0.77) {
       if (e < 0.75) return e < 0.25 && hh(X, Y, 114) < 0.35 ? ROAD.tarHi : ROAD.tar;
       if (e < 1.05 && bay(X, Y) < 0.5) return ROAD.dark;
     } else if (e < 0.28) return ROAD.d2;
   }
-  return band(t, [ROAD.dark, ROAD.base, ROAD.lite], X, Y, 0.35);
+  return band(t, [ROAD.dark, ROAD.base, ROAD.lite], X, Y, 0.2);
 }
 const isAsphalt = (id: string) => INFO[id]?.fam === 'asphalt';
 function manhole(t: TileCtx): void {
@@ -888,8 +927,8 @@ function roadPost(t: TileCtx): void {
         if (edge) t.set(x, y, n < 0.3 ? ROAD.dark : y === py && n < 0.6 ? ROAD.tarHi : ROAD.tar);
         else t.set(x, y, n < 0.04 ? ROAD.agg : n > 0.95 ? ROAD.d2 : band(fbF(X, Y, 124, 0.4), [mixc(ROAD.dark, ROAD.d2, 0.5), ROAD.dark, mixc(ROAD.dark, ROAD.base, 0.5)], X, Y, 0.5));
       }
-  } else if (h < 0.2 && t.id !== 'crosswalk') {
-    // an oil stain: soft dark core, dithered halo, a rare rainbow sheen
+  } else if (h < 0.2 && t.id !== 'crosswalk' && (t.id === 'parking' || INFO[t.n(0, -1)]?.fam === 'sidewalk' || INFO[t.n(0, 1)]?.fam === 'sidewalk' ? h > 0.075 : h < 0.09)) {
+    // an oil stain where cars stand (by the curb, in the lot): soft dark core, dithered halo, a rare rainbow sheen
     const cx = 8 + hh(t.tx, t.ty, 125) * 16;
     const cy = 8 + hh(t.tx, t.ty, 126) * 16;
     const rx = 4 + hh(t.tx, t.ty, 127) * 4;
@@ -1000,21 +1039,21 @@ function sidewalkTex(X: number, Y: number): number {
   const wx = X / K;
   const wy = Y / K;
   const n = hh(X, Y, 161);
-  if (n < 0.035) return SIDEWALK.lite;
-  if (n > 0.972) return SIDEWALK.dark;
+  if (n < 0.012) return SIDEWALK.lite;
+  if (n > 0.99) return SIDEWALK.dark;
   // broom finish: faint horizontal streaks across each slab
-  let t = fbm(wx, wy, 162, 1.5) * 0.55 + 0.32 + (vnoise(X / 7, Y / 0.9, 164 + Math.floor(X / TS)) - 0.5) * 0.28;
+  let t = fbm2(wx, wy, 162, 1.8) * 0.4 + 0.4 + (vnoise(X / 7, Y / 0.9, 164 + Math.floor(X / TS)) - 0.5) * 0.12;
   // weathering: rain stains and foot-polished paths
   const st = vnoise(wx / 20, wy / 20, 165);
   if (st > 0.66) t -= (st - 0.66) * 1.4;
-  return band(t, [SIDEWALK.dark, SIDEWALK.b3, SIDEWALK.b2, SIDEWALK.base, SIDEWALK.lite], X, Y, 0.4);
+  return band(t, [SIDEWALK.dark, SIDEWALK.b3, SIDEWALK.b2, SIDEWALK.base, SIDEWALK.lite], X, Y, 0.3);
 }
 function sidewalkPost(t: TileCtx): void {
   const own = (x: number, y: number) => t.own(x, y) === t.id;
   const h = hh(t.tx, t.ty, 163);
   // chipped slab corners
   for (const [cx, cy, s] of [[1, 1, 0], [30, 1, 1], [1, 30, 2], [30, 30, 3]] as [number, number, number][]) {
-    if (hh(t.tx * 4 + s, t.ty, 170) > 0.22) continue;
+    if (hh(t.tx * 4 + s, t.ty, 170) > 0.08 + lively(t.tx * 16, t.ty * 16, 171) * 0.2) continue;
     const dx = cx < 16 ? 1 : -1;
     const dy = cy < 16 ? 1 : -1;
     for (let j = 0; j < 3; j++)
@@ -1024,8 +1063,8 @@ function sidewalkPost(t: TileCtx): void {
         if (own(x, y)) t.set(x, y, i + j === 2 ? SIDEWALK.dark : SIDEWALK.crack);
       }
   }
-  if (h < 0.14) {
-    // a crack that wanders off a joint, a determined weed in it
+  if (h < 0.03 + lively(t.tx * 16, t.ty * 16, 172) * 0.22) {
+    // a crack that wanders off a joint, a determined weed in it (gathered in the older stretches)
     let x = 4 + Math.floor(hh(t.tx, t.ty, 164) * 22);
     let y = 3;
     const len = 9 + Math.floor(hh(t.tx, t.ty, 165) * 10);
@@ -1047,7 +1086,7 @@ function sidewalkPost(t: TileCtx): void {
     }
   }
   // gum spots: flattened discs, older ones darker
-  const gums = h > 0.5 ? Math.floor(hh(t.tx, t.ty, 168) * 3) : 0;
+  const gums = h > 0.86 ? 1 + Math.floor(hh(t.tx, t.ty, 168) * 2) : 0;
   for (let i = 0; i < gums; i++) {
     const gx = 4 + Math.floor(hh(t.tx, t.ty + i, 169) * 23);
     const gy = 4 + Math.floor(hh(t.tx + i, t.ty, 171) * 23);
@@ -1055,7 +1094,7 @@ function sidewalkPost(t: TileCtx): void {
     const g = old ? C('#b09ca2') : C('#c8b4b2');
     stampRows((x, y, c) => own(x, y) && t.set(x, y, c), hh(gx, gy, 173) < 0.5 ? ['lg.', 'ggd', '.d.'] : ['lg', 'gd'], { l: liA(g, 0.3), g, d: shA(g, 0.14) }, gx, gy);
   }
-  if (h > 0.2 && h < 0.24 && SEASON !== 'winter') {
+  if (h > 0.2 && h < 0.214 && SEASON !== 'winter') {
     // chalk drawing: a tiny heart
     const gx = 9 + Math.floor(hh(t.tx, t.ty, 173) * 12);
     const gy = 9 + Math.floor(hh(t.tx, t.ty, 174) * 12);
@@ -1066,7 +1105,7 @@ function sidewalkPost(t: TileCtx): void {
   const nearGrass = [t.n(0, -1), t.n(0, 1), t.n(-1, 0), t.n(1, 0)].some((id) => INFO[id]?.grassy);
   if (SEASON !== 'winter') {
     const g = GRASS[SEASON];
-    const tries = nearGrass ? 5 : 2;
+    const tries = nearGrass ? 4 : 1;
     for (let i = 0; i < tries; i++) {
       const r = hh(t.tx * 5 + i, t.ty, 177);
       if (r > 0.6) continue;
@@ -1662,12 +1701,17 @@ const M = 10;
 const GW = TS + M * 2;
 function renderTile(id: TerrainId, tx: number, ty: number, ids5: string[]): Uint32Array {
   const buf = new Uint32Array(TS * TS);
-  const own: string[] = new Array(GW * GW);
+  // Fast path: the 3x3 around us is all one terrain, so every pixel of the
+  // owner grid is ours and the per-pixel ownership work can be skipped.
+  let same9 = true;
+  for (let oy = -1; oy <= 1; oy++) for (let ox = -1; ox <= 1; ox++) if (ids5[(oy + 2) * 5 + ox + 2] !== id) same9 = false;
+  const own: string[] = same9 ? [] : new Array(GW * GW);
   // which of the 3x3 tiles around us actually blend with a neighbour?
   const grps: Grp[][] = [];
-  for (let oy = -1; oy <= 1; oy++) for (let ox = -1; ox <= 1; ox++) grps.push(groupsAt(ids5, ox, oy));
+  if (!same9) for (let oy = -1; oy <= 1; oy++) for (let ox = -1; ox <= 1; ox++) grps.push(groupsAt(ids5, ox, oy));
   const X0 = tx * TS;
   const Y0 = ty * TS;
+  if (!same9)
   for (let ly = -M; ly < TS + M; ly++)
     for (let lx = -M; lx < TS + M; lx++) {
       const ox = lx < 0 ? -1 : lx >= TS ? 1 : 0;
@@ -1677,23 +1721,31 @@ function renderTile(id: TerrainId, tx: number, ty: number, ids5: string[]): Uint
       own[(ly + M) * GW + lx + M] = g.length ? ownerFine(base, g, (lx - ox * TS + 0.5) / K, (ly - oy * TS + 0.5) / K, X0 + lx, Y0 + ly) : base;
     }
   const inG = (lx: number, ly: number) => lx >= -M && ly >= -M && lx < TS + M && ly < TS + M;
-  const O = (lx: number, ly: number) => (inG(lx, ly) ? own[(ly + M) * GW + lx + M] : id);
+  const self = INFO[id];
+  const O = same9 ? () => id : (lx: number, ly: number) => (inG(lx, ly) ? own[(ly + M) * GW + lx + M] : id);
   const infoG: (TInfo | undefined)[] = new Array(GW * GW);
   const hG = new Float32Array(GW * GW);
-  for (let i = 0; i < GW * GW; i++) {
-    const inf = INFO[own[i]];
-    infoG[i] = inf;
-    hG[i] = inf ? inf.height : isWall(own[i]) ? 9 : -1;
-  }
+  if (same9) {
+    infoG.fill(self);
+    hG.fill(self ? self.height : -1);
+  } else
+    for (let i = 0; i < GW * GW; i++) {
+      const inf = INFO[own[i]];
+      infoG[i] = inf;
+      hG[i] = inf ? inf.height : isWall(own[i]) ? 9 : -1;
+    }
   const IA = (lx: number, ly: number) => (inG(lx, ly) ? infoG[(ly + M) * GW + lx + M] : undefined);
   const HA = (lx: number, ly: number) => (inG(lx, ly) ? hG[(ly + M) * GW + lx + M] : -1);
-  const self = INFO[id];
   // 1. base texture
-  for (let y = 0; y < TS; y++)
-    for (let x = 0; x < TS; x++) {
-      const info = IA(x, y) ?? self;
-      buf[y * TS + x] = info.tex(X0 + x, Y0 + y);
-    }
+  if (same9) {
+    const tex = self.tex;
+    for (let y = 0; y < TS; y++) for (let x = 0; x < TS; x++) buf[y * TS + x] = tex(X0 + x, Y0 + y);
+  } else
+    for (let y = 0; y < TS; y++)
+      for (let x = 0; x < TS; x++) {
+        const info = IA(x, y) ?? self;
+        buf[y * TS + x] = info.tex(X0 + x, Y0 + y);
+      }
   // undecorated texture memo (tile + margins) so decorations can shade relative to it
   const memo = new Uint32Array(GW * GW);
   for (let y = 0; y < TS; y++) memo.set(buf.subarray(y * TS, y * TS + TS), (y + M) * GW + M);
@@ -1706,7 +1758,7 @@ function renderTile(id: TerrainId, tx: number, ty: number, ids5: string[]): Uint
   };
   // 2. decorations, clipped to each owner's pixels (grass may overhang lower ground)
   const owners = new Set<string>([id]);
-  if (grps.some((g) => g.length)) for (let i = 0; i < GW * GW; i++) if (INFO[own[i]]) owners.add(own[i]);
+  if (!same9 && grps.some((g) => g.length)) for (let i = 0; i < GW * GW; i++) if (INFO[own[i]]) owners.add(own[i]);
   for (const oid of owners) {
     const info = INFO[oid];
     if (!info?.deco) continue;
