@@ -117,7 +117,7 @@ building('b-gasstation', 54, 23, 32, 'gasstation', 'Gas · Bait · Snacks');
 o('tree', 49.5, 19.5, { variant: 1 });
 o('tree', 61.5, 20, { variant: 0 });
 o('poster-board', 47.2, 23.3, {}, 'poster-board');
-o('car', 4, 25.6, { variant: 1 });
+o('car', 5, 25.6, { variant: 1 });
 o('pickup', 47, 27.8, { variant: 0 });
 o('chair', 59, 21.6, {}, 'chair-busstop');
 
