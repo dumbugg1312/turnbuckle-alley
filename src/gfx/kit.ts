@@ -12,10 +12,63 @@
 export type Color = string | number;
 export type Paint = Color | ((x: number, y: number, old: number) => Color | null | undefined) | null | undefined;
 export interface Spr {
+  /** Buffer size in fine pixels (logical size x k). */
   w: number;
   h: number;
   d: Uint32Array<ArrayBufferLike>;
   name?: string;
+  /** Density: fine pixels per logical (world) pixel. Missing = 1. */
+  k?: number;
+}
+
+// ---------- density (DECISIONS.md D-018) ----------
+/**
+ * Sprites built inside dense(2, ...) get a buffer twice as fine. Every
+ * primitive keeps taking LOGICAL (world-pixel) coordinates, so old drawing
+ * code renders the same, ellipses and polygons come out smoother, and new
+ * detail can sit on half-pixels: fractional coordinates, P1() for a single
+ * fine pixel, and the live FX/FY (fine pixel coordinates) inside paint
+ * callbacks. Paint callbacks still get whole logical x, y, so existing
+ * patterns and dithers don't change. Canvases from dense sprites are tagged,
+ * and drawImage() treats them at their logical size, so draw calls stay in
+ * world pixels. Use lw()/lh() for a canvas's logical size.
+ */
+let KD = 1;
+/** Fine pixel coordinates of the pixel a paint callback is being asked about. */
+export let FX = 0;
+export let FY = 0;
+/** Current build density (1 outside dense()). */
+export function density(): number {
+  return KD;
+}
+/** Build sprites at density k inside fn (nests; restores after). */
+export function dense<T>(k: number, fn: () => T): T {
+  const prev = KD;
+  KD = Math.max(1, Math.round(k));
+  try {
+    return fn();
+  } finally {
+    KD = prev;
+  }
+}
+type Dense = { __k?: number };
+/** Logical width/height of a canvas (dense canvases are k times bigger). */
+export const lw = (c: HTMLCanvasElement): number => c.width / ((c as Dense).__k ?? 1);
+export const lh = (c: HTMLCanvasElement): number => c.height / ((c as Dense).__k ?? 1);
+export const kOf = (c: CanvasImageSource): number => ((c as Dense).__k ?? 1);
+if (typeof CanvasRenderingContext2D !== 'undefined' && !(CanvasRenderingContext2D.prototype as unknown as { __kPatched?: boolean }).__kPatched) {
+  const proto = CanvasRenderingContext2D.prototype as unknown as { __kPatched: boolean; drawImage: (...a: unknown[]) => void };
+  const orig = proto.drawImage;
+  proto.__kPatched = true;
+  proto.drawImage = function (this: CanvasRenderingContext2D, ...a: unknown[]) {
+    const img = a[0] as HTMLCanvasElement & Dense;
+    const k = img && img.__k;
+    if (k && k > 1) {
+      if (a.length === 3) return orig.call(this, img, a[1], a[2], img.width / k, img.height / k);
+      if (a.length === 9) return orig.call(this, img, (a[1] as number) * k, (a[2] as number) * k, (a[3] as number) * k, (a[4] as number) * k, a[5], a[6], a[7], a[8]);
+    }
+    return orig.apply(this, a);
+  };
 }
 
 // ---------- colour helpers (buffers are little-endian ABGR) ----------
@@ -89,10 +142,10 @@ let CX1 = 1;
 let CY1 = 1;
 
 export function clip(x: number, y: number, w: number, h: number): void {
-  CX0 = Math.max(0, x | 0);
-  CY0 = Math.max(0, y | 0);
-  CX1 = Math.min(TWD, (x + w) | 0);
-  CY1 = Math.min(THT, (y + h) | 0);
+  CX0 = Math.max(0, Math.floor(x * KD));
+  CY0 = Math.max(0, Math.floor(y * KD));
+  CX1 = Math.min(TWD, Math.floor((x + w) * KD));
+  CY1 = Math.min(THT, Math.floor((y + h) * KD));
 }
 export function noclip(): void {
   CX0 = 0;
@@ -103,15 +156,19 @@ export function noclip(): void {
 
 /** Build a sprite procedurally: fn draws with the primitives into a w x h buffer (0 = transparent). */
 export function mkSpr(w: number, h: number, fn: (s: Spr) => void, name?: string): Spr {
-  const s: Spr = { w, h, d: new Uint32Array(w * h), name };
+  const k = KD;
+  const fw = Math.ceil(w * k);
+  const fh = Math.ceil(h * k);
+  const s: Spr = { w: fw, h: fh, d: new Uint32Array(fw * fh), name };
+  if (k > 1) s.k = k;
   const sv = [TB, TWD, THT, CX0, CY0, CX1, CY1] as const;
   TB = s.d;
-  TWD = w;
-  THT = h;
+  TWD = fw;
+  THT = fh;
   CX0 = 0;
   CY0 = 0;
-  CX1 = w;
-  CY1 = h;
+  CX1 = fw;
+  CY1 = fh;
   try {
     fn(s);
   } finally {
@@ -121,37 +178,48 @@ export function mkSpr(w: number, h: number, fn: (s: Spr) => void, name?: string)
 }
 
 // ---------- primitives ----------
-export function P(x: number, y: number, c: Paint): void {
-  x = Math.floor(x);
-  y = Math.floor(y);
-  if (x < CX0 || y < CY0 || x >= CX1 || y >= CY1 || c == null) return;
-  const i = y * TWD + x;
+/** Write one fine pixel (fine coordinates); callbacks get logical coords. */
+function put(fx: number, fy: number, c: Paint): void {
+  if (fx < CX0 || fy < CY0 || fx >= CX1 || fy >= CY1) return;
+  const i = fy * TWD + fx;
   if (typeof c === 'function') {
-    const v = c(x, y, TB[i]);
+    FX = fx;
+    FY = fy;
+    const v = KD === 1 ? c(fx, fy, TB[i]) : c(Math.floor(fx / KD), Math.floor(fy / KD), TB[i]);
     if (v != null) TB[i] = col(v);
-  } else TB[i] = typeof c === 'number' ? c : col(c);
+  } else TB[i] = typeof c === 'number' ? c : col(c as Color);
 }
-/** Read a pixel from the current target. */
+export function P(x: number, y: number, c: Paint): void {
+  if (c == null) return;
+  if (KD === 1) {
+    put(Math.floor(x), Math.floor(y), c);
+    return;
+  }
+  const fx = Math.floor(x * KD);
+  const fy = Math.floor(y * KD);
+  for (let j = 0; j < KD; j++) for (let i = 0; i < KD; i++) put(fx + i, fy + j, c);
+}
+/** One fine pixel at logical (x, y), e.g. P1(10.5, 3, c) on a density-2 sprite. */
+export function P1(x: number, y: number, c: Paint): void {
+  if (c == null) return;
+  put(Math.floor(x * KD), Math.floor(y * KD), c);
+}
+/** Read a pixel from the current target (logical coords; fractional reach fine pixels). */
 export function GP(x: number, y: number): number {
-  x |= 0;
-  y |= 0;
-  if (x < 0 || y < 0 || x >= TWD || y >= THT) return 0;
-  return TB[y * TWD + x];
+  const fx = Math.floor(x * KD);
+  const fy = Math.floor(y * KD);
+  if (fx < 0 || fy < 0 || fx >= TWD || fy >= THT) return 0;
+  return TB[fy * TWD + fx];
 }
 export function R(x: number, y: number, w: number, h: number, c: Paint): void {
   if (c == null) return;
-  const x0 = Math.max(CX0, Math.floor(x));
-  const y0 = Math.max(CY0, Math.floor(y));
-  const x1 = Math.min(CX1, Math.floor(x + w));
-  const y1 = Math.min(CY1, Math.floor(y + h));
+  const x0 = Math.max(CX0, Math.floor(x * KD));
+  const y0 = Math.max(CY0, Math.floor(y * KD));
+  const x1 = Math.min(CX1, Math.floor((x + w) * KD));
+  const y1 = Math.min(CY1, Math.floor((y + h) * KD));
   if (x1 <= x0) return;
   if (typeof c === 'function') {
-    for (let yy = y0; yy < y1; yy++)
-      for (let xx = x0; xx < x1; xx++) {
-        const i = yy * TWD + xx;
-        const v = c(xx, yy, TB[i]);
-        if (v != null) TB[i] = col(v);
-      }
+    for (let yy = y0; yy < y1; yy++) for (let xx = x0; xx < x1; xx++) put(xx, yy, c);
     return;
   }
   const cc = col(c);
@@ -216,11 +284,13 @@ export function poly(pts: [number, number][], c: Paint): void {
     if (p[1] < y0) y0 = p[1];
     if (p[1] > y1) y1 = p[1];
   }
-  y0 = Math.max(CY0, Math.floor(y0));
-  y1 = Math.min(CY1 - 1, Math.ceil(y1));
+  // Scan-convert on the fine grid (KD = 1 is the classic behaviour).
+  const K = KD;
+  y0 = Math.max(CY0, Math.floor(y0 * K));
+  y1 = Math.min(CY1 - 1, Math.ceil(y1 * K));
   const xs: number[] = [];
   for (let y = y0; y <= y1; y++) {
-    const yc = y + 0.5;
+    const yc = (y + 0.5) / K;
     xs.length = 0;
     for (let i = 0, j = pts.length - 1; i < pts.length; j = i++) {
       const xi = pts[i][0];
@@ -231,18 +301,20 @@ export function poly(pts: [number, number][], c: Paint): void {
     }
     xs.sort((a, b) => a - b);
     for (let k = 0; k + 1 < xs.length; k += 2) {
-      const xa = Math.ceil(xs[k] - 0.5);
-      const xb = Math.floor(xs[k + 1] - 0.5);
-      for (let x = xa; x <= xb; x++) P(x, y, c);
+      const xa = Math.ceil(xs[k] * K - 0.5);
+      const xb = Math.floor(xs[k + 1] * K - 0.5);
+      for (let x = xa; x <= xb; x++) put(x, y, c);
     }
   }
 }
 export function ell(cx: number, cy: number, rx: number, ry: number, c: Paint): void {
-  for (let y = Math.floor(cy - ry); y <= Math.ceil(cy + ry); y++)
-    for (let x = Math.floor(cx - rx); x <= Math.ceil(cx + rx); x++) {
-      const dx = (x + 0.5 - cx) / rx;
-      const dy = (y + 0.5 - cy) / ry;
-      if (dx * dx + dy * dy <= 1) P(x, y, c);
+  if (c == null) return;
+  const K = KD;
+  for (let y = Math.floor((cy - ry) * K); y <= Math.ceil((cy + ry) * K); y++)
+    for (let x = Math.floor((cx - rx) * K); x <= Math.ceil((cx + rx) * K); x++) {
+      const dx = ((x + 0.5) / K - cx) / rx;
+      const dy = ((y + 0.5) / K - cy) / ry;
+      if (dx * dx + dy * dy <= 1) put(x, y, c);
     }
 }
 export function circ(cx: number, cy: number, r: number, c: Paint): void {
@@ -337,16 +409,43 @@ export function SP(rows: string | string[], pal: Record<string, Color | [Color, 
 }
 /** Draw a sprite into the current target; flip mirrors; fn remaps colors. */
 export function DS(s: Spr, x: number, y: number, o?: { flip?: boolean; fn?: (c: number, x: number, y: number) => number }): void {
-  x = Math.round(x);
-  y = Math.round(y);
   const flip = o?.flip;
   const fn = o?.fn;
+  const sk = s.k ?? 1;
+  if (sk === KD && KD > 1) {
+    // Same density: copy fine pixels; fn sees logical coords.
+    const fx0 = Math.round(x * KD);
+    const fy0 = Math.round(y * KD);
+    for (let yy = 0; yy < s.h; yy++)
+      for (let xx = 0; xx < s.w; xx++) {
+        const c = s.d[yy * s.w + (flip ? s.w - 1 - xx : xx)];
+        if (!c) continue;
+        const fx = fx0 + xx;
+        const fy = fy0 + yy;
+        put(fx, fy, fn ? fn(c, Math.floor(fx / KD), Math.floor(fy / KD)) : c);
+      }
+    return;
+  }
+  if (sk > 1) {
+    // A dense sprite into a coarser target: sample it.
+    const step = sk / KD;
+    s = { w: Math.floor(s.w / step), h: Math.floor(s.h / step), d: sampleDown(s, step) };
+  }
+  x = Math.round(x);
+  y = Math.round(y);
   for (let yy = 0; yy < s.h; yy++)
     for (let xx = 0; xx < s.w; xx++) {
       const c = s.d[yy * s.w + (flip ? s.w - 1 - xx : xx)];
       if (!c) continue;
       P(x + xx, y + yy, fn ? fn(c, x + xx, y + yy) : c);
     }
+}
+function sampleDown(s: Spr, step: number): Uint32Array {
+  const w = Math.floor(s.w / step);
+  const h = Math.floor(s.h / step);
+  const d = new Uint32Array(w * h);
+  for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) d[y * w + x] = s.d[Math.floor(y * step) * s.w + Math.floor(x * step)];
+  return d;
 }
 export function stamp(rows: string | string[], pal: Record<string, Color | [Color, Color, number] | null>, x: number, y: number, o?: { flip?: boolean }): void {
   DS(SP(rows, pal), x, y, o);
@@ -356,6 +455,8 @@ export function stamp(rows: string | string[], pal: Record<string, Color | [Colo
  * (selective outlining). fn(fill, side) where side = 'lit' or 'dark'.
  */
 export function OUT(s: Spr, fn: (c: number, side: 'lit' | 'dark', x: number, y: number) => Color = selA, diag = false): Spr {
+  const k = s.k ?? 1;
+  if (k > 1) return outDense(s, k, fn, diag);
   const w = s.w + 2;
   const h = s.h + 2;
   const d = new Uint32Array(w * h);
@@ -387,15 +488,49 @@ export function OUT(s: Spr, fn: (c: number, side: 'lit' | 'dark', x: number, y: 
     }
   return { w, h, d, name: s.name };
 }
+/**
+ * Dense selective outline: k fine pixels thick, so the line weight matches
+ * the world's 1-pixel outlines. The first ring picks its colour like OUT();
+ * outer rings repeat the ring colour next to them. Pads by k fine pixels.
+ */
+function outDense(s: Spr, k: number, fn: (c: number, side: 'lit' | 'dark', x: number, y: number) => Color, diag: boolean): Spr {
+  const w = s.w + 2 * k;
+  const h = s.h + 2 * k;
+  const d = new Uint32Array(w * h);
+  const ring = new Uint8Array(w * h);
+  for (let y = 0; y < s.h; y++) for (let x = 0; x < s.w; x++) d[(y + k) * w + x + k] = s.d[y * s.w + x];
+  for (let r = 1; r <= k; r++) {
+    const src = d.slice();
+    const at = (x: number, y: number) => (x < 0 || y < 0 || x >= w || y >= h ? 0 : src[y * w + x]);
+    const isRing = (x: number, y: number) => x >= 0 && y >= 0 && x < w && y < h && ring[y * w + x] > 0;
+    for (let y = 0; y < h; y++)
+      for (let x = 0; x < w; x++) {
+        if (src[y * w + x]) continue;
+        const nb: [number, number, 'lit' | 'dark'][] = [[x, y - 1, 'dark'], [x - 1, y, 'dark'], [x + 1, y, 'lit'], [x, y + 1, 'lit']];
+        if (diag) nb.push([x - 1, y - 1, 'dark'], [x + 1, y - 1, 'dark'], [x - 1, y + 1, 'dark'], [x + 1, y + 1, 'dark']);
+        for (const [nx, ny, side] of nb) {
+          const n = at(nx, ny);
+          if (!n) continue;
+          if (r === 1) d[y * w + x] = col(fn(n, side, Math.floor(x / k), Math.floor(y / k)));
+          else if (isRing(nx, ny)) d[y * w + x] = n;
+          else continue;
+          ring[y * w + x] = r;
+          break;
+        }
+      }
+  }
+  return { w, h, d, name: s.name, k };
+}
+
 /** Rotate 90 degrees counter-clockwise. */
 export function rotL(s: Spr): Spr {
   const d = new Uint32Array(s.w * s.h);
   for (let y = 0; y < s.h; y++) for (let x = 0; x < s.w; x++) d[(s.w - 1 - x) * s.h + y] = s.d[y * s.w + x];
-  return { w: s.h, h: s.w, d, name: s.name };
+  return { w: s.h, h: s.w, d, name: s.name, k: s.k };
 }
 export function recolor(s: Spr, map: Record<string, Color>): Spr {
   const m = new Map(Object.entries(map).map(([a, b]) => [col(a), col(b)]));
-  return { w: s.w, h: s.h, d: s.d.map((c) => (m.has(c) ? m.get(c)! : c)), name: s.name };
+  return { w: s.w, h: s.h, d: s.d.map((c) => (m.has(c) ? m.get(c)! : c)), name: s.name, k: s.k };
 }
 export function eachPx(s: Spr, cb: (x: number, y: number, c: number) => void): void {
   for (let y = 0; y < s.h; y++) for (let x = 0; x < s.w; x++) if (s.d[y * s.w + x]) cb(x, y, s.d[y * s.w + x]);
@@ -411,6 +546,7 @@ export function toCanvas(s: Spr): HTMLCanvasElement {
   const img = x.createImageData(s.w, s.h);
   new Uint32Array(img.data.buffer).set(s.d);
   x.putImageData(img, 0, 0);
+  if (s.k && s.k > 1) (c as Dense).__k = s.k;
   return c;
 }
 
@@ -420,6 +556,7 @@ const canvasCache = new Map<string, HTMLCanvasElement>();
  * canvas back. Key must uniquely describe the sprite (include colors/variants).
  */
 export function sprite(key: string, w: number, h: number, fn: (s: Spr) => void, opts: { outline?: boolean | ((c: number, side: 'lit' | 'dark', x: number, y: number) => Color); diag?: boolean } = {}): HTMLCanvasElement {
+  key = KD > 1 ? `${key}@${KD}` : key;
   const hit = canvasCache.get(key);
   if (hit) return hit;
   let s = mkSpr(w, h, fn, key);
