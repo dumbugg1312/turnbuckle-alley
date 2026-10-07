@@ -1098,6 +1098,219 @@ function micro(s: string, x: number, y: number, c: Color, f = FT): void {
 }
 
 // =====================================================================
+//  Pictograms: little painted pictures that say what a sign used to spell
+//  out (a fish for bait, a cup for coffee). Coordinates are the top-left of
+//  the picture in world pixels; detail sits on half pixels.
+// =====================================================================
+/** Fish, about 9 x 5, facing left; body colour c. */
+export function picFish(x: number, y: number, c: Color, belly: Color = '#e8f4f0', eye: Color = AK): void {
+  poly([[x + 6.5, y + 2.5], [x + 9, y + 0.5], [x + 8.5, y + 2.5], [x + 9, y + 4.5]], shA(c, 0.15));
+  ell(x + 3.5, y + 2.5, 3.5, 2, c);
+  ell(x + 3.5, y + 3.2, 2.6, 1, belly);
+  R(x + 1.5, y + 1, 3, HF, liA(c, 0.45));
+  P1(x + 1.5, y + 2, eye);
+  fv(x + 5, y + 1, y + 4, shA(c, 0.25));
+}
+/** A fishhook on a line, about 3 x 6. */
+export function picHook(x: number, y: number, c: Color): void {
+  fv(x + 1.5, y, y + 4, c);
+  fh(x, x + 1.5, y + 5, c);
+  P1(x, y + 4.5, c);
+  P1(x + 1.5, y + 4.5, c);
+  P1(x - 0.5, y + 4, c);
+}
+/** Coffee cup on a saucer with steam, about 7 x 7. */
+export function picCup(x: number, y: number, c: Color, steam: Color | ((x: number, y: number, o: number) => number) = '#fff4e0'): void {
+  for (const [sx, k] of [[2, 0], [4, 1]] as [number, number][]) {
+    P1(x + sx, y + k, steam);
+    P1(x + sx + 0.5, y + 0.5 + k, steam);
+    P1(x + sx, y + 1 + k, steam);
+  }
+  RR(x + 0.5, y + 2.5, 5, 3.5, 1, c);
+  fh(x + 1, x + 5, y + 2.5, liA(c, 0.5));
+  ell(x + 6, y + 4, 1.2, 1, c);
+  ell(x + 6, y + 4, 0.5, 0.4, 0);
+  R(x, y + 6, 7, HF, shA(c, 0.2));
+}
+/** Pie slice: a wedge with crust and cherries, about 8 x 5. */
+export function picPie(x: number, y: number, crust: Color = '#f2c070', fill: Color = '#d8434b'): void {
+  poly([[x, y + 4.5], [x + 8, y + 1.5], [x + 8, y + 4.5]], fill);
+  poly([[x, y + 4.5], [x + 8, y + 1], [x + 8, y + 2.2], [x + 1.5, y + 4.5]], crust);
+  R(x, y + 4.5, 8, 1, shA(crust, 0.2));
+  P1(x + 5, y + 3.5, liA(fill, 0.4));
+  P1(x + 6.5, y + 3, liA(fill, 0.4));
+}
+/** Milkshake: tall glass, whipped top, cherry and straw, about 5 x 9. */
+export function picShake(x: number, y: number, c: Color = '#ffb0c8'): void {
+  L1b(x + 3.5, y + 2.5, x + 4.5, y, '#e8505a');
+  ell(x + 2.5, y + 3, 2.3, 1.2, '#fff8f0');
+  circ(x + 2, y + 1.8, 0.7, '#d8434b');
+  poly([[x + 0.3, y + 3.5], [x + 4.7, y + 3.5], [x + 3.8, y + 8], [x + 1.2, y + 8]], c);
+  fv(x + 1, y + 4, y + 7, liA(c, 0.5));
+  R(x + 1.5, y + 8, 2, 1, '#e8e4f0');
+}
+/** Ice cream cone with one scoop and a drip. */
+export function picCone(x: number, y: number, scoop: Color = '#ffd0dc'): void {
+  poly([[x + 0.5, y + 3.5], [x + 4.5, y + 3.5], [x + 2.5, y + 9]], '#e0a858');
+  for (let k = 0; k < 3; k++) L1b(x + 1 + k * 1.2, y + 3.5, x + 2.5 + k * 0.6, y + 7.5, '#b87a3a');
+  circ(x + 2.5, y + 2.2, 2.2, scoop);
+  P1(x + 1.5, y + 1, liA(scoop, 0.6));
+  P1(x + 3.5, y + 3.5, scoop);
+  P1(x + 3.5, y + 4, scoop);
+}
+/** Soda bottle, about 3 x 8. */
+export function picBottle(x: number, y: number, c: Color = '#5ab0a0', label: Color = '#fff4e6'): void {
+  R(x + 1, y, 1, 0.5, '#d8434b');
+  R(x + 1, y + 0.5, 1, 2, c);
+  poly([[x + 1, y + 2.5], [x + 2, y + 2.5], [x + 3, y + 4], [x + 3, y + 8], [x, y + 8], [x, y + 4]], c);
+  R(x, y + 5, 3, 1.5, label);
+  fv(x + 0.5, y + 3.5, y + 8, liA(c, 0.5));
+}
+/** A loaf of bread with slashes, about 8 x 4. */
+export function picBread(x: number, y: number, c: Color = '#d89048'): void {
+  ell(x + 4, y + 2.2, 4, 2, c);
+  R(x, y + 2.2, 8, 1.8, shA(c, 0.15));
+  ell(x + 4, y + 1.6, 3.4, 1.2, liA(c, 0.25));
+  for (let k = 0; k < 3; k++) L1b(x + 2 + k * 2, y + 1, x + 3 + k * 2, y + 2.2, shA(c, 0.35));
+}
+/** A two-tier cake with a candle, about 7 x 8. */
+export function picCake(x: number, y: number, icing: Color = '#fff4f6', c: Color = '#f2a0b8'): void {
+  fv(x + 3.5, y, y + 2, '#ffe070');
+  P1(x + 3.5, y - 0.5, '#ff9a4a');
+  R(x + 1.5, y + 2, 4, 2.5, c);
+  R(x + 1.5, y + 2, 4, 0.5, icing);
+  R(x, y + 4.5, 7, 3, c);
+  R(x, y + 4.5, 7, 0.5, icing);
+  for (let k = 0; k < 4; k++) P1(x + 0.5 + k * 2, y + 5, icing);
+  R(x - 0.5, y + 7.5, 8, 0.5, '#e8e4f0');
+}
+/** Folding chair seen from the side, about 5 x 7. */
+export function picChair(x: number, y: number, c: Color): void {
+  R(x + 0.5, y, 3, 3, c);
+  R(x, y + 3.5, 5, 1, c);
+  L1b(x + 0.5, y + 4.5, x + 4.5, y + 7, c);
+  L1b(x + 4.5, y + 4.5, x + 0.5, y + 7, c);
+  fv(x + 0.5, y, y + 4.5, c);
+}
+/** Paint can with a drip running down, about 5 x 6. */
+export function picPaint(x: number, y: number, c: Color, paint: Color = '#e8504a'): void {
+  R(x, y + 1, 5, 5, c);
+  ell(x + 2.5, y + 1, 2.5, 0.8, paint);
+  fv(x + 1, y + 1, y + 3.5, paint);
+  P1(x + 1, y + 3.5, paint);
+  curveLine(x + 4, y + 1, x + 5.5, y - 0.5, c);
+}
+/** A key, about 7 x 3. */
+export function picKey(x: number, y: number, c: Color): void {
+  circ(x + 1.5, y + 1.5, 1.5, c);
+  P1(x + 1.5, y + 1.5, 0);
+  R(x + 3, y + 1, 4, HF, c);
+  R(x + 5, y + 1.5, HF, 1, c);
+  R(x + 6.5, y + 1.5, HF, 1, c);
+}
+/** A ticket stub with notched ends, about 8 x 4. */
+export function picTicket(x: number, y: number, c: Color, ink: Color): void {
+  R(x, y, 8, 4, c);
+  for (const sx of [0, 7.5]) {
+    P1(x + sx, y + 1.5, 0);
+    P1(x + sx, y + 2, 0);
+  }
+  for (let k = 0; k < 3; k++) P1(x + 5.5, y + 0.5 + k, ink);
+  R(x + 1, y + 1, 3.5, HF, ink);
+  R(x + 1, y + 2.5, 2.5, HF, ink);
+}
+/** A chunky painted arrow, about 7 x 5. */
+export function picArrow(x: number, y: number, c: Color, dir: 1 | -1 = 1): void {
+  const tip = dir > 0 ? x + 7 : x;
+  const back = dir > 0 ? x + 4 : x + 3;
+  R(dir > 0 ? x : x + 3, y + 1.5, 4, 2, c);
+  poly([[back, y], [tip, y + 2.5], [back, y + 5]], c);
+}
+/** A rotary phone handset, about 7 x 4. */
+export function picPhone(x: number, y: number, c: Color): void {
+  RR(x, y, 7, 1.5, 1, c);
+  RR(x - 0.5, y + 0.5, 2, 3, 1, c);
+  RR(x + 5.5, y + 0.5, 2, 3, 1, c);
+}
+/** A microphone on a little stand, about 4 x 8. */
+export function picMic(x: number, y: number, c: Color, grille: Color): void {
+  RR(x + 0.5, y, 3, 4, 1, grille);
+  for (let k = 0; k < 3; k++) R(x + 0.5, y + 0.8 + k, 3, HF, shA(grille, 0.25));
+  fv(x + 2, y + 4, y + 7, c);
+  R(x + 0.5, y + 7, 3, 1, c);
+}
+/** A gas pump, about 5 x 7. */
+export function picPump(x: number, y: number, c: Color): void {
+  R(x, y + 1, 4, 6, c);
+  R(x + 0.5, y + 2, 3, 1.5, '#fff4e6');
+  R(x - 0.5, y + 7, 5, HF, c);
+  fv(x + 4.5, y + 2, y + 5, c);
+  P1(x + 5, y + 1.5, c);
+  R(x + 1, y, 2, 1, c);
+}
+/** A pretzel in neon-able strokes, about 8 x 6. */
+export function picPretzel(x: number, y: number, c: Color | ((x: number, y: number, o: number) => number)): void {
+  for (const sx of [2, 6]) {
+    for (let a = 0; a < Math.PI * 2; a += 0.35) P1(x + sx + Math.cos(a) * 2, y + 2.5 + Math.sin(a) * 2, c);
+  }
+  L1b(x + 1, y + 4, x + 5, y + 6, c);
+  L1b(x + 7, y + 4, x + 3, y + 6, c);
+}
+/** A snowflake, about 5 x 5. */
+export function picFlake(x: number, y: number, c: Color): void {
+  fv(x + 2.5, y, y + 5, c);
+  R(x, y + 2.5, 5, HF, c);
+  L1b(x + 0.5, y + 0.5, x + 4.5, y + 4.5, c);
+  L1b(x + 4.5, y + 0.5, x + 0.5, y + 4.5, c);
+}
+/** A folded newspaper, about 6 x 4. */
+export function picPaper(x: number, y: number, c: Color, ink: Color): void {
+  R(x, y, 6, 4, c);
+  R(x + 0.5, y + 0.5, 5, 1, ink);
+  for (let k = 0; k < 2; k++) R(x + 0.5, y + 2 + k, 2, HF, ink);
+  for (let k = 0; k < 2; k++) R(x + 3, y + 2 + k, 2.5, HF, ink);
+}
+/** Service bell, about 6 x 4. */
+export function picBell(x: number, y: number, c: Color): void {
+  P1(x + 3, y, c);
+  ell(x + 3, y + 2.5, 2.5, 2, c);
+  R(x, y + 2.5, 6, 1.5, 0);
+  R(x, y + 2.5, 6, 1, c);
+  P1(x + 2, y + 1.5, liA(c, 0.6));
+}
+/** One-fine-pixel line for pictograms. */
+function L1b(x0: number, y0: number, x1: number, y1: number, c: Color | ((x: number, y: number, o: number) => number)): void {
+  const n = Math.max(1, Math.ceil(Math.max(Math.abs(x1 - x0), Math.abs(y1 - y0)) * 2));
+  for (let i = 0; i <= n; i++) P1(x0 + ((x1 - x0) * i) / n, y0 + ((y1 - y0) * i) / n, c);
+}
+const curveLine = (x0: number, y0: number, x1: number, y1: number, c: Color) => L1b(x0, y0, x1, y1, c);
+/** Neon pictogram: draw(ox, oy, c) paints the tube at (ox, oy); a soft glow is laid under it. */
+export function neonPic(x: number, y: number, w: number, h: number, draw: (ox: number, oy: number, c: Color) => void, core: Color, glow: Color, on = true): void {
+  if (!on) {
+    draw(x, y, mix(glow, '#3b2a4f', 0.55));
+    return;
+  }
+  // find the tube's fine pixels by drawing it into a scratch sprite first
+  const s = mkSpr(w + 2, h + 2, () => draw(1, 1, '#ffffff'));
+  const k = s.k ?? 1;
+  const halo: [number, number, number][] = [[-1, 0, 0.3], [1, 0, 0.3], [0, -1, 0.3], [0, 1, 0.3], [-0.5, -0.5, 0.5], [0.5, 0.5, 0.5], [-0.5, 0.5, 0.5], [0.5, -0.5, 0.5], [-0.5, 0, 0.6], [0.5, 0, 0.6], [0, -0.5, 0.6], [0, 0.5, 0.6]];
+  const seen = new Set<number>();
+  for (let yy = 0; yy < s.h; yy++)
+    for (let xx = 0; xx < s.w; xx++) {
+      if (!s.d[yy * s.w + xx]) continue;
+      for (const [dx, dy, a] of halo) {
+        const gx = xx + dx * k;
+        const gy = yy + dy * k;
+        const key = gy * 4096 + gx;
+        if (seen.has(key)) continue;
+        seen.add(key);
+        P1(x - 1 + gx / k, y - 1 + gy / k, over(glow, a));
+      }
+    }
+  draw(x, y, core);
+}
+
+// =====================================================================
 //  Building registration
 // =====================================================================
 export type Lt = [number, number, number, string];
@@ -1292,12 +1505,15 @@ function dinerBooths(wx: number, wy: number, ww: number, wh: number, v: number):
     fv(wx + 24, wy + 14, wy + 20, '#c8c0b8');
     for (let k = 0; k < 4; k++) fh(wx + 20, wx + 23.5, wy + 16.5 + k, '#a8a0b8');
     for (let k = 0; k < 3; k++) fh(wx + 25, wx + 28, wy + 16.5 + k, '#a8a0b8');
-    micro('TATTLER', wx + 19.5, wy + 14.5, '#4a3a5a');
+    R(wx + 19.5, wy + 14.5, 4, 1, '#4a3a5a');
     ell(wx + 44, wy + 18, 2.5, 0.75, '#ffffff');
     poly([[wx + 42, wy + 17.5], [wx + 46, wy + 17.5], [wx + 44.5, wy + 16]], '#f0c060');
     P1(wx + 44, wy + 16, '#d04050');
-    T('PIE', wx + 2, wy + 21.5, enamel('#ffd977'), FT, { ls: 1, shadow: '#7a2a3a' });
-    T('COFFEE', wx + 28, wy + 21.5, enamel('#ffd977'), FT, { shadow: '#7a2a3a' });
+    // gold-leaf pictures on the glass: a slice of pie, a cup of joe
+    picPie(wx + 3.5, wy + 21.5, '#7a2a3a', '#7a2a3a');
+    picPie(wx + 3, wy + 21, '#ffd977', '#f2b440');
+    picCup(wx + 31.5, wy + 19.5, '#7a2a3a', '#7a2a3a');
+    picCup(wx + 31, wy + 19, '#ffd977', '#ffe9b0');
   } else {
     // a couple sharing one milkshake with two straws; a kid in a cape at the next booth
     pp(wx + 5, wy + 12, '#6a5aa0', '#c8906a');
@@ -1312,7 +1528,8 @@ function dinerBooths(wx: number, wy: number, ww: number, wh: number, v: number):
       poly([[wx + 23, wy + 19], [wx + 30, wy + 19], [wx + 31, wy + 26], [wx + 22, wy + 26]], '#3f74d8');
       R(wx + 27, wy + 17, 3, 1.5, '#fff4dc');
     }
-    T('SHAKES', wx + 2, wy + 21.5, enamel('#ffd977'), FT, { shadow: '#7a2a3a' });
+    picShake(wx + 17.5, wy + 18.5, '#7a2a3a');
+    picShake(wx + 17, wy + 18, '#ffd977');
   }
 }
 /** The kitchen pass: steel, an order wheel, the cook in a paper hat, fryer steam. */
@@ -1346,7 +1563,7 @@ function dinerKitchen(wx: number, wy: number, ww: number, wh: number): void {
   fh(wx + ww - 9, wx + ww - 3, wy + 5.5, '#ffb070');
   R(wx, wy + wh - 5.5, ww, 5.5, '#9a94b0');
   FR(wx, wy + wh - 5.5, ww, 5.5, (fx) => (fx % 6 === 0 ? '#7a7490' : null));
-  micro('ORDER UP', wx + 2, wy + wh - 4, '#fff4dc');
+  picBell(wx + 3, wy + wh - 4.5, '#f2c050');
 }
 function drawDiner(): void {
   const W = 176;
@@ -1380,8 +1597,6 @@ function drawDiner(): void {
   FR(0, 33, W, 9, (fx, fy, o) => ((fx & 7) === 0 ? shA(o, 0.08) : hash2(fx, fy, 14) < 0.03 ? liA(o, 0.15) : o));
   TC('BREAKFAST ALL DAY', W / 2 + 0.5, 35.5, '#8e2c4c', FT, {});
   TC('BREAKFAST ALL DAY', W / 2, 35, enamel('#fff0dc'), FT, {});
-  micro('OPEN 6 AM', 10, 36, '#fff0dc');
-  micro('SINCE 1957', W - 30, 36, '#fff0dc');
   for (const sx of [5, 42, W - 43, W - 6]) {
     P(sx, 37, '#ffd977');
     P1(sx - 1, 37, '#ffe9b0');
@@ -1457,8 +1672,9 @@ function drawDiner(): void {
   FR(dx, GY - 4, 16, 4, (fx, _fy, o) => (fx % 3 === 0 ? '#a89cc0' : o));
   R(dx + 13, dy + 12, 2, 5, '#f2eef6');
   fv(dx + 13, dy + 12, dy + 17, '#ffffff');
-  RR(dx + 2, dy + 2, 12, 7, 1, '#2f2440');
-  neon('OPEN', dx + 2, dy + 3, '#e6fff8', '#38e0c8', FT, { sp: 0 });
+  // a neon cup of coffee hangs in the door glass instead of OPEN
+  RR(dx + 3.5, dy + 1.5, 9, 9, 1, '#2f2440');
+  neonPic(dx + 4.5, dy + 2, 7, 7, (ox, oy, c) => picCup(ox, oy, c, c), '#e6fff8', '#38e0c8');
   awning(dx - 4, dy - 9, 24, 5, '#d4464e', '#fff1dc', 3);
   // wall lantern, menu card, house number, a gumball machine by the step
   R(133, 54, 3, 2, '#4a3050');
@@ -1474,7 +1690,7 @@ function drawDiner(): void {
   for (let k = 0; k < 5; k++) micro(['EGGS 2.50', 'PIE .90', 'BLT 3', 'MELT 3.25', 'JOE .45'][k], 98, 69 + k * 1.5, '#7a6a8a');
   fh(97.5, 108.5, 77, tint('#2b2140', 0.35));
   RR(150, 44.5, 12, 3.5, 1, '#2f5a68');
-  micro('NO. 12', 151, 45, '#fff4dc');
+  micro('12', 154.5, 45, '#fff4dc');
   ell(137, GY - 12, 3, 3, over('#ffffff', 0.55));
   P1(136, GY - 13.5, '#ffffff');
   for (let k = 0; k < 7; k++) P1(135.5 + (k % 3) * 1.25, GY - 13 + Math.floor(k / 3) * 1.25, ['#e8505a', '#f4b63f', '#5ab0e0', '#6fb070'][k % 4]);
@@ -1568,8 +1784,11 @@ function drawHardware(): void {
   chairIcon(26, 26, '#7a7096', '#4e4870');
   chairIcon(W - 34, 26, '#7a7096', '#4e4870');
   for (const [sx, sy] of [[24, 16.5], [W - 25, 16.5], [24, 35], [W - 25, 35]] as [number, number][]) P1(sx, sy, '#8a7a6a');
-  micro('EST. 1949', 5, 25, '#2f5a68');
-  micro('ROPE. BOLTS.', W - 17, 25, '#2f5a68');
+  // a coil of rope hung on a nail at the right-hand corner of the false front
+  P1(W - 11, 23.5, '#5a4a4a');
+  ell(W - 11, 27, 2.6, 2.6, '#c89a5a');
+  ell(W - 11, 27, 1.4, 1.4, '#e8b45a');
+  fv(W - 9, 28, 31, '#c89a5a');
   // gutter and awning
   awning(3, 42, W - 6, 7, '#5f9a6a', '#fbefd4', 4);
   // display window (left), now deep enough for the whole show
@@ -1625,9 +1844,10 @@ function drawHardware(): void {
     R(mx, wy, 1.5, wh, '#3a6f78');
     fv(mx, wy, wy + wh, '#5aa39a');
   }
-  T('CHAIRS', wx + 1, wy + 1, '#ffffff', FT, { sp: 0 });
-  micro('PAINT', wx + 21.5, wy + 1.5, '#ffffff');
-  micro('KEYS CUT', wx + 41.5, wy + 1.5, '#ffffff');
+  // white decals on the glass: a chair, a paint can, a key
+  picChair(wx + 1.5, wy + 1, '#ffffff');
+  picPaint(wx + 22, wy + 1, '#ffffff', '#ffffff');
+  picKey(wx + 42, wy + 2, '#ffffff');
   boxF(wx - 2, wy + wh + 1.5, ww + 4, 3, '#a8603a');
   // narrow window of key blanks on hooks
   win(76, 58, 12, 22, {
@@ -1648,9 +1868,13 @@ function drawHardware(): void {
   });
   // door (centre x = 104, a 16 x 32 opening)
   doorF(96, GY - 32, 16, 32, '#4f9a92', { frame: '#2f5a68', lite: true, liteH: 12, wall: '#7a5a6e', kick: '#c8c4d8', step: '#c8b0a8' });
-  RR(98, 70, 12, 6, 1, '#fff4dc');
-  T('OPEN', 98.5, 70.5, enamel('#a8323e'), FT, { sp: 0 });
-  P1(104, 69, '#8a7a6a');
+  // a little hanging hammer sign on the door
+  fv(103, 67, 69.5, '#8a7a6a');
+  fv(105, 67, 69.5, '#8a7a6a');
+  RR(100, 69.5, 8, 6, 1, '#fff4dc');
+  R(101.5, 71, 4, 1.5, '#a8323e');
+  fv(103.5, 72.5, 74.5, '#8a5a3a');
+  fv(104, 72.5, 74.5, '#6a4a3a');
   // shop bell bracket
   fh(113, 116, 60, '#f2c050');
   ell(115.5, 61.5, 1, 1, '#f2c050');
@@ -1911,7 +2135,8 @@ function drawSportatorium(): void {
     fv(mx + 0.5, my + 1, GY - 4, '#ee6a64');
     fv(mx + 10, my + 1, GY - 4, '#8e2440');
     RR(mx + 1.5, my + 2, 8, 6, 1, '#fff4dc');
-    T('POP', mx + 2, my + 2.5, enamel('#c8343f'), FT, { sp: 0 });
+    picBottle(mx + 4, my + 1.5, '#c8343f', '#fff4dc');
+    R(mx + 4, my + 7, 3, 0.5, '#fff4dc');
     for (let k = 0; k < 4; k++) {
       R(mx + 2 + k * 2, my + 11, 1.5, 3, ['#f4b63f', '#5ab0e0', '#e86a8a', '#6fb070'][k]);
       fh(mx + 2 + k * 2, mx + 3.5 + k * 2, my + 11, '#ffffff');
@@ -1924,10 +2149,11 @@ function drawSportatorium(): void {
   // left: the box office
   {
     signBoardF(2, 98, 14, 7, '#5b3a62', '#fbefd2');
-    // LINE FORMS HERE, in hand paint across the tin
-    micro('LINE FORMS', 18, 100, '#fff4dc');
-    micro('HERE  >', 19, 102, '#fff4dc');
-    T('TIX', 3.5, 99, enamel('#b8303e'), FT, { sp: 0 });
+    // a ticket on the board, and a hand-painted arrow on the tin pointing at the window
+    picTicket(5, 99.5, '#f4b63f', '#b8303e');
+    picArrow(19, 100, '#fff4dc', -1);
+    P1(26.5, 100.5, '#fff4dc');
+    P1(27.5, 101.5, over('#fff4dc', 0.6));
     R(2, 107, 14, 13, '#4a3a4a');
     glassF(3, 108, 12, 11, () => {
       R(3, 108, 12, 11, '#e7a468');
@@ -2536,7 +2762,10 @@ function drawBakery(): void {
       ell(wx2 + 1.25, 28 + k * 1.6, 0.9, 0.6, '#e8b858');
     }
   }
-  micro('CAKES  PIES  BREAD', 88, 30, '#5aa898');
+  // what's inside, painted in mint beside the door: a cake, a pie, a loaf
+  picCake(84.5, 26.5, '#fff6ee', '#5aa898');
+  picPie(94, 29, '#3f8a7a', '#8ad0b8');
+  picBread(105, 29.5, '#4a9a88');
   // pastel striped awning over the window
   awning(3, 38, 64, 6, '#ffb6cc', '#fff6ee', 3);
   for (let x = 3; x < 67; x += 6) P1(x + 1, 39, '#8ad0b8');
@@ -2568,7 +2797,6 @@ function drawBakery(): void {
       fh(wx + 3 + k * 8, wx + 7 + k * 8, wy + 19.5, '#e8b060');
       for (let j = 0; j < 3; j++) P1(wx + 3.5 + k * 8 + j * 1.5, wy + 20, '#f8d898');
     }
-    micro('FRESH DAILY', wx + 1, wy + 1, '#d0507a');
   });
   for (const mx of [wx + 19, wx + 38.5]) R(mx, wy, 1, wh, '#fff6ee');
   boxF(wx - 2, wy + wh + 1.5, ww + 4, 9, '#8ad0b8');
@@ -2588,8 +2816,8 @@ function drawBakery(): void {
   fh(dx + 2, dx + 16, dy - 2.5, '#b8885a');
   R(dx, dy - 3.5, 2, 1, '#a8704a');
   R(dx + 16, dy - 3.5, 2, 1, '#a8704a');
-  RR(dx + 5, dy + 22, 8, 5, 1, '#fff6ee');
-  T('HI', dx + 6, dy + 22, enamel('#d0507a'), FT, {});
+  // a little heart painted on the door glass, at the baker's eye level (high)
+  for (const [hx, hy] of [[0, 0], [1.5, 0], [-0.5, 0.5], [0.5, 0.5], [1, 0.5], [2, 0.5], [0, 1], [0.5, 1], [1, 1], [1.5, 1], [0.5, 1.5], [1, 1.5], [0.75, 2]] as [number, number][]) P1(dx + 8 + hx, dy + 5 + hy, '#d0507a');
   // round window over the bench, a bicycle with a basket of loaves
   glassF(110, 48, 10, 10, () => room(110, 48, 10, 10, '#ffe2c8', 5));
   FR(108, 46, 14, 14, (fx, fy, o) => {
@@ -2769,7 +2997,6 @@ function drawRadio(): void {
       fh(bx + 2, bx + 4, by + 5, '#fff2b0');
     },
   });
-  micro('SINCE 1946', bx + 4, by + 25.5, '#fbefd4');
   glassBlocks(bx + 1, by + 31, 6, 2);
   // the door with a little deco canopy (centre x = 56, a 16 x 32 opening)
   const dc = 56;
@@ -2779,7 +3006,7 @@ function drawRadio(): void {
   for (let x = dc - 11; x < dc + 11; x += 2.5) P1(x, GY - 36.5, '#24485a');
   aoTop(dc - 11, GY - 36, 22, 2, 0.3);
   doorF(dc - 8, GY - 32, 16, 32, '#4f9a92', { frame: '#d8c8b8', lite: true, liteH: 11, seed: 54, kick: '#c8c4d8', step: '#c8b0a8' });
-  micro('STUDIO', dc - 5.5, GY - 15, '#fff4dc');
+  picMic(dc - 2, GY - 17, '#fff4dc', '#c8c4d8');
   // record decals
   for (const [rx, ry] of [[dc - 13, GY - 22], [dc + 13, GY - 22]] as [number, number][]) {
     circ(rx, ry, 2.5, '#2b2140');
@@ -2791,8 +3018,7 @@ function drawRadio(): void {
   glassBlocks(86, 48, 7, 4);
   RR(94, 72, 12, 9, 1, '#2f5a68');
   fh(95, 105, 72, '#5a8a98');
-  micro('REQUEST', 95.5, 73.5, '#fbefd4');
-  micro('LINE', 97, 75.5, '#fbefd4');
+  picPhone(96.5, 73.5, '#fbefd4');
   R(98.5, 77.5, 3, 2.5, '#c8c4d8');
   R(108, GY - 9, 16, 1.5, '#a8704f');
   fh(108, 124, GY - 9, '#d09a6a');
@@ -4720,7 +4946,9 @@ function gasPump(x: number, y: number, body: Color, trim: Color): void {
   // vintage pump: rounded top, glowing globe, dial face, hose
   circ(x + 5, y + 2, 3, '#fff4dc');
   circ(x + 5, y + 2, 2, mix(body, '#ffffff', 0.4));
-  T('G', x + 4, y, body, FT, {});
+  // a little flame painted on the globe
+  poly([[x + 5, y], [x + 6.2, y + 2.4], [x + 5, y + 3.6], [x + 3.8, y + 2.4]], body);
+  P1(x + 5, y + 2.5, '#ffd977');
   R(x + 4, y + 5, 3, 2, '#c8c4d8');
   RR(x, y + 7, 11, 18, 3, body);
   VL(x, y + 9, y + 23, liA(body, 0.35));
@@ -4753,10 +4981,10 @@ function drawGasStation(): void {
   // the shop sign across the parapet
   signBoardF(S + 30, 13, 48, 9, '#2f6a74', '#fff4dc');
   TC('ROUTE 9', S + 54, 14.5, enamel('#d8434b'), FT, { ls: 1 });
-  // SNACKS neon over the window
-  RR(S + 3, 29, 24, 8, 1, '#2f2440');
-  fh(S + 4, S + 26, 29, '#4a3a5a');
-  neon('SNACKS', S + 4, 30, '#fff4e6', '#ff8a4a', FT, {});
+  // a neon pretzel over the snack window (it says SNACKS without saying it)
+  RR(S + 7, 28, 14, 10, 1, '#2f2440');
+  fh(S + 8, S + 20, 28, '#4a3a5a');
+  neonPic(S + 10, 29.5, 9, 7, (ox, oy, c) => picPretzel(ox, oy, c), '#fff4e6', '#ff8a4a');
   // window full of snacks
   const sw = S + 4;
   R(sw - 1, 43, 26, 22, '#3f9a92');
@@ -4777,15 +5005,18 @@ function drawGasStation(): void {
   R(sw - 1, 64, 26, 1.5, '#3f9a92');
   // door (centre x = 120, a 16 x 32 opening)
   doorF(112, GY - 32, 16, 32, '#3f9a92', { frame: '#fff4dc', lite: true, liteH: 13, wall: '#f6e6c8', seed: 203, kick: '#c8c4d8', step: '#c8c0c4' });
-  RR(114.5, 68, 11, 6, 1, '#fff4dc');
-  T('HI', 117.5, 68.5, enamel('#d8434b'), FT, {});
-  // BAIT sign with a fish, over the minnow tank window
-  signBoardF(140, 28, 30, 11, '#2f6a74', '#fff4dc');
-  T('BAIT', 142.5, 30.5, enamel('#2f6a74'), FT, {});
-  ell(161.5, 33.5, 2.75, 1.5, '#5ab0e0');
-  fh(159.5, 163.5, 33, '#9ad8f0');
-  poly([[158, 32], [159.5, 33.5], [158, 35]], '#5ab0e0');
-  P1(163, 33, AK);
+  // a hand-drawn smiley taped inside the door glass, a bit crooked
+  R(115.5, 68.5, 6, 5, '#fff8e8');
+  P1(116, 68, '#e8d8b0');
+  P1(117.5, 70, AK);
+  P1(119.5, 70, AK);
+  L1b(117, 71.5, 118.5, 72.5, '#d8434b');
+  L1b(118.5, 72.5, 120, 71.5, '#d8434b');
+  // a bait board that is just a big fish on a hook, over the minnow tank
+  signBoardF(144, 26, 22, 13, '#2f6a74', '#fff4dc');
+  picHook(149, 27.5, '#6a6488');
+  picFish(151, 31.5, '#5ab0e0', '#e8f8ff');
+  P1(150.5, 31.5, '#6a6488');
   win(142, 44, 26, 12, {
     frame: '#3f9a92',
     cols: 2,
@@ -4807,7 +5038,7 @@ function drawGasStation(): void {
   R(132, GY - 15, 12, 15, '#e8f0f8');
   box(132, GY - 15, 12, 15, '#5a8ac8');
   fh(132.5, 143.5, GY - 14.5, '#ffffff');
-  T('ICE', 133, GY - 12, enamel('#3a6ab0'), FT, {});
+  picFlake(135.5, GY - 13, '#3a6ab0');
   FR(132.5, GY - 6, 11, 5, (_fx, fy, o) => (fy % 3 === 0 ? '#c8d8e8' : o));
   R(150, 62, 18, GY - 62, '#d8434b');
   fh(150, 168, 62, '#ff8a80');
@@ -4815,12 +5046,12 @@ function drawGasStation(): void {
     R(151, 63, 16, 10, '#a8d8e0');
     for (let k = 0; k < 7; k++) R(151.5 + k * 2.2, 64, 1.5, 7, ['#d8434b', '#3f9a92', '#f4b63f'][k % 3]);
   });
-  T('POP', 153, 75, '#fff4e6', FT, {});
+  picBottle(155, 74.5, '#fff4e6', '#d8434b');
+  picBottle(159.5, 74.5, '#fff4e6', '#d8434b');
   fh(150, 168, GY - 0.5, tint('#2b2140', 0.4));
-  // a newspaper box and a payphone sticker by the door
+  // a newspaper box (today's front page showing through the window)
   RR(98, GY - 12, 8, 12, 1, '#3f74d8');
-  glassF(99, GY - 11, 6, 4, () => R(99, GY - 11, 6, 4, '#f4eee0'));
-  micro('TATTLER', 99, GY - 6, '#fff4dc');
+  glassF(99, GY - 11, 6, 4, () => picPaper(99, GY - 11, '#f4eee0', '#8a84a0'));
   grime(S, GY - 8, W - S, 7, 0.2);
   // --- canopy over the pumps
   const C = S + 2;
@@ -4833,11 +5064,12 @@ function drawGasStation(): void {
   FR(2, 15.5, C - 4, 9, (fx, fy, o) => (hash2(fx, fy, 205) < 0.04 ? '#e8dcd0' : o));
   fh(2, C - 2, 24.5, '#b8a8b0');
   fh(0, C, 25.5, '#8a2c44');
-  T('GAS', 8, 18, enamel('#d8434b'), FT, {});
-  P1(23.5, 20, '#3f9a92');
-  T('BAIT', 28, 18, enamel('#2f6a74'), FT, {});
-  P1(46.5, 20, '#3f9a92');
-  T('SNACKS', 51, 18, enamel('#d8434b'), FT, {});
+  // the canopy band says it in pictures: fuel, bait, snacks
+  picPump(14, 16.5, '#d8434b');
+  P1(28.5, 20, '#3f9a92');
+  picFish(34, 18, '#2f6a74', '#bfe4e0', '#fbf0e4');
+  P1(50.5, 20, '#3f9a92');
+  picPretzel(57, 17, '#b8603a');
   // under-canopy lights
   for (const lx of [14, 40, 66]) {
     R(lx - 2.5, 26, 5, 1, '#fff8d8');
