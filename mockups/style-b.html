@@ -1,0 +1,1364 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<meta name="theme-color" content="#140b2e">
+<title>Turnbuckle Alley · B · Saturday Morning Cartoon</title>
+<style>
+  html, body { margin: 0; height: 100%; background: #140b2e; overflow: hidden; }
+  body { display: flex; align-items: center; justify-content: center; touch-action: manipulation;
+         -webkit-user-select: none; user-select: none; font: 600 12px/1 ui-monospace, Menlo, Consolas, monospace; }
+  #screen { display: block; image-rendering: pixelated; image-rendering: crisp-edges; }
+  .hud { position: fixed; top: max(8px, env(safe-area-inset-top)); display: flex; gap: 6px; z-index: 2; }
+  .hud.l { left: max(8px, env(safe-area-inset-left)); }
+  .hud.r { right: max(8px, env(safe-area-inset-right)); }
+  .hud a, .hud button { appearance: none; border: 1px solid #000; background: #2a1660; color: #fff;
+         font: inherit; padding: 6px 9px; border-radius: 3px; text-decoration: none; cursor: pointer;
+         opacity: .82; letter-spacing: .02em; }
+  .hud a:hover, .hud button:hover { opacity: 1; }
+  .hud button.on { background: #ffd21f; color: #140b2e; border-color: #ffd21f; opacity: 1; }
+  .hud kbd { font: inherit; opacity: .6; margin-right: 4px; }
+  body.embed .hud { display: none; }
+  @media (max-height: 420px) { .hud a, .hud button { padding: 4px 7px; font-size: 11px; } .hud .lbl { display: none; } }
+</style>
+</head>
+<body>
+<canvas id="screen" width="384" height="216" aria-label="Direction B: Saturday Morning Cartoon pixel art mockup"></canvas>
+<nav class="hud l"><a href="index.html">&#8249; <span class="lbl">All directions</span><span></span></a></nav>
+<nav class="hud r">
+  <button data-scene="1"><kbd>1</kbd><span class="lbl">Main Street</span></button>
+  <button data-scene="2"><kbd>2</kbd><span class="lbl">Saturday Night</span></button>
+</nav>
+<script>
+// ================================================================
+//  Tiny pixel toolkit (shared by all three Turnbuckle Alley mockups)
+//  Everything draws into a 384x216 Uint32 framebuffer, which is then
+//  scaled up with integer nearest-neighbour scaling by CSS.
+// ================================================================
+'use strict';
+const W = 384, H = 216;
+const CV = document.getElementById('screen');
+CV.width = W; CV.height = H;
+const G2 = CV.getContext('2d', { alpha: false });
+G2.imageSmoothingEnabled = false;
+const IMG = G2.createImageData(W, H);
+const FB = new Uint32Array(IMG.data.buffer);
+
+// ---------- colour helpers (framebuffer is little-endian ABGR) ----------
+const _cc = new Map();
+function col(h) {
+  if (typeof h === 'number') return h;
+  let c = _cc.get(h);
+  if (c !== undefined) return c;
+  let s = h.charAt(0) === '#' ? h.slice(1) : h;
+  if (s.length === 3) s = s[0] + s[0] + s[1] + s[1] + s[2] + s[2];
+  const n = parseInt(s, 16);
+  c = (0xff000000 | ((n & 255) << 16) | (n & 0xff00) | ((n >>> 16) & 255)) >>> 0;
+  _cc.set(h, c);
+  return c;
+}
+const cR = c => c & 255, cG = c => (c >>> 8) & 255, cB = c => (c >>> 16) & 255;
+function pk(r, g, b) {
+  r = r < 0 ? 0 : r > 255 ? 255 : r | 0;
+  g = g < 0 ? 0 : g > 255 ? 255 : g | 0;
+  b = b < 0 ? 0 : b > 255 ? 255 : b | 0;
+  return (0xff000000 | (b << 16) | (g << 8) | r) >>> 0;
+}
+function mix(a, b, t) {
+  a = col(a); b = col(b);
+  return pk(cR(a) + (cR(b) - cR(a)) * t, cG(a) + (cG(b) - cG(a)) * t, cB(a) + (cB(b) - cB(a)) * t);
+}
+function mul(a, b) {
+  a = col(a); b = col(b);
+  return pk(cR(a) * cR(b) / 255, cG(a) * cG(b) / 255, cB(a) * cB(b) / 255);
+}
+function scr(a, b) {
+  a = col(a); b = col(b);
+  return pk(255 - (255 - cR(a)) * (255 - cR(b)) / 255, 255 - (255 - cG(a)) * (255 - cG(b)) / 255, 255 - (255 - cB(a)) * (255 - cB(b)) / 255);
+}
+function lum(c) { c = col(c); return (cR(c) * 0.3 + cG(c) * 0.59 + cB(c) * 0.11) / 255; }
+
+// ---------- clipping ----------
+// all primitives draw into the current target (the screen, or a sprite buffer via mkSpr)
+let TB = FB, TWD = W, THT = H;
+let CX0 = 0, CY0 = 0, CX1 = W, CY1 = H;
+function clip(x, y, w, h) { CX0 = Math.max(0, x | 0); CY0 = Math.max(0, y | 0); CX1 = Math.min(TWD, (x + w) | 0); CY1 = Math.min(THT, (y + h) | 0); }
+function noclip() { CX0 = 0; CY0 = 0; CX1 = TWD; CY1 = THT; }
+// build a sprite procedurally: fn() draws with the normal primitives into a w x h buffer (0 = transparent)
+function mkSpr(w, h, fn, name) {
+  const s = { w, h, d: new Uint32Array(w * h), name };
+  const sv = [TB, TWD, THT, CX0, CY0, CX1, CY1];
+  TB = s.d; TWD = w; THT = h; CX0 = 0; CY0 = 0; CX1 = w; CY1 = h;
+  try { fn(s); } finally { [TB, TWD, THT, CX0, CY0, CX1, CY1] = sv; }
+  if (name) SHEET.push(s);
+  return s;
+}
+
+// ---------- primitives ----------
+// A "paint" c may be a colour (hex/number) or a function (x, y, old) -> colour|null
+function P(x, y, c) {
+  x = Math.floor(x); y = Math.floor(y);
+  if (x < CX0 || y < CY0 || x >= CX1 || y >= CY1 || c == null) return;
+  const i = y * TWD + x;
+  if (typeof c === 'function') { const v = c(x, y, TB[i]); if (v != null) TB[i] = col(v); }
+  else TB[i] = typeof c === 'number' ? c : col(c);
+}
+function GP(x, y) { x |= 0; y |= 0; if (x < 0 || y < 0 || x >= TWD || y >= THT) return 0; return TB[y * TWD + x]; }
+function R(x, y, w, h, c) {
+  if (c == null) return;
+  const x0 = Math.max(CX0, Math.floor(x)), y0 = Math.max(CY0, Math.floor(y));
+  const x1 = Math.min(CX1, Math.floor(x + w)), y1 = Math.min(CY1, Math.floor(y + h));
+  if (x1 <= x0) return;
+  if (typeof c === 'function') { for (let yy = y0; yy < y1; yy++) for (let xx = x0; xx < x1; xx++) { const i = yy * TWD + xx, v = c(xx, yy, TB[i]); if (v != null) TB[i] = col(v); } return; }
+  c = col(c);
+  for (let yy = y0; yy < y1; yy++) TB.fill(c, yy * TWD + x0, yy * TWD + x1);
+}
+function HL(x0, x1, y, c) { if (x1 < x0) [x0, x1] = [x1, x0]; R(x0, y, x1 - x0 + 1, 1, c); }
+function VL(x, y0, y1, c) { if (y1 < y0) [y0, y1] = [y1, y0]; R(x, y0, 1, y1 - y0 + 1, c); }
+function L(x0, y0, x1, y1, c) {
+  x0 = Math.round(x0); y0 = Math.round(y0); x1 = Math.round(x1); y1 = Math.round(y1);
+  const dx = Math.abs(x1 - x0), dy = -Math.abs(y1 - y0), sx = x0 < x1 ? 1 : -1, sy = y0 < y1 ? 1 : -1;
+  let e = dx + dy;
+  for (;;) { P(x0, y0, c); if (x0 === x1 && y0 === y1) break; const e2 = 2 * e; if (e2 >= dy) { e += dy; x0 += sx; } if (e2 <= dx) { e += dx; y0 += sy; } }
+}
+function box(x, y, w, h, c) { HL(x, x + w - 1, y, c); HL(x, x + w - 1, y + h - 1, c); VL(x, y, y + h - 1, c); VL(x + w - 1, y, y + h - 1, c); }
+// rounded rectangle fill (r = corner radius 1..3)
+function RR(x, y, w, h, r, c) {
+  const cut = r === 1 ? [1] : r === 2 ? [2, 1] : r === 3 ? [3, 1, 1] : r >= 4 ? [4, 2, 1, 1] : [];
+  for (let yy = 0; yy < h; yy++) {
+    let k = 0;
+    if (yy < cut.length) k = cut[yy]; else if (h - 1 - yy < cut.length) k = cut[h - 1 - yy];
+    R(x + k, y + yy, w - 2 * k, 1, c);
+  }
+}
+// rounded rect with border: border colour, then inset fill
+function RRB(x, y, w, h, r, border, fill) { RR(x, y, w, h, r, border); if (fill != null) RR(x + 1, y + 1, w - 2, h - 2, Math.max(0, r - 1), fill); }
+function poly(pts, c) {
+  let y0 = Infinity, y1 = -Infinity;
+  for (const p of pts) { if (p[1] < y0) y0 = p[1]; if (p[1] > y1) y1 = p[1]; }
+  y0 = Math.max(CY0, Math.floor(y0)); y1 = Math.min(CY1 - 1, Math.ceil(y1));
+  const xs = [];
+  for (let y = y0; y <= y1; y++) {
+    const yc = y + 0.5; xs.length = 0;
+    for (let i = 0, j = pts.length - 1; i < pts.length; j = i++) {
+      const xi = pts[i][0], yi = pts[i][1], xj = pts[j][0], yj = pts[j][1];
+      if ((yi > yc) !== (yj > yc)) xs.push(xi + (yc - yi) * (xj - xi) / (yj - yi));
+    }
+    xs.sort((a, b) => a - b);
+    for (let k = 0; k + 1 < xs.length; k += 2) {
+      const xa = Math.ceil(xs[k] - 0.5), xb = Math.floor(xs[k + 1] - 0.5);
+      for (let x = xa; x <= xb; x++) P(x, y, c);
+    }
+  }
+}
+function ell(cx, cy, rx, ry, c) {
+  for (let y = Math.floor(cy - ry); y <= Math.ceil(cy + ry); y++)
+    for (let x = Math.floor(cx - rx); x <= Math.ceil(cx + rx); x++) {
+      const dx = (x + 0.5 - cx) / rx, dy = (y + 0.5 - cy) / ry;
+      if (dx * dx + dy * dy <= 1) P(x, y, c);
+    }
+}
+function circ(cx, cy, r, c) { ell(cx, cy, r, r, c); }
+// curved line (quadratic) for ropes / wires
+function curve(x0, y0, x1, y1, sag, c, cb) {
+  const n = Math.max(2, Math.ceil(Math.abs(x1 - x0) + Math.abs(y1 - y0)));
+  let px = null, py = null;
+  for (let i = 0; i <= n; i++) {
+    const t = i / n, x = x0 + (x1 - x0) * t, y = y0 + (y1 - y0) * t + sag * 4 * t * (1 - t);
+    const rx = Math.round(x), ry = Math.round(y);
+    if (rx !== px || ry !== py) { P(rx, ry, c); if (cb) cb(rx, ry, t, i); px = rx; py = ry; }
+  }
+}
+
+// ---------- dithering ----------
+const BAYER = [0, 8, 2, 10, 12, 4, 14, 6, 3, 11, 1, 9, 15, 7, 13, 5];
+const dth = (x, y, lvl) => BAYER[((y & 3) << 2) | (x & 3)] < lvl; // lvl 0..16
+function DR(x, y, w, h, c1, c2, lvl) { c1 = col(c1); c2 = col(c2); R(x, y, w, h, (xx, yy) => dth(xx, yy, lvl) ? c2 : c1); }
+// clustered-dot halftone threshold (period d, 45 degree screen)
+function makeHalftone(d) {
+  const t = new Float32Array(d * d);
+  for (let y = 0; y < d; y++) for (let x = 0; x < d; x++) {
+    let u = ((x + y) % d) / d, v = ((x - y + d * 8) % d) / d;
+    u = Math.min(u, 1 - u) * 2; v = Math.min(v, 1 - v) * 2; // 0 at lattice point
+    t[y * d + x] = Math.sqrt(u * u + v * v) / Math.SQRT2 + (x * 0.0013 + y * 0.0007);
+  }
+  // rank-normalise so levels are evenly spaced
+  const idx = [...t.keys()].sort((a, b) => t[a] - t[b]);
+  const out = new Float32Array(d * d);
+  idx.forEach((k, r) => out[k] = (r + 0.5) / (d * d));
+  return { d, t: out };
+}
+const HT4 = makeHalftone(4), HT6 = makeHalftone(6), HT8 = makeHalftone(8);
+const ht = (x, y, v, T = HT6) => T.t[(((y % T.d) + T.d) % T.d) * T.d + (((x % T.d) + T.d) % T.d)] < v; // v 0..1
+
+// vertical gradient: stops = [colour,...], soft = fraction of each band that dithers
+function VG(x, y, w, h, stops, soft = 0.5, ditherFn = dth) {
+  const n = stops.length - 1, cs = stops.map(col);
+  for (let yy = 0; yy < h; yy++) {
+    const t = (yy / Math.max(1, h - 1)) * n;
+    let i = Math.min(n - 1, Math.floor(t)), f = t - i;
+    f = Math.max(0, Math.min(1, (f - 0.5) / Math.max(0.001, soft) + 0.5));
+    const a = cs[i], b = cs[i + 1], lvl = Math.round(f * 16);
+    R(x, y + yy, w, 1, (xx, py) => ditherFn(xx, py, lvl, f) ? b : a);
+  }
+}
+// apply a function to every pixel in a rect
+function MAP(x, y, w, h, fn) { R(x, y, w, h, (xx, yy, old) => fn(old, xx, yy)); }
+
+// ---------- seeded random ----------
+function rng(seed) {
+  let s = seed >>> 0;
+  return () => { s = (s + 0x6D2B79F5) >>> 0; let t = s; t = Math.imul(t ^ (t >>> 15), t | 1); t ^= t + Math.imul(t ^ (t >>> 7), t | 61); return ((t ^ (t >>> 14)) >>> 0) / 4294967296; };
+}
+const hash2 = (x, y, s = 0) => { let h = (x * 374761393 + y * 668265263 + s * 2147483647) | 0; h = Math.imul(h ^ (h >>> 13), 1274126177); return ((h ^ (h >>> 16)) >>> 0) / 4294967296; };
+
+// ---------- sprites ----------
+// rows: array of strings; pal: { ch: '#hex' | [c1, c2, level] (local dither) | null }
+const SHEET = [];
+function SP(rows, pal, name) {
+  if (typeof rows === 'string') rows = rows.split('\n').map(r => r.trim()).filter(r => r.length);
+  const h = rows.length;
+  let w = 0; for (const r of rows) w = Math.max(w, r.length);
+  const d = new Uint32Array(w * h);
+  rows.forEach((r, y) => {
+    if (r.length !== w && name) console.warn('[sprite] ' + name + ' row ' + y + ' length ' + r.length + ' != ' + w);
+    for (let x = 0; x < r.length; x++) {
+      const ch = r[x];
+      if (ch === '.' || ch === ' ') continue;
+      let v = pal[ch];
+      if (v === undefined) { if (name) console.warn('[sprite] ' + name + ' unknown char ' + ch); continue; }
+      if (v === null) continue;
+      if (Array.isArray(v)) v = dth(x, y, v[2]) ? v[1] : v[0];
+      d[y * w + x] = col(v);
+    }
+  });
+  const s = { w, h, d, name };
+  if (name) SHEET.push(s);
+  return s;
+}
+// draw sprite; o.flip mirrors horizontally; o.fn(colour,x,y) remaps colours
+function DS(s, x, y, o) {
+  x = Math.round(x); y = Math.round(y);
+  const flip = o && o.flip, fn = o && o.fn;
+  for (let yy = 0; yy < s.h; yy++) for (let xx = 0; xx < s.w; xx++) {
+    const c = s.d[yy * s.w + (flip ? s.w - 1 - xx : xx)];
+    if (!c) continue;
+    P(x + xx, y + yy, fn ? fn(c, x + xx, y + yy) : c);
+  }
+}
+// draw a character grid straight onto the current target (handy inside mkSpr)
+function stamp(rows, pal, x, y, o) { DS(SP(rows, pal), x, y, o); }
+// add a 1px outline whose colour depends on the neighbouring fill colour.
+// fn(fillColour, side) where side = 'lit' (top/left edge) or 'dark' (bottom/right edge)
+function OUT(s, fn, diag = false) {
+  const w = s.w + 2, h = s.h + 2, d = new Uint32Array(w * h);
+  for (let y = 0; y < s.h; y++) for (let x = 0; x < s.w; x++) d[(y + 1) * w + x + 1] = s.d[y * s.w + x];
+  const src = d.slice();
+  const at = (x, y) => (x < 0 || y < 0 || x >= w || y >= h) ? 0 : src[y * w + x];
+  for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
+    if (src[y * w + x]) continue;
+    // neighbours: right/below means this pixel is on the lit (top/left) edge of the shape
+    let n = at(x, y - 1), side = 'dark';
+    if (!n) { n = at(x - 1, y); side = 'dark'; }
+    if (!n) { n = at(x + 1, y); side = 'lit'; }
+    if (!n) { n = at(x, y + 1); side = 'lit'; }
+    if (!n && diag) { n = at(x - 1, y - 1) || at(x + 1, y - 1) || at(x - 1, y + 1) || at(x + 1, y + 1); side = 'dark'; }
+    if (n) d[y * w + x] = col(fn(n, side, x, y));
+  }
+  return { w, h, d, name: s.name };
+}
+function rotL(s) { // rotate a sprite 90 degrees counter-clockwise
+  const d = new Uint32Array(s.w * s.h);
+  for (let y = 0; y < s.h; y++) for (let x = 0; x < s.w; x++) d[(s.w - 1 - x) * s.h + y] = s.d[y * s.w + x];
+  return { w: s.h, h: s.w, d, name: s.name };
+}
+function recolor(s, map) {
+  const m = new Map(Object.entries(map).map(([a, b]) => [col(a), col(b)]));
+  return { w: s.w, h: s.h, d: s.d.map(c => m.has(c) ? m.get(c) : c), name: s.name };
+}
+// silhouette helper: iterate opaque pixels
+function eachPx(s, cb) { for (let y = 0; y < s.h; y++) for (let x = 0; x < s.w; x++) if (s.d[y * s.w + x]) cb(x, y, s.d[y * s.w + x]); }
+// long cast shadow of a sprite onto the ground (feet at baseline y = by)
+function castShadow(s, x, by, kx, ky, paint, flip) {
+  const seen = new Set();
+  eachPx(s, (sx, sy) => {
+    const hgt = (s.h - 1 - sy);
+    const gx = Math.round(x + (flip ? s.w - 1 - sx : sx) + hgt * kx), gy = Math.round(by + hgt * ky);
+    for (let k = 0; k < 2; k++) {
+      const key = (gy * 1000 + gx + k);
+      if (seen.has(key)) continue; seen.add(key);
+      P(gx + k, gy, paint);
+    }
+  });
+}
+
+// ---------- bitmap fonts ----------
+function mkFont(def, opt = {}) {
+  const f = { g: {}, sp: opt.sp ?? 1, space: opt.space ?? 3, h: opt.h ?? 7, mono: opt.mono || 0 };
+  for (const ch in def) {
+    const rows = def[ch];
+    let w = 0; for (const r of rows) w = Math.max(w, r.length);
+    f.g[ch] = { w, rows };
+  }
+  return f;
+}
+// main proportional font: cap height 7, descenders to row 8
+const FM = mkFont({
+  A: ['.###.', '#...#', '#...#', '#####', '#...#', '#...#', '#...#'],
+  B: ['####.', '#...#', '#...#', '####.', '#...#', '#...#', '####.'],
+  C: ['.###.', '#...#', '#....', '#....', '#....', '#...#', '.###.'],
+  D: ['####.', '#...#', '#...#', '#...#', '#...#', '#...#', '####.'],
+  E: ['#####', '#....', '#....', '####.', '#....', '#....', '#####'],
+  F: ['#####', '#....', '#....', '####.', '#....', '#....', '#....'],
+  G: ['.###.', '#...#', '#....', '#.###', '#...#', '#...#', '.###.'],
+  H: ['#...#', '#...#', '#...#', '#####', '#...#', '#...#', '#...#'],
+  I: ['###', '.#.', '.#.', '.#.', '.#.', '.#.', '###'],
+  J: ['..###', '...#.', '...#.', '...#.', '#..#.', '#..#.', '.##..'],
+  K: ['#...#', '#..#.', '#.#..', '##...', '#.#..', '#..#.', '#...#'],
+  L: ['#....', '#....', '#....', '#....', '#....', '#....', '#####'],
+  M: ['#...#', '##.##', '#.#.#', '#.#.#', '#...#', '#...#', '#...#'],
+  N: ['#...#', '##..#', '#.#.#', '#..##', '#...#', '#...#', '#...#'],
+  O: ['.###.', '#...#', '#...#', '#...#', '#...#', '#...#', '.###.'],
+  P: ['####.', '#...#', '#...#', '####.', '#....', '#....', '#....'],
+  Q: ['.###.', '#...#', '#...#', '#...#', '#.#.#', '#..#.', '.##.#'],
+  R: ['####.', '#...#', '#...#', '####.', '#.#..', '#..#.', '#...#'],
+  S: ['.###.', '#...#', '#....', '.###.', '....#', '#...#', '.###.'],
+  T: ['#####', '..#..', '..#..', '..#..', '..#..', '..#..', '..#..'],
+  U: ['#...#', '#...#', '#...#', '#...#', '#...#', '#...#', '.###.'],
+  V: ['#...#', '#...#', '#...#', '#...#', '.#.#.', '.#.#.', '..#..'],
+  W: ['#...#', '#...#', '#...#', '#.#.#', '#.#.#', '##.##', '#...#'],
+  X: ['#...#', '#...#', '.#.#.', '..#..', '.#.#.', '#...#', '#...#'],
+  Y: ['#...#', '#...#', '.#.#.', '..#..', '..#..', '..#..', '..#..'],
+  Z: ['#####', '....#', '...#.', '..#..', '.#...', '#....', '#####'],
+  a: ['....', '....', '.##.', '...#', '.###', '#..#', '.###'],
+  b: ['#...', '#...', '###.', '#..#', '#..#', '#..#', '###.'],
+  c: ['....', '....', '.##.', '#..#', '#...', '#..#', '.##.'],
+  d: ['...#', '...#', '.###', '#..#', '#..#', '#..#', '.###'],
+  e: ['....', '....', '.##.', '#..#', '####', '#...', '.##.'],
+  f: ['.##', '#..', '###', '#..', '#..', '#..', '#..'],
+  g: ['....', '....', '.###', '#..#', '#..#', '#..#', '.###', '...#', '.##.'],
+  h: ['#...', '#...', '###.', '#..#', '#..#', '#..#', '#..#'],
+  i: ['#', '.', '#', '#', '#', '#', '#'],
+  j: ['.#', '..', '.#', '.#', '.#', '.#', '.#', '.#', '#.'],
+  k: ['#...', '#...', '#..#', '#.#.', '##..', '#.#.', '#..#'],
+  l: ['#.', '#.', '#.', '#.', '#.', '#.', '.#'],
+  m: ['.....', '.....', '####.', '#.#.#', '#.#.#', '#.#.#', '#.#.#'],
+  n: ['....', '....', '###.', '#..#', '#..#', '#..#', '#..#'],
+  o: ['....', '....', '.##.', '#..#', '#..#', '#..#', '.##.'],
+  p: ['....', '....', '###.', '#..#', '#..#', '#..#', '###.', '#...', '#...'],
+  q: ['....', '....', '.###', '#..#', '#..#', '#..#', '.###', '...#', '...#'],
+  r: ['...', '...', '#.#', '##.', '#..', '#..', '#..'],
+  s: ['....', '....', '.###', '#...', '.##.', '...#', '###.'],
+  t: ['.#.', '.#.', '###', '.#.', '.#.', '.#.', '..#'],
+  u: ['....', '....', '#..#', '#..#', '#..#', '#..#', '.###'],
+  v: ['.....', '.....', '#...#', '#...#', '.#.#.', '.#.#.', '..#..'],
+  w: ['.....', '.....', '#...#', '#...#', '#.#.#', '#.#.#', '.#.#.'],
+  x: ['....', '....', '#..#', '#..#', '.##.', '#..#', '#..#'],
+  y: ['....', '....', '#..#', '#..#', '#..#', '#..#', '.###', '...#', '.##.'],
+  z: ['....', '....', '####', '...#', '.##.', '#...', '####'],
+  0: ['.##.', '#..#', '#.##', '##.#', '#..#', '#..#', '.##.'],
+  1: ['.#.', '##.', '.#.', '.#.', '.#.', '.#.', '###'],
+  2: ['.##.', '#..#', '...#', '..#.', '.#..', '#...', '####'],
+  3: ['.##.', '#..#', '...#', '.##.', '...#', '#..#', '.##.'],
+  4: ['#..#', '#..#', '#..#', '####', '...#', '...#', '...#'],
+  5: ['####', '#...', '###.', '...#', '...#', '#..#', '.##.'],
+  6: ['.##.', '#...', '#...', '###.', '#..#', '#..#', '.##.'],
+  7: ['####', '...#', '..#.', '..#.', '.#..', '.#..', '.#..'],
+  8: ['.##.', '#..#', '#..#', '.##.', '#..#', '#..#', '.##.'],
+  9: ['.##.', '#..#', '#..#', '.###', '...#', '...#', '.##.'],
+  '.': ['.', '.', '.', '.', '.', '.', '#'],
+  ',': ['..', '..', '..', '..', '..', '.#', '.#', '#.'],
+  "'": ['#', '#', '.'],
+  '’': ['#', '#', '.'],
+  '"': ['#.#', '#.#'],
+  '!': ['#', '#', '#', '#', '#', '.', '#'],
+  '?': ['.##.', '#..#', '...#', '..#.', '.#..', '....', '.#..'],
+  ':': ['.', '.', '#', '.', '.', '#', '.'],
+  ';': ['..', '..', '.#', '..', '..', '.#', '.#', '#.'],
+  '-': ['...', '...', '...', '###'],
+  '+': ['...', '...', '.#.', '###', '.#.'],
+  '(': ['.#', '#.', '#.', '#.', '#.', '#.', '.#'],
+  ')': ['#.', '.#', '.#', '.#', '.#', '.#', '#.'],
+  '/': ['..#', '..#', '.#.', '.#.', '.#.', '#..', '#..'],
+  '&': ['.##..', '#..#.', '.##..', '.#..#', '#.##.', '#..#.', '.##.#'],
+  '#': ['.#.#.', '#####', '.#.#.', '.#.#.', '#####', '.#.#.', '.....'],
+  '$': ['..#..', '.####', '#.#..', '.###.', '..#.#', '####.', '..#..'],
+  '*': ['.....', '#.#.#', '.###.', '#####', '.###.', '#.#.#'],
+  '♥': ['.....', '.#.#.', '#####', '#####', '.###.', '..#..'],
+  '…': ['.....', '.....', '.....', '.....', '.....', '.....', '#.#.#'],
+}, { sp: 1, space: 3, h: 7 });
+// tiny 3x5 caps font for signs, posters and cards
+const FT = mkFont({
+  A: ['.#.', '#.#', '###', '#.#', '#.#'], B: ['##.', '#.#', '##.', '#.#', '##.'], C: ['.##', '#..', '#..', '#..', '.##'],
+  D: ['##.', '#.#', '#.#', '#.#', '##.'], E: ['###', '#..', '##.', '#..', '###'], F: ['###', '#..', '##.', '#..', '#..'],
+  G: ['.##', '#..', '#.#', '#.#', '.##'], H: ['#.#', '#.#', '###', '#.#', '#.#'], I: ['###', '.#.', '.#.', '.#.', '###'],
+  J: ['..#', '..#', '..#', '#.#', '.#.'], K: ['#.#', '#.#', '##.', '#.#', '#.#'], L: ['#..', '#..', '#..', '#..', '###'],
+  M: ['#...#', '##.##', '#.#.#', '#...#', '#...#'], N: ['#..#', '##.#', '#.##', '#..#', '#..#'], O: ['.#.', '#.#', '#.#', '#.#', '.#.'],
+  P: ['##.', '#.#', '##.', '#..', '#..'], Q: ['.#.', '#.#', '#.#', '##.', '.##'], R: ['##.', '#.#', '##.', '#.#', '#.#'],
+  S: ['.##', '#..', '.#.', '..#', '##.'], T: ['###', '.#.', '.#.', '.#.', '.#.'], U: ['#.#', '#.#', '#.#', '#.#', '###'],
+  V: ['#.#', '#.#', '#.#', '.#.', '.#.'], W: ['#...#', '#...#', '#.#.#', '##.##', '#...#'], X: ['#.#', '#.#', '.#.', '#.#', '#.#'],
+  Y: ['#.#', '#.#', '.#.', '.#.', '.#.'], Z: ['###', '..#', '.#.', '#..', '###'],
+  0: ['###', '#.#', '#.#', '#.#', '###'], 1: ['.#', '##', '.#', '.#', '.#'], 2: ['##.', '..#', '.#.', '#..', '###'],
+  3: ['##.', '..#', '.#.', '..#', '##.'], 4: ['#.#', '#.#', '###', '..#', '..#'], 5: ['###', '#..', '##.', '..#', '##.'],
+  6: ['.##', '#..', '###', '#.#', '###'], 7: ['###', '..#', '.#.', '.#.', '.#.'], 8: ['###', '#.#', '###', '#.#', '###'],
+  9: ['###', '#.#', '###', '..#', '##.'],
+  '.': ['.', '.', '.', '.', '#'], ',': ['.', '.', '.', '#', '#'], '!': ['#', '#', '#', '.', '#'], '?': ['##.', '..#', '.#.', '...', '.#.'],
+  "'": ['#', '#', '.', '.', '.'], ':': ['.', '#', '.', '#', '.'], '-': ['..', '..', '##', '..', '..'], '+': ['...', '.#.', '###', '.#.', '...'],
+  '/': ['..#', '..#', '.#.', '#..', '#..'], '&': ['.#.', '#.#', '.#.', '#.#', '.##'], '$': ['.##', '##.', '.#.', '.##', '##.'],
+  '#': ['#.#', '###', '#.#', '###', '#.#'], '*': ['#.#', '.#.', '#.#', '...', '...'], '♥': ['#.#', '###', '###', '.#.', '...'],
+  '(': ['.#', '#.', '#.', '#.', '.#'], ')': ['#.', '.#', '.#', '.#', '#.'], '"': ['#.#', '#.#', '...', '...', '...'], '@': ['.##.', '#..#', '#.##', '#.##', '.#..'],
+}, { sp: 1, space: 2, h: 5 });
+// text: o = { bold, ls (extra letter spacing), mono (fixed advance), outline: colour, shadow: colour, sx, sy }
+function glyph(f, ch) { return f.g[ch] || f.g[ch.toUpperCase()] || (ch === ' ' ? null : f.g['?']); }
+function TW(s, f = FM, o = {}) {
+  const sc = o.scale || 1;
+  let w = 0;
+  for (const ch of s) {
+    if (ch === ' ') { w += (o.mono || f.space) + (o.ls || 0); continue; }
+    const g = glyph(f, ch);
+    w += (o.mono ? o.mono : g.w + (o.bold ? 1 : 0) + f.sp) + (o.ls || 0);
+  }
+  return Math.max(0, w - f.sp - (o.ls || 0)) * sc;
+}
+function T(s, x, y, c, f = FM, o = {}) {
+  if (o.outline != null || o.shadow != null) {
+    const base = Object.assign({}, o, { outline: null, shadow: null });
+    if (o.shadow != null) T(s, x + (o.sx ?? 1), y + (o.sy ?? 1), o.shadow, f, base);
+    if (o.outline != null) for (const [dx, dy] of [[-1, 0], [1, 0], [0, -1], [0, 1], [-1, -1], [1, -1], [-1, 1], [1, 1]]) T(s, x + dx, y + dy, o.outline, f, base);
+    return T(s, x, y, c, f, base);
+  }
+  const sc = o.scale || 1;
+  let cx = x;
+  for (const ch of s) {
+    if (ch === ' ') { cx += ((o.mono || f.space) + (o.ls || 0)) * sc; continue; }
+    const g = glyph(f, ch);
+    const off = o.mono ? Math.floor((o.mono - g.w - (o.bold ? 1 : 0)) / 2) : 0;
+    for (let r = 0; r < g.rows.length; r++) {
+      const row = g.rows[r];
+      for (let i = 0; i < row.length; i++) if (row[i] === '#') {
+        const pc = typeof c === 'function' ? (xx, yy, old) => c(xx, yy, old, r) : c;
+        const sy = o.sy || sc;
+        if (sc === 1 && sy === 1) { P(cx + off + i, y + r, pc); if (o.bold) P(cx + off + i + 1, y + r, pc); }
+        else { R(cx + (off + i) * sc, y + r * sy, sc * (o.bold ? 2 : 1), sy, pc); }
+      }
+    }
+    cx += ((o.mono ? o.mono : g.w + (o.bold ? 1 : 0) + f.sp) + (o.ls || 0)) * sc;
+  }
+  return cx;
+}
+function TC(s, cx, y, c, f = FM, o = {}) { return T(s, Math.round(cx - TW(s, f, o) / 2), y, c, f, o); }
+function wrap(s, maxW, f = FM, o = {}) {
+  const words = s.split(' '), lines = []; let cur = '';
+  for (const w of words) { const t = cur ? cur + ' ' + w : w; if (TW(t, f, o) > maxW && cur) { lines.push(cur); cur = w; } else cur = t; }
+  if (cur) lines.push(cur);
+  return lines;
+}
+
+// ---------- page shell: scaling, scene switching, animation loop ----------
+let SCENE = 1, TICK = 0, DIRTY = true, SCENE_T0 = 0;
+const SCENES = {};
+function fit() {
+  const dpr = window.devicePixelRatio || 1;
+  const vw = window.innerWidth, vh = window.innerHeight;
+  let s = Math.floor(Math.min(vw * dpr / W, vh * dpr / H));
+  // thumbnails (and tiny windows) fill their box; full pages keep exact integer scaling
+  if (s < 1 || document.body.classList.contains('embed')) s = Math.min(vw * dpr / W, vh * dpr / H);
+  CV.style.width = (W * s / dpr) + 'px';
+  CV.style.height = (H * s / dpr) + 'px';
+}
+function setScene(n) {
+  SCENE = n; DIRTY = true; SCENE_T0 = TICK;
+  document.querySelectorAll('[data-scene]').forEach(b => b.classList.toggle('on', +b.dataset.scene === n));
+}
+function boot() {
+  if (/embed/.test(location.hash)) document.body.classList.add('embed');
+  fit();
+  addEventListener('resize', fit);
+  addEventListener('keydown', e => { if (e.key === '1') setScene(1); if (e.key === '2') setScene(2); });
+  document.querySelectorAll('[data-scene]').forEach(b => b.addEventListener('click', () => setScene(+b.dataset.scene)));
+  setScene(/scene2|^#2$/.test(location.hash) ? 2 : 1);
+  const sheet = /sheet/.test(location.hash);
+  // debug magnifier: #z=x,y,factor shows a region of the frame enlarged (for art review)
+  const zm = /z=(\d+),(\d+),(\d+)/.exec(location.hash);
+  const ZOOM = zm ? zm.slice(1).map(Number) : null;
+  const frame = ts => {
+    const tk = Math.floor(ts / 1000 * 12);
+    if (tk !== TICK || DIRTY) {
+      TICK = tk; DIRTY = false;
+      noclip();
+      if (sheet) drawSheet(); else SCENES[SCENE](tk);
+      noclip();
+      if (ZOOM) { const [zx, zy, f] = ZOOM, src = FB.slice(); for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) { const sx = zx + Math.floor(x / f), sy = zy + Math.floor(y / f); FB[y * W + x] = (sx < W && sy < H) ? src[sy * W + sx] : 0xff000000; } }
+      G2.putImageData(IMG, 0, 0);
+    }
+    requestAnimationFrame(frame);
+  };
+  requestAnimationFrame(frame);
+}
+function drawSheet() {
+  R(0, 0, W, H, '#777788');
+  let x = 2, y = 2, rowH = 0;
+  for (const s of SHEET) {
+    if (x + s.w > W - 2) { x = 2; y += rowH + 3; rowH = 0; }
+    DS(s, x, y); x += s.w + 3; rowH = Math.max(rowH, s.h);
+  }
+}
+
+// ---- b_1.js ----
+// ================================================================
+//  DIRECTION B — "Saturday Morning Cartoon"
+//  Punchy, bold dark outlines, high saturation, flat cel shading,
+//  big expressive heads (about 2.5 heads tall), exaggerated shapes.
+// ================================================================
+const OL = '#1b1033';
+const outB = s => OUT(s, () => OL);          // extra outer line: 2px silhouette, 1px inner lines
+
+// ---- cartoon part helpers (every part carries its own outline) ----
+function ovalB(cx, cy, rx, ry, fill, shade, light) {
+  ell(cx, cy, rx + 1, ry + 1, OL);
+  ell(cx, cy, rx, ry, fill);
+  if (shade) {
+    const fc = col(fill);
+    ell(cx, cy, rx, ry, (x, y, o) => {
+      if (o !== fc) return o;
+      const dx = (x + 0.5 - (cx - rx * 0.32)) / (rx * 1.02), dy = (y + 0.5 - (cy - ry * 0.3)) / (ry * 1.08);
+      return dx * dx + dy * dy > 1 ? shade : o;
+    });
+  }
+  if (light) ell(cx - rx * 0.42, cy - ry * 0.45, Math.max(0.8, rx * 0.22), Math.max(0.8, ry * 0.18), light);
+}
+function boxB(x, y, w, h, r, fill, shade, light) {
+  RRB(x, y, w, h, r, OL, fill);
+  const fc = col(fill);
+  if (shade) { const sw = Math.max(1, Math.round(w * 0.3)); R(x + w - 1 - sw, y + 1, sw, h - 2, (X, Y, o) => o === fc ? shade : o); }
+  if (light) R(x + 1, y + 1, Math.max(1, Math.round(w * 0.18)), h - 2, (X, Y, o) => o === fc ? light : o);
+}
+function polyB(pts, fill) {
+  poly(pts, fill);
+  for (let i = 0; i < pts.length; i++) { const a = pts[i], b = pts[(i + 1) % pts.length]; L(a[0], a[1], b[0], b[1], OL); }
+}
+function limbB(x0, y0, x1, y1, th, fill, shade) {
+  const n = Math.max(1, Math.ceil(Math.hypot(x1 - x0, y1 - y0)));
+  for (let i = 0; i <= n; i++) { const t = i / n; circ(x0 + (x1 - x0) * t, y0 + (y1 - y0) * t, th / 2 + 1, OL); }
+  for (let i = 0; i <= n; i++) { const t = i / n; circ(x0 + (x1 - x0) * t, y0 + (y1 - y0) * t, th / 2, fill); }
+  if (shade) {
+    const nx = (y1 - y0) / n, ny = -(x1 - x0) / n, off = th * 0.28;
+    for (let i = 0; i <= n; i++) { const t = i / n; circ(x0 + (x1 - x0) * t - nx * off, y0 + (y1 - y0) * t - ny * off, th * 0.22, shade); }
+  }
+}
+// cartoon eye: white oval with pupil (dx,dy = pupil offset)
+function eyeB(cx, cy, rx, ry, dx = 0, dy = 0, lid = 0) {
+  ell(cx, cy, rx + 1, ry + 1, OL); ell(cx, cy, rx, ry, '#ffffff');
+  const pr = Math.max(1, Math.round(rx * 0.55));
+  R(Math.round(cx + dx - pr / 2), Math.round(cy + dy - pr / 2), pr, pr + 1, OL);
+  P(Math.round(cx + dx - pr / 2), Math.round(cy + dy - pr / 2), '#ffffff');
+  if (lid) R(Math.floor(cx - rx), Math.floor(cy - ry - 1), Math.ceil(rx * 2) + 1, lid, OL);
+}
+function grinB(cx, cy, w, h, teeth = true) {
+  // open D-shaped grin
+  for (let y = 0; y <= h; y++) {
+    const half = Math.round((w / 2) * Math.sqrt(1 - (y / (h + 0.5)) ** 2));
+    HL(cx - half, cx + half - 1, cy + y, OL);
+  }
+  for (let y = 1; y < h; y++) {
+    const half = Math.round((w / 2) * Math.sqrt(1 - (y / (h + 0.5)) ** 2)) - 1;
+    if (half > 0) HL(cx - half, cx + half - 1, cy + y, y === 1 && teeth ? '#ffffff' : (y >= h - 1 ? '#ff6a8a' : '#a8204a'));
+  }
+}
+// rotate a list of points around a pivot
+function rotPts(pts, cx, cy, a) { const c = Math.cos(a), s = Math.sin(a); return pts.map(([x, y]) => [cx + (x - cx) * c - (y - cy) * s, cy + (x - cx) * s + (y - cy) * c]); }
+function ellPts(cx, cy, rx, ry, n = 20) { const p = []; for (let i = 0; i < n; i++) { const a = i / n * Math.PI * 2; p.push([cx + Math.cos(a) * rx, cy + Math.sin(a) * ry]); } return p; }
+
+// ---------------- characters ----------------
+// the player: spiky hair, star hoodie, enormous sneakers, gym bag
+const B_PLAYER = outB(mkSpr(30, 46, () => {
+  const sk = '#ffc49a', skD = '#e8896a';
+  // gym bag behind (on the far side)
+  boxB(18, 26, 11, 9, 3, '#ffd21f', '#e0901a', '#fff07a'); HL(19, 27, 29, '#ff3a5a');
+  // legs + giant sneakers
+  boxB(9, 34, 5, 6, 1, '#4a6aff', '#2a3ab0'); boxB(15, 34, 5, 6, 1, '#4a6aff', '#2a3ab0');
+  ovalB(10, 42, 6, 3.2, '#ffffff', '#b8c0f0'); ovalB(19, 42, 6, 3.2, '#ffffff', '#b8c0f0');
+  HL(6, 13, 44, '#ff3a4a'); HL(15, 22, 44, '#ff3a4a'); P(10, 40, '#ff3a4a'); P(19, 40, '#ff3a4a');
+  // torso (hoodie) with star
+  boxB(6, 22, 17, 14, 4, '#2ad0c0', '#1a8aa0', '#8afff0');
+  const st = ['..#..', '.###.', '#####', '.###.', '.#.#.'];
+  st.forEach((r, y) => [...r].forEach((ch, x) => { if (ch === '#') P(12 + x, 26 + y, '#ffe23a'); }));
+  HL(10, 18, 23, '#1a8aa0');
+  // arms: near arm down, far arm holding the strap
+  limbB(7, 25, 4, 33, 5, '#2ad0c0', '#1a8aa0'); ovalB(4, 35, 2.5, 2.5, sk, skD);
+  limbB(22, 25, 23, 29, 5, '#1a8aa0'); ovalB(22, 27, 2.5, 2.5, sk, skD);
+  L(22, 24, 24, 27, OL);
+  // head
+  ovalB(15, 13, 10, 10, sk, skD);
+  ovalB(5, 14, 2, 3, sk, skD);
+  // spiky hair
+  polyB([[4, 12], [3, 4], [7, 7], [8, 0], [12, 5], [15, -1], [17, 5], [22, 1], [22, 7], [27, 6], [25, 12], [22, 9], [17, 10], [12, 8], [8, 11]], '#3a2a8a');
+  L(9, 5, 11, 8, '#7a6ad0'); L(15, 2, 15, 6, '#7a6ad0'); L(21, 4, 20, 7, '#7a6ad0');
+  // face
+  eyeB(12, 14, 2.2, 3, 1, 0); eyeB(19, 14, 2.2, 3, 1, 0);
+  L(9, 10, 13, 10, OL); L(17, 10, 21, 9, OL);
+  grinB(16, 18, 8, 3);
+  P(9, 18, '#ff8a8a'); P(10, 18, '#ff8a8a'); P(21, 18, '#ff8a8a'); P(22, 18, '#ff8a8a');
+}, 'playerB'));
+
+// Pip: huge head, giant cardboard belt held overhead
+const B_PIP = outB(mkSpr(34, 44, () => {
+  const sk = '#ffd2b0', skD = '#f09a80';
+  // the belt overhead
+  boxB(1, 0, 32, 9, 4, '#d9a060', '#a86a3a', '#f0c890');
+  ovalB(17, 4.5, 7, 5.5, '#ffe23a', '#e0a020', '#fff8a0');
+  T('CHAMP', 10, 2, '#e0304a', FT, { sp: 0 });
+  // arms up holding it
+  limbB(8, 9, 10, 20, 4, sk, skD); limbB(26, 9, 24, 20, 4, sk, skD);
+  ovalB(8, 8, 2.5, 2, sk); ovalB(26, 8, 2.5, 2, sk);
+  // legs + sneakers
+  boxB(12, 35, 4, 5, 1, '#ffd2b0', '#f09a80'); boxB(18, 35, 4, 5, 1, '#ffd2b0', '#f09a80');
+  ovalB(13, 41, 4.5, 2.5, '#ff4a5a', '#c02a4a'); ovalB(21, 41, 4.5, 2.5, '#ff4a5a', '#c02a4a');
+  HL(10, 16, 42, '#ffffff'); HL(18, 24, 42, '#ffffff');
+  // striped shirt + shorts
+  boxB(10, 26, 14, 9, 3, '#ffffff', '#c8d0f0');
+  for (let y = 28; y < 34; y += 2) R(11, y, 12, 1, (x, yy, o) => o === col('#ffffff') ? '#3a7aff' : (o === col('#c8d0f0') ? '#2a4ab8' : o));
+  boxB(10, 32, 14, 5, 2, '#4a6aff', '#2a3ab0');
+  // giant head
+  ovalB(17, 19, 11, 10, sk, skD);
+  // messy hair
+  polyB([[7, 18], [6, 12], [9, 13], [9, 8], [13, 11], [15, 7], [18, 11], [21, 7], [23, 11], [27, 9], [26, 14], [28, 17], [24, 15], [19, 14], [13, 15]], '#ff7a2a');
+  L(11, 11, 12, 13, '#ffb060'); L(19, 10, 19, 12, '#ffb060');
+  // face
+  eyeB(13, 20, 2, 2.6, 0, 0); eyeB(21, 20, 2, 2.6, 0, 0);
+  grinB(17, 24, 9, 3);
+  R(17, 25, 1, 1, '#a8204a');            // gap tooth
+  for (const [x, y] of [[10, 22], [12, 23], [23, 23], [25, 22]]) P(x, y, '#e0704a');
+}, 'pipB'));
+
+// Big Earl: mountain of a gentle librarian with a tower of books
+const B_EARL = outB(mkSpr(48, 62, () => {
+  const sk = '#a8603e', skD = '#7a3e34', skL = '#d08a5a';
+  // little legs + big shoes
+  boxB(14, 50, 8, 7, 2, '#7a4a6a', '#5a3050'); boxB(26, 50, 8, 7, 2, '#7a4a6a', '#5a3050');
+  ovalB(17, 58, 7, 3.2, '#5a2a3a', '#3a1a2a'); ovalB(31, 58, 7, 3.2, '#5a2a3a', '#3a1a2a');
+  // huge round torso (mustard cardigan)
+  ovalB(24, 37, 21, 16, '#ffb02a', '#d07a1a', '#ffd870');
+  polyB([[18, 22], [30, 22], [26, 46], [22, 46]], '#2ad0c0');
+  for (const y of [30, 36, 42]) { ovalB(17, y, 1.2, 1.2, '#fff4c0'); }
+  // arms wrapping around the books
+  limbB(6, 30, 12, 46, 9, '#ffb02a', '#d07a1a'); limbB(42, 30, 37, 45, 9, '#d07a1a');
+  // tower of books
+  const books = [['#ff4a5a', '#c02a4a', 13, 26], ['#3a7aff', '#2a4ab8', 12, 31], ['#7ae04a', '#3aa04a', 14, 36], ['#ffe23a', '#e0a020', 12, 41], ['#c86aff', '#8a3ad0', 13, 46]];
+  for (const [c1, c2, x, y] of books) { boxB(x, y, 22, 6, 1, c1, c2); HL(x + 3, x + 12, y + 2, '#ffffff'); R(x + 19, y + 1, 2, 4, '#fff4d8'); }
+  // hands on top of the stack
+  ovalB(12, 46, 3.5, 3, sk, skD); ovalB(36, 45, 3.5, 3, sk, skD);
+  // head: bald dome, round glasses, big grey beard over the chest
+  ovalB(24, 12, 10, 11.5, sk, skD, skL);
+  ovalB(13, 14, 2, 3, sk, skD); ovalB(35, 14, 2, 3, skD);
+  polyB([[14, 13], [34, 13], [35, 21], [31, 29], [24, 34], [17, 29], [13, 21]], '#ece8f6');
+  poly([[29, 14], [34, 14], [35, 21], [31, 29], [26, 33], [28, 24]], (x, y, o) => o === col('#ece8f6') ? '#bcb4dc' : o);
+  L(19, 24, 20, 29, '#bcb4dc'); L(24, 26, 24, 31, '#bcb4dc');
+  ovalB(24, 13, 9, 3, sk, skD);
+  grinB(24, 19, 7, 2, false);
+  polyB([[16, 17], [24, 15], [32, 17], [30, 19], [24, 17], [18, 19]], '#ece8f6');
+  ovalB(24, 14, 2.2, 1.8, skD);
+  ell(19.5, 10, 4, 3.5, OL); ell(19.5, 10, 3, 2.5, '#eaffff'); ell(28.5, 10, 4, 3.5, OL); ell(28.5, 10, 3, 2.5, '#eaffff');
+  HL(23, 25, 9, OL);
+  R(19, 9, 2, 2, OL); R(28, 9, 2, 2, OL); P(19, 9, '#ffffff'); P(28, 9, '#ffffff');
+  L(15, 5, 20, 5, '#ece8f6'); L(28, 5, 33, 5, '#ece8f6');
+}, 'earlB'));
+
+// trash can + Jobber the raccoon peeking out (big cartoon eyes)
+function canB(tail) {
+  return outB(mkSpr(30, 30, () => {
+    // tail hanging out the side
+    const tw = tail ? 2 : 0;
+    for (let k = 0; k < 7; k++) { const x = 3 + k * 1.2, y = 9 + k * 1.6 + (k > 3 ? tw * (k - 3) * 0.3 : 0); circ(x, y, 3, OL); }
+    for (let k = 0; k < 7; k++) { const x = 3 + k * 1.2, y = 9 + k * 1.6 + (k > 3 ? tw * (k - 3) * 0.3 : 0); circ(x, y, 2, k % 2 ? '#3a2a4a' : '#a89090'); }
+    // can body, slightly dented
+    polyB([[7, 12], [25, 12], [24, 29], [8, 29]], '#9ab0ff');
+    R(19, 13, 5, 16, (x, y, o) => o === col('#9ab0ff') ? '#5a6ad0' : o);
+    R(9, 13, 2, 16, (x, y, o) => o === col('#9ab0ff') ? '#e0e8ff' : o);
+    for (const y of [17, 23]) HL(8, 24, y, OL);
+    P(14, 20, OL); P(15, 21, OL);     // dent
+    // raccoon head
+    ovalB(16, 9, 8, 6, '#a89090', '#7a6070');
+    polyB([[9, 5], [8, 0], [12, 3]], '#a89090'); polyB([[23, 5], [24, 0], [20, 3]], '#a89090');
+    ovalB(16, 9, 6.5, 2.6, OL);
+    eyeB(13, 9, 2, 2, 1, 0); eyeB(19, 9, 2, 2, 1, 0);
+    ovalB(16, 12, 3, 1.6, '#f4ece8'); P(16, 11, OL); P(15, 11, OL);
+    // lid popped up on its head
+    polyB(rotPts([[4, 1], [26, 1], [26, 4], [4, 4]], 15, 2.5, -0.18), '#c8d4ff');
+    R(13, -1, 4, 2, OL);
+    // paws on the rim
+    ovalB(10, 13, 2, 1.5, '#a89090'); ovalB(22, 13, 2, 1.5, '#a89090');
+    HL(7, 25, 12, OL);
+  }));
+}
+const B_CAN = [canB(0), canB(1)];
+SHEET.push(B_CAN[0]);
+
+// steel folding chair, knocked over (drawn standing, then tipped)
+const B_CHAIR = outB(rotL(mkSpr(18, 24, () => {
+  // back legs + backrest
+  limbB(4, 3, 4, 22, 2, '#c8d4ff'); limbB(14, 3, 14, 22, 2, '#9aa8e0');
+  boxB(2, 1, 15, 7, 2, '#c8d4ff', '#8a98d8', '#ffffff'); R(5, 3, 9, 2, '#6a78c0');
+  // seat
+  polyB([[1, 11], [17, 11], [16, 15], [2, 15]], '#e0e8ff'); HL(3, 15, 14, '#8a98d8');
+  // front legs crossing
+  limbB(3, 15, 6, 22, 2, '#c8d4ff'); limbB(15, 15, 12, 22, 2, '#9aa8e0');
+  HL(4, 14, 19, OL);
+})));
+SHEET.push(B_CHAIR);
+
+// Big Earl portrait for the dialogue box
+const B_EARL_PORTRAIT = mkSpr(40, 40, () => {
+  const sk = '#a8603e', skD = '#7a3e34', skL = '#d08a5a';
+  ovalB(20, 46, 22, 12, '#ffb02a', '#d07a1a');
+  polyB([[14, 35], [26, 35], [22, 40], [18, 40]], '#2ad0c0');
+  ovalB(20, 17, 12, 13, sk, skD, skL);
+  ovalB(7, 19, 2.5, 3.5, sk, skD); ovalB(33, 19, 2.5, 3.5, skD);
+  polyB([[8, 19], [32, 19], [33, 28], [28, 36], [20, 40], [12, 36], [7, 28]], '#ece8f6');
+  poly([[26, 20], [32, 20], [33, 28], [28, 36], [22, 39], [25, 30]], (x, y, o) => o === col('#ece8f6') ? '#bcb4dc' : o);
+  L(14, 30, 15, 36, '#bcb4dc'); L(20, 32, 20, 38, '#bcb4dc');
+  ovalB(20, 19, 11, 3.5, sk, skD);
+  grinB(20, 26, 9, 3, false);
+  polyB([[10, 23], [20, 21], [30, 23], [27, 26], [20, 24], [13, 26]], '#ece8f6');
+  ovalB(20, 20, 3, 2.2, skD);
+  ell(14, 15, 5, 4.5, OL); ell(14, 15, 4, 3.5, '#eaffff'); ell(26, 15, 5, 4.5, OL); ell(26, 15, 4, 3.5, '#eaffff');
+  HL(19, 21, 14, OL);
+  R(14, 14, 2, 3, OL); R(26, 14, 2, 3, OL); P(14, 14, '#ffffff'); P(26, 14, '#ffffff');
+  L(9, 9, 15, 9, '#ece8f6'); L(25, 9, 31, 9, '#ece8f6'); L(9, 10, 10, 10, '#ece8f6'); L(30, 10, 31, 10, '#ece8f6');
+  ell(14, 7, 3, 1.4, '#e8a070');
+}, 'earlPortraitB');
+
+// ---- b_2.js ----
+// ---------------- Direction B · Scene 1: Main Street, golden hour ----------------
+const BGY = 130, BCURB = 160, BSTREET = 165;
+
+function skyB(t) {
+  // hard cartoon bands with a gentle wave between them
+  const bands = ['#3b2390', '#5a2aa8', '#8a32b8', '#c23aa8', '#ff4a8a', '#ff7a5a', '#ffaa3a', '#ffd23a'];
+  const bh = 15;
+  for (let y = 0; y < 132; y++) for (let x = 0; x < W; x++) {
+    const wv = Math.round(Math.sin(x * 0.05 + y * 0.02) * 1.5);
+    const i = Math.max(0, Math.min(bands.length - 1, Math.floor((y + wv) / bh)));
+    P(x, y, bands[i]);
+  }
+  // sun with spinning rays
+  const sx = 220, sy = 30, rot = t * 0.01;
+  for (let i = 0; i < 14; i++) {
+    const a0 = rot + i / 14 * Math.PI * 2, a1 = a0 + Math.PI / 14;
+    poly([[sx, sy], [sx + Math.cos(a0) * 200, sy + Math.sin(a0) * 200], [sx + Math.cos(a1) * 200, sy + Math.sin(a1) * 200]], (x, y, o) => mix(o, '#ffe86a', 0.18));
+  }
+  ovalB(sx, sy, 17, 17, '#ffe23a', '#ffb02a', '#fff8c0');
+  ovalB(sx, sy, 12, 12, '#fff07a', null, '#ffffff');
+  // a sleepy, contented sun face
+  L(sx - 7, sy - 1, sx - 4, sy - 2, OL); L(sx - 4, sy - 2, sx - 2, sy - 1, OL);
+  L(sx + 2, sy - 1, sx + 4, sy - 2, OL); L(sx + 4, sy - 2, sx + 7, sy - 1, OL);
+  grinB(sx, sy + 3, 8, 2, false);
+  ell(sx - 8, sy + 3, 2, 1.2, '#ff9a6a'); ell(sx + 8, sy + 3, 2, 1.2, '#ff9a6a');
+  // cartoon clouds
+  const cloud = (x, y, n) => {
+    for (let k = 0; k < n; k++) ell(x + k * 9, y - (k % 2) * 3, 8, 6, OL);
+    for (let k = 0; k < n; k++) ell(x + k * 9, y - (k % 2) * 3, 7, 5, '#fff0f8');
+    R(x - 7, y + 1, n * 9 + 5, 4, (X, Y, o) => o === col('#fff0f8') ? '#ffb0d8' : o);
+    HL(x - 6, x + n * 9 - 3, y + 5, OL);
+  };
+  cloud(24 + ((t * 0.08) % 20), 18, 4); cloud(270 - ((t * 0.06) % 20), 14, 5); cloud(330, 52, 3);
+}
+function hillsB() {
+  for (let x = 0; x < W; x++) {
+    const h = 96 + Math.round(Math.sin(x * 0.03) * 6 + Math.sin(x * 0.011 + 2) * 5);
+    VL(x, h + 1, 132, '#7a3ab8'); P(x, h, OL);
+    const h2 = 108 + Math.round(Math.sin(x * 0.045 + 1) * 4);
+    VL(x, h2 + 1, 132, '#5a2a98'); P(x, h2, OL);
+  }
+  // lollipop trees
+  for (const [x, y] of [[18, 98], [60, 104], [150, 100], [210, 102], [372, 98]]) { VL(x, y, y + 14, OL); ovalB(x, y, 6, 6, '#2ad070', '#1a9050', '#8affb0'); }
+}
+function towerB(t) {
+  const cx = 140, top = 8;
+  // lattice legs
+  for (const [a, b] of [[-7, -12], [7, 12], [-3, -5], [3, 5]]) { L(cx + a, top + 34, cx + b, top + 74, OL); L(cx + a + 1, top + 34, cx + b + 1, top + 74, OL); }
+  L(cx - 9, top + 48, cx + 9, top + 62, OL); L(cx + 9, top + 48, cx - 9, top + 62, OL);
+  // the post
+  boxB(cx - 3, top - 6, 7, 44, 2, '#e0e8ff', '#8a98d8');
+  ovalB(cx, top - 6, 5, 2.5, '#ffffff', '#c8d4ff');
+  // giant turnbuckle pad tank
+  boxB(cx - 14, top, 29, 34, 9, '#ff3a5a', '#c01a4a', '#ff9aaa');
+  for (const y of [top + 11, top + 22]) HL(cx - 13, cx + 13, y, OL);
+  R(cx - 15, top + 4, 31, 3, OL); R(cx - 15, top + 27, 31, 3, OL);
+  T('TA', cx - 6, top + 13, '#ffffff', FM, { bold: true });
+  // ropes slung to the diner sign
+  curve(cx - 14, top + 13, 104, 22, 4, '#ff3a5a'); curve(cx - 14, top + 17, 104, 28, 4, '#ffffff'); curve(cx - 14, top + 21, 104, 34, 4, '#3a7aff');
+}
+
+// ---------------- Hot Tag Diner (a chrome railcar diner) ----------------
+function dinerB(t) {
+  const x0 = -6, x1 = 124, top = 76;
+  // neon sign on its pole
+  boxB(46, 46, 5, 32, 1, '#5a5a8a', '#3a3a6a');
+  RRB(12, 14, 92, 36, 6, OL, '#2a1a5a');
+  RRB(14, 16, 88, 32, 5, '#ff4aa8', '#2a1a5a');
+  const fl = [2, 3, 20].includes(t % 80);
+  const neon = (s, x, y, core, glow, o) => {
+    T(s, x - 1, y, glow, FM, o); T(s, x + 1, y, glow, FM, o); T(s, x, y - 1, glow, FM, o); T(s, x, y + 1, glow, FM, o);
+    T(s, x, y, core, FM, o);
+  };
+  neon('HOT TAG', 20, 19, fl ? '#ff8ac8' : '#fff0fa', fl ? '#7a2a6a' : '#ff3aa8', { scale: 2 });
+  neon('DINER', 40, 37, '#e0fff8', '#2ad0c0', { ls: 3 });
+  // neon hands slapping a tag
+  const hand = ['.##.', '####', '####', '.##.', '.##.'];
+  hand.forEach((r, y) => [...r].forEach((ch, x) => { if (ch === '#') { P(18 + x, 36 + y, '#ffe23a'); P(94 - x, 36 + y, '#ffe23a'); } }));
+  if ((t >> 2) % 2) { P(24, 37, '#ffffff'); P(88, 37, '#ffffff'); P(56, 34, '#ffffff'); }
+  // railcar body
+  boxB(x0, top, x1 - x0, 54, 10, '#e8f0ff', '#a8b8f0', '#ffffff');
+  // red stripe band + lettering
+  R(x0 + 1, top + 8, x1 - x0 - 2, 8, '#ff3a4a'); HL(x0 + 1, x1 - 2, top + 8, OL); HL(x0 + 1, x1 - 2, top + 15, OL);
+  TC('EAT  *  PIE  *  COFFEE', 58, top + 10, '#ffffff', FT, { sp: 1 });
+  // chrome ribs
+  for (let y = top + 40; y < top + 52; y += 3) HL(x0 + 2, x1 - 3, y, '#c8d4ff');
+  // windows with booths and a happy customer
+  for (let i = 0; i < 4; i++) {
+    const wx = 2 + i * 22, wy = top + 19;
+    RRB(wx, wy, 19, 17, 3, OL, '#5ae8ff');
+    R(wx + 1, wy + 10, 17, 6, '#ff3a5a'); HL(wx + 1, wx + 17, wy + 10, OL);
+    if (i === 1) { ovalB(wx + 9, wy + 7, 4, 4, '#ffc49a', '#e8896a'); ell(wx + 9, wy + 3, 5, 3, '#c86aff'); eyeB(wx + 8, wy + 7, 1, 1.3); eyeB(wx + 11, wy + 7, 1, 1.3); }
+    if (i === 2) { ovalB(wx + 10, wy + 7, 4, 4, '#a8603e', '#7a3e34'); R(wx + 6, wy + 2, 9, 3, '#ffd21f'); HL(wx + 6, wx + 15, wy + 2, OL); grinB(wx + 10, wy + 8, 4, 1, false); }
+    L(wx + 3, wy + 2, wx + 7, wy + 6, '#ffffff'); L(wx + 4, wy + 2, wx + 8, wy + 6, '#ffffff');
+  }
+  // door + steps
+  RRB(92, top + 14, 18, 40, 3, OL, '#ff3a4a'); RRB(95, top + 17, 12, 14, 2, OL, '#5ae8ff');
+  RR(96, top + 19, 10, 6, 1, '#2a1a5a'); T('OPEN', 97, top + 20, '#7affea', FT, { sp: 0 });
+  P(106, top + 36, '#ffe23a');
+  boxB(88, top + 50, 26, 5, 1, '#c8d4ff', '#8a98d8');
+}
+
+// ---------------- Steel Chair Hardware (leans a little, giant chair on the roof) ----------------
+function hardwareB(t) {
+  const x0 = 128, x1 = 228, top = 52, lean = 5;
+  // giant folding chair sculpture on the roof
+  const cx = 178;
+  limbB(cx - 13, 16, cx - 13, 52, 3, '#c8d4ff'); limbB(cx + 9, 16, cx + 9, 52, 3, '#9aa8e0');
+  boxB(cx - 16, 6, 30, 14, 4, '#c8d4ff', '#8a98d8', '#ffffff'); R(cx - 10, 10, 18, 4, '#6a78c0');
+  polyB([[cx - 20, 30], [cx + 16, 30], [cx + 13, 38], [cx - 17, 38]], '#e0e8ff'); HL(cx - 15, cx + 12, 36, '#8a98d8');
+  limbB(cx - 16, 38, cx - 10, 52, 3, '#c8d4ff'); limbB(cx + 12, 38, cx + 6, 52, 3, '#9aa8e0');
+  // sparkle on the chair
+  if ((t >> 2) % 3 === 0) { const sx = cx - 8, sy = 8; HL(sx - 3, sx + 3, sy, '#ffffff'); VL(sx, sy - 3, sy + 3, '#ffffff'); }
+  // building (leaning parallelogram)
+  polyB([[x0 + lean, top], [x1 + lean, top], [x1, BGY], [x0, BGY]], '#7ae04a');
+  // siding stripes
+  for (let y = top + 4; y < BGY; y += 5) { const sh = (y - top) / (BGY - top) * lean; L(x0 + lean - sh + 1, y, x1 + lean - sh - 1, y, '#4ab83a'); }
+  poly([[x1 + lean - 14, top + 1], [x1 + lean - 1, top + 1], [x1 - 1, BGY - 1], [x1 - 14, BGY - 1]], (x, y, o) => o === col('#7ae04a') ? '#4ab83a' : (o === col('#4ab83a') ? '#2a8a3a' : o));
+  // cornice
+  polyB([[x0 + lean - 4, top - 6], [x1 + lean + 4, top - 6], [x1 + lean + 3, top], [x0 + lean - 3, top]], '#ffd21f');
+  // sign
+  RRB(x0 + 10, top + 4, 84, 22, 4, OL, '#fff4d0');
+  TC('STEEL CHAIR', x0 + 54, top + 7, '#ff3a4a', FM, { bold: true, outline: OL });
+  TC('HARDWARE', x0 + 54, top + 17, '#2a8a3a', FT, { ls: 2 });
+  // awning (red/white scallops)
+  for (let x = x0 + 4; x < x1; x++) {
+    const st = Math.floor((x - x0) / 6) % 2;
+    VL(x, top + 30, top + 38, st ? '#ffffff' : '#ff3a4a');
+    const k = (x - x0) % 6; if (k > 0 && k < 5) P(x, top + 39, st ? '#ffffff' : '#ff3a4a'); else P(x, top + 39, OL);
+    if (k === 0) P(x, top + 40, null);
+  }
+  HL(x0 + 4, x1 - 1, top + 30, OL);
+  for (let x = x0 + 4; x < x1; x++) { const k = (x - x0) % 6; P(x, top + (k > 0 && k < 5 ? 40 : 39), OL); }
+  // window with chairs and a sale burst
+  RRB(x0 + 6, top + 44, 54, 30, 2, OL, '#5ae8ff');
+  for (let i = 0; i < 3; i++) { const wx = x0 + 10 + i * 14; boxB(wx, top + 50, 10, 6, 1, '#c8d4ff', '#8a98d8'); boxB(wx - 1, top + 58, 12, 3, 1, '#e0e8ff'); VL(wx, top + 61, top + 72, OL); VL(wx + 9, top + 61, top + 72, OL); }
+  L(x0 + 9, top + 46, x0 + 19, top + 56, '#ffffff'); L(x0 + 10, top + 46, x0 + 20, top + 56, '#ffffff');
+  // starburst SALE
+  const bx = x0 + 52, by = top + 50;
+  const pts = []; for (let i = 0; i < 16; i++) { const a = i / 16 * Math.PI * 2 + t * 0.02, r = i % 2 ? 7 : 11; pts.push([bx + Math.cos(a) * r, by + Math.sin(a) * r]); }
+  polyB(pts, '#ffe23a'); TC('SALE', bx, by - 2, '#ff3a4a', FT, { sp: 0 });
+  // door
+  RRB(x0 + 68, top + 44, 22, 34, 3, OL, '#ffd21f'); RRB(x0 + 72, top + 48, 14, 12, 2, OL, '#5ae8ff');
+  ovalB(x0 + 86, top + 64, 1.5, 1.5, '#ffffff');
+  // barrel of brooms
+  boxB(x0 + 92, BGY - 12, 10, 12, 3, '#d08a4a', '#a0603a');
+  for (const [dx, h] of [[2, 18], [5, 22], [8, 16]]) { VL(x0 + 92 + dx, BGY - 12 - h, BGY - 12, '#ffd21f'); }
+  polyB([[x0 + 95, BGY - 34], [x0 + 99, BGY - 34], [x0 + 101, BGY - 28], [x0 + 93, BGY - 28]], '#ffe23a');
+}
+
+// ---------------- the Sportatorium (round barn roof, curved banner) ----------------
+function posterB(x, y, w, h, kind, t) {
+  const wed = kind === 'wed';
+  RRB(x, y, w, h, 2, OL, wed ? '#2ad0c0' : '#ff4aa8');
+  // radiating stripes
+  const cx = x + w / 2, cy = y + h * 0.55;
+  R(x + 1, y + 1, w - 2, h - 2, (X, Y, o) => { const a = Math.atan2(Y - cy, X - cx); return (Math.floor((a + Math.PI) / (Math.PI / 6)) % 2) ? mix(o, '#ffffff', 0.18) : o; });
+  TC(wed ? 'WEDNESDAY' : 'SATURDAY', cx, y + 3, '#ffffff', FT, { outline: OL });
+  TC('NIGHT', cx, y + 10, '#ffe23a', FM, { bold: true, outline: OL });
+  if (wed) {
+    // the Mountain (Earl's monster-heel face)
+    ovalB(cx, cy + 6, 9, 9, '#a8603e', '#7a3e34');
+    ovalB(cx, cy + 11, 8, 5, '#f6f2ff', '#c8c0e8');
+    L(cx - 6, cy + 1, cx - 2, cy + 3, OL); L(cx + 6, cy + 1, cx + 2, cy + 3, OL);
+    P(cx - 3, cy + 4, '#ff3a3a'); P(cx + 3, cy + 4, '#ff3a3a');
+    HL(cx - 3, cx + 2, cy + 11, OL);
+  } else {
+    // golden butterfly mask
+    for (const sd of [-1, 1]) { ovalB(cx + sd * 7, cy + 2, 6, 5, '#ffe23a', '#e0a020'); ovalB(cx + sd * 5, cy + 10, 4, 3.5, '#ffaa3a'); }
+    ovalB(cx, cy + 5, 5, 7, '#ffe23a', '#e0a020', '#fff8a0');
+    eyeB(cx - 2, cy + 4, 1.2, 1.4, 0.5); eyeB(cx + 2, cy + 4, 1.2, 1.4, 0.5);
+    P(cx - 6, cy, '#2ad0c0'); P(cx + 6, cy, '#2ad0c0');
+  }
+  TC(wed ? 'THE MOUNTAIN' : 'MARIPOSA', cx, y + h - 7, '#ffffff', FT, { outline: OL });
+}
+function sportB(t) {
+  const x0 = 232, x1 = 392, top = 14, wall = 54, cx = 312;
+  // arched roof (half ellipse) + walls
+  ell(cx, wall + 2, 82, 46, OL);
+  ell(cx, wall + 2, 81, 45, (x, y, o) => { const k = ((x % 7) + 7) % 7; return k === 0 ? '#c01a4a' : '#ff4a3a'; });
+  R(x0, wall, x1 - x0, BGY - wall, (x, y) => { const k = ((x % 7) + 7) % 7; return k === 0 ? '#c01a4a' : (x > 360 ? '#e0303a' : '#ff4a3a'); });
+  VL(x0, wall, BGY - 1, OL);
+  // roof ribs
+  for (let a = 0.35; a < Math.PI - 0.3; a += 0.42) L(cx - Math.cos(a) * 30, wall + 2 - Math.sin(a) * 16, cx - Math.cos(a) * 80, wall + 2 - Math.sin(a) * 44, '#ff7a5a');
+  // curved banner
+  for (let i = -52; i <= 52; i++) {
+    const y = Math.round(28 + (i * i) / 140);
+    VL(cx + i, y - 1, y + 12, OL); VL(cx + i, y, y + 11, '#fff4d0');
+  }
+  const word = 'SPORTATORIUM';
+  let wx = cx - Math.round(TW(word, FM, { bold: true, ls: 1 }) / 2);
+  for (const ch of word) {
+    const off = wx + 3 - cx, y = Math.round(28 + (off * off) / 140) + 3;
+    T(ch, wx, y, '#ff3a4a', FM, { bold: true, outline: OL });
+    wx += TW(ch, FM, { bold: true }) + 2;
+  }
+  // round window
+  ovalB(cx, 16, 6, 6, '#ffe23a', '#ffb02a'); HL(cx - 5, cx + 5, 16, OL); VL(cx, 11, 21, OL);
+  // big doors (open, warm light)
+  RRB(cx - 22, 70, 44, BGY - 70 + 1, 2, OL, '#ffe86a');
+  R(cx - 21, 71, 42, BGY - 71, (x, y) => ((x + y) % 9 < 2) ? '#fff8c0' : '#ffd23a');
+  boxB(cx - 34, 70, 14, BGY - 70 + 1, 1, '#ff7a3a', '#c04a3a'); L(cx - 33, 71, cx - 21, BGY - 1, OL); L(cx - 21, 71, cx - 33, BGY - 1, OL);
+  boxB(cx + 20, 70, 14, BGY - 70 + 1, 1, '#ff7a3a', '#c04a3a'); L(cx + 21, 71, cx + 33, BGY - 1, OL); L(cx + 33, 71, cx + 21, BGY - 1, OL);
+  // a peek of the ring ropes inside
+  for (let k = 0; k < 3; k++) HL(cx - 20, cx + 19, 96 + k * 6, ['#ff3a5a', '#ffffff', '#3a7aff'][k]);
+  // posters
+  posterB(236, 66, 43, 56, 'wed', t);
+  posterB(346, 66, 38, 56, 'sat', t);
+  // TONIGHT burst
+  const bx = 296, by = 64; const pts = []; for (let i = 0; i < 18; i++) { const a = i / 18 * Math.PI * 2, r = i % 2 ? 9 : 14; pts.push([bx + Math.cos(a) * r * 1.4, by + Math.sin(a) * r * 0.8]); }
+  polyB(pts, '#ffe23a'); TC('SAT!', bx, by - 3, '#ff3a4a', FT, { outline: '#ffffff' });
+}
+
+function groundB(t) {
+  R(0, BGY, W, BCURB - BGY, '#ffd8a8');
+  for (let y = BGY; y < BCURB; y++) for (let x = 0; x < W; x++) {
+    if ((x + (y > BGY + 15 ? 16 : 0)) % 32 === 0 || y === BGY + 15) P(x, y, '#e8a878');
+  }
+  HL(0, W - 1, BGY, OL); HL(0, W - 1, BGY + 1, '#c87a5a');
+  R(0, BCURB, W, 2, '#fff0d8'); R(0, BCURB + 2, W, 3, '#c87a8a'); HL(0, W - 1, BCURB + 4, OL);
+  R(0, BSTREET, W, H - BSTREET, '#5a48c0');
+  for (let x = 0; x < W; x += 22) R(x + 6, 206, 12, 3, '#ffd21f');
+  for (let x = 6; x < 70; x += 10) R(x, BSTREET + 4, 6, 50, '#fff0f8');
+  // bubbly street sparkle
+  for (let k = 0; k < 20; k++) { const x = (k * 53) % W, y = BSTREET + 3 + (k * 17) % 40; P(x, y, '#7a6ae0'); }
+}
+
+function lampB(x, t) {
+  boxB(x - 2, 96, 5, 64, 1, '#3a3a7a', '#2a2a5a');
+  ovalB(x, 158, 5, 2.5, '#3a3a7a');
+  ovalB(x, 92, 6, 6, '#fff07a', '#ffd23a', '#ffffff');
+  polyB([[x - 7, 86], [x + 7, 86], [x + 4, 82], [x - 4, 82]], '#3a3a7a');
+  // town banner
+  RRB(x + 3, 102, 12, 22, 1, OL, '#2ad0c0'); polyB([[x + 3, 123], [x + 15, 123], [x + 15, 128], [x + 9, 125], [x + 3, 128]], '#2ad0c0');
+  boxB(x + 7, 106, 4, 16, 1, '#e0e8ff'); for (const y of [107, 112, 117]) boxB(x + 5, y, 8, 4, 1, '#ff3a5a');
+}
+function sandwichB(x, y) {
+  L(x + 1, y + 26, x + 4, y + 2, OL); L(x + 31, y + 26, x + 28, y + 2, OL);
+  RRB(x + 2, y, 29, 23, 3, OL, '#2a4a4a');
+  TC('TODAY:', x + 16, y + 3, '#ffffff', FT, {});
+  TC('SUPLEX', x + 16, y + 9, '#ffe23a', FT, {});
+  TC('STACK!', x + 16, y + 15, '#ff7ab8', FT, {});
+}
+
+// ---------------- dialogue (comic panel style) ----------------
+function dialogB(t) {
+  const bx = 30, by = 168, bw = 324, bh = 44;
+  R(bx + 4, by + 4, bw, bh, '#140b2e');
+  RRB(bx - 1, by - 1, bw + 2, bh + 2, 3, OL, OL);
+  RRB(bx, by, bw, bh, 2, OL, '#fff8e6');
+  R(bx + 2, by + bh - 6, bw - 4, 4, '#ffe9b8');
+  // halftone corner dots for energy
+  for (let y = by + 2; y < by + 14; y += 3) for (let x = bx + bw - 30; x < bx + bw - 2; x += 3) if ((x + y) % 6 === 0 && (x - (bx + bw - 30)) > (by + 14 - y) * 2) P(x, y, '#ffd0a0');
+  // portrait in a starburst
+  const px = bx + 4, py = by - 10;
+  const pts = []; for (let i = 0; i < 20; i++) { const a = i / 20 * Math.PI * 2 + t * 0.03, r = i % 2 ? 19 : 25; pts.push([px + 22 + Math.cos(a) * r, py + 30 + Math.sin(a) * r]); }
+  clip(0, 0, W, by + bh - 1);
+  polyB(pts, '#ffe23a');
+  ovalB(px + 22, py + 30, 19, 19, '#ff7ab8', '#e04a98');
+  noclip();
+  clip(px + 2, py + 10, 40, by + bh - 1 - (py + 10));
+  DS(B_EARL_PORTRAIT, px + 2, py + 11);
+  if ((t % 50) < 2) { ell(px + 16, py + 26, 4, 3.5, '#eaffff'); ell(px + 28, py + 26, 4, 3.5, '#eaffff'); HL(px + 13, px + 18, py + 27, OL); HL(px + 25, px + 30, py + 27, OL); }
+  noclip();
+  // name tag (slanted)
+  const nx = bx + 54, ny = by - 9;
+  polyB([[nx, ny + 12], [nx + 4, ny], [nx + 62, ny], [nx + 58, ny + 12]], '#ff3a4a');
+  T('BIG EARL', nx + 8, ny + 3, '#ffffff', FM, { bold: true, outline: OL });
+  // text
+  const line = "Story time's at four. Don't tell anyone I do the voices.";
+  const n = Math.min(line.length, Math.max(0, (t - SCENE_T0) * 2 | 0));
+  const lines = ["Story time's at four.", "Don't tell anyone I do the voices."];
+  let left = n;
+  lines.forEach((ln, i) => { const s = ln.slice(0, Math.max(0, left)); left -= ln.length + 1; T(s, bx + 60, by + 9 + i * 13, OL, FM, { bold: true }); });
+  if (n >= line.length) {
+    const bob = (t >> 2) & 1;
+    polyB([[bx + bw - 16, by + bh - 12 + bob], [bx + bw - 8, by + bh - 12 + bob], [bx + bw - 12, by + bh - 7 + bob]], '#ff3a4a');
+  }
+}
+
+SCENES[1] = function (t) {
+  skyB(t);
+  hillsB();
+  towerB(t);
+  dinerB(t);
+  hardwareB(t);
+  sportB(t);
+  groundB(t);
+  sandwichB(10, 131);
+  lampB(126, t);
+  // cartoon drop shadows
+  const sh = (x, y, rx) => ell(x, y, rx, 3, (X, Y, o) => mul(o, '#b088c8'));
+  sh(72, 156, 14); sh(116, 154, 12); sh(160, 163, 22); sh(200, 163, 14); sh(318, 155, 12);
+  DS(B_CHAIR, 58, 140);
+  if ((t % 24) < 8) { const sx = 66 + ((t % 24) > 3 ? 10 : 0), sy = 140; HL(sx - 2, sx + 2, sy, '#ffffff'); VL(sx, sy - 2, sy + 2, '#ffffff'); }
+  DS(B_CAN[(t >> 3) % 2], 100, 124);
+  DS(B_EARL, 136, 100);
+  if ((t % 60) < 2) { ell(156.5, 111, 3, 2.5, '#eaffff'); ell(165.5, 111, 3, 2.5, '#eaffff'); HL(154, 158, 111, OL); HL(163, 167, 111, OL); }
+  DS(B_PLAYER, 186, 116, { flip: true });
+  DS(B_PIP, 300, 109 + ((t >> 3) % 2));
+  // excited lines around Pip
+  if ((t >> 2) % 2) { L(296, 106, 292, 102, OL); L(339, 106, 343, 102, OL); L(294, 116, 289, 115, OL); L(341, 116, 346, 115, OL); }
+  // hydrant + mailbox
+  boxB(234, 144, 9, 14, 3, '#ff3a4a', '#c01a4a', '#ff9aaa'); boxB(231, 148, 15, 4, 1, '#ff3a4a', '#c01a4a');
+  boxB(362, 132, 14, 24, 5, '#3a7aff', '#2a4ab8', '#8ab0ff'); HL(364, 373, 140, OL);
+  clockB(t);
+  dialogB(t);
+};
+function clockB(t) {
+  const x = 318, y = 3, w = 62, h = 17;
+  R(x + 3, y + 3, w, h, '#140b2e');
+  RRB(x, y, w, h, 3, OL, '#ffe23a');
+  R(x + 1, y + 1, w - 2, 2, '#fff8a0');
+  ovalB(x + 9, y + 8, 5, 5, '#ff7a3a', '#e04a2a', '#ffc08a');
+  T('SAT', x + 17, y + 5, '#ff3a4a', FM, { bold: true, outline: OL });
+  T('5:40', x + 39, y + 5, OL, FM, { bold: true });
+}
+
+// ---- b_3.js ----
+// ---------------- Direction B · Scene 2: Saturday night inside the Sportatorium ----------------
+
+// "Gorgeous" Gideon Price: huge muscles, huge hair, huge robe, tiny bit of panic
+const B_GID = outB(mkSpr(46, 58, () => {
+  const sk = '#ffb880', skD = '#e07a5a', skL = '#ffe0c0';
+  // robe flaring out behind (sequins!)
+  polyB([[8, 18], [38, 18], [46, 56], [0, 56]], '#c23ad0');
+  poly([[30, 19], [38, 18], [46, 56], [34, 56]], (x, y, o) => o === col('#c23ad0') ? '#8a1aa8' : o);
+  for (let k = 0; k < 40; k++) { const x = (k * 37) % 46, y = 22 + (k * 23) % 33; if (GP(x, y) === col('#c23ad0')) P(x, y, '#ff9aff'); else if (GP(x, y) === col('#8a1aa8')) P(x, y, '#e060f0'); }
+  L(0, 56, 8, 18, '#ffe23a'); L(1, 56, 9, 18, '#ffe23a'); L(46, 56, 38, 18, '#ffe23a'); L(45, 56, 37, 18, '#ffe23a');
+  HL(1, 45, 55, '#ffe23a');
+  // legs + boots
+  boxB(15, 40, 7, 8, 2, sk, skD); boxB(24, 40, 7, 8, 2, sk, skD);
+  boxB(13, 46, 10, 11, 3, '#ffffff', '#c8c0f0'); boxB(24, 46, 10, 11, 3, '#ffffff', '#c8c0f0');
+  HL(14, 21, 50, '#ffe23a'); HL(25, 32, 50, '#ffe23a');
+  // gold trunks
+  polyB([[13, 34], [33, 34], [32, 42], [23, 40], [14, 42]], '#ffe23a');
+  // massive V-shaped torso
+  polyB([[7, 18], [39, 18], [33, 35], [13, 35]], sk);
+  poly([[28, 19], [38, 19], [33, 34], [27, 34]], (x, y, o) => o === col(sk) ? skD : o);
+  L(23, 21, 23, 33, skD); L(14, 25, 22, 26, skD); L(24, 26, 32, 25, skD);
+  for (const y of [29, 32]) { HL(19, 22, y, skD); HL(24, 27, y, skD); }
+  ell(15, 21, 3, 1.5, skL);
+  // arms flexed up (to catch)
+  limbB(9, 20, 3, 8, 7, sk, skD); limbB(37, 20, 43, 8, 7, skD);
+  ovalB(5, 13, 4.5, 4, sk, skD, skL); ovalB(41, 13, 4.5, 4, skD);
+  ovalB(3, 4, 3.5, 3.5, sk, skD); ovalB(43, 4, 3.5, 3.5, skD);
+  // fluffy white collar
+  for (let x = 8; x <= 38; x += 5) ovalB(x, 18, 3, 2.5, '#ffffff', '#e0d0f0');
+  // head + glorious pompadour
+  ovalB(23, 12, 7, 7.5, sk, skD);
+  polyB([[14, 9], [13, 2], [18, -2], [27, -2], [33, 1], [34, 6], [31, 8], [28, 5], [22, 6], [17, 9]], '#ffe23a');
+  L(17, 2, 26, 0, '#fff8a0'); L(18, 4, 24, 3, '#fff8a0');
+  // panicked face looking up
+  eyeB(20, 11, 2, 2.6, 0, -1); eyeB(26, 11, 2, 2.6, 0, -1);
+  ell(23, 16.5, 2.5, 2, OL); ell(23, 16.8, 1.5, 1.2, '#a8204a');
+  // sweat drops
+  for (const [x, y] of [[13, 10], [33, 9]]) { P(x, y, '#8ae8ff'); P(x, y + 1, '#8ae8ff'); P(x - 1, y + 1, '#c8f8ff'); }
+}, 'gideonB'));
+
+// Referee Mo
+const B_REF = outB(mkSpr(30, 46, () => {
+  const sk = '#ffc49a', skD = '#e8896a';
+  boxB(9, 34, 5, 8, 1, '#2a2a4a'); boxB(16, 34, 5, 8, 1, '#2a2a4a');
+  ovalB(10, 43, 5, 2.5, '#1b1033'); ovalB(19, 43, 5, 2.5, '#1b1033');
+  boxB(6, 21, 18, 15, 4, '#ffffff');
+  for (let x = 8; x < 24; x += 3) R(x, 22, 1, 13, OL);
+  HL(7, 22, 34, OL);
+  // pointing arm up-left, other on hip
+  limbB(8, 23, 2, 9, 4, '#ffffff'); ovalB(2, 7, 2.5, 2.5, sk, skD); VL(1, 1, 5, sk); P(0, 1, OL);
+  limbB(23, 24, 27, 30, 4, '#ffffff'); ovalB(26, 31, 2.5, 2.5, sk, skD);
+  // bow tie
+  polyB([[11, 20], [15, 22], [19, 20], [19, 24], [15, 22], [11, 24]], OL);
+  // head
+  ovalB(15, 12, 9, 9, sk, skD);
+  polyB([[6, 10], [8, 3], [15, 1], [22, 3], [24, 10], [21, 6], [15, 5], [9, 6]], '#4a3040');
+  eyeB(12, 11, 1.8, 2.4, -1, -1); eyeB(18, 11, 1.8, 2.4, -1, -1);
+  polyB([[9, 16], [15, 14], [21, 16], [19, 18], [15, 16.5], [11, 18]], '#4a3040');
+  HL(13, 17, 19, '#a8204a');
+}, 'refB'));
+
+// Agnes, purse at full swing
+const B_AGNES = outB(mkSpr(30, 40, () => {
+  const sk = '#ffd8c0', skD = '#f0a090';
+  boxB(7, 24, 16, 16, 5, '#a86aff', '#7a3ad0', '#d0a8ff');
+  for (let x = 10; x <= 20; x += 2) ovalB(x, 25, 1, 1, '#ffffff');
+  limbB(21, 26, 26, 14, 4, '#a86aff', '#7a3ad0'); ovalB(26, 13, 2.5, 2.5, sk, skD);
+  limbB(8, 27, 5, 34, 4, '#a86aff'); ovalB(5, 35, 2.5, 2.5, sk, skD);
+  // giant cloud of white curls
+  for (const [x, y, r] of [[8, 9, 5], [13, 5, 6], [19, 5, 6], [23, 10, 5], [9, 15, 4], [22, 16, 4], [15, 3, 4]]) ell(x, y, r + 1, r + 1, OL);
+  for (const [x, y, r] of [[8, 9, 5], [13, 5, 6], [19, 5, 6], [23, 10, 5], [9, 15, 4], [22, 16, 4], [15, 3, 4]]) ell(x, y, r, r, '#ffffff');
+  for (const [x, y] of [[7, 8], [12, 4], [19, 4], [23, 9]]) P(x, y, '#d8d0f0');
+  ovalB(15.5, 15, 7, 7.5, sk, skD);
+  // big round glasses + determined grin
+  ell(12.5, 14, 3.4, 3.2, OL); ell(12.5, 14, 2.4, 2.2, '#eaffff'); ell(18.5, 14, 3.4, 3.2, OL); ell(18.5, 14, 2.4, 2.2, '#eaffff');
+  R(13, 14, 2, 2, OL); R(19, 14, 2, 2, OL);
+  L(9, 10, 13, 11, OL); L(18, 11, 22, 10, OL);
+  grinB(15.5, 18, 6, 2);
+  P(10, 18, '#ff8aa0'); P(21, 18, '#ff8aa0');
+}, 'agnesB'));
+const B_PURSE = outB(mkSpr(14, 12, () => {
+  L(4, 3, 7, 0, OL); L(7, 0, 10, 3, OL); L(5, 3, 7, 1, '#ffe23a'); L(7, 1, 9, 3, '#ffe23a');
+  boxB(1, 3, 12, 8, 2, '#ff3a5a', '#c01a4a', '#ff9aaa'); ovalB(7, 6, 1.2, 1.2, '#ffe23a');
+}));
+
+// La Mariposa Dorada: diving cross body, cape opening like butterfly wings
+const B_MARI = outB(mkSpr(66, 54, () => {
+  const cx = 33;
+  for (const sd of [-1, 1]) {
+    // cape wings
+    ovalB(cx + sd * 18, 17, 15, 12, '#ffe23a');
+    ovalB(cx + sd * 12, 35, 10, 8, '#ffe23a');
+    ell(cx + sd * 15, 19, 9, 7, '#ffaa3a'); ell(cx + sd * 10, 34, 6, 5, '#ffaa3a');
+    ovalB(cx + sd * 21, 13, 4, 3.5, '#ff4aa8'); ell(cx + sd * 21, 13, 1.8, 1.5, '#2ad0c0');
+    ovalB(cx + sd * 15, 38, 2.5, 2, '#ff4aa8');
+    for (const [ox, oy] of [[30, 12], [32, 18], [29, 24], [21, 6], [13, 7], [21, 40], [16, 42]]) ovalB(cx + sd * ox, oy, 0.9, 0.9, '#ffffff');
+    // arms holding the cape edges
+    limbB(cx + sd * 5, 25, cx + sd * 26, 7, 4, '#e8a070', '#c07050');
+    ovalB(cx + sd * 27, 6, 2.6, 2.6, '#e8a070');
+    // gold arm cuffs
+    ovalB(cx + sd * 20, 12, 1.8, 1.8, '#ffe23a');
+  }
+  // legs trailing down-left, giant boots
+  limbB(cx - 2, 33, cx - 9, 45, 5, '#ff4aa8', '#c02a88'); limbB(cx + 3, 33, cx + 1, 46, 5, '#c02a88');
+  ovalB(cx - 11, 48, 5, 4, '#ffffff', '#c8c0f0'); ovalB(cx + 1, 50, 5, 4, '#ffffff', '#c8c0f0');
+  HL(cx - 15, cx - 7, 46, '#ffe23a'); HL(cx - 3, cx + 5, 48, '#ffe23a');
+  // torso
+  boxB(cx - 6, 22, 13, 13, 4, '#ffe23a', '#ffb02a', '#fff8a0');
+  ovalB(cx, 28, 2.5, 2, '#ff4aa8'); ovalB(cx - 3, 27, 1.5, 1.5, '#ff4aa8'); ovalB(cx + 3, 27, 1.5, 1.5, '#ff4aa8');
+  // braid
+  for (let k = 0; k < 8; k++) circ(cx - 9 - k * 1.5, 10 + k * 1.2 + Math.sin(k) * 1.2, 2.2, OL);
+  for (let k = 0; k < 8; k++) circ(cx - 9 - k * 1.5, 10 + k * 1.2 + Math.sin(k) * 1.2, 1.3, k % 3 === 2 ? '#ffe23a' : '#4a2a6a');
+  // masked head
+  ovalB(cx, 13, 9.5, 9.5, '#ffe23a', '#ffb02a', '#fff8c0');
+  for (const sd of [-1, 1]) {
+    polyB([[cx + sd * 1, 9], [cx + sd * 6, 4], [cx + sd * 11, 1], [cx + sd * 10, 9], [cx + sd * 7, 15], [cx + sd * 2, 14]], '#ff4aa8');
+    ovalB(cx + sd * 9.5, 2.5, 1.4, 1.4, '#2ad0c0');
+  }
+  polyB([[cx, 2], [cx + 2, 5], [cx, 8], [cx - 2, 5]], '#2ad0c0');
+  eyeB(cx - 4, 11, 2.8, 3.2, 1, 1); eyeB(cx + 4, 11, 2.8, 3.2, 1, 1);
+  ovalB(cx, 18.5, 4.5, 2.6, '#e8a070');
+  grinB(cx, 17.5, 6, 2);
+}, 'mariposaB'));
+
+// ---- crowd ----
+const BF_SKIN = ['#ffd2b0', '#ffc49a', '#e8a070', '#c07848', '#8a5030', '#ffe0c8'];
+const BF_HAIR = ['#3a2a8a', '#ff7a2a', '#ffe23a', '#1b1033', '#c23a3a', '#ffffff', '#2ad070', '#ff4aa8'];
+const BF_SHIRT = ['#ff3a4a', '#3a7aff', '#2ad0c0', '#ffd21f', '#a86aff', '#ff7ab8', '#7ae04a', '#ffffff', '#ff8a3a'];
+function fanB(x, y, o) {
+  const s = o.s, sk = o.skin, sh = o.shirt;
+  const up = o.bob ? 1 : 0;
+  boxB(x - s, y + s - 1, s * 2 + 1, s + 4, 3, sh, mix(sh, '#1b1033', 0.3));
+  if (o.arms) {
+    limbB(x - s + 1, y + s, x - s - 3, y - s + 1 - up, 3, sh); ovalB(x - s - 3, y - s - up, 2, 2, sk);
+    limbB(x + s, y + s, x + s + 4, y - s + 1 - up, 3, mix(sh, '#1b1033', 0.3)); ovalB(x + s + 4, y - s - up, 2, 2, sk);
+  }
+  const yy = y - up;
+  ovalB(x, yy, s, s, sk, mix(sk, '#a02a5a', 0.3));
+  const hc = o.hairC;
+  switch (o.hair) {
+    case 0: polyB([[x - s, yy - 1], [x - s + 1, yy - s + 1], [x, yy - s - 1], [x + s - 1, yy - s + 1], [x + s, yy - 1], [x + 2, yy - s + 3], [x - 2, yy - s + 3]], hc); break;
+    case 1: ovalB(x, yy - s + 2, s + 2, s * 0.7, hc); ovalB(x, yy + 1, s - 1, s - 2, sk); break;
+    case 2: ovalB(x, yy - s - 1, s * 0.5, s * 0.45, hc); polyB([[x - s, yy - 1], [x - s + 2, yy - s + 1], [x + s - 2, yy - s + 1], [x + s, yy - 1], [x, yy - s + 3]], hc); break;
+    case 3: polyB([[x - s - 1, yy - 1], [x - s, yy - s], [x + s, yy - s], [x + s + 1, yy - 1], [x + s + 3, yy - 1], [x + s + 3, yy + 1], [x - s - 1, yy + 1]], o.cap); break;
+    case 4: for (let k = -2; k <= 2; k++) polyB([[x + k * 3 - 2, yy - s + 2], [x + k * 3, yy - s - 4], [x + k * 3 + 2, yy - s + 2]], hc); break;
+    default: break;
+  }
+  const es = Math.max(1.2, s * 0.24);
+  eyeB(x - s * 0.38, yy + 0, es, es * 1.2, 0, -0.5); eyeB(x + s * 0.38, yy + 0, es, es * 1.2, 0, -0.5);
+  if (o.open) { ell(x, yy + s * 0.55, s * 0.28, s * 0.25, OL); ell(x, yy + s * 0.6, s * 0.16, s * 0.12, '#a8204a'); }
+  else grinB(Math.round(x), Math.round(yy + s * 0.4), Math.max(3, s), 2);
+}
+function signB(x, y, w, lines, bg, ink) {
+  const h = lines.length * 8 + 4;
+  limbB(x + w / 2, y + h, x + w / 2, y + h + 10, 2, '#d08a4a');
+  RRB(x, y, w, h, 2, OL, bg);
+  lines.forEach((ln, i) => TC(ln, x + w / 2, y + 3 + i * 8, ink, FT, {}));
+}
+
+// ---- ring ----
+const BR = { bl: [100, 104], br: [244, 104], fl: [74, 150], fr: [270, 150] };
+function ringBackB() {
+  const { bl, br, fl, fr } = BR;
+  polyB([bl, br, fr, fl], '#c8e0ff');
+  poly([[br[0] - 30, br[1] + 1], [br[0] - 1, br[1] + 1], [fr[0] - 1, fr[1] - 1], [fr[0] - 36, fr[1] - 1]], (x, y, o) => o === col('#c8e0ff') ? '#a0c0f0' : o);
+  // centre logo starburst
+  const pts = []; for (let i = 0; i < 16; i++) { const a = i / 16 * Math.PI * 2, r = i % 2 ? 9 : 14; pts.push([172 + Math.cos(a) * r * 1.8, 127 + Math.sin(a) * r * 0.6]); }
+  poly(pts, '#b0d0ff');
+  T('ACW', 162, 124, '#90b0f0', FM, { bold: true });
+  postB(bl[0], bl[1], 26); postB(br[0], br[1], 26);
+  [7, 14, 21].forEach((h, i) => {
+    const fh = [9, 18, 27][i], c = ['#ff3a5a', '#ffffff', '#3a7aff'][i];
+    for (const d of [0, 1]) { L(bl[0], bl[1] - h + d, br[0], br[1] - h + d, d ? OL : c); }
+    L(bl[0], bl[1] - h, fl[0], fl[1] - fh, c); L(br[0], br[1] - h, fr[0], fr[1] - fh, c);
+  });
+}
+function postB(x, yb, h) {
+  boxB(x - 2, yb - h, 5, h + 1, 1, '#e0e8ff', '#8a98d8');
+  for (const [k, c] of [[0.3, '#ff3a5a'], [0.55, '#ffe23a'], [0.8, '#ff3a5a']]) boxB(x - 3, yb - h * k - 3 - h * 0.15, 7, 6, 2, c, mix(c, OL, 0.35));
+}
+function ringFrontB() {
+  const { fl, fr } = BR;
+  postB(fl[0], fl[1], 32); postB(fr[0], fr[1], 32);
+  [9, 18, 27].forEach((h, i) => { const c = ['#ff3a5a', '#ffffff', '#3a7aff'][i]; HL(fl[0] + 3, fr[0] - 3, fl[1] - h, c); HL(fl[0] + 3, fr[0] - 3, fl[1] - h + 1, OL); });
+  // apron
+  RRB(fl[0] - 4, fl[1], fr[0] - fl[0] + 8, 24, 1, OL, '#ff3a4a');
+  R(fl[0] - 3, fl[1] + 1, fr[0] - fl[0] + 6, 3, '#ff8a8a');
+  const pts = []; for (let i = 0; i < 18; i++) { const a = i / 18 * Math.PI * 2, r = i % 2 ? 8 : 12; pts.push([172 + Math.cos(a) * r * 2.2, 162 + Math.sin(a) * r * 0.75]); }
+  polyB(pts, '#ffe23a');
+  TC('ACW', 172, 159, '#ff3a4a', FM, { bold: true, outline: OL });
+  for (const sx of [96, 248]) { TC('*', sx, 158, '#ffffff', FM, {}); }
+}
+
+// ---- card (toy-package style) ----
+function cardB(t) {
+  const x = 298, y = 96 + ((t >> 3) & 1), w = 80, h = 114;
+  R(x + 4, y + 4, w, h, '#0e0624');
+  RRB(x - 1, y - 1, w + 2, h + 2, 4, OL, OL);
+  RRB(x, y, w, h, 4, OL, '#fff4d0');
+  R(x + 1, y + 1, w - 2, 22, '#ff3a4a'); HL(x + 1, x + w - 2, y + 23, OL);
+  TC('TOP ROPE', x + 52, y + 3, '#ffffff', FM, { bold: true, outline: OL });
+  TC('CROSSBODY', x + 52, y + 13, '#ffe23a', FM, { outline: OL });
+  // illustration window: radial burst + Mariposa
+  const ix = x + 4, iy = y + 26, iw = w - 8, ih = 42;
+  RRB(ix - 1, iy - 1, iw + 2, ih + 2, 1, OL, '#3a7aff');
+  clip(ix, iy, iw, ih);
+  const cx = ix + iw / 2, cy = iy + ih / 2;
+  R(ix, iy, iw, ih, (X, Y) => (Math.floor((Math.atan2(Y - cy, X - cx) + Math.PI) / (Math.PI / 8) + t * 0.05) % 2) ? '#3a7aff' : '#5a9aff');
+  DS(B_MARI, ix + 3, iy - 6);
+  noclip();
+  // cost starburst
+  const gx = x + 4, gy = y + 4;
+  const pts = []; for (let i = 0; i < 16; i++) { const a = i / 16 * Math.PI * 2 + t * 0.04, r = i % 2 ? 8 : 11; pts.push([gx + 7 + Math.cos(a) * r, gy + 7 + Math.sin(a) * r]); }
+  polyB(pts, '#ffe23a');
+  T('2', gx + 3, gy + 1, '#ff3a4a', FM, { scale: 2, outline: OL });
+  // type ribbon
+  const ry = iy + ih + 3;
+  polyB([[x + 12, ry], [x + w - 12, ry], [x + w - 8, ry + 5], [x + w - 12, ry + 10], [x + 12, ry + 10], [x + 8, ry + 5]], '#2ad0c0');
+  TC('AERIAL', x + w / 2, ry + 3, '#ffffff', FT, { outline: OL, ls: 1 });
+  // effect text
+  const ty = ry + 14;
+  T('12', T('+', x + 6, ty, '#ff3a4a', FM, {}) + 1, ty, '#ff3a4a', FM, { bold: true });
+  T('Crowd.', x + 30, ty, OL, FM, {});
+  T('Opponent goes', x + 6, ty + 11, OL, FM, {});
+  T('DOWN!', x + 6, ty + 21, '#3a7aff', FM, { bold: true, outline: OL });
+}
+
+const BCONF = Array.from({ length: 46 }, (_, i) => { const r = rng(800 + i); return { x: r() * W, y: r() * H, v: 0.35 + r() * 0.5, d: r() * 6.28, c: BF_SHIRT[i % BF_SHIRT.length], k: i % 3 }; });
+
+SCENES[2] = function (t) {
+  // radial burst backdrop
+  const bcx = 172, bcy = 70;
+  R(0, 0, W, 110, (x, y) => (Math.floor((Math.atan2(y - bcy, x - bcx) + Math.PI) / (Math.PI / 12) + t * 0.03) % 2) ? '#3a1a98' : '#4e2ab8');
+  // truss + spotlight cans
+  R(0, 4, W, 3, OL); R(0, 10, W, 3, OL); for (let x = 0; x < W; x += 6) L(x, 7, x + 3, 10, OL);
+  // neon sign
+  RRB(116, 15, 112, 22, 4, OL, '#1b1033');
+  const fl = [7, 8, 30].includes(t % 70);
+  TC('SATURDAY NIGHT', 172, 19, fl ? '#ff8ac8' : '#ffffff', FM, { bold: true, outline: fl ? '#7a2a6a' : '#ff3aa8' });
+  for (let x = 120; x < 226; x += 6) { P(x, 33, ((x / 6 + (t >> 1)) % 3) ? '#ffe23a' : '#ffffff'); }
+  // bleachers of big-headed fans
+  const r = rng(55);
+  for (let row = 0; row < 3; row++) {
+    const y = 48 + row * 15, s = 6 + row;
+    R(0, y + s + 2, W, 20, row === 0 ? '#2a1478' : row === 1 ? '#321a88' : '#3a1e98');
+    for (let x = 4 + row * 7; x < W; x += s * 2 + 6 + Math.floor(r() * 4)) {
+      const o = { s, skin: BF_SKIN[(r() * BF_SKIN.length) | 0], hairC: BF_HAIR[(r() * BF_HAIR.length) | 0], hair: (r() * 6) | 0, shirt: BF_SHIRT[(r() * BF_SHIRT.length) | 0], cap: BF_SHIRT[(r() * BF_SHIRT.length) | 0], arms: r() < 0.4, open: r() < 0.6 };
+      if (row < 2) { const sil = row === 0 ? '#22105e' : '#2c1872'; o.skin = sil; o.hairC = row === 0 ? '#1c0c50' : '#241466'; o.shirt = sil; o.cap = o.hairC; }
+      if (row === 2 && (x < 54 || (x > 280 && x < 330))) continue;
+      o.bob = o.arms && (((t >> 2) + x) % 4 < 2);
+      fanB(x, y, o);
+    }
+  }
+  // signs held up in the crowd
+  signB(196, 44, 46, ['EARL READS', 'TO MY KIDS'], '#fff4d0', '#3a7aff');
+  signB(150, 38, 40, ['MARIPOSA', '4 EVER!'], '#ff9ad0', '#6a1a70');
+  signB(250, 46, 30, ['BOO!', 'GIDEON'], '#7ae04a', '#ff3a4a');
+  // Pip with his belt up
+  { const pb = (t >> 3) & 1; boxB(286, 66 - pb, 30, 9, 4, '#d9a060', '#a86a3a'); ovalB(301, 70 - pb, 7, 5, '#ffe23a', '#e0a020'); T('#1', 296, 68 - pb, '#e0304a', FT, {});
+    fanB(301, 88, { s: 8, skin: '#ffd2b0', hairC: '#ff7a2a', hair: 0, shirt: '#ffffff', arms: true, open: false, bob: false }); }
+  // barricade
+  R(0, 100, W, 6, OL); R(0, 101, W, 3, '#5a4ad0');
+  // Agnes swinging her purse + WHAP lines
+  DS(B_AGNES, 14, 64);
+  { const ang = Math.sin(t * 0.4) * 1.3 - 0.4, hx = 40, hy = 77; const px = hx + Math.cos(ang - 1.57) * 12, py = hy + Math.sin(ang - 1.57) * 12;
+    L(hx, hy, px + 7, py + 1, OL); DS(B_PURSE, px, py - 2);
+    for (let k = 1; k < 4; k++) { const a2 = ang - 1.57 - k * 0.25 * Math.sign(Math.cos(t * 0.4) || 1); P(hx + Math.cos(a2) * 16, hy + Math.sin(a2) * 16, '#ffffff'); P(hx + Math.cos(a2) * 18, hy + Math.sin(a2) * 18, '#ffffff'); }
+    if (Math.abs(Math.sin(t * 0.4)) > 0.85) T('WHAP!', 50, 56, '#ffe23a', FT, { outline: OL }); }
+  // floor
+  R(0, 106, W, 110, '#2a1878');
+  ringBackB();
+  // spotlight beams (flat, hard-edged)
+  poly([[96, 12], [104, 12], [150, 92], [116, 96]], (x, y, o) => mix(o, '#fff8a0', 0.28));
+  poly([[262, 12], [270, 12], [214, 140], [178, 140]], (x, y, o) => mix(o, '#fff8a0', 0.22));
+  ell(196, 140, 22, 5, (x, y, o) => mix(o, '#fff8a0', 0.35));
+  // ref + Gideon
+  DS(B_REF, 214, 76);
+  DS(B_GID, 172, 86);
+  // speed lines + Mariposa diving in from the top rope
+  // halo so she pops off the crowd, and her shadow on the mat
+  ell(117, 66, 36, 30, (x, y, o) => mix(o, '#fff4a0', 0.22)); ell(117, 66, 26, 22, (x, y, o) => mix(o, '#ffffff', 0.12));
+  ell(126, 122, 13, 3, (x, y, o) => mul(o, '#a8a0e0'));
+  for (let k = 0; k < 4; k++) { const y0 = 70 + k * 6; L(98 - k * 2, y0 + 18, 82 + k * 3, y0 - 4, OL); L(99 - k * 2, y0 + 18, 83 + k * 3, y0 - 4, '#ffffff'); }
+  DS(B_MARI, 84, 42 + ((t >> 2) & 1));
+  // anticipation burst between them
+  if ((t >> 2) % 2) { for (let k = 0; k < 8; k++) { const a = k / 8 * Math.PI * 2; L(160 + Math.cos(a) * 5, 74 + Math.sin(a) * 5, 160 + Math.cos(a) * 9, 74 + Math.sin(a) * 9, '#ffe23a'); } }
+  ringFrontB();
+  // foreground fans with foam fingers
+  const r2 = rng(21);
+  for (const [fx, fy] of [[12, 130], [40, 136], [20, 160], [52, 164]]) {
+    boxB(fx - 10, fy + 6, 21, 18, 5, '#2c1872', '#22105e'); ovalB(fx, fy, 8, 8, '#341e80', '#2c1872');
+    HL(fx - 4, fx + 4, fy - 8, '#8a6ae0');
+  }
+  for (const fx of [10, 36, 62, 190, 216, 242, 268]) {
+    const s = 10, y = 200 + (r2() * 4 | 0);
+    boxB(fx - 13, y + 8, 27, 20, 6, '#24125e', '#1b0e4a');
+    ovalB(fx, y, s, s, '#2e1870', '#24125e');
+    if (r2() < 0.55) { const up = ((t >> 2) + fx) % 4 < 2 ? 1 : 0; limbB(fx + 9, y + 6, fx + 12, y - 8 - up, 4, '#24125e'); boxB(fx + 11, y - 30 - up, 5, 12, 2, '#ffe23a', '#e0a020'); boxB(fx + 7, y - 20 - up, 14, 13, 4, '#ffe23a', '#e0a020', '#fff8a0'); T('#1', fx + 9, y - 16 - up, '#ff3a4a', FT, {}); }
+  }
+  // chunky confetti + stars
+  for (const c of BCONF) {
+    const y = (c.y + t * c.v) % (H + 10) - 5, x = c.x + Math.sin(t * 0.08 + c.d) * 5;
+    if (c.k === 0) { R(x, y, 3, 2, OL); R(x, y, 2, 1, c.c); }
+    else if (c.k === 1) { const s = ((t >> 2) + (c.d * 9 | 0)) % 2; if (s) { P(x, y - 1, c.c); P(x, y + 1, c.c); P(x - 1, y, c.c); P(x + 1, y, c.c); P(x, y, '#ffffff'); } else P(x, y, c.c); }
+    else { R(x, y, 2, 3, OL); P(x, y, c.c); P(x, y + 1, c.c); }
+  }
+  cardB(t);
+};
+
+boot();
+</script>
+</body>
+</html>

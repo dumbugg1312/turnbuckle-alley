@@ -1,0 +1,109 @@
+/* The Dungeon HUD. Sizes use --u like the rest of the UI. */
+.dg-hud { position: absolute; inset: 0; }
+.dg-floor {
+  position: absolute;
+  left: calc(var(--u) * 5 + env(safe-area-inset-left));
+  top: calc(var(--u) * 5 + env(safe-area-inset-top));
+  padding: calc(var(--u) * 3) calc(var(--u) * 7) calc(var(--u) * 3.5);
+  min-width: calc(var(--u) * 92);
+  border-color: #142a28;
+  box-shadow: inset 0 calc(var(--u) * -2) 0 #1d1428, inset 0 calc(var(--u) * 1) 0 #3f2d52, 0 0 calc(var(--u) * 6) rgba(122, 255, 212, 0.35), 0 calc(var(--u) * 2.5) 0 rgba(10, 5, 20, 0.5);
+  pointer-events: none !important;
+}
+.dg-floor .dg-num { font-family: var(--font-display); font-size: calc(var(--u) * 17); line-height: 0.85; color: #7affd4; text-shadow: 0 0 calc(var(--u) * 3) rgba(122, 255, 212, 0.6); }
+.dg-floor .dg-num small { font-size: 0.6em; color: var(--gold); margin-left: calc(var(--u) * 3); text-shadow: none; }
+.dg-floor .dg-era { font-family: var(--font-label); font-size: calc(var(--u) * 5.4); text-transform: uppercase; letter-spacing: 0.04em; color: #f6ead2; margin-top: calc(var(--u) * 1.5); }
+.dg-loot { display: flex; flex-wrap: wrap; gap: calc(var(--u) * 2) calc(var(--u) * 4); margin-top: calc(var(--u) * 2.5); max-width: calc(var(--u) * 120); }
+.dg-loot:empty { display: none; }
+.dg-loot span { display: inline-flex; align-items: center; gap: calc(var(--u) * 1); font-family: var(--font-display); font-size: calc(var(--u) * 10); color: #fff4dc; }
+.dg-loot span.bump { animation: dg-bump 0.35s cubic-bezier(.2,1.8,.5,1); }
+.dg-loot canvas { width: calc(var(--u) * 10); height: calc(var(--u) * 10); image-rendering: pixelated; }
+@keyframes dg-bump { from { transform: scale(1.6); color: var(--gold); } }
+.dg-clock {
+  position: absolute;
+  top: calc(var(--u) * 5 + env(safe-area-inset-top));
+  right: calc(var(--u) * 5 + env(safe-area-inset-right));
+  padding: calc(var(--u) * 3) calc(var(--u) * 7);
+  text-align: right;
+  pointer-events: none !important;
+}
+.dg-clock .t { font-family: var(--font-display); font-size: calc(var(--u) * 15); line-height: 0.85; }
+.dg-clock .d { font-family: var(--font-label); font-size: calc(var(--u) * 5.2); text-transform: uppercase; }
+.dg-energy {
+  position: absolute;
+  right: calc(var(--u) * 5 + env(safe-area-inset-right));
+  bottom: calc(var(--u) * 5 + env(safe-area-inset-bottom));
+  padding: calc(var(--u) * 2.5);
+  display: flex; flex-direction: column; align-items: center; gap: calc(var(--u) * 1.5);
+  pointer-events: none !important;
+}
+.dg-energy b { font-family: var(--font-display); font-size: calc(var(--u) * 10); line-height: 0.8; font-weight: normal; }
+.dg-ebar { width: calc(var(--u) * 8); height: calc(var(--u) * 52); background: #2a1d38; border: calc(var(--u) * 1) solid var(--ink); border-radius: calc(var(--u) * 3); position: relative; overflow: hidden; }
+.dg-efill { position: absolute; left: 0; right: 0; bottom: 0; background: linear-gradient(#ffe08a, #7fd06a 30%, #3bb273); transition: height 0.25s; }
+.dg-efill.low { background: linear-gradient(#ffb070, #e0503a); animation: dg-pulse 0.8s ease-in-out infinite; }
+@keyframes dg-pulse { 50% { opacity: 0.6; } }
+.dg-action {
+  position: absolute;
+  right: calc(var(--u) * 26 + env(safe-area-inset-right));
+  bottom: calc(var(--u) * 10 + env(safe-area-inset-bottom));
+  font-family: var(--font-display) !important;
+  font-size: calc(var(--u) * 14) !important;
+  min-width: calc(var(--u) * 54);
+  padding: calc(var(--u) * 4) calc(var(--u) * 9) !important;
+  border-radius: calc(var(--u) * 10) !important;
+}
+.dg-menu {
+  position: absolute;
+  left: calc(var(--u) * 5 + env(safe-area-inset-left));
+  bottom: calc(var(--u) * 5 + env(safe-area-inset-bottom));
+  font-size: calc(var(--u) * 11) !important;
+  padding: calc(var(--u) * 2) calc(var(--u) * 6) !important;
+}
+.dg-hint {
+  position: absolute;
+  left: 50%;
+  bottom: calc(var(--u) * 6 + env(safe-area-inset-bottom));
+  transform: translateX(-50%);
+  font-family: var(--font-label);
+  font-size: calc(var(--u) * 5.6);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  padding: calc(var(--u) * 2.5) calc(var(--u) * 6);
+  white-space: nowrap;
+  pointer-events: none !important;
+  transition: opacity 0.3s;
+}
+.dg-hint.gold { background: var(--gold); color: var(--ink); }
+.dg-streak {
+  position: absolute;
+  left: 50%;
+  top: calc(var(--u) * 6 + env(safe-area-inset-top));
+  transform: translateX(-50%) rotate(-3deg);
+  font-family: var(--font-display);
+  font-size: calc(var(--u) * 14);
+  color: #fff4dc;
+  text-shadow: calc(var(--u) * 1) calc(var(--u) * 1) 0 var(--ink), calc(var(--u) * -1) calc(var(--u) * -1) 0 var(--ink), 0 0 calc(var(--u) * 6) #ff9a4a;
+  pointer-events: none !important;
+}
+.dg-streak.pop { animation: dg-bump 0.35s cubic-bezier(.2,1.8,.5,1); }
+.dg-title {
+  position: absolute;
+  left: 50%;
+  top: 34%;
+  transform: translate(-50%, -50%);
+  text-align: center;
+  pointer-events: none !important;
+  animation: dg-title 2.6s ease-out forwards;
+}
+.dg-title .n { font-family: var(--font-display); font-size: calc(var(--u) * 34); color: #7affd4; line-height: 0.9;
+  text-shadow: calc(var(--u) * 1.5) calc(var(--u) * 1.5) 0 var(--ink), calc(var(--u) * -1) calc(var(--u) * -1) 0 var(--ink), 0 0 calc(var(--u) * 10) rgba(122, 255, 212, 0.8); }
+.dg-title .e { font-family: var(--font-display); font-size: calc(var(--u) * 14); color: #fff4dc; letter-spacing: 0.03em;
+  text-shadow: calc(var(--u) * 1) calc(var(--u) * 1) 0 var(--ink), calc(var(--u) * -1) calc(var(--u) * -1) 0 var(--ink); }
+.dg-title .y { display: inline-block; margin-top: calc(var(--u) * 3); font-family: var(--font-label); font-size: calc(var(--u) * 6); background: var(--gold); color: var(--ink); padding: calc(var(--u) * 1) calc(var(--u) * 4); border: calc(var(--u) * 1) solid var(--ink); border-radius: calc(var(--u) * 2); }
+@keyframes dg-title {
+  0% { opacity: 0; transform: translate(-50%, -30%) scale(1.4); }
+  12% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+  80% { opacity: 1; }
+  100% { opacity: 0; transform: translate(-50%, -60%); }
+}
+.dg-black { position: absolute; inset: 0; background: #0b0712; z-index: 50; pointer-events: none !important; transition: opacity 0.25s; }

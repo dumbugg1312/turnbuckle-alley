@@ -1,0 +1,88 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#1b1522">
+<title>Turnbuckle Alley · Art Directions</title>
+<style>
+  :root {
+    --bg: #1b1522; --panel: #251d2e; --line: #3a2f46; --ink: #f4e6d0; --muted: #b9a8b8;
+    --gold: #f2b25c; --pink: #ff5f9e; --teal: #4fc8b4;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; background: var(--bg); color: var(--ink); }
+  body {
+    font: 16px/1.55 ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    padding: max(20px, env(safe-area-inset-top)) max(16px, env(safe-area-inset-right)) 40px max(16px, env(safe-area-inset-left));
+    background-image: radial-gradient(ellipse at 50% -10%, #3a2440 0%, transparent 60%);
+    min-height: 100vh;
+  }
+  header { max-width: 1180px; margin: 8px auto 26px; }
+  .kicker { font: 600 12px/1 ui-monospace, Menlo, Consolas, monospace; letter-spacing: .14em; text-transform: uppercase; color: var(--gold); }
+  h1 { font: 800 clamp(30px, 5vw, 48px)/1.05 Georgia, "Iowan Old Style", "Times New Roman", serif; margin: 10px 0 10px; letter-spacing: -.01em; }
+  h1 span { color: var(--pink); }
+  header p { color: var(--muted); max-width: 64ch; margin: 0; }
+  .grid { max-width: 1180px; margin: 0 auto; display: grid; gap: 22px; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); }
+  .card { background: var(--panel); border: 1px solid var(--line); border-radius: 14px; overflow: hidden; display: flex; flex-direction: column; }
+  .shot { position: relative; aspect-ratio: 16 / 9; background: #0f0b14; display: block; }
+  .shot iframe { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; pointer-events: none; }
+  .shot .tag { position: absolute; left: 10px; top: 10px; font: 700 12px/1 ui-monospace, Menlo, monospace; background: rgba(15, 11, 20, .78); color: var(--ink); padding: 6px 8px; border-radius: 6px; }
+  .body { padding: 16px 18px 18px; display: flex; flex-direction: column; gap: 10px; flex: 1; }
+  .body h2 { margin: 0; font: 700 22px/1.2 Georgia, "Iowan Old Style", serif; }
+  .body p { margin: 0; color: var(--muted); font-size: 15px; }
+  .swatches { display: flex; gap: 4px; margin-top: 2px; }
+  .swatches i { width: 18px; height: 18px; border-radius: 4px; display: block; box-shadow: inset 0 0 0 1px rgba(0,0,0,.25); }
+  .row { display: flex; gap: 10px; margin-top: auto; padding-top: 6px; flex-wrap: wrap; }
+  .btn { display: inline-flex; align-items: center; gap: 8px; font: 700 14px/1 ui-sans-serif, system-ui, sans-serif; text-decoration: none; color: #1b1522; background: var(--gold); padding: 10px 14px; border-radius: 9px; }
+  .btn.alt { background: transparent; color: var(--ink); border: 1px solid var(--line); }
+  .btn:hover { filter: brightness(1.08); }
+  .a .btn:not(.alt) { background: #f2b25c; }
+  .b .btn:not(.alt) { background: #ffd21f; }
+  .c .btn:not(.alt) { background: #ff2f7d; color: #fff8ee; }
+  footer { max-width: 1180px; margin: 28px auto 0; color: var(--muted); font-size: 14px; }
+  kbd { font: 600 12px/1 ui-monospace, Menlo, monospace; border: 1px solid var(--line); border-bottom-width: 2px; padding: 2px 6px; border-radius: 5px; color: var(--ink); }
+</style>
+</head>
+<body>
+<header>
+  <div class="kicker">Turnbuckle Alley · art direction</div>
+  <h1>Three looks for one <span>small wrestling town</span></h1>
+  <p>Each direction paints the same two moments: Main Street at golden hour, and Saturday night inside the Sportatorium. Everything is drawn in code at 384×216 and scaled up pixel-perfect. Open one, then press <kbd>1</kbd> and <kbd>2</kbd> (or tap the buttons) to switch scenes.</p>
+</header>
+
+<main class="grid">
+  <article class="card a">
+    <a class="shot" href="style-a.html" aria-label="Open Direction A"><iframe src="style-a.html#embed" title="Direction A preview" loading="lazy" tabindex="-1"></iframe><span class="tag">A</span></a>
+    <div class="body">
+      <h2>Golden Hour Storybook</h2>
+      <p>A warm, painterly picture book. Shadows lean plum and teal instead of black, outlines take on the colour of what they wrap, and skies melt in soft dithered bands. It rewards slow looking: flower boxes, chalkboard specials, framed photos in the diner window.</p>
+      <div class="swatches" aria-hidden="true"><i style="background:#5a5f9f"></i><i style="background:#dc9bab"></i><i style="background:#fcd8a0"></i><i style="background:#c4473f"></i><i style="background:#a9d8bf"></i><i style="background:#3f9a92"></i><i style="background:#e0a242"></i><i style="background:#2b2140"></i></div>
+      <div class="row"><a class="btn" href="style-a.html">Open Direction A &rarr;</a><a class="btn alt" href="style-a.html#scene2">Saturday night</a></div>
+    </div>
+  </article>
+
+  <article class="card b">
+    <a class="shot" href="style-b.html" aria-label="Open Direction B"><iframe src="style-b.html#embed" title="Direction B preview" loading="lazy" tabindex="-1"></iframe><span class="tag">B</span></a>
+    <div class="body">
+      <h2>Saturday Morning Cartoon</h2>
+      <p>An original 90s wrestling cartoon that never aired. Thick dark outlines, flat cel shading, big heads about two and a half heads tall, leaning buildings and enormous boots. Loud, bouncy and readable from across the room, or on a phone held at arm's length.</p>
+      <div class="swatches" aria-hidden="true"><i style="background:#3b2390"></i><i style="background:#ff4a8a"></i><i style="background:#ffd23a"></i><i style="background:#ff3a4a"></i><i style="background:#7ae04a"></i><i style="background:#2ad0c0"></i><i style="background:#3a7aff"></i><i style="background:#1b1033"></i></div>
+      <div class="row"><a class="btn" href="style-b.html">Open Direction B &rarr;</a><a class="btn alt" href="style-b.html#scene2">Saturday night</a></div>
+    </div>
+  </article>
+
+  <article class="card c">
+    <a class="shot" href="style-c.html" aria-label="Open Direction C"><iframe src="style-c.html#embed" title="Direction C preview" loading="lazy" tabindex="-1"></iframe><span class="tag">C</span></a>
+    <div class="body">
+      <h2>Halftone Wrestling Magazine</h2>
+      <p>Print nostalgia brought to life: thirteen colours only, off-white paper, ink outlines and halftone dots doing all the shading. Spot colours of hot pink, cyan and gold pop like an old wrestling magazine, fight poster or photocopied fan zine.</p>
+      <div class="swatches" aria-hidden="true"><i style="background:#f1e6cf"></i><i style="background:#d9c8a8"></i><i style="background:#1f1a2b"></i><i style="background:#5d536b"></i><i style="background:#ff2f7d"></i><i style="background:#14a6d2"></i><i style="background:#f6b51c"></i><i style="background:#efb38c"></i></div>
+      <div class="row"><a class="btn" href="style-c.html">Open Direction C &rarr;</a><a class="btn alt" href="style-c.html#scene2">Saturday night</a></div>
+    </div>
+  </article>
+</main>
+
+<footer>Mockups only: plain HTML and a little JavaScript per page, no images, fonts or libraries. Characters shown: the player, Big Earl, Pip, Jobber the raccoon, La Mariposa Dorada, "Gorgeous" Gideon Price, Referee Mo and Agnes.</footer>
+</body>
+</html>
