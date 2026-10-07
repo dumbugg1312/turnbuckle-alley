@@ -1330,7 +1330,7 @@ export function drawHeadExtras(hb: HB): void {
       case 'hat':
         crown(4 * k, W - 3 * k);
         brim(cx - W / 2 - 2 * k + (side ? k : 0), W + 4 * k, top + k, k);
-        rect(cx - (W - 3 * k) / 2 + (side ? -0.5 * k : 0), top, W - 3 * k, k, (x, y) => tint(a, y === Math.round(top) ? 1 : 0));
+        rect(cx - (W - 3 * k) / 2 + (side ? -0.5 * k : 0), top, W - 3 * k, k, (_x, y) => tint(a, y === Math.round(top) ? 1 : 0));
         break;
       case 'cowboy-hat':
         crown(4 * k, W - 4 * k);
@@ -1439,7 +1439,7 @@ export function drawHeadExtras(hb: HB): void {
         drect(side ? hb.cx - 2 * k : hb.x0 + W, hb.eyeY - 3 * k - 1, k, 1, '#e88a9a');
         break;
       case 'safety-glasses':
-        rect(hb.x0, top + k, W, k, (x, y) => tint(a, y === Math.round(top + k) ? 0 : -1));
+        rect(hb.x0, top + k, W, k, (_x, y) => tint(a, y === Math.round(top + k) ? 0 : -1));
         if (!back) rect(side ? hb.x0 + W - 3 * k : cx - 3 * k, top + k, side ? 3 * k : 6 * k, 2 * k, (x, y) => (y === Math.round(top + k) && x < cx ? mixc(c, '#ffffff', 0.7) : mixc(c, '#ffffff', 0.4)));
         break;
     }
@@ -1515,7 +1515,7 @@ export function drawBearHead(hb: HB, expr: Expr, blink: boolean): void {
   const ear = (ex0: number, ey0: number) => {
     const r = 2.3 * K;
     oval(ex0, ey0, r, r, (x, y) => toneAt(fur, toneIdx(formV((x + 0.5 - ex0) / r, (ey0 - y - 0.5) / r, { x: 1, y: 0 }, { x: 0, y: -1 }), true) - ((x * 5 + y * 3) % 9 === 0 ? 1 : 0)));
-    oval(ex0, ey0 + 0.3 * K, r * 0.5, r * 0.5, (x, y) => (y < ey0 ? inner : shA(inner, 0.2)));
+    oval(ex0, ey0 + 0.3 * K, r * 0.5, r * 0.5, (_x, y) => (y < ey0 ? inner : shA(inner, 0.2)));
   };
   if (hb.view !== 'side') {
     ear(hb.x0 + 1.5 * K, hb.y0 + K);
@@ -1544,7 +1544,7 @@ export function drawBearHead(hb: HB, expr: Expr, blink: boolean): void {
     drect(hb.eR + EW, hb.eyeY + EH + 1, K, 1, bl);
   } else {
     layer({ sh: 0.3 });
-    oval(hb.x0 + hb.w, hb.mY, 2.5 * K, 1.8 * K, (x, y) => toneAt(muz, y > hb.mY ? -1 : 0));
+    oval(hb.x0 + hb.w, hb.mY, 2.5 * K, 1.8 * K, (_x, y) => toneAt(muz, y > hb.mY ? -1 : 0));
     drect(hb.x0 + hb.w + K, hb.mY - K, K, K, INK);
     dpx(hb.x0 + hb.w + K, hb.mY - K, '#5a4a60');
     if (blink) drect(hb.eS, hb.eyeY + EH - 1, EWS, 1, INK);

@@ -290,7 +290,7 @@ export function drawShoe(an: Pt, near: boolean): void {
   const x0 = Math.round(ax - 1.5 * K);
   for (let j = 0; j < h; j++) {
     const soleRow = j >= h - soleH;
-    const toeIn = Math.max(0, Math.round((h - 1 - j) * (K === 1 ? 1 : 0.8)) - (soleRow ? 0 : 0));
+    const toeIn = Math.max(0, Math.round((h - 1 - j) * 0.8));
     const wj = soleRow ? fl : fl - toeIn - (st === 'cowboy-boots' ? 1 : 0);
     for (let i = 0; i < wj; i++) {
       let c: Color = soleRow ? (j === h - 1 ? soleD : sole) : i < K ? rp.l1 : i >= wj - K ? rp.d1 : rp.m;
@@ -511,7 +511,7 @@ export function drawOverExtras(): void {
             });
             if (e.id !== 'vest') {
               // Lapel: a lit fold from the collar down to mid chest.
-              shape([[bx + s * inner, by - H + 0.5 * K], [bx + s * (inner + 2.5 * K), by - H + 0.5 * K], [bx + s * (inner + 0.6 * K), by - H * 0.5]], (x, y) => tint(long ? a : c, y < by - H + 1.5 * K ? 1 : 0, kind));
+              shape([[bx + s * inner, by - H + 0.5 * K], [bx + s * (inner + 2.5 * K), by - H + 0.5 * K], [bx + s * (inner + 0.6 * K), by - H * 0.5]], (_x, y) => tint(long ? a : c, y < by - H + 1.5 * K ? 1 : 0, kind));
             }
             // Buttons on blazers and cardigans.
             if (e.id === 'blazer' || e.id === 'cardigan') for (let b = 0; b < 2; b++) drect(bx + s * (inner + 0.3 * K) - (s < 0 ? K : 0), by - H * (0.45 - b * 0.18), K, K, b === 0 ? tint(a, 1) : tint(a, 0));
@@ -531,7 +531,7 @@ export function drawOverExtras(): void {
             if (y > by - K && y < by + 2.5 * K && pdx < 2.5 * K) return tint(c, y === Math.round(by - K + 1) || pdx > 2.5 * K - 1 ? -1 : 0);
             return paint(x, y);
           });
-          rect(bx - hw(H * 0.35), by - H * 0.35, hw(H * 0.35) * 2, K, (x, y) => tint(a, y === Math.round(by - H * 0.35) ? 1 : 0));
+          rect(bx - hw(H * 0.35), by - H * 0.35, hw(H * 0.35) * 2, K, (_x, y) => tint(a, y === Math.round(by - H * 0.35) ? 1 : 0));
           // Neck strap.
           for (const s of [-1, 1]) line(bx + s * (w / 2 - K), by - H * 0.75, bx + s * 1.5 * K, by - H - K, tint(a, 0));
         }
@@ -550,7 +550,7 @@ export function drawOverExtras(): void {
       case 'bandana':
         if (side) {
           rect(X(r.neck) - 2 * K, Y(r.neck) - K, 5 * K, 2 * K, (x, y) => tint(c, x > X(r.neck) ? -1 : y < Y(r.neck) ? 1 : 0));
-          if (e.id === 'scarf') rect(X(r.neck) - 3 * K, Y(r.neck), 2 * K, 5 * K + B.sway * K, (x, y) => tint(a, Math.floor(y / K) % 2 === 0 ? 0 : -1));
+          if (e.id === 'scarf') rect(X(r.neck) - 3 * K, Y(r.neck), 2 * K, 5 * K + B.sway * K, (_x, y) => tint(a, Math.floor(y / K) % 2 === 0 ? 0 : -1));
         } else {
           rect(bx - m.headW * 0.3, by - H - K, m.headW * 0.6, 2 * K, (x, y) => tint(c, y < by - H ? 1 : Math.floor((x - bx + 64) / K) % 3 === 0 ? -1 : 0));
           if (e.id === 'scarf') rect(bx + K, by - H, 2 * K, H * 0.55 + B.sway * K, (x, y) => tint(a, Math.floor(y / K) % 2 === 0 ? (x < bx + 2 * K ? 1 : 0) : -1));
@@ -595,7 +595,7 @@ export function drawOverExtras(): void {
         } else line(...tp(0, H), ex0, ey0, tint(a, 0));
         if (e.id === 'medal') {
           disc(ex0 + 0.5 * K, ey0 + K, 2 * K, (x, y) => tint(c, x < ex0 && y < ey0 + K ? 2 : y > ey0 + 1.5 * K ? -1 : 0, 'metal'));
-        } else if (e.id === 'whistle') rect(ex0, ey0, 2 * K, K, (x, y) => tint(c, y === Math.round(ey0) ? 1 : 0, 'metal'));
+        } else if (e.id === 'whistle') rect(ex0, ey0, 2 * K, K, (_x, y) => tint(c, y === Math.round(ey0) ? 1 : 0, 'metal'));
         else if (e.id === 'lanyard') {
           rect(ex0 - 0.5 * K, ey0, 2 * K, 3 * K, '#fbf6ec');
           rect(ex0 - 0.5 * K, ey0, 2 * K, 1, tint(c, 0));
@@ -609,7 +609,7 @@ export function drawOverExtras(): void {
       case 'headphones':
         if (side) rect(X(r.neck) - K, Y(r.neck) - 2 * K, 3 * K, 3 * K, (x, y) => tint(c, y < Y(r.neck) - 2 * K + 1 ? 1 : x >= X(r.neck) + K ? -1 : 0));
         else {
-          rect(bx - m.headW / 2 + K, by - H - 2 * K, 3 * K, 3 * K, (x, y) => tint(c, y < by - H - 2 * K + 1 ? 1 : 0));
+          rect(bx - m.headW / 2 + K, by - H - 2 * K, 3 * K, 3 * K, (_x, y) => tint(c, y < by - H - 2 * K + 1 ? 1 : 0));
           rect(bx + m.headW / 2 - 4 * K, by - H - 2 * K, 3 * K, 3 * K, (x, y) => tint(c, y < by - H - 2 * K + 1 ? 1 : x >= bx + m.headW / 2 - 2 * K ? -1 : 0));
           rect(bx - m.headW / 2 + 2 * K, by - H - K, m.headW - 4 * K, K, tint(a, 0));
         }
@@ -660,7 +660,7 @@ export function drawOverExtras(): void {
             for (let y = 0; y < ph; y++)
               for (let x = 0; x < pw; x++) {
                 const edge = x === 0 || x === pw - 1 || y === 0 || y === ph - 1;
-                let cc = edge ? (x === 0 || y === 0 ? g(1) : g(-1)) : g(0);
+                let cc: Color = edge ? (x === 0 || y === 0 ? g(1) : g(-1)) : g(0);
                 if (x === 1 && y === 1) cc = g(2);
                 const rdx = x - (pw / 2 - 0.5);
                 const rdy = y - (ph / 2 - 0.5);

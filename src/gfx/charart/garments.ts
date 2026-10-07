@@ -406,7 +406,7 @@ export function torsoFront(lx: number, ly: number, hw: number, back: boolean): C
       return L.topAccent;
     }
     if (L.top === 'apron' && ax < hw * 0.55 && ly < H * 0.78) {
-      setG('cloth', fy === Math.round(H * 0.78) - 1 ? -1 : 0);
+      setG('cloth', band(ly, Math.round(H * 0.78) - 1) ? -1 : 0);
       return L.topAccent;
     }
     if (L.topPattern === 'logo' && top > 2 && top < 5 && ax < 1.6) {
