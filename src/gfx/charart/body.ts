@@ -109,7 +109,25 @@ export function metrics(look: Look): Met {
   } else if (look.head === 'long') {
     m.headH += 1;
   }
+  // Arm length follows the body: hanging straight, the wrist lands level with
+  // the crotch and the elbow near the waist, as on a real person (the usual
+  // anthropometric table, Drillis and Contini, puts the shoulder at 0.818 of
+  // height and the wrist at 0.485, just above the crotch). Upper arm to
+  // forearm is about 56 to 44. Fixed lengths reached the knee on short torsos.
+  const reach = Math.max(3.5, m.torsoH - shoulderJointDown(m, 1) - 0.3);
+  m.upArm = reach * 0.56;
+  m.foreArm = reach * 0.44;
   return m;
+}
+
+/** How far the trapezius falls from the neck to the shoulder point (in `m`'s units; `k` = units per native px). */
+export function shoulderDropOf(m: { shW: number; torsoH: number }, k: number): number {
+  return Math.max(2 * k, Math.min(m.torsoH * 0.3, m.shW * 0.2));
+}
+
+/** Front view: how far the shoulder joint sits below the top of the torso, inside the deltoid. */
+export function shoulderJointDown(m: { shW: number; torsoH: number; armD: number }, k: number): number {
+  return shoulderDropOf(m, k) * 0.5 + m.armD * 0.35;
 }
 
 export function totalHeight(m: Met): number {
@@ -721,15 +739,14 @@ export function solve(def: PoseDef, m: Met, k = 1): Rig {
   let shF: Pt;
   let shB: Pt;
   if (side) {
-    const s0 = add(torsoBase, up, m.torsoH - Math.max(1.5, m.armD * 0.6) - Math.max(2 * k, Math.min(m.torsoH * 0.3, m.shW * 0.2)) * 0.3);
+    const s0 = add(torsoBase, up, m.torsoH - Math.max(1.5, m.armD * 0.6) - shoulderDropOf(m, k) * 0.3);
     const tw = (def.twist ?? 0) * k;
     shF = add(s0, fw, 0.5 + tw);
     shB = add(s0, fw, -1 - tw);
   } else {
     // The shoulder joint sits inside the deltoid, below the sloping trapezius,
     // so the arm hangs against the body instead of pegging out of a box corner.
-    const drop = Math.max(2 * k, Math.min(m.torsoH * 0.3, m.shW * 0.2));
-    const sy = torsoBase.y - m.torsoH + drop * 0.8 + m.armD * 0.5;
+    const sy = torsoBase.y - m.torsoH + shoulderJointDown(m, k);
     const ax = m.shW / 2 - m.armD * 0.15;
     const tl = (def.shTilt ?? 0) * k;
     shF = { x: hip.x + ax, y: sy + tl };

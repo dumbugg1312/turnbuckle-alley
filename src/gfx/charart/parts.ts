@@ -1,6 +1,6 @@
 import { liA, mixc, P, shA, type Color } from '../kit';
 import { EXTRA_SLOT } from '../look';
-import { K, type Hand } from './body';
+import { K, shoulderDropOf, type Hand } from './body';
 import { armColor, B, bottomColorAt, BOOT_H, dk, ex, GF, GK, legColor, pattern, setG, shade, torsoFront, torsoSide, X, Y } from './garments';
 import { INK, ramp, tint, toneAt } from './palette';
 import { clamp, cyl, disc, dpx, drect, formV, layer, lerp, line, oval, px, pt, rect, shape, toneIdx, type Pt } from './raster';
@@ -47,7 +47,7 @@ export function shoulderSlope(d: number): number {
 
 /** How far the shoulder line falls from the neck to the shoulder point (art px). */
 export function shoulderDrop(m: { shW: number; torsoH: number }): number {
-  return Math.max(2 * K, Math.min(m.torsoH * 0.3, m.shW * 0.2));
+  return shoulderDropOf(m, K);
 }
 export function sideEdges(t: number): [number, number] {
   const m = B.m;
