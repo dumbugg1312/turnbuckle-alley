@@ -10,7 +10,7 @@ import * as audioModule from '../audio';
 import { game } from '../core/game';
 import type { Scene } from '../core/scene';
 import { G, type Alignment, type Dir, type Persona } from '../core/state';
-import { characterSize, characterSprite, type Pose } from '../gfx/characters';
+import { characterSize, characterSprite, renderPortrait, type Pose } from '../gfx/characters';
 import { dth, ell, hash2, mkSpr, R, RR, shA, toCanvas, VG } from '../gfx/kit';
 import {
   BODY_TYPES, BOTTOM_STYLES, CLOTH_COLORS, cloneLook, EXTRA_SLOT, EXTRA_STYLES, EYE_COLORS, EYE_STYLES, FACIAL_STYLES, FEATURES,
@@ -283,7 +283,9 @@ const audioAny = audioModule as unknown as {
 type Mode = 'self' | 'ring';
 type TabId = 'you' | 'body' | 'face' | 'hair' | 'outfit' | 'extras' | 'gear' | 'mask' | 'robe' | 'persona' | 'moves' | 'entrance' | 'theme';
 
-const SELF_TABS: [TabId, string][] = [['you', 'You'], ['body', 'Body'], ['face', 'Face'], ['hair', 'Hair'], ['outfit', 'Outfit'], ['extras', 'Extras']];
+/** Look fields that change everyone's silhouette (so preset previews redraw). */
+const BODY_KEYS = new Set(['body', 'height', 'skin', 'head', 'age', 'hair', 'hairColor', 'hairAccent', 'eyes', 'eyeColor', 'facial', 'features']);
+const SELF_TABS: [TabId, string][] = [['you', 'You'], ['face', 'Face'], ['hair', 'Hair'], ['outfit', 'Outfit'], ['extras', 'Extras']];
 const RING_TABS: [TabId, string][] = [['gear', 'Gear'], ['mask', 'Mask'], ['robe', 'Robe & belts'], ['hair', 'Hair'], ['persona', 'Persona'], ['moves', 'Moves'], ['entrance', 'Entrance'], ['theme', 'Theme']];
 
 const CIV_TOPS = ['tee', 'hoodie', 'flannel', 'sweater', 'cardigan', 'buttondown', 'polo', 'track', 'blouse', 'tank', 'crop', 'rashguard', 'jacket', 'vest'];
@@ -394,6 +396,80 @@ class CreatorScene implements Scene {
   private set(p: Partial<Look>): void {
     this.look = { ...this.look, ...p };
     this.renderTab();
+    this.refreshPolaroid();
+    if (Object.keys(p).some((k) => BODY_KEYS.has(k))) this.scheduleThumbs();
+  }
+
+  private bodyRows(add: (...n: Node[]) => void): void {
+    const L = this.look;
+    add(this.chipRow('Build', BODY_TYPES, L.body, (v) => this.set({ body: v as Look['body'], height: v === 'giant' ? Math.max(L.height, 4) : Math.min(L.height, 4) }), true));
+    add(this.sliderRow('Height', -2, L.body === 'giant' ? 8 : 6, L.height, (v) => this.set({ height: v }), (v) => (v < 0 ? 'Compact' : v === 0 ? 'Average' : v < 4 ? 'Tall' : 'Very tall')));
+    add(this.swatchRow('Skin', SKIN_TONES_ALL, L.skin, (c) => this.set({ skin: c })));
+    add(this.chipRow('Head', HEAD_SHAPES, L.head, (v) => this.set({ head: v as Look['head'] })));
+    add(this.chipRow('Age', [{ id: 'adult', label: 'Adult' }, { id: 'elder', label: 'Seasoned' }], L.age === 'elder' ? 'elder' : 'adult', (v) => this.set({ age: v === 'elder' ? 'elder' : undefined })));
+  }
+
+  // ------------------------------------------------------------ the Polaroid and preset previews
+
+  private polaroidEl: HTMLElement | null = null;
+  private thumbTimer: ReturnType<typeof setTimeout> | null = null;
+
+  /** A Polaroid pinned in the room: a painted close-up, with the name written underneath. */
+  private buildPolaroid(): HTMLElement {
+    const card = el('div', 'cr-polaroid');
+    card.append(el('div', 'cr-polaroid-photo'), el('div', 'cr-polaroid-name'), el('div', 'cr-polaroid-sub'));
+    this.polaroidEl = card;
+    return card;
+  }
+
+  private refreshPolaroid(): void {
+    const card = this.polaroidEl;
+    if (!card) return;
+    const photo = card.querySelector('.cr-polaroid-photo') as HTMLElement;
+    // Native-resolution portrait, shown at the world's own whole-pixel scale.
+    const a = this.stageArea();
+    const size = Math.max(40, Math.min(104, Math.round(Math.min(a.w * 0.44, a.h * (a.w > a.h ? 0.6 : 0.42)))));
+    const pic = renderPortrait(this.look, 'happy', size);
+    const cv = document.createElement('canvas');
+    cv.width = pic.width;
+    cv.height = pic.height;
+    cv.getContext('2d')!.drawImage(pic, 0, 0);
+    const css = game.screen.cssPerNative;
+    cv.style.width = `${pic.width * css}px`;
+    cv.style.height = `${pic.height * css}px`;
+    photo.replaceChildren(cv);
+    (card.querySelector('.cr-polaroid-name') as HTMLElement).textContent = this.name.trim() || 'You';
+    (card.querySelector('.cr-polaroid-sub') as HTMLElement).textContent = (this.pronouns.trim() || 'they') + (['they', 'she', 'he'].includes(this.pronouns.trim()) ? '/' + ({ they: 'them', she: 'her', he: 'him' } as Record<string, string>)[this.pronouns.trim()] : '');
+  }
+
+  private presetLook(p: Preset): Look {
+    if (this.mode === 'self') return { ...this.look, ...p.self, topPattern: p.self.topPattern, bottomPattern: p.self.bottomPattern, extras: [...(p.self.extras ?? [])] };
+    return this.applyRingPart(this.look, p.ring);
+  }
+
+  private scheduleThumbs(): void {
+    if (this.thumbTimer) clearTimeout(this.thumbTimer);
+    this.thumbTimer = setTimeout(() => this.refreshThumbs(), 160);
+  }
+
+  /** Each preset card shows you in that outfit. */
+  private refreshThumbs(): void {
+    this.thumbTimer = null;
+    if (!this.root) return;
+    for (const p of PRESETS) {
+      const slot = this.root.querySelector<HTMLElement>(`.cr-preset[data-id="${p.id}"] .cr-preset-pic`);
+      if (!slot) continue;
+      const spr = characterSprite(this.presetLook(p), { facing: 'down', pose: 'idle', frame: 0, t: 0 });
+      const cv = document.createElement('canvas');
+      cv.width = spr.canvas.width;
+      cv.height = spr.canvas.height;
+      cv.getContext('2d')!.drawImage(spr.canvas, 0, 0);
+      // Whole device pixels per art pixel, about half the world's scale.
+      const css = Math.max(1, Math.floor(game.screen.scale / 2)) / (window.devicePixelRatio || 1);
+      cv.style.width = `${cv.width * css}px`;
+      cv.style.height = `${cv.height * css}px`;
+      slot.replaceChildren(cv);
+    }
   }
 
   private extra(id: string): Extra | undefined {
@@ -602,6 +678,7 @@ class CreatorScene implements Scene {
     const rotL = el('button', { class: 'cr-rot left', 'aria-label': 'Turn left', onclick: (e: Event) => { e.stopPropagation(); this.rotate(-1); } }, '⟲');
     const rotR = el('button', { class: 'cr-rot right', 'aria-label': 'Turn right', onclick: (e: Event) => { e.stopPropagation(); this.rotate(1); } }, '⟳');
     stage.append(rotL, rotR);
+    if (this.mode === 'self') stage.append(this.buildPolaroid());
     const panel = el('div', 'cr-panel panel');
     const head = el('div', 'cr-head');
     head.append(
@@ -612,7 +689,7 @@ class CreatorScene implements Scene {
     const rollBtn = el('button', { class: 'btn gold cr-roll', onclick: () => this.roll() }, '🎲 Roll me one');
     const presets = el('div', 'cr-presets');
     for (const p of PRESETS) {
-      const b = el('button', { class: 'cr-preset', 'data-id': p.id, onclick: () => this.applyPreset(p) }, el('b', {}, this.mode === 'self' ? p.selfLabel : p.label), el('span', {}, this.mode === 'self' ? p.selfBlurb : p.blurb));
+      const b = el('button', { class: 'cr-preset', 'data-id': p.id, title: this.mode === 'self' ? p.selfBlurb : p.blurb, onclick: () => this.applyPreset(p) }, el('div', 'cr-preset-pic'), el('div', 'cr-preset-text', el('b', {}, this.mode === 'self' ? p.selfLabel : p.label), el('span', {}, this.mode === 'self' ? p.selfBlurb : p.blurb)));
       presets.append(b);
     }
     quick.append(rollBtn, presets);
@@ -633,10 +710,13 @@ class CreatorScene implements Scene {
     this.tabsEl = tabs;
     this.stageEl = stage;
     this.renderAll();
+    this.refreshPolaroid();
+    this.refreshThumbs();
   }
 
   private renderAll(): void {
     if (!this.root) return;
+    this.refreshPolaroid();
     this.root.querySelectorAll<HTMLElement>('.cr-preset').forEach((b) => b.classList.toggle('on', b.dataset.id === this.presetId));
     this.renderTabs();
     this.renderTab();
@@ -659,16 +739,14 @@ class CreatorScene implements Scene {
     const add = (...n: Node[]) => body.append(...n);
     switch (this.tab) {
       case 'you':
-        add(this.textRow('Name', this.name, 'What should Grandma call you?', (v) => (this.name = v), 24));
+        add(this.textRow('Name', this.name, 'What should Grandma call you?', (v) => { this.name = v; this.refreshPolaroid(); }, 24));
         add(this.chipRow('Pronouns', [{ id: 'they', label: 'they/them' }, { id: 'she', label: 'she/her' }, { id: 'he', label: 'he/him' }, { id: 'custom', label: 'custom' }], ['they', 'she', 'he'].includes(this.pronouns) ? this.pronouns : 'custom', (v) => { this.pronouns = v === 'custom' ? '' : v; this.renderTab(); }));
-        if (!['they', 'she', 'he'].includes(this.pronouns)) add(this.textRow('Your pronouns', this.pronouns, 'e.g. xe/xem', (v) => (this.pronouns = v), 20));
+        if (!['they', 'she', 'he'].includes(this.pronouns)) add(this.textRow('Your pronouns', this.pronouns, 'e.g. xe/xem', (v) => { this.pronouns = v; this.refreshPolaroid(); }, 20));
+        add(this.section('Body'));
+        this.bodyRows(add);
         break;
       case 'body':
-        add(this.chipRow('Build', BODY_TYPES, L.body, (v) => this.set({ body: v as Look['body'], height: v === 'giant' ? Math.max(L.height, 4) : Math.min(L.height, 4) }), true));
-        add(this.sliderRow('Height', -2, L.body === 'giant' ? 8 : 6, L.height, (v) => this.set({ height: v }), (v) => (v < 0 ? 'Compact' : v === 0 ? 'Average' : v < 4 ? 'Tall' : 'Very tall')));
-        add(this.swatchRow('Skin', SKIN_TONES_ALL, L.skin, (c) => this.set({ skin: c })));
-        add(this.chipRow('Head', HEAD_SHAPES, L.head, (v) => this.set({ head: v as Look['head'] })));
-        add(this.chipRow('Age', [{ id: 'adult', label: 'Adult' }, { id: 'elder', label: 'Seasoned' }], L.age === 'elder' ? 'elder' : 'adult', (v) => this.set({ age: v === 'elder' ? 'elder' : undefined })));
+        this.bodyRows(add);
         break;
       case 'face':
         add(this.chipRow('Eyes', EYE_STYLES, L.eyes, (v) => this.set({ eyes: v }), true));
@@ -975,11 +1053,13 @@ class CreatorScene implements Scene {
   }
 
   private backdrop(W: number, H: number): HTMLCanvasElement {
-    const key = `${W}x${H}:${this.mode}`;
+    // Lay the room out in the visible stage (above the panel on phones), matching render()'s floor.
+    const st = this.stageArea();
+    const key = `${W}x${H}:${this.mode}:${st.w}x${st.h}`;
     if (this.bg && this.bgKey === key) return this.bg;
     const self = this.mode === 'self';
     const spr = mkSpr(W, H, () => {
-      const floorY = Math.floor(H * 0.74);
+      const floorY = Math.min(Math.floor(st.y + st.h * 0.78), H - 26);
       if (self) {
         VG(0, 0, W, floorY, ['#e8c8a8', '#d8a890', '#b88a98'], 0.6);
         for (let x = 0; x < W; x += 12) R(x, 0, 2, floorY, (xx, yy, o) => (dth(xx, yy, 6) ? shA(o, 0.06) : o));
@@ -988,10 +1068,10 @@ class CreatorScene implements Scene {
         VG(0, floorY, W, H - floorY, ['#a8745a', '#7a4e40'], 0.5);
         for (let y = floorY + 3; y < H; y += 5) R(0, y, W, 1, (xx, yy, o) => (hash2(xx >> 4, yy, 3) > 0.15 ? shA(o, 0.12) : o));
         // Night window with city lights.
-        const wx = Math.floor(W * 0.06);
-        const wy = Math.floor(H * 0.12);
-        const ww = Math.max(40, Math.floor(W * 0.16));
-        const wh = Math.floor(H * 0.32);
+        const wx = Math.floor(st.x + st.w * 0.05);
+        const wy = Math.floor(st.y + st.h * 0.1);
+        const ww = Math.max(34, Math.floor(st.w * 0.3));
+        const wh = Math.max(30, Math.floor((floorY - 10 - wy) * 0.6));
         RR(wx - 2, wy - 2, ww + 4, wh + 4, 2, '#5b3f6b');
         VG(wx, wy, ww, wh, ['#2a2050', '#4a3a78', '#8a5a8a'], 0.6);
         for (let i = 0; i < 9; i++) {
@@ -1034,8 +1114,10 @@ class CreatorScene implements Scene {
     const a = this.stageArea();
     const floorY = Math.min(Math.floor(a.y + a.h * 0.78), H - 26);
     const size = characterSize(this.look);
-    const k = Math.max(2, Math.min(4, Math.floor((a.h * 0.42) / Math.max(26, size.h)), Math.floor((a.w * 0.55) / Math.max(18, size.w)), Math.floor((floorY - 24) / Math.max(26, size.h + 6))));
-    let cx = Math.floor(a.x + a.w / 2);
+    // Sprites stay crisp at 2x; past that they turn blocky. The Polaroid carries the detail.
+    const k = this.mode === 'self' ? 2 : Math.max(2, Math.min(3, Math.floor((a.h * 0.6) / Math.max(26, size.h)), Math.floor((a.w * 0.62) / Math.max(18, size.w)), Math.floor((floorY - 12) / Math.max(26, size.h + 4))));
+    // In the mirror room the Polaroid takes the top-right, so the mirror sits left of centre.
+    let cx = Math.floor(a.x + a.w * (this.mode === 'self' ? 0.27 : 0.5));
     // Pose and facing for the showcase.
     const dirs: Dir[] = ['down', 'left', 'up', 'right'];
     const manual = this.manualDir >= 0 && this.t < this.manualUntil;

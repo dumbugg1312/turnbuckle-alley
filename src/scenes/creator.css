@@ -279,3 +279,65 @@
   .cr-chip { font-size: max(calc(var(--u) * 7.2), 12px); }
   .cr-tab { font-size: max(calc(var(--u) * 6.2), 10px); }
 }
+
+/* ---------- Preset cards with a preview of you in the outfit ---------- */
+.cr-preset { display: flex; align-items: center; gap: calc(var(--u) * 3); width: calc(var(--u) * 112); padding: calc(var(--u) * 2) calc(var(--u) * 4) calc(var(--u) * 2) calc(var(--u) * 2); }
+.cr-preset-pic {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  min-width: calc(var(--u) * 22);
+  min-height: calc(var(--u) * 30);
+  border-radius: calc(var(--u) * 2);
+  background: radial-gradient(ellipse at 50% 92%, rgba(43, 33, 64, 0.18) 0 30%, transparent 32%), linear-gradient(#fff6e3, #f1dcc0);
+  padding: calc(var(--u) * 1) calc(var(--u) * 1.5) calc(var(--u) * 0.5);
+}
+.cr-preset-pic canvas { display: block; image-rendering: pixelated; }
+.cr-preset.on .cr-preset-pic { background: radial-gradient(ellipse at 50% 92%, rgba(43, 33, 64, 0.2) 0 30%, transparent 32%), linear-gradient(#fff4c8, #f4d27a); }
+.cr-preset-text { min-width: 0; }
+
+/* ---------- The Polaroid pinned in the mirror room ---------- */
+.cr-polaroid {
+  position: absolute;
+  right: calc(var(--u) * 10);
+  top: 18%;
+  background: #fbf6ea;
+  padding: calc(var(--u) * 3) calc(var(--u) * 3) calc(var(--u) * 2);
+  border-radius: calc(var(--u) * 1);
+  box-shadow: 0 calc(var(--u) * 1.5) 0 rgba(43, 33, 64, 0.35), 0 calc(var(--u) * 4) calc(var(--u) * 8) rgba(43, 33, 64, 0.25);
+  transform: rotate(3deg);
+  pointer-events: none;
+  text-align: center;
+  animation: cr-pin 0.5s cubic-bezier(.2, 1.4, .5, 1);
+}
+@keyframes cr-pin { from { transform: rotate(-8deg) translateY(calc(var(--u) * -12)); opacity: 0; } }
+.cr-polaroid::before {
+  /* the tape */
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: calc(var(--u) * -4);
+  width: calc(var(--u) * 26);
+  height: calc(var(--u) * 8);
+  transform: translateX(-50%) rotate(-4deg);
+  background: rgba(244, 214, 140, 0.75);
+  box-shadow: 0 calc(var(--u) * 0.5) 0 rgba(43, 33, 64, 0.12);
+}
+.cr-polaroid-photo { background: #2b2140; line-height: 0; }
+.cr-polaroid-photo canvas { display: block; image-rendering: pixelated; }
+.cr-polaroid-name {
+  font-family: var(--font-display);
+  font-size: calc(var(--u) * 10);
+  color: #3a3060;
+  margin-top: calc(var(--u) * 2.5);
+  max-width: calc(var(--u) * 90);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.cr-polaroid-sub { font-family: var(--font-label); font-size: calc(var(--u) * 5.6); color: #7a6a8a; text-transform: lowercase; }
+@media (orientation: portrait) {
+  .cr-polaroid { right: calc(var(--u) * 8); top: 14%; }
+  .cr-polaroid-name { font-size: calc(var(--u) * 8); }
+}
